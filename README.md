@@ -41,7 +41,7 @@
 | M4 | Inventory Traceability | Idempotent inventory event log and stock audit UI |
 | M5 | Dashboard & Integration | Admin dashboard, reports, API contracts, integration and release coordination |
 
-Detailed task breakdown is tracked in GitHub Issues. Add the created Issues to the **Thực Tập Chuyên Ngành** GitHub Project and assign them to the matching team member.
+Detailed task breakdown is tracked in GitHub Issues. Add Issues #1–#28 to the **Thực Tập Chuyên Ngành** GitHub Project and assign them to the matching team member.
 
 ## Repository layout
 
@@ -72,6 +72,7 @@ See:
 - [Architecture rules](docs/ARCHITECTURE.md)
 - [API contract](docs/API_CONTRACT.md)
 - [Definition of done](docs/DEFINITION_OF_DONE.md)
+- [GitHub Project board setup](docs/PROJECT_BOARD_SETUP.md)
 
 ## Local development
 
