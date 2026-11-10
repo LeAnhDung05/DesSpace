@@ -85,16 +85,16 @@ Thời gian dự án: **19/10/2026 – 29/11/2026**. Bảng dưới đây tập 
 
 ## 9. Cấp quyền và gán Assignee
 
-Repository hiện là Public. Kết quả kiểm tra hiện tại: `LeAnhDung05` có quyền Admin; `hoangHT-w` và `Anvu-IFBB` có quyền Write; `Mod3r3d` và `HaDiLuc` mới chỉ có quyền Read. Để các thành viên có thể push code và nhận Issue:
+Repository hiện là Public. Kết quả kiểm tra mới nhất: `LeAnhDung05` có quyền Admin; cả `hoangHT-w`, `Anvu-IFBB`, `Mod3r3d` và `HaDiLuc` đều có quyền Write. Để các thành viên có thể push code và nhận Issue:
 
 1. Chủ repository mở **Settings → Collaborators**.
 2. Chọn **Add people**.
 3. Mời `hoangHT-w`, `HaDiLuc`, `Mod3r3d`, `Anvu-IFBB`.
-4. Cấp quyền **Write** cho `Mod3r3d` và `HaDiLuc` (hai tài khoản đang chỉ có Read).
+4. Xác nhận cả bốn thành viên cộng tác viên đã có quyền **Write**.
 5. Mỗi người mở thông báo/email GitHub và chấp nhận lời mời.
 6. Sau khi quyền được xác nhận, gán Assignee cho Issue #1–#37 theo bảng phân công trên.
 
-Phân công mới: M1 `hoangHT-w`; M2 `Anvu-IFBB`; M3 `LeAnhDung05`; M4 `Mod3r3d`; M5 `HaDiLuc`. Hiện M1, M2 và M3 đã được gán Issue; M4 và M5 cần quyền Write để hoàn tất gán Assignee cho #4, #20–#23, #34 và #5, #24–#28, #35–#37.
+Phân công mới: M1 `hoangHT-w`; M2 `Anvu-IFBB`; M3 `LeAnhDung05`; M4 `Mod3r3d`; M5 `HaDiLuc`. Toàn bộ Issues #1–#37 đã được gán Assignee theo phân công này.
 
 ## 10. Thứ tự ưu tiên bổ sung
 
