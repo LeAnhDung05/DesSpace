@@ -23,11 +23,11 @@ Lưu ý: Issue trong repository và item trên Project là hai đối tượng r
 
 | Module | Thành viên | GitHub username | Module phụ trách |
 |---|---|---|---|
-| M1 | Thành viên 01 | [LeAnhDung05](https://github.com/LeAnhDung05) | Phòng trưng bày 3D/AR |
-| M2 | Thành viên 02 | [hoangHT-w](https://github.com/hoangHT-w) | Giao diện Premium, danh mục, tìm kiếm |
-| M3 | Thành viên 03 | [HaDiLuc](https://github.com/HaDiLuc) | Giỏ hàng, thanh toán, đơn hàng |
+| M1 | Thành viên 01 | [hoangHT-w](https://github.com/hoangHT-w) | Phòng trưng bày 3D/AR |
+| M2 | Thành viên 02 | [Anvu-IFBB](https://github.com/Anvu-IFBB) | Giao diện Premium, danh mục, tìm kiếm |
+| M3 | Thành viên 03 | [LeAnhDung05](https://github.com/LeAnhDung05) | Giỏ hàng, thanh toán, đơn hàng |
 | M4 | Thành viên 04 | [Mod3r3d](https://github.com/Mod3r3d) | Nhật ký và truy vết tồn kho |
-| M5 | Thành viên 05 | [Anvu-IFBB](https://github.com/Anvu-IFBB) | Dashboard, báo cáo, tích hợp/release |
+| M5 | Thành viên 05 | [HaDiLuc](https://github.com/HaDiLuc) | Dashboard, báo cáo, tích hợp/release |
 
 ## 4. Các trường nên có trên bảng Project
 
@@ -85,16 +85,16 @@ Thời gian dự án: **19/10/2026 – 29/11/2026**. Bảng dưới đây tập 
 
 ## 9. Cấp quyền và gán Assignee
 
-Repository hiện là Public. Kết quả kiểm tra cho thấy `LeAnhDung05` có quyền Admin; bốn tài khoản còn lại chưa có quyền Write được xác nhận. Để các thành viên có thể push code và nhận Issue:
+Repository hiện là Public. Kết quả kiểm tra hiện tại: `LeAnhDung05` có quyền Admin; `hoangHT-w` và `Anvu-IFBB` có quyền Write; `Mod3r3d` và `HaDiLuc` mới chỉ có quyền Read. Để các thành viên có thể push code và nhận Issue:
 
 1. Chủ repository mở **Settings → Collaborators**.
 2. Chọn **Add people**.
 3. Mời `hoangHT-w`, `HaDiLuc`, `Mod3r3d`, `Anvu-IFBB`.
-4. Cấp quyền **Write** cho cả bốn người.
+4. Cấp quyền **Write** cho `Mod3r3d` và `HaDiLuc` (hai tài khoản đang chỉ có Read).
 5. Mỗi người mở thông báo/email GitHub và chấp nhận lời mời.
 6. Sau khi quyền được xác nhận, gán Assignee cho Issue #1–#37 theo bảng phân công trên.
 
-Các username đã được ghi trong nội dung Issue và tài liệu nhóm; trường Assignees chưa thể gán thành công trước khi quyền Write được xác nhận. Sau khi các thành viên chấp nhận lời mời, quản lý cần gán cả các Issue bổ sung #29–#37.
+Phân công mới: M1 `hoangHT-w`; M2 `Anvu-IFBB`; M3 `LeAnhDung05`; M4 `Mod3r3d`; M5 `HaDiLuc`. Hiện M1, M2 và M3 đã được gán Issue; M4 và M5 cần quyền Write để hoàn tất gán Assignee cho #4, #20–#23, #34 và #5, #24–#28, #35–#37.
 
 ## 10. Thứ tự ưu tiên bổ sung
 
