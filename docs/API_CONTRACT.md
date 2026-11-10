@@ -1,49 +1,49 @@
-# DeSpace — API Contract (Initial)
+# DeSpace — Quy ước API dùng chung (API Contract)
 
-This document is the shared contract between module owners. Agree on endpoint names, schemas and permissions here before implementation. Do not create parallel endpoints that duplicate WooCommerce behavior.
+Tài liệu này là hợp đồng kết nối giữa các module. Trước khi lập trình phụ thuộc, các thành viên phải thống nhất tên endpoint, cấu trúc dữ liệu và quyền truy cập. Không tạo endpoint DeSpace trùng lặp chức năng mà WooCommerce đã có.
 
-## Conventions
+## 1. Quy ước chung
 
 - Namespace: `despace/v1`
-- Base path: `/wp-json/despace/v1/`
-- Methods: GET for read; POST for state-changing actions.
-- Response: JSON with stable keys and clear HTTP status codes.
-- Every privileged route must define a permission callback and capability check.
-- Validate and sanitize every parameter.
-- Public catalog filters may be read-only; product administration and reports require suitable capabilities.
-- Use WordPress REST API for structured operations; use AJAX / Fetch API only where theme interaction requires it.
+- Đường dẫn gốc: `/wp-json/despace/v1/`
+- GET dùng để đọc dữ liệu; POST dùng cho thao tác thay đổi trạng thái/dữ liệu.
+- Response trả JSON với các key ổn định và HTTP status code rõ ràng.
+- Mọi route có quyền quản trị phải khai báo permission callback và kiểm tra capability.
+- Tất cả tham số đều phải validate và sanitize.
+- Bộ lọc danh mục công khai có thể chỉ cần quyền đọc; quản trị sản phẩm và báo cáo cần capability phù hợp.
+- Dùng WordPress REST API cho thao tác dữ liệu có cấu trúc; dùng AJAX/Fetch API khi cần tương tác giao diện theme.
 
-## Initial endpoints
+## 2. Các endpoint ban đầu
 
-| Method | Endpoint | Owner | Purpose |
+| Method | Endpoint | Phụ trách | Mục đích |
 |---|---|---|---|
-| GET | `/catalog` | M2 | Search, filter and paginate published WooCommerce products |
-| GET | `/products/{id}/3d` | M1 | Read validated GLB / poster metadata |
-| POST | `/products/{id}/3d` | M1 | Save 3D attachment metadata; authorized staff only |
-| GET | `/inventory/logs` | M4 | Filter stock audit events; authorized staff only |
-| GET | `/reports/overview` | M5 | Dashboard KPIs by date range; authorized staff only |
-| GET | `/reports/top-products` | M5 | Top products for selected date range; authorized staff only |
+| GET | `/catalog` | M2 | Tìm kiếm, lọc và phân trang sản phẩm WooCommerce đã công khai |
+| GET | `/products/{id}/3d` | M1 | Đọc metadata GLB/poster đã được kiểm tra |
+| POST | `/products/{id}/3d` | M1 | Lưu metadata attachment 3D; chỉ nhân viên có quyền mới được thao tác |
+| GET | `/inventory/logs` | M4 | Lọc nhật ký biến động tồn kho; chỉ người có quyền |
+| GET | `/reports/overview` | M5 | KPI Dashboard theo khoảng thời gian; chỉ người có quyền |
+| GET | `/reports/top-products` | M5 | Sản phẩm bán chạy trong khoảng thời gian chọn |
 
-Cart, coupon, checkout and order lifecycle should use WooCommerce APIs and supported WooCommerce endpoints / hooks. Do not duplicate these as a parallel DeSpace order service.
+Giỏ hàng, coupon, checkout và vòng đời đơn hàng phải dùng WooCommerce APIs cùng các endpoint/hooks được hỗ trợ. Không xây dịch vụ đơn hàng DeSpace song song.
 
-## Catalog query contract
+## 3. Quy ước tham số lọc danh mục
 
-Suggested query parameters:
-- `q`: product name / SKU search
-- `category`: product category / room taxonomy term
-- `min_price`, `max_price`
-- `material`, `color`, `size`
-- `has_3d`: boolean
-- `page`, `per_page`, `orderby`, `order`
+Các query parameters đề xuất:
+- `q`: tìm theo tên sản phẩm/SKU.
+- `category`: term danh mục sản phẩm/phòng.
+- `min_price`, `max_price`: khoảng giá.
+- `material`, `color`, `size`: chất liệu, màu sắc, kích thước.
+- `has_3d`: giá trị boolean, sản phẩm có GLB hay không.
+- `page`, `per_page`, `orderby`, `order`: phân trang và sắp xếp.
 
-Response should include:
-- `items`: product ID, name, permalink, image, price display, SKU, stock status, categories, 3D availability.
+Response nên có:
+- `items`: product ID, tên, permalink, ảnh, giá hiển thị, SKU, trạng thái tồn kho, danh mục và trạng thái có 3D.
 - `pagination`: page, per_page, total_items, total_pages.
-- `applied_filters`: normalized filters.
+- `applied_filters`: các bộ lọc đã được chuẩn hóa.
 
-The server must validate bounds and allowed sort fields. Price and availability displayed by the UI must not be used as the final checkout authority; WooCommerce revalidates at checkout.
+Máy chủ phải kiểm tra giới hạn và các trường sắp xếp được phép. Giá/tình trạng hàng trên giao diện không phải căn cứ cuối cùng để checkout; WooCommerce phải kiểm tra lại khi đặt hàng.
 
-## Error shape
+## 4. Cấu trúc lỗi
 
 ```json
 {
@@ -53,10 +53,12 @@ The server must validate bounds and allowed sort fields. Price and availability 
 }
 ```
 
-## Coordination rule
+Giữ các mã lỗi/key trong API nhất quán để frontend xử lý được; nội dung message có thể Việt hóa nếu nhóm thống nhất.
 
-When a module needs a contract change:
-1. Open an Issue describing the change and affected modules.
-2. Update this document in a PR.
-3. Obtain approval from affected module owners.
-4. Merge the contract change before dependent implementation is merged.
+## 5. Quy trình thay đổi API
+
+Khi một module cần thay đổi hợp đồng API:
+1. Tạo Issue mô tả thay đổi và các module bị ảnh hưởng.
+2. Cập nhật tài liệu này trong Pull Request.
+3. Xin xác nhận từ các module owner liên quan.
+4. Merge thay đổi API trước khi merge phần code phụ thuộc.
