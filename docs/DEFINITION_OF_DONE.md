@@ -1,28 +1,28 @@
-# DeSpace — Definition of Done
+# DeSpace — Tiêu chí xác nhận hoàn thành công việc (Definition of Done)
 
-A task is done only when all applicable checks pass:
+Một Issue chỉ được đánh dấu Done khi các kiểm tra phù hợp bên dưới đều đạt:
 
-- [ ] Scope matches its GitHub Issue and no unrelated module is changed.
-- [ ] Code follows the final technology stack and agreed folder ownership.
-- [ ] Permission checks, validation, sanitization and output escaping are implemented.
-- [ ] No secrets or local database / uploads are committed.
-- [ ] Unit / functional test evidence is included.
-- [ ] Integration behavior with dependent modules is tested.
-- [ ] UI matches approved Figma screen and responsive behavior is checked.
-- [ ] Pull Request links its Issue and receives at least one review.
-- [ ] No unresolved review comments or known blocker remains.
-- [ ] Staging smoke test passes.
-- [ ] Documentation and known limitations are updated.
+- [ ] Phạm vi code đúng với Issue; không sửa lan sang module không liên quan.
+- [ ] Code tuân thủ bộ công nghệ đã chốt và đúng thư mục phụ trách.
+- [ ] Có kiểm tra quyền, validate, sanitize và escape dữ liệu đầu ra.
+- [ ] Không commit secret, database local hoặc file upload chưa được phép.
+- [ ] Có bằng chứng unit test/functional test.
+- [ ] Đã kiểm tra tích hợp với module phụ thuộc.
+- [ ] Giao diện khớp màn hình Figma đã duyệt và đã kiểm tra responsive.
+- [ ] Pull Request liên kết Issue và có ít nhất một người review.
+- [ ] Không còn nhận xét review chưa xử lý hoặc blocker đã biết.
+- [ ] Kiểm thử smoke test trên staging đạt.
+- [ ] Tài liệu và giới hạn đã biết được cập nhật.
 
-## End-to-end MVP acceptance
+## Tiêu chí nghiệm thu MVP từ đầu đến cuối
 
-1. Admin creates / edits a WooCommerce product with SKU, price, category, variations, stock and image.
-2. For a product with a valid GLB, the product detail screen shows a working model-viewer; AR appears only on supported devices.
-3. Customer searches and combines catalog filters; result set and pagination are correct.
-4. Customer adds products to cart, applies an eligible coupon and completes checkout using COD or manual transfer.
-5. WooCommerce creates the order and remains responsible for stock movement.
-6. DeSpace inventory audit records each stock event once, including the order / product reference.
-7. Staff / Admin access is capability-controlled.
-8. Dashboard reports values from WooCommerce within the selected date range.
-9. Desktop, tablet and mobile smoke tests pass.
-10. Backup, setup steps, test evidence and known limitations are documented.
+1. Admin tạo/sửa sản phẩm WooCommerce với SKU, giá, danh mục, biến thể, tồn kho và ảnh.
+2. Sản phẩm có GLB hợp lệ hiển thị model-viewer trên trang chi tiết; AR chỉ xuất hiện trên thiết bị hỗ trợ.
+3. Khách hàng tìm kiếm và kết hợp nhiều bộ lọc danh mục; kết quả và phân trang đúng.
+4. Khách hàng thêm sản phẩm vào giỏ, áp dụng coupon hợp lệ và checkout bằng COD hoặc chuyển khoản thủ công.
+5. WooCommerce tạo đơn hàng và tiếp tục chịu trách nhiệm quản lý biến động tồn kho.
+6. Nhật ký tồn kho DeSpace ghi nhận mỗi sự kiện một lần, có tham chiếu đơn hàng/sản phẩm.
+7. Quyền truy cập Staff/Admin được kiểm soát bằng capabilities.
+8. Dashboard lấy số liệu từ WooCommerce theo khoảng thời gian đã chọn.
+9. Kiểm thử smoke test desktop, tablet và mobile đạt.
+10. Tài liệu sao lưu, hướng dẫn cài đặt, bằng chứng kiểm thử và giới hạn đã biết được bàn giao.
