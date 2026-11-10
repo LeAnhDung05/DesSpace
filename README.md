@@ -33,15 +33,17 @@
 
 ## 3. Phân công 5 module
 
-| Thành viên | Module | Trách nhiệm chính |
-|---|---|---|
-| M1 | Phòng trưng bày 3D/AR | Metadata GLB, model-viewer, AR và phương án dự phòng |
-| M2 | Danh mục & Giao diện Premium | Child Theme, trang chủ, danh mục, tìm kiếm và lọc AJAX |
-| M3 | Giỏ hàng & Đơn hàng | Giỏ hàng, coupon, checkout, hướng dẫn thanh toán và tra cứu đơn |
-| M4 | Truy vết tồn kho | Nhật ký biến động tồn kho chống ghi trùng và giao diện kiểm tra |
-| M5 | Dashboard & Tích hợp | Dashboard, báo cáo, API Contract, tích hợp và điều phối release |
+| Thành viên | GitHub username | Module | Trách nhiệm chính |
+|---|---|---|---|
+| M1 – Thành viên 01 | [LeAnhDung05](https://github.com/LeAnhDung05) | Phòng trưng bày 3D/AR | Metadata GLB, model-viewer, AR và phương án dự phòng |
+| M2 – Thành viên 02 | [hoangHT-w](https://github.com/hoangHT-w) | Danh mục & Giao diện Premium | Child Theme, trang chủ, danh mục, tìm kiếm và lọc AJAX |
+| M3 – Thành viên 03 | [HaDiLuc](https://github.com/HaDiLuc) | Giỏ hàng & Đơn hàng | Giỏ hàng, coupon, checkout, hướng dẫn thanh toán và tra cứu đơn |
+| M4 – Thành viên 04 | [Mod3r3d](https://github.com/Mod3r3d) | Truy vết tồn kho | Nhật ký biến động tồn kho chống ghi trùng và giao diện kiểm tra |
+| M5 – Thành viên 05 | [Anvu-IFBB](https://github.com/Anvu-IFBB) | Dashboard & Tích hợp | Dashboard, báo cáo, API Contract, tích hợp và điều phối release |
 
-Công việc chi tiết được theo dõi bằng GitHub Issues. Thêm Issues #1–#28 vào Project **Thực Tập Chuyên Ngành** và gán cho đúng thành viên.
+Công việc chi tiết được theo dõi bằng GitHub Issues #1–#28 và Project **Thực Tập Chuyên Ngành**.
+
+**Lưu ý quyền truy cập:** chủ repository cần mời bốn tài khoản thành viên vào Settings → Collaborators và cấp quyền Write. Sau khi họ chấp nhận lời mời, hãy gán Assignee cho Issues theo bảng trên.
 
 ## 4. Cấu trúc repository
 
