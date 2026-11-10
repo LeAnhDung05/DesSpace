@@ -1,49 +1,49 @@
-# DeSpace — Premium Furniture E-commerce
+# DeSpace — Website thương mại điện tử nội thất cao cấp
 
-**Project:** DESPACE-2026  
-**Internship period:** 19/10/2026 – 29/11/2026  
-**Team:** 5 members  
-**Design:** [DeSpace Figma file](https://www.figma.com/design/2O1yGyEkoUrDRcGX6upmNw)
+**Mã dự án:** DESPACE-2026  
+**Thời gian thực hiện:** 19/10/2026 – 29/11/2026  
+**Nhóm:** 5 thành viên  
+**Thiết kế:** [File Figma DeSpace](https://www.figma.com/design/2O1yGyEkoUrDRcGX6upmNw)
 
-## Final technology stack
+## 1. Công nghệ sử dụng đã chốt
 
-| Layer | Technology |
+| Lớp | Công nghệ |
 |---|---|
 | Frontend | HTML5 + CSS3 + JavaScript ES6+ |
-| Design | Figma — Premium UI/UX |
+| Thiết kế | Figma — Premium UI/UX |
 | CMS | WordPress |
-| E-commerce | WooCommerce |
+| Thương mại điện tử | WooCommerce |
 | Backend | PHP |
-| Database | MySQL Community Edition |
+| Cơ sở dữ liệu | MySQL Community Edition |
 | API | WordPress REST API + AJAX / Fetch API |
 | 3D / AR | Google model-viewer + GLB |
-| Custom module | DeSpace Core Plugin (`despace-core`) |
-| Presentation | DeSpace Child Theme (`despace-child`) |
-| Version control | Git + GitHub |
+| Module riêng | DeSpace Core Plugin (`despace-core`) |
+| Giao diện | DeSpace Child Theme (`despace-child`) |
+| Quản lý mã nguồn | Git + GitHub |
 
-## Product architecture
+## 2. Kiến trúc sản phẩm
 
-- One shared website, one repository and one integrated WordPress/WooCommerce application.
-- `despace-child` owns presentation, templates and theme assets.
-- `despace-core` owns DeSpace-specific business logic and extension modules.
-- WordPress/WooCommerce remain the source of truth for users, products, variations, coupons, orders and stock.
-- Do not create duplicate `users`, `products`, `orders` or `coupons` tables.
-- Access orders through WooCommerce CRUD APIs for HPOS compatibility.
-- The custom `despace_inventory_logs` table is an audit log only. It must never become a second stock engine or deduct/restore stock twice.
+- Một website dùng chung, một repository và một ứng dụng WordPress/WooCommerce tích hợp.
+- `despace-child` phụ trách giao diện, template và tài nguyên theme.
+- `despace-core` phụ trách nghiệp vụ riêng và các module mở rộng của DeSpace.
+- WordPress/WooCommerce là nguồn dữ liệu chính cho người dùng, sản phẩm, biến thể, coupon, đơn hàng và tồn kho.
+- Không tạo các bảng `users`, `products`, `orders`, `coupons` trùng với dữ liệu lõi.
+- Thao tác đơn hàng qua WooCommerce CRUD API để tương thích HPOS.
+- Bảng `despace_inventory_logs` chỉ lưu nhật ký truy vết; không được trở thành hệ thống tồn kho thứ hai hoặc trừ/hoàn tồn hai lần.
 
-## Five workstreams
+## 3. Phân công 5 module
 
-| Owner | Workstream | Primary responsibility |
+| Thành viên | Module | Trách nhiệm chính |
 |---|---|---|
-| M1 | 3D / AR Showroom | GLB metadata, model-viewer, AR support and fallbacks |
-| M2 | Catalog & Premium UI | Child Theme, homepage, catalog, search and AJAX filters |
-| M3 | Checkout & Orders | Cart, coupon, checkout, payment instructions and order tracking |
-| M4 | Inventory Traceability | Idempotent inventory event log and stock audit UI |
-| M5 | Dashboard & Integration | Admin dashboard, reports, API contracts, integration and release coordination |
+| M1 | Phòng trưng bày 3D/AR | Metadata GLB, model-viewer, AR và phương án dự phòng |
+| M2 | Danh mục & Giao diện Premium | Child Theme, trang chủ, danh mục, tìm kiếm và lọc AJAX |
+| M3 | Giỏ hàng & Đơn hàng | Giỏ hàng, coupon, checkout, hướng dẫn thanh toán và tra cứu đơn |
+| M4 | Truy vết tồn kho | Nhật ký biến động tồn kho chống ghi trùng và giao diện kiểm tra |
+| M5 | Dashboard & Tích hợp | Dashboard, báo cáo, API Contract, tích hợp và điều phối release |
 
-Detailed task breakdown is tracked in GitHub Issues. Add Issues #1–#28 to the **Thực Tập Chuyên Ngành** GitHub Project and assign them to the matching team member.
+Công việc chi tiết được theo dõi bằng GitHub Issues. Thêm Issues #1–#28 vào Project **Thực Tập Chuyên Ngành** và gán cho đúng thành viên.
 
-## Repository layout
+## 4. Cấu trúc repository
 
 ```text
 wordpress/
@@ -66,20 +66,20 @@ docs/
 .github/
 ```
 
-See:
-- [Team task map](docs/TEAM_TASKS.md)
-- [Git workflow](docs/GIT_WORKFLOW.md)
-- [Architecture rules](docs/ARCHITECTURE.md)
-- [API contract](docs/API_CONTRACT.md)
-- [Definition of done](docs/DEFINITION_OF_DONE.md)
-- [GitHub Project board setup](docs/PROJECT_BOARD_SETUP.md)
+Tài liệu cần đọc:
+- [Phân công module và trách nhiệm](docs/TEAM_TASKS.md)
+- [Quy trình Git/GitHub](docs/GIT_WORKFLOW.md)
+- [Kiến trúc và quyền sở hữu dữ liệu](docs/ARCHITECTURE.md)
+- [Quy ước API dùng chung](docs/API_CONTRACT.md)
+- [Tiêu chí hoàn thành công việc](docs/DEFINITION_OF_DONE.md)
+- [Hướng dẫn thiết lập GitHub Project](docs/PROJECT_BOARD_SETUP.md)
 
-## Local development
+## 5. Môi trường phát triển
 
-Each member runs a separate local WordPress + WooCommerce + MySQL environment using the same agreed versions and seed data. Integrate through the shared `develop` branch and test end-to-end on one shared staging environment.
+Mỗi thành viên chạy một môi trường WordPress + WooCommerce + MySQL riêng trên máy cá nhân, sử dụng cùng phiên bản đã thống nhất và cùng bộ dữ liệu mẫu. Tích hợp qua nhánh `develop` và kiểm thử đầu-cuối trên một môi trường staging dùng chung.
 
-Never commit `wp-config.php`, credentials, local databases, caches, WordPress core, or unapproved customer data. Use environment-specific configuration and the provided `.gitignore`.
+Không commit `wp-config.php`, thông tin đăng nhập, database local, cache, WordPress Core hoặc dữ liệu khách hàng chưa được phép. Dùng cấu hình riêng theo môi trường và file `.gitignore`.
 
-## Current delivery focus
+## 6. Trọng tâm bàn giao
 
-The project is in the final implementation period (10/11/2026). Prioritize a working MVP for all five workstreams, cross-module integration, security checks, responsive tests and a demonstrable end-to-end ordering flow by 29/11/2026.
+Tại thời điểm 10/11/2026, ưu tiên hoàn thành MVP cho cả 5 module, tích hợp liên module, kiểm tra bảo mật, responsive và luồng đặt hàng đầu-cuối có thể demo trước 29/11/2026.
