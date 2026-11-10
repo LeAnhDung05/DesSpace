@@ -136,4 +136,4 @@ Các username đã được ghép theo thứ tự danh sách nhóm gửi:
 - M4: `Mod3r3d`
 - M5: `HaDiLuc`
 
-**Lưu ý:** Tài khoản chủ repository `LeAnhDung05` có quyền Admin. Hai tài khoản `Mod3r3d` và `HaDiLuc` hiện vẫn chỉ có quyền Read; cần nâng lên Write và xác nhận lời mời đã được chấp nhận. Chủ repository cần vào **Settings → Collaborators → Add people**, mời từng tài khoản và cấp quyền **Write**. Sau khi các bạn chấp nhận lời mời, quản lý mới có thể gán Assignee và thành viên mới có thể push branch/tạo Pull Request theo quy trình nhóm.
+**Lưu ý quyền:** `LeAnhDung05` có quyền Admin; `hoangHT-w` và `Anvu-IFBB` có quyền Write. `Mod3r3d` và `HaDiLuc` hiện vẫn chỉ có quyền Read. Chủ repository cần vào **Settings → Collaborators**, nâng hai tài khoản này lên **Write** và kiểm tra họ đã chấp nhận lời mời. Sau khi quyền được xác nhận, quản lý có thể gán các Issue M4/M5 còn lại và hai thành viên có thể push branch/tạo Pull Request.
