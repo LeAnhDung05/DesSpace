@@ -1,0 +1,30 @@
+# Secrets and environment config
+.env
+.env.*
+!.env.example
+wp-config.php
+auth.json
+
+# WordPress core and runtime
+wordpress/wp-admin/
+wordpress/wp-includes/
+wordpress/wp-content/cache/
+wordpress/wp-content/upgrade/
+wordpress/wp-content/backups/
+wordpress/wp-content/uploads/
+wordpress/wp-content/debug.log
+
+# Local databases and exports
+*.sql
+*.sql.gz
+*.sqlite
+*.db
+
+# Dependencies / generated files
+vendor/
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
