@@ -41,7 +41,7 @@
 | M4 – Thành viên 04 | [Mod3r3d](https://github.com/Mod3r3d) | Truy vết tồn kho | Nhật ký biến động tồn kho chống ghi trùng và giao diện kiểm tra |
 | M5 – Thành viên 05 | [Anvu-IFBB](https://github.com/Anvu-IFBB) | Dashboard & Tích hợp | Dashboard, báo cáo, API Contract, tích hợp và điều phối release |
 
-Công việc chi tiết được theo dõi bằng GitHub Issues #1–#28 và Project **Thực Tập Chuyên Ngành**.
+Công việc chi tiết được theo dõi bằng GitHub Issues #1–#37 và Project **Thực Tập Chuyên Ngành**. Các đầu việc bổ sung #29–#37 bao phủ tối ưu/kiểm thử 3D/AR, trang chi tiết sản phẩm, trang nội dung & SEO, vận chuyển, tài khoản & email, đối soát tồn kho, bảo mật, triển khai/sao lưu và UAT.
 
 **Lưu ý quyền truy cập:** chủ repository cần mời bốn tài khoản thành viên vào Settings → Collaborators và cấp quyền Write. Sau khi họ chấp nhận lời mời, hãy gán Assignee cho Issues theo bảng trên.
 
@@ -84,4 +84,4 @@ Không commit `wp-config.php`, thông tin đăng nhập, database local, cache, 
 
 ## 6. Trọng tâm bàn giao
 
-Tại thời điểm 10/11/2026, ưu tiên hoàn thành MVP cho cả 5 module, tích hợp liên module, kiểm tra bảo mật, responsive và luồng đặt hàng đầu-cuối có thể demo trước 29/11/2026.
+Tại thời điểm 10/11/2026, ưu tiên hoàn thành MVP cho cả 5 module, tích hợp liên module, kiểm tra bảo mật, responsive và luồng đặt hàng đầu-cuối có thể demo trước 29/11/2026. Thứ tự ưu tiên là: P0 — luồng sản phẩm/giỏ hàng/checkout/tồn kho chạy được; P1 — tài khoản, vận chuyển, nội dung/chính sách và email giao dịch; P2 — tối ưu 3D/AR, SEO cơ bản và cải thiện phi chức năng sau khi luồng P0 ổn định.
