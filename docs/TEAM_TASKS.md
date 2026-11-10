@@ -3,7 +3,7 @@
 ## 1. Phân công 5 thành viên
 
 ### M1 — Phòng trưng bày sản phẩm 3D/AR
-**Phụ trách:** Thành viên 01 — GitHub: [@LeAnhDung05](https://github.com/LeAnhDung05)
+**Phụ trách:** Thành viên 01 — GitHub: [@hoangHT-w](https://github.com/hoangHT-w)
 
 Công việc:
 - Quản lý metadata file GLB, ảnh poster và cờ bật/tắt AR của sản phẩm.
@@ -23,7 +23,7 @@ Tiêu chí nghiệm thu:
 - Issue bổ sung: [#29 — Tối ưu GLB và kiểm thử tương thích 3D/AR](https://github.com/LeAnhDung05/DesSpace/issues/29).
 
 ### M2 — Giao diện Premium, danh mục và tìm kiếm sản phẩm
-**Phụ trách:** Thành viên 02 — GitHub: [@hoangHT-w](https://github.com/hoangHT-w)
+**Phụ trách:** Thành viên 02 — GitHub: [@Anvu-IFBB](https://github.com/Anvu-IFBB)
 
 Công việc:
 - Xây dựng `despace-child`, header/footer và các thành phần giao diện dùng chung.
@@ -45,7 +45,7 @@ Tiêu chí nghiệm thu:
 - Issues bổ sung: [#30 — Trang chi tiết sản phẩm](https://github.com/LeAnhDung05/DesSpace/issues/30), [#31 — Trang nội dung, chính sách và SEO](https://github.com/LeAnhDung05/DesSpace/issues/31).
 
 ### M3 — Giỏ hàng, thanh toán và quản lý đơn hàng
-**Phụ trách:** Thành viên 03 — GitHub: [@HaDiLuc](https://github.com/HaDiLuc)
+**Phụ trách:** Thành viên 03 — GitHub: [@LeAnhDung05](https://github.com/LeAnhDung05)
 
 Công việc:
 - Thay đổi số lượng, xóa sản phẩm và kiểm tra giỏ hàng.
@@ -86,7 +86,7 @@ Tiêu chí nghiệm thu:
 - Issue bổ sung: [#34 — Đối soát tồn kho cho biến thể và tình huống biên](https://github.com/LeAnhDung05/DesSpace/issues/34).
 
 ### M5 — Dashboard, báo cáo và tích hợp
-**Phụ trách:** Thành viên 05 — GitHub: [@Anvu-IFBB](https://github.com/Anvu-IFBB) — Điều phối tích hợp/release.
+**Phụ trách:** Thành viên 05 — GitHub: [@HaDiLuc](https://github.com/HaDiLuc) — Điều phối tích hợp/release.
 
 Công việc:
 - Khởi tạo Core Plugin và ranh giới tích hợp module.
@@ -130,10 +130,10 @@ Mỗi người phụ trách module phải bàn giao:
 ## 4. Quyền truy cập repository và gán Issue
 
 Các username đã được ghép theo thứ tự danh sách nhóm gửi:
-- M1: `LeAnhDung05`
-- M2: `hoangHT-w`
-- M3: `HaDiLuc`
+- M1: `hoangHT-w`
+- M2: `Anvu-IFBB`
+- M3: `LeAnhDung05`
 - M4: `Mod3r3d`
-- M5: `Anvu-IFBB`
+- M5: `HaDiLuc`
 
-**Lưu ý:** Tài khoản chủ repository `LeAnhDung05` có quyền Admin. Bốn tài khoản còn lại hiện chưa có quyền Write được xác nhận. Chủ repository cần vào **Settings → Collaborators → Add people**, mời từng tài khoản và cấp quyền **Write**. Sau khi các bạn chấp nhận lời mời, quản lý mới có thể gán Assignee và thành viên mới có thể push branch/tạo Pull Request theo quy trình nhóm.
+**Lưu ý:** Tài khoản chủ repository `LeAnhDung05` có quyền Admin. Hai tài khoản `Mod3r3d` và `HaDiLuc` hiện vẫn chỉ có quyền Read; cần nâng lên Write và xác nhận lời mời đã được chấp nhận. Chủ repository cần vào **Settings → Collaborators → Add people**, mời từng tài khoản và cấp quyền **Write**. Sau khi các bạn chấp nhận lời mời, quản lý mới có thể gán Assignee và thành viên mới có thể push branch/tạo Pull Request theo quy trình nhóm.
