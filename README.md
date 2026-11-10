@@ -43,7 +43,7 @@
 
 Công việc chi tiết được theo dõi bằng GitHub Issues #1–#37 và Project **Thực Tập Chuyên Ngành**. Các đầu việc bổ sung #29–#37 bao phủ tối ưu/kiểm thử 3D/AR, trang chi tiết sản phẩm, trang nội dung & SEO, vận chuyển, tài khoản & email, đối soát tồn kho, bảo mật, triển khai/sao lưu và UAT.
 
-**Lưu ý quyền truy cập:** chủ repository cần mời bốn tài khoản thành viên vào Settings → Collaborators và cấp quyền Write. Sau khi họ chấp nhận lời mời, hãy gán Assignee cho Issues theo bảng trên.
+**Lưu ý quyền truy cập:** `hoangHT-w` và `Anvu-IFBB` đã có quyền Write; `LeAnhDung05` là chủ repo/Admin. Hai thành viên `Mod3r3d` và `HaDiLuc` hiện vẫn chỉ có quyền Read; cần nâng lên Write và xác nhận lời mời đã được chấp nhận để có thể gán Assignee và push code.
 
 ## 4. Cấu trúc repository
 
