@@ -35,11 +35,11 @@
 
 | Thành viên | GitHub username | Module | Trách nhiệm chính |
 |---|---|---|---|
-| M1 – Thành viên 01 | [LeAnhDung05](https://github.com/LeAnhDung05) | Phòng trưng bày 3D/AR | Metadata GLB, model-viewer, AR và phương án dự phòng |
-| M2 – Thành viên 02 | [hoangHT-w](https://github.com/hoangHT-w) | Danh mục & Giao diện Premium | Child Theme, trang chủ, danh mục, tìm kiếm và lọc AJAX |
-| M3 – Thành viên 03 | [HaDiLuc](https://github.com/HaDiLuc) | Giỏ hàng & Đơn hàng | Giỏ hàng, coupon, checkout, hướng dẫn thanh toán và tra cứu đơn |
+| M1 – Thành viên 01 | [hoangHT-w](https://github.com/hoangHT-w) | Phòng trưng bày 3D/AR | Metadata GLB, model-viewer, AR và phương án dự phòng |
+| M2 – Thành viên 02 | [Anvu-IFBB](https://github.com/Anvu-IFBB) | Danh mục & Giao diện Premium | Child Theme, trang chủ, danh mục, tìm kiếm và lọc AJAX |
+| M3 – Thành viên 03 | [LeAnhDung05](https://github.com/LeAnhDung05) | Giỏ hàng & Đơn hàng | Giỏ hàng, coupon, checkout, hướng dẫn thanh toán và tra cứu đơn |
 | M4 – Thành viên 04 | [Mod3r3d](https://github.com/Mod3r3d) | Truy vết tồn kho | Nhật ký biến động tồn kho chống ghi trùng và giao diện kiểm tra |
-| M5 – Thành viên 05 | [Anvu-IFBB](https://github.com/Anvu-IFBB) | Dashboard & Tích hợp | Dashboard, báo cáo, API Contract, tích hợp và điều phối release |
+| M5 – Thành viên 05 | [HaDiLuc](https://github.com/HaDiLuc) | Dashboard & Tích hợp | Dashboard, báo cáo, API Contract, tích hợp và điều phối release |
 
 Công việc chi tiết được theo dõi bằng GitHub Issues #1–#37 và Project **Thực Tập Chuyên Ngành**. Các đầu việc bổ sung #29–#37 bao phủ tối ưu/kiểm thử 3D/AR, trang chi tiết sản phẩm, trang nội dung & SEO, vận chuyển, tài khoản & email, đối soát tồn kho, bảo mật, triển khai/sao lưu và UAT.
 
