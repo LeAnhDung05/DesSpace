@@ -26,3 +26,16 @@ Một Issue chỉ được đánh dấu Done khi các kiểm tra phù hợp bên
 8. Dashboard lấy số liệu từ WooCommerce theo khoảng thời gian đã chọn.
 9. Kiểm thử smoke test desktop, tablet và mobile đạt.
 10. Tài liệu sao lưu, hướng dẫn cài đặt, bằng chứng kiểm thử và giới hạn đã biết được bàn giao.
+
+## Tiêu chí nghiệm thu bổ sung cho Issues #29–#37
+
+11. GLB được tối ưu ở mức phù hợp; có kiểm thử model-viewer trên thiết bị/trình duyệt mục tiêu, trạng thái loading/error và fallback ảnh 2D.
+12. Trang chi tiết lấy dữ liệu từ WooCommerce, hiển thị đúng giá, SKU, ảnh, mô tả, thông số, biến thể và tồn kho; đổi biến thể phải cập nhật đúng dữ liệu.
+13. Các trang Giới thiệu, Liên hệ, FAQ và chính sách dùng nội dung đã được nhóm xác nhận; không còn placeholder/link rỗng. SEO cơ bản có title, meta description, heading, ALT ảnh và sitemap theo cấu hình đã chọn.
+14. Khu vực giao hàng, phương thức và phí vận chuyển được tính đúng tại WooCommerce cart/checkout; vùng không hỗ trợ được thông báo.
+15. Đăng ký, đăng nhập, đăng xuất, quên mật khẩu, tài khoản và lịch sử đơn hoạt động; Customer/Guest không thể xem đơn hoặc dữ liệu của người khác.
+16. Email giao dịch phản ánh đúng mã đơn và trạng thái thanh toán; đơn chuyển khoản chưa đối soát không được thông báo đã thanh toán. Có bằng chứng gửi email test hoặc hướng dẫn cấu hình SMTP và giới hạn môi trường.
+17. Nhật ký tồn kho được kiểm thử với sản phẩm biến thể, chỉnh tồn thủ công, đơn nhiều dòng, hủy đơn và hoàn tiền một phần/toàn phần; không tự ý cộng/trừ tồn ngoài WooCommerce.
+18. Có ma trận quyền Admin/Staff/Customer; REST endpoints, upload, CSRF, validate/sanitize/escape, SQL tùy chỉnh và dữ liệu nhạy cảm đã được rà soát. Không còn blocker bảo mật nghiêm trọng/cao chưa xử lý trước demo.
+19. Staging được cấu hình HTTPS; secrets tách khỏi Git; có backup database + uploads, hướng dẫn rollback và bằng chứng restore thử nghiệm.
+20. Có ma trận kiểm thử đa trình duyệt/thiết bị, kiểm tra lỗi console/request, hiệu năng cơ bản, khả năng truy cập và UAT; lỗi blocker của luồng duyệt sản phẩm/đặt hàng đã được khắc phục hoặc ghi rõ giới hạn được chấp nhận.
