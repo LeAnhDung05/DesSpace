@@ -3,7 +3,7 @@
 ## 1. Phân công 5 thành viên
 
 ### M1 — Phòng trưng bày sản phẩm 3D/AR
-**Phụ trách chính:** Thành viên 01.
+**Phụ trách:** Thành viên 01 — GitHub: [@LeAnhDung05](https://github.com/LeAnhDung05)
 
 Công việc:
 - Quản lý metadata file GLB, ảnh poster và cờ bật/tắt AR của sản phẩm.
@@ -19,7 +19,7 @@ Tiêu chí nghiệm thu:
 - Metadata lưu attachment ID, không ghi cứng URL media.
 
 ### M2 — Giao diện Premium, danh mục và tìm kiếm sản phẩm
-**Phụ trách chính:** Thành viên 02.
+**Phụ trách:** Thành viên 02 — GitHub: [@hoangHT-w](https://github.com/hoangHT-w)
 
 Công việc:
 - Xây dựng `despace-child`, header/footer và các thành phần giao diện dùng chung.
@@ -35,7 +35,7 @@ Tiêu chí nghiệm thu:
 - Giao diện thống nhất với file Figma và Design Tokens DeSpace Premium.
 
 ### M3 — Giỏ hàng, thanh toán và quản lý đơn hàng
-**Phụ trách chính:** Thành viên 03.
+**Phụ trách:** Thành viên 03 — GitHub: [@HaDiLuc](https://github.com/HaDiLuc)
 
 Công việc:
 - Thay đổi số lượng, xóa sản phẩm và kiểm tra giỏ hàng.
@@ -51,7 +51,7 @@ Tiêu chí nghiệm thu:
 - Customer chỉ xem đơn của mình; Guest phải có cơ chế xác minh an toàn.
 
 ### M4 — Nhật ký và truy vết biến động tồn kho
-**Phụ trách chính:** Thành viên 04.
+**Phụ trách:** Thành viên 04 — GitHub: [@Mod3r3d](https://github.com/Mod3r3d)
 
 Công việc:
 - Thiết kế schema và migration dbDelta cho `despace_inventory_logs`.
@@ -67,7 +67,7 @@ Tiêu chí nghiệm thu:
 - Log ghi nguồn sự kiện, sản phẩm/biến thể, đơn hàng, số lượng thay đổi, tồn sau sự kiện và thời điểm.
 
 ### M5 — Dashboard, báo cáo và tích hợp
-**Phụ trách chính:** Thành viên 05 – Điều phối tích hợp/release.
+**Phụ trách:** Thành viên 05 — GitHub: [@Anvu-IFBB](https://github.com/Anvu-IFBB) — Điều phối tích hợp/release.
 
 Công việc:
 - Khởi tạo Core Plugin và ranh giới tích hợp module.
@@ -101,6 +101,13 @@ Mỗi người phụ trách module phải bàn giao:
 - M4 lắng nghe các sự kiện tồn kho của WooCommerce; không tự điều khiển số lượng tồn độc lập.
 - M5 phụ trách bootstrap dùng chung, API Contract và tích hợp cuối; mỗi thành viên vẫn chịu trách nhiệm code và test của module mình.
 
-## 4. Gán tài khoản GitHub
+## 4. Quyền truy cập repository và gán Issue
 
-Sau khi cả 5 thành viên chấp nhận lời mời vào repository, cập nhật GitHub username tương ứng với M1–M5 trong Project field/Assignees. Không gán nhầm người khi chưa xác nhận username.
+Các username đã được ghép theo thứ tự danh sách nhóm gửi:
+- M1: `LeAnhDung05`
+- M2: `hoangHT-w`
+- M3: `HaDiLuc`
+- M4: `Mod3r3d`
+- M5: `Anvu-IFBB`
+
+**Lưu ý:** Tài khoản chủ repository `LeAnhDung05` có quyền Admin. Bốn tài khoản còn lại hiện chưa có quyền Write được xác nhận. Chủ repository cần vào **Settings → Collaborators → Add people**, mời từng tài khoản và cấp quyền **Write**. Sau khi các bạn chấp nhận lời mời, quản lý mới có thể gán Assignee và thành viên mới có thể push branch/tạo Pull Request theo quy trình nhóm.
