@@ -19,7 +19,17 @@ Các Issues đã được tạo trong repository, nhưng cần thêm chúng vào
 
 Lưu ý: Issue trong repository và item trên Project là hai đối tượng riêng. Tạo Issue trong repository không có nghĩa là Issue tự động xuất hiện trên Project.
 
-## 3. Các trường nên có trên bảng Project
+## 3. Phân công thành viên theo GitHub username
+
+| Module | Thành viên | GitHub username | Module phụ trách |
+|---|---|---|---|
+| M1 | Thành viên 01 | [LeAnhDung05](https://github.com/LeAnhDung05) | Phòng trưng bày 3D/AR |
+| M2 | Thành viên 02 | [hoangHT-w](https://github.com/hoangHT-w) | Giao diện Premium, danh mục, tìm kiếm |
+| M3 | Thành viên 03 | [HaDiLuc](https://github.com/HaDiLuc) | Giỏ hàng, thanh toán, đơn hàng |
+| M4 | Thành viên 04 | [Mod3r3d](https://github.com/Mod3r3d) | Nhật ký và truy vết tồn kho |
+| M5 | Thành viên 05 | [Anvu-IFBB](https://github.com/Anvu-IFBB) | Dashboard, báo cáo, tích hợp/release |
+
+## 4. Các trường nên có trên bảng Project
 
 | Tên trường | Loại | Giá trị / mục đích |
 |---|---|---|
@@ -29,7 +39,7 @@ Lưu ý: Issue trong repository và item trên Project là hai đối tượng r
 | Ước lượng (Estimate) | Number | 1, 2, 3, 5, 8 điểm |
 | Trạng thái (Status) | Status có sẵn | Backlog, Ready, In Progress, In Review, Testing, Done, Blocked |
 
-## 4. Ý nghĩa các trạng thái
+## 5. Ý nghĩa các trạng thái
 
 | Trạng thái GitHub | Ý nghĩa tiếng Việt | Khi nào dùng |
 |---|---|---|
@@ -43,7 +53,7 @@ Lưu ý: Issue trong repository và item trên Project là hai đối tượng r
 
 Có thể đổi tên các tùy chọn Status sang tiếng Việt trong cấu hình trường của Project nếu GitHub cho phép chỉnh sửa trường đó. Nếu giữ nhãn tiếng Anh, dùng bảng giải thích này làm quy ước chung.
 
-## 5. Các chế độ xem (Views) nên tạo
+## 6. Các chế độ xem (Views) nên tạo
 
 - **Backlog:** dạng bảng; nhóm theo Module, sắp xếp theo Priority.
 - **Board:** dạng Kanban; nhóm theo Status để nhìn việc đang làm/chờ review/đã hoàn thành.
@@ -51,7 +61,7 @@ Có thể đổi tên các tùy chọn Status sang tiếng Việt trong cấu h�
 - **Roadmap:** dạng timeline/roadmap để nhìn mốc thực hiện theo Sprint.
 - **My items:** mỗi thành viên lọc các nhiệm vụ được giao cho mình.
 
-## 6. Bản đồ Issue theo module
+## 7. Bản đồ Issue theo module
 
 | Module | Issue tổng | Các Issue công việc |
 |---|---:|---|
@@ -63,7 +73,7 @@ Có thể đổi tên các tùy chọn Status sang tiếng Việt trong cấu h�
 
 Các Issue tổng có liên kết đến Issue công việc. Dùng trường Module để nhóm. Trường Sub-issues progress chỉ tự phản ánh quan hệ con thực tế nếu đã tạo quan hệ Sub-issue trong giao diện GitHub; chỉ ghi số Issue trong nội dung chưa tự tạo quan hệ đó.
 
-## 7. Kế hoạch Sprint đề xuất
+## 8. Kế hoạch Sprint đề xuất
 
 Thời gian dự án: **19/10/2026 – 29/11/2026**. Bảng dưới đây tập trung vào phần việc còn lại tại thời điểm **10/11/2026**.
 
@@ -73,16 +83,19 @@ Thời gian dự án: **19/10/2026 – 29/11/2026**. Bảng dưới đây tập 
 | Sprint 5 | 16/11/2026 – 22/11/2026 | Hoàn thiện 5 module và tích hợp luồng liên module |
 | Sprint 6 | 23/11/2026 – 29/11/2026 | Kiểm thử staging, sửa lỗi, demo, tài liệu và bàn giao |
 
-## 8. Phân công nhóm
+## 9. Cấp quyền và gán Assignee
 
-Chỉ gán M1–M5 với GitHub username thật sau khi các thành viên chấp nhận lời mời vào repository.
+Repository hiện là Public. Kết quả kiểm tra cho thấy `LeAnhDung05` có quyền Admin; bốn tài khoản còn lại chưa có quyền Write được xác nhận. Để các thành viên có thể push code và nhận Issue:
 
-- **M1:** Phòng trưng bày 3D/AR.
-- **M2:** Giao diện Premium, danh mục và tìm kiếm.
-- **M3:** Giỏ hàng, thanh toán và quản lý đơn.
-- **M4:** Nhật ký và truy vết tồn kho.
-- **M5:** Dashboard, báo cáo và điều phối tích hợp/release.
+1. Chủ repository mở **Settings → Collaborators**.
+2. Chọn **Add people**.
+3. Mời `hoangHT-w`, `HaDiLuc`, `Mod3r3d`, `Anvu-IFBB`.
+4. Cấp quyền **Write** cho cả bốn người.
+5. Mỗi người mở thông báo/email GitHub và chấp nhận lời mời.
+6. Sau khi quyền được xác nhận, gán Assignee cho Issue #1–#28 theo bảng phân công trên.
 
-## 9. Quy tắc làm việc quan trọng
+Các username đã được ghi trong nội dung Issue và tài liệu nhóm; trường Assignees chưa thể gán thành công trước khi quyền Write được xác nhận.
+
+## 10. Quy tắc làm việc quan trọng
 
 Chỉ có một ứng dụng, một repository và một Project dùng chung. Mỗi thành viên chạy môi trường WordPress/MySQL riêng trên máy cá nhân và dùng feature branch riêng; tích hợp qua Pull Request vào `develop`, sau đó kiểm thử đầu-cuối trên một môi trường staging chung.
