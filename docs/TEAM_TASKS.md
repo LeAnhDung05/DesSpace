@@ -1,96 +1,106 @@
-# DeSpace — Team Workstream & Ownership
+# DeSpace — Phân công module và trách nhiệm thành viên
 
-## Team ownership
+## 1. Phân công 5 thành viên
 
-### M1 — 3D / AR Showroom
-Owns:
-- Product GLB / poster attachment metadata and AR enable flag.
-- GLB attachment validation and safe upload handling.
-- Product detail model-viewer integration.
-- Rotate / zoom, loading, error and fallback states.
-- AR capability detection and device testing.
+### M1 — Phòng trưng bày sản phẩm 3D/AR
+**Phụ trách chính:** Thành viên 01.
 
-Acceptance:
-- Valid GLB is displayed and interactive.
-- AR entry is offered only when supported.
-- Failed or unsupported AR does not break 2D product browsing.
-- Product metadata stores attachment IDs, not hard-coded media URLs.
+Công việc:
+- Quản lý metadata file GLB, ảnh poster và cờ bật/tắt AR của sản phẩm.
+- Kiểm tra file GLB và xử lý an toàn khi upload.
+- Tích hợp model-viewer vào trang chi tiết sản phẩm.
+- Xây dựng thao tác xoay/thu phóng, trạng thái đang tải, lỗi và phương án dự phòng.
+- Kiểm tra khả năng AR và thử nghiệm trên thiết bị phù hợp.
 
-### M2 — Catalog & Premium UI
-Owns:
-- `despace-child`, shared header/footer and reusable storefront presentation.
-- Homepage, catalog, product cards and responsive behavior.
-- Search by product name / SKU.
-- Multi-filter AJAX using Fetch API.
-- Empty state, pagination, filter reset and URL state where applicable.
+Tiêu chí nghiệm thu:
+- GLB hợp lệ được hiển thị và có thể tương tác.
+- Chỉ cung cấp thao tác AR khi thiết bị hỗ trợ.
+- AR lỗi hoặc không được hỗ trợ không làm hỏng việc xem ảnh 2D/3D.
+- Metadata lưu attachment ID, không ghi cứng URL media.
 
-Acceptance:
-- Catalog data and price come from WooCommerce.
-- Combined filters return correct results.
-- Desktop / tablet / mobile views work.
-- UI follows the shared Figma file and DeSpace Premium design tokens.
+### M2 — Giao diện Premium, danh mục và tìm kiếm sản phẩm
+**Phụ trách chính:** Thành viên 02.
 
-### M3 — Checkout & Order Management
-Owns:
-- Cart quantity changes, remove item and cart validation.
-- WooCommerce coupon handling.
-- Checkout for Customer and Guest when enabled.
-- COD and manual bank transfer instructions / QR when configured.
-- Order confirmation and customer order tracking.
+Công việc:
+- Xây dựng `despace-child`, header/footer và các thành phần giao diện dùng chung.
+- Xây dựng trang chủ, danh mục, thẻ sản phẩm và giao diện responsive.
+- Tìm kiếm theo tên sản phẩm/SKU.
+- Lọc nhiều tiêu chí bằng Fetch API/AJAX.
+- Xử lý trạng thái không có kết quả, phân trang, xóa bộ lọc và giữ trạng thái trên URL khi phù hợp.
 
-Acceptance:
-- WooCommerce validates price, coupon and stock.
-- Unconfirmed bank transfer is never marked paid.
-- Order status and payment status are represented accurately.
-- Customer can only view their own orders; Guest lookup requires a suitable secure verification mechanism.
+Tiêu chí nghiệm thu:
+- Dữ liệu danh mục và giá lấy từ WooCommerce.
+- Kết hợp nhiều bộ lọc cho kết quả đúng.
+- Giao diện desktop/tablet/mobile hoạt động.
+- Giao diện thống nhất với file Figma và Design Tokens DeSpace Premium.
 
-### M4 — Inventory Traceability
-Owns:
-- `despace_inventory_logs` schema and dbDelta migration.
-- Event key and idempotent logging.
-- Stock movement event capture for import / sale / restore / adjust.
-- Inventory audit screen and filters.
-- Tests for cancellation, restore and repeated hooks.
+### M3 — Giỏ hàng, thanh toán và quản lý đơn hàng
+**Phụ trách chính:** Thành viên 03.
 
-Acceptance:
-- WooCommerce is the only stock source of truth.
-- One real event produces at most one inventory log.
-- Cancelling an order that never reduced stock does not increase stock.
-- Logs record event origin, product / variation, order, quantity delta, stock-after and timestamp.
+Công việc:
+- Thay đổi số lượng, xóa sản phẩm và kiểm tra giỏ hàng.
+- Tích hợp mã giảm giá WooCommerce.
+- Checkout cho Customer và Guest nếu được bật.
+- Hướng dẫn COD và chuyển khoản ngân hàng thủ công/mã QR khi có cấu hình.
+- Xây dựng trang xác nhận và tra cứu đơn hàng.
 
-### M5 — Dashboard, Reports & Integration
-Owns:
-- Core plugin bootstrap and module integration boundaries.
-- API Contract, shared architecture and integration coordination.
-- Admin dashboard KPIs.
-- Revenue, order-status and top-product reports.
-- Staff / Admin capability checks and release coordination.
+Tiêu chí nghiệm thu:
+- WooCommerce xác thực giá, coupon và tồn kho.
+- Chuyển khoản chưa đối soát không được đánh dấu đã thanh toán.
+- Trạng thái đơn hàng và trạng thái thanh toán hiển thị chính xác.
+- Customer chỉ xem đơn của mình; Guest phải có cơ chế xác minh an toàn.
 
-Acceptance:
-- Dashboard uses real WooCommerce data and documented date filters.
-- M1–M4 modules integrate without duplicated business logic.
-- REST endpoints enforce authentication / capabilities and validate input.
-- Pull Requests are reviewed and staging smoke tests pass.
+### M4 — Nhật ký và truy vết biến động tồn kho
+**Phụ trách chính:** Thành viên 04.
 
-## Shared responsibilities
+Công việc:
+- Thiết kế schema và migration dbDelta cho `despace_inventory_logs`.
+- Dùng event_key và cơ chế ghi log chống trùng lặp.
+- Ghi nhận sự kiện nhập/bán/hoàn/điều chỉnh kho.
+- Xây dựng màn hình lịch sử biến động và bộ lọc.
+- Kiểm thử hủy đơn, hoàn kho và hook bị gọi lặp.
 
-Every module owner must deliver:
-1. Editable Figma implementation reference or screen mapping.
-2. PHP / JavaScript source in the agreed module folder.
-3. Input validation, authorization and error handling.
-4. Unit or functional tests for the owned logic.
-5. At least one integration test with its upstream / downstream module.
-6. Documentation for configuration and known limitations.
-7. Pull Request with screenshots / test evidence.
+Tiêu chí nghiệm thu:
+- WooCommerce là nguồn dữ liệu tồn kho duy nhất.
+- Một sự kiện thực tế chỉ tạo tối đa một bản ghi log.
+- Hủy đơn chưa từng làm giảm tồn kho thì không được cộng tồn.
+- Log ghi nguồn sự kiện, sản phẩm/biến thể, đơn hàng, số lượng thay đổi, tồn sau sự kiện và thời điểm.
 
-## Integration dependencies
+### M5 — Dashboard, báo cáo và tích hợp
+**Phụ trách chính:** Thành viên 05 – Điều phối tích hợp/release.
 
-- M2 provides product card, product detail layout and catalog context; M1 plugs the model-viewer into product detail.
-- M1 provides / documents product 3D metadata keys; M2 consumes the metadata to show 3D availability badges and filters.
-- M3 consumes WooCommerce products, variations, coupons and stock; it must not create an independent cart/order engine.
-- M4 listens to WooCommerce stock events; it must not control stock quantity independently.
-- M5 owns shared bootstrap, API contract and final integration; each module owner owns its own implementation and tests.
+Công việc:
+- Khởi tạo Core Plugin và ranh giới tích hợp module.
+- Quản lý API Contract, kiến trúc chung và phối hợp tích hợp.
+- Xây dựng KPI Dashboard quản trị.
+- Báo cáo doanh thu, trạng thái đơn và sản phẩm bán chạy.
+- Kiểm tra capabilities cho Staff/Admin và điều phối release.
 
-## Team member identities
+Tiêu chí nghiệm thu:
+- Dashboard sử dụng dữ liệu WooCommerce thực và bộ lọc thời gian rõ ràng.
+- M1–M4 tích hợp không trùng lặp nghiệp vụ.
+- REST endpoints kiểm tra quyền và validate dữ liệu đầu vào.
+- Pull Request được review và kiểm thử smoke test trên staging đạt.
 
-Replace M1–M5 with actual GitHub usernames in the Project's Module field / assignees after all five accounts have accepted repository access.
+## 2. Trách nhiệm chung của mỗi thành viên
+
+Mỗi người phụ trách module phải bàn giao:
+1. Liên kết màn hình Figma hoặc mô tả vị trí giao diện đã triển khai.
+2. Source PHP/JavaScript trong đúng thư mục module.
+3. Kiểm tra dữ liệu đầu vào, quyền truy cập và xử lý lỗi.
+4. Unit test/functional test cho logic mình phụ trách.
+5. Ít nhất một kiểm thử tích hợp với module liên quan.
+6. Tài liệu cấu hình và các giới hạn đã biết.
+7. Pull Request có ảnh chụp hoặc bằng chứng kiểm thử.
+
+## 3. Phụ thuộc và phối hợp giữa các module
+
+- M2 cung cấp thẻ sản phẩm, bố cục trang chi tiết và ngữ cảnh danh mục; M1 tích hợp model-viewer vào trang chi tiết.
+- M1 thống nhất/công bố các metadata 3D của sản phẩm; M2 sử dụng metadata để hiển thị nhãn 3D và hỗ trợ bộ lọc.
+- M3 sử dụng sản phẩm, biến thể, coupon và tồn kho của WooCommerce; không tạo hệ thống giỏ hàng/đơn hàng riêng.
+- M4 lắng nghe các sự kiện tồn kho của WooCommerce; không tự điều khiển số lượng tồn độc lập.
+- M5 phụ trách bootstrap dùng chung, API Contract và tích hợp cuối; mỗi thành viên vẫn chịu trách nhiệm code và test của module mình.
+
+## 4. Gán tài khoản GitHub
+
+Sau khi cả 5 thành viên chấp nhận lời mời vào repository, cập nhật GitHub username tương ứng với M1–M5 trong Project field/Assignees. Không gán nhầm người khi chưa xác nhận username.
