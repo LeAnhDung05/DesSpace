@@ -115,15 +115,37 @@ class InventoryLogsController {
 		}
 
 		$date_from = $request->get_param( 'date_from' );
-		if ( ! empty( $date_from ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date_from ) ) {
+		if ( ! empty( $date_from ) ) {
+			if ( ! self::is_valid_date( $date_from ) ) {
+				return new \WP_Error(
+					'despace_invalid_date_format',
+					__( 'Invalid date_from format. Expected YYYY-MM-DD.', 'despace-core' ),
+					array( 'status' => 400 )
+				);
+			}
 			$where_clauses[] = 'created_at >= %s';
 			$where_values[]  = $date_from . ' 00:00:00';
 		}
 
 		$date_to = $request->get_param( 'date_to' );
-		if ( ! empty( $date_to ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date_to ) ) {
+		if ( ! empty( $date_to ) ) {
+			if ( ! self::is_valid_date( $date_to ) ) {
+				return new \WP_Error(
+					'despace_invalid_date_format',
+					__( 'Invalid date_to format. Expected YYYY-MM-DD.', 'despace-core' ),
+					array( 'status' => 400 )
+				);
+			}
 			$where_clauses[] = 'created_at <= %s';
 			$where_values[]  = $date_to . ' 23:59:59';
+		}
+
+		if ( ! empty( $date_from ) && ! empty( $date_to ) && $date_from > $date_to ) {
+			return new \WP_Error(
+				'despace_invalid_date_range',
+				__( 'date_from cannot be after date_to.', 'despace-core' ),
+				array( 'status' => 400 )
+			);
 		}
 
 		$where_sql = implode( ' AND ', $where_clauses );
@@ -211,6 +233,24 @@ class InventoryLogsController {
 				'sanitize_callback' => 'sanitize_text_field',
 			),
 		);
+	}
+
+	/**
+	 * Validate if string is a valid Gregorian calendar date in YYYY-MM-DD format.
+	 *
+	 * @param string $date
+	 * @return bool
+	 */
+	public static function is_valid_date( string $date ): bool {
+		if ( ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $date, $matches ) ) {
+			return false;
+		}
+
+		$year  = (int) $matches[1];
+		$month = (int) $matches[2];
+		$day   = (int) $matches[3];
+
+		return checkdate( $month, $day, $year );
 	}
 }
 

@@ -95,11 +95,11 @@ class InventoryExportService {
 		) );
 
 		foreach ( (array) $rows as $row ) {
-			fputcsv( $output, array(
+			$escaped_row = array(
 				$row['id'],
-				$row['event_key'],
-				$row['event_type'],
-				$row['event_source'],
+				self::escape_csv_cell( $row['event_key'] ),
+				self::escape_csv_cell( $row['event_type'] ),
+				self::escape_csv_cell( $row['event_source'] ),
 				$row['product_id'],
 				$row['variation_id'] ?? '',
 				$row['order_id'] ?? '',
@@ -110,11 +110,32 @@ class InventoryExportService {
 				$row['quantity_delta'],
 				$row['stock_after'] ?? '',
 				$row['created_at'],
-			) );
+			);
+			fputcsv( $output, $escaped_row );
 		}
 
 		fclose( $output );
 		exit;
+	}
+
+	/**
+	 * Escape CSV cell to prevent formula injection in spreadsheet applications.
+	 *
+	 * Values beginning with =, +, -, @, \t, or \r can be interpreted as formulas.
+	 *
+	 * @param mixed $value
+	 * @return mixed
+	 */
+	public static function escape_csv_cell( $value ) {
+		if ( is_string( $value ) && '' !== $value ) {
+			$first_char = $value[0];
+			if ( in_array( $first_char, array( '=', '+', '-', '@', "\t", "\r" ), true ) ) {
+				if ( ! is_numeric( $value ) ) {
+					return "'" . $value;
+				}
+			}
+		}
+		return $value;
 	}
 }
 

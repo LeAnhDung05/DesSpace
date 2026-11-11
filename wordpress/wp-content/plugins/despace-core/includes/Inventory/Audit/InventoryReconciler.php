@@ -72,8 +72,9 @@ class InventoryReconciler {
 		$last_log     = $wpdb->get_row( $wpdb->prepare( $last_log_sql, $where_values ), ARRAY_A );
 
 		$initial_stock = null;
-		if ( $first_log && null !== $first_log['quantity_before'] ) {
-			$initial_stock = (float) $first_log['quantity_before'];
+		if ( $first_log ) {
+			// If quantity_before is recorded, use it as baseline; if null (product was created as new item), baseline is 0.0.
+			$initial_stock = null !== $first_log['quantity_before'] ? (float) $first_log['quantity_before'] : 0.0;
 		}
 
 		$latest_logged_stock = null;
