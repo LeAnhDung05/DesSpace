@@ -188,6 +188,12 @@ class Mock_Pay_Order {
 	public array $notes = array();
 	public array $meta = array();
 	public bool $downloadable = false;
+	public bool $payment_complete_result = true;
+	public bool $payment_complete_no_state_change = false;
+	public bool $throw_on_payment_complete = false;
+	public int $payment_complete_calls = 0;
+	/** @var callable|null */
+	public $on_payment_complete = null;
 
 	public function get_id(): int { return $this->id; }
 	public function get_order_number(): string { return (string) $this->id; }
@@ -209,6 +215,19 @@ class Mock_Pay_Order {
 		if ( '' !== $note ) $this->notes[] = $note;
 	}
 	public function payment_complete( string $tx = '' ): bool {
+		$this->payment_complete_calls++;
+		if ( is_callable( $this->on_payment_complete ) ) {
+			call_user_func( $this->on_payment_complete, $this );
+		}
+		if ( $this->throw_on_payment_complete ) {
+			throw new \RuntimeException( 'Simulated payment_complete failure' );
+		}
+		if ( ! $this->payment_complete_result ) {
+			return false;
+		}
+		if ( $this->payment_complete_no_state_change ) {
+			return true;
+		}
 		if ( '' !== $tx ) $this->transaction_id = $tx;
 		if ( null === $this->date_paid ) $this->date_paid = time();
 		$this->paid   = true;
@@ -219,6 +238,78 @@ class Mock_Pay_Order {
 	public function get_meta( string $k, bool $single = true ) { return $this->meta[ $k ] ?? ''; }
 	public function save(): int { return $this->id; }
 }
+
+class Mock_WPDB {
+	public string $options = 'wp_options';
+	public array $rows = array();
+
+	public function prepare( string $query, ...$args ): array {
+		return array(
+			'query' => $query,
+			'args'  => $args,
+		);
+	}
+
+	public function get_var( $prepared ) {
+		if ( ! is_array( $prepared ) ) {
+			return null;
+		}
+		$sql  = (string) ( $prepared['query'] ?? '' );
+		$args = (array) ( $prepared['args'] ?? array() );
+		if ( false !== strpos( $sql, 'SELECT option_value FROM' ) ) {
+			$key = (string) ( $args[0] ?? '' );
+			return $this->rows[ $key ]['option_value'] ?? null;
+		}
+		return null;
+	}
+
+	public function query( $prepared ): int {
+		if ( ! is_array( $prepared ) ) {
+			return 0;
+		}
+		$sql  = (string) ( $prepared['query'] ?? '' );
+		$args = (array) ( $prepared['args'] ?? array() );
+
+		if ( 0 === strpos( $sql, 'INSERT IGNORE INTO' ) ) {
+			$key = (string) ( $args[0] ?? '' );
+			$val = (string) ( $args[1] ?? '' );
+			$al  = (string) ( $args[2] ?? 'no' );
+			if ( isset( $this->rows[ $key ] ) ) {
+				return 0;
+			}
+			$this->rows[ $key ] = array(
+				'option_value' => $val,
+				'autoload'     => $al,
+			);
+			return 1;
+		}
+
+		if ( 0 === strpos( $sql, 'UPDATE' ) ) {
+			$new_val = (string) ( $args[0] ?? '' );
+			$key     = (string) ( $args[1] ?? '' );
+			$old_val = (string) ( $args[2] ?? '' );
+			if ( isset( $this->rows[ $key ] ) && $this->rows[ $key ]['option_value'] === $old_val ) {
+				$this->rows[ $key ]['option_value'] = $new_val;
+				return 1;
+			}
+			return 0;
+		}
+
+		if ( 0 === strpos( $sql, 'DELETE FROM' ) ) {
+			$key = (string) ( $args[0] ?? '' );
+			$val = (string) ( $args[1] ?? '' );
+			if ( isset( $this->rows[ $key ] ) && $this->rows[ $key ]['option_value'] === $val ) {
+				unset( $this->rows[ $key ] );
+				return 1;
+			}
+			return 0;
+		}
+
+		return 0;
+	}
+}
+
+$wpdb = new Mock_WPDB();
 
 class WooCommerce {
 	public Mock_Pay_Cart $cart;
@@ -247,11 +338,12 @@ use DeSpace\CheckoutOrders\Payment\BacsInstructions;
 CheckoutOrdersModule::init();
 
 function reset_payment_env( array $overrides = array() ): void {
-	global $despace_mock_wc, $despace_mock_options, $despace_mock_current_user, $despace_mock_caps, $despace_mock_orders;
+	global $despace_mock_wc, $despace_mock_options, $despace_mock_current_user, $despace_mock_caps, $despace_mock_orders, $wpdb;
 	$despace_mock_wc           = new WooCommerce();
 	$despace_mock_current_user = 0;
 	$despace_mock_caps         = array();
 	$despace_mock_orders       = array();
+	$wpdb                      = new Mock_WPDB();
 
 	$test_account = array(
 		'account_name'   => 'Test Fixture Merchant',
@@ -327,6 +419,11 @@ class M3PaymentUnitRunner {
 		$this->tc_22_no_inventory_event_created();
 		$this->tc_23_bacs_instructions_hidden_when_disabled();
 		$this->tc_24_gateway_settings_read_from_woocommerce();
+		$this->tc_25_bacs_requires_explicit_receipt_confirmation();
+		$this->tc_26_bacs_rechecks_order_state_inside_lock();
+		$this->tc_27_bacs_atomic_lock_blocks_concurrent_confirm();
+		$this->tc_28_bacs_payment_complete_failure_handling();
+		$this->tc_29_bacs_lock_finally_expiry_and_owner_token();
 
 		$total  = count( $this->results );
 		$passed = count( array_filter( $this->results ) );
@@ -604,23 +701,26 @@ class M3PaymentUnitRunner {
 	}
 
 	private function tc_20_hpos_compatibility_and_admin_confirm(): void {
-		global $despace_mock_caps, $despace_mock_orders;
+		global $despace_mock_caps, $despace_mock_orders, $wpdb;
 		reset_payment_env();
 		$order                  = new Mock_Pay_Order();
 		$order->id              = 7001;
 		$despace_mock_orders[7001] = $order;
 
-		$unauth = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7001, 'FT261112' );
+		$unauth = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7001, 'FT261112', array( 'confirmed_received' => true ) );
 		$despace_mock_caps['manage_woocommerce'] = true;
 		$valid_nonce = wp_create_nonce( 'despace_confirm_bacs_payment_7001' );
-		$miss_nonce  = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7001, 'FT261112' );
-		$bad_nonce   = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7001, 'FT261112', array( 'nonce' => 'bad' ) );
+		$miss_nonce  = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7001, 'FT261112', array( 'confirmed_received' => true ) );
+		$bad_nonce   = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7001, 'FT261112', array( 'nonce' => 'bad', 'confirmed_received' => true ) );
 		$no_rcv      = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7001, 'FT261112', array( 'nonce' => $valid_nonce, 'confirmed_received' => false ) );
 		$auth        = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7001, 'FT261112', array(
 			'nonce'              => $valid_nonce,
 			'confirmed_received' => true,
 		) );
-		$repeat      = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7001, 'FT261112', array( 'nonce' => $valid_nonce ) );
+		$repeat      = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7001, 'FT261112', array(
+			'nonce'              => $valid_nonce,
+			'confirmed_received' => true,
+		) );
 
 		$src = $this->get_combined_payment_source();
 		$ok  = is_wp_error( $unauth )
@@ -633,13 +733,17 @@ class M3PaymentUnitRunner {
 			&& 'despace_bacs_receipt_not_confirmed' === $no_rcv->get_error_code()
 			&& ! is_wp_error( $auth )
 			&& 'processing' === ( $auth['new_status'] ?? '' )
+			&& true === ( $auth['is_paid'] ?? false )
 			&& true === ( $auth['date_paid_set'] ?? false )
 			&& 'FT261112' === $order->get_transaction_id()
+			&& 1 === count( $order->notes )
 			&& is_wp_error( $repeat )
 			&& 'despace_bacs_already_processed' === $repeat->get_error_code()
+			&& empty( $wpdb->rows )
 			&& false === strpos( $src, 'update_post_meta' )
 			&& false === strpos( $src, 'wp_posts' )
-			&& false === strpos( $src, '$wpdb' );
+			&& false === strpos( $src, 'wp_postmeta' )
+			&& false === strpos( $src, 'wp_wc_orders' );
 		$this->record( 'TC-PAY-20', 'Enforce HPOS CRUD & capability-checked BACS confirm', $ok );
 	}
 
@@ -705,6 +809,179 @@ class M3PaymentUnitRunner {
 			&& 'woocommerce_native_gateways' === ( $cfg['payment']['source_of_truth'] ?? '' )
 			&& false === ( $cfg['payment']['qr_generation_enabled'] ?? true );
 		$this->record( 'TC-PAY-24', 'Reflect dynamic WC gateway settings without code edits', $ok );
+	}
+
+	private function tc_25_bacs_requires_explicit_receipt_confirmation(): void {
+		global $despace_mock_caps, $despace_mock_orders;
+		reset_payment_env();
+		$despace_mock_caps['manage_woocommerce'] = true;
+		$order                    = new Mock_Pay_Order();
+		$order->id                = 7002;
+		$despace_mock_orders[7002] = $order;
+		$nonce                    = wp_create_nonce( 'despace_confirm_bacs_payment_7002' );
+
+		$missing   = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7002, 'FT01', array( 'nonce' => $nonce ) );
+		$false_val = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7002, 'FT01', array( 'nonce' => $nonce, 'confirmed_received' => false ) );
+		$ambig_str = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7002, 'FT01', array( 'nonce' => $nonce, 'confirmed_received' => 'maybe' ) );
+		$ambig_int = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7002, 'FT01', array( 'nonce' => $nonce, 'confirmed_received' => 2 ) );
+		$null_val  = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7002, 'FT01', array( 'nonce' => $nonce, 'confirmed_received' => null ) );
+		$str_true  = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7002, 'FT01', array( 'nonce' => $nonce, 'confirmed_received' => 'true' ) );
+
+		$ok = is_wp_error( $missing ) && 'despace_bacs_receipt_confirmation_required' === $missing->get_error_code()
+			&& is_wp_error( $false_val ) && 'despace_bacs_receipt_not_confirmed' === $false_val->get_error_code()
+			&& is_wp_error( $ambig_str ) && 'despace_invalid_bacs_receipt_confirmation' === $ambig_str->get_error_code()
+			&& is_wp_error( $ambig_int ) && 'despace_invalid_bacs_receipt_confirmation' === $ambig_int->get_error_code()
+			&& is_wp_error( $null_val ) && 'despace_invalid_bacs_receipt_confirmation' === $null_val->get_error_code()
+			&& ! is_wp_error( $str_true ) && true === ( $str_true['confirmed'] ?? false );
+		$this->record( 'TC-PAY-25', 'Require explicit boolean confirmed_received cleanly', $ok );
+	}
+
+	private function tc_26_bacs_rechecks_order_state_inside_lock(): void {
+		global $despace_mock_caps, $despace_mock_orders, $wpdb;
+		reset_payment_env();
+		$despace_mock_caps['edit_shop_orders'] = true;
+
+		$cod               = new Mock_Pay_Order();
+		$cod->id           = 7003;
+		$cod->payment_method = 'cod';
+		$despace_mock_orders[7003] = $cod;
+
+		$processing         = new Mock_Pay_Order();
+		$processing->id     = 7004;
+		$processing->status = 'processing';
+		$despace_mock_orders[7004] = $processing;
+
+		$paid        = new Mock_Pay_Order();
+		$paid->id    = 7005;
+		$paid->paid  = true;
+		$despace_mock_orders[7005] = $paid;
+
+		$res_cod  = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7003, 'FT', array( 'nonce' => wp_create_nonce( 'despace_confirm_bacs_payment_7003' ), 'confirmed_received' => true ) );
+		$res_proc = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7004, 'FT', array( 'nonce' => wp_create_nonce( 'despace_confirm_bacs_payment_7004' ), 'confirmed_received' => true ) );
+		$res_paid = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7005, 'FT', array( 'nonce' => wp_create_nonce( 'despace_confirm_bacs_payment_7005' ), 'confirmed_received' => true ) );
+
+		$ok = is_wp_error( $res_cod ) && 'despace_invalid_bacs_order' === $res_cod->get_error_code()
+			&& is_wp_error( $res_proc ) && 'despace_bacs_already_processed' === $res_proc->get_error_code()
+			&& is_wp_error( $res_paid ) && 'despace_bacs_already_processed' === $res_paid->get_error_code()
+			&& empty( $wpdb->rows );
+		$this->record( 'TC-PAY-26', 'Reject non-BACS, non-on-hold, & paid orders inside lock', $ok );
+	}
+
+	private function tc_27_bacs_atomic_lock_blocks_concurrent_confirm(): void {
+		global $despace_mock_caps, $despace_mock_orders, $wpdb;
+		reset_payment_env();
+		$despace_mock_caps['manage_woocommerce'] = true;
+
+		$order                    = new Mock_Pay_Order();
+		$order->id                = 7006;
+		$despace_mock_orders[7006] = $order;
+		$nonce                    = wp_create_nonce( 'despace_confirm_bacs_payment_7006' );
+
+		$concurrent_result = null;
+		// Simulate overlapping second request arriving while first request is inside payment_complete().
+		$order->on_payment_complete = function () use ( &$concurrent_result, $nonce ): void {
+			$concurrent_result = PaymentStatusGuard::confirm_bacs_payment_by_admin(
+				7006,
+				'FT-SECOND',
+				array(
+					'nonce'              => $nonce,
+					'confirmed_received' => true,
+				)
+			);
+		};
+
+		$first_result = PaymentStatusGuard::confirm_bacs_payment_by_admin(
+			7006,
+			'FT-FIRST',
+			array(
+				'nonce'              => $nonce,
+				'confirmed_received' => true,
+			)
+		);
+
+		$ok = ! is_wp_error( $first_result )
+			&& true === ( $first_result['confirmed'] ?? false )
+			&& 1 === $order->payment_complete_calls
+			&& 'FT-FIRST' === $order->get_transaction_id()
+			&& 1 === count( $order->notes )
+			&& is_wp_error( $concurrent_result )
+			&& 'despace_bacs_confirmation_in_progress' === $concurrent_result->get_error_code()
+			&& empty( $wpdb->rows );
+		$this->record( 'TC-PAY-27', 'Block concurrent BACS confirmation via atomic DB lock', $ok );
+	}
+
+	private function tc_28_bacs_payment_complete_failure_handling(): void {
+		global $despace_mock_caps, $despace_mock_orders, $wpdb;
+		reset_payment_env();
+		$despace_mock_caps['manage_woocommerce'] = true;
+
+		$order_fail                          = new Mock_Pay_Order();
+		$order_fail->id                      = 7007;
+		$order_fail->payment_complete_result = false;
+		$despace_mock_orders[7007]           = $order_fail;
+
+		$order_noop                                  = new Mock_Pay_Order();
+		$order_noop->id                              = 7008;
+		$order_noop->payment_complete_no_state_change = true;
+		$despace_mock_orders[7008]                   = $order_noop;
+
+		$r_fail = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7007, 'FT', array(
+			'nonce'              => wp_create_nonce( 'despace_confirm_bacs_payment_7007' ),
+			'confirmed_received' => true,
+		) );
+		$r_noop = PaymentStatusGuard::confirm_bacs_payment_by_admin( 7008, 'FT', array(
+			'nonce'              => wp_create_nonce( 'despace_confirm_bacs_payment_7008' ),
+			'confirmed_received' => true,
+		) );
+
+		$ok = is_wp_error( $r_fail )
+			&& 'despace_bacs_payment_complete_failed' === $r_fail->get_error_code()
+			&& 0 === count( $order_fail->notes )
+			&& is_wp_error( $r_noop )
+			&& 'despace_bacs_payment_not_recorded' === $r_noop->get_error_code()
+			&& 0 === count( $order_noop->notes )
+			&& empty( $wpdb->rows );
+		$this->record( 'TC-PAY-28', 'Reject payment_complete false/unrecorded & skip note', $ok );
+	}
+
+	private function tc_29_bacs_lock_finally_expiry_and_owner_token(): void {
+		global $despace_mock_caps, $despace_mock_orders, $wpdb;
+		reset_payment_env();
+		$despace_mock_caps['manage_woocommerce'] = true;
+
+		// 1. Exception during payment_complete must still release lock via finally.
+		$order_exc                            = new Mock_Pay_Order();
+		$order_exc->id                        = 7009;
+		$order_exc->throw_on_payment_complete = true;
+		$despace_mock_orders[7009]            = $order_exc;
+		$caught                               = false;
+		try {
+			PaymentStatusGuard::confirm_bacs_payment_by_admin( 7009, 'FT', array(
+				'nonce'              => wp_create_nonce( 'despace_confirm_bacs_payment_7009' ),
+				'confirmed_received' => true,
+			) );
+		} catch ( \RuntimeException $e ) {
+			$caught = true;
+		}
+		$lock_released_after_exc = $caught && empty( $wpdb->rows ) && 0 === count( $order_exc->notes );
+
+		// 2. Expired lock taken over atomically by Request B; stale Request A cannot delete B's lock.
+		$stale_payload = (string) json_encode( array( 'token' => 'stale_tok_A', 'expires_at' => time() - 60 ) );
+		$wpdb->rows['despace_bacs_lock_7010'] = array( 'option_value' => $stale_payload, 'autoload' => 'no' );
+		$lock_b = PaymentStatusGuard::acquire_bacs_lock( 7010, 30 );
+		$stale_release_res = PaymentStatusGuard::release_bacs_lock( array(
+			'key'     => 'despace_bacs_lock_7010',
+			'token'   => 'stale_tok_A',
+			'payload' => $stale_payload,
+		) );
+		$lock_b_still_present = ! is_wp_error( $lock_b )
+			&& false === $stale_release_res
+			&& isset( $wpdb->rows['despace_bacs_lock_7010'] )
+			&& $wpdb->rows['despace_bacs_lock_7010']['option_value'] === $lock_b['payload'];
+		$own_release_res = is_array( $lock_b ) && PaymentStatusGuard::release_bacs_lock( $lock_b );
+
+		$ok = $lock_released_after_exc && $lock_b_still_present && $own_release_res && empty( $wpdb->rows );
+		$this->record( 'TC-PAY-29', 'Release lock on exception & protect owner token on expiry', $ok );
 	}
 }
 

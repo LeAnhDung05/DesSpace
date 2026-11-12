@@ -101,6 +101,25 @@ class Mock_Email_Order {
 	public function get_billing_address_2(): string { return $this->billing_address_2; }
 	public function get_billing_postcode(): string { return $this->billing_postcode; }
 	public function get_meta( string $k, bool $single = true ) { return $this->meta[ $k ] ?? ''; }
+	public function get_address( string $type = 'billing' ): array {
+		$p = 'shipping' === $type ? 'shipping_' : 'billing_';
+		return array(
+			'address_1' => $this->{$p . 'address_1'},
+			'address_2' => $this->{$p . 'address_2'},
+			'city'      => $this->{$p . 'city'},
+			'state'     => $this->{$p . 'state'},
+			'postcode'  => $this->{$p . 'postcode'},
+			'country'   => $this->{$p . 'country'},
+		);
+	}
+	public function get_formatted_billing_address(): string {
+		$raw = apply_filters( 'woocommerce_order_formatted_billing_address', $this->get_address( 'billing' ), $this );
+		return implode( '<br/>', array_filter( array( $raw['address_1'], $raw['address_2'], $raw['city'], $raw['state'] ) ) );
+	}
+	public function get_formatted_shipping_address(): string {
+		$raw = apply_filters( 'woocommerce_order_formatted_shipping_address', $this->get_address( 'shipping' ), $this );
+		return implode( '<br/>', array_filter( array( $raw['address_1'], $raw['address_2'], $raw['city'], $raw['state'] ) ) );
+	}
 }
 
 class WooCommerce {}
@@ -139,6 +158,7 @@ class M3EmailUnitRunner {
 		$this->tc_13_legacy_order_address_fallback();
 		$this->tc_14_no_private_pii_leaked_in_email_meta();
 		$this->tc_15_no_untriggered_custom_send();
+		$this->tc_16_no_duplicate_address_in_html_plain_admin_customer();
 
 		$total  = count( $this->results );
 		$passed = count( array_filter( $this->results ) );
@@ -265,19 +285,22 @@ class M3EmailUnitRunner {
 
 	private function tc_12_vietnam_2tier_address_formatted(): void {
 		$order = new Mock_Email_Order();
-		$email = new Mock_Email_Instance( 'customer_processing_order', true );
-		ob_start();
-		do_action( 'woocommerce_email_customer_details', $order, false, false, $email );
-		$html = (string) ob_get_clean();
+		$order->billing_address_1 = '99 Phố Huế';
+		$order->billing_state     = '01';
+		$order->billing_city      = 'Phường Hai Bà Trưng';
+		$order->meta['_billing_despace_region_code']  = '01';
+		$order->meta['_billing_despace_commune_code'] = '00004';
 
-		$fields = apply_filters( 'woocommerce_email_order_meta_fields', array(), false, $order );
-		$val    = (string) ( $fields['despace_shipping_address_line']['value'] ?? '' );
+		$formatted_shipping = $order->get_formatted_shipping_address();
+		$formatted_billing  = $order->get_formatted_billing_address();
+		$fields             = apply_filters( 'woocommerce_email_order_meta_fields', array(), false, $order );
 
-		$ok = false !== strpos( $val, '10 Đường Hoàng Liên' )
-			&& false !== strpos( $val, 'Phường Lào Cai' )
-			&& false !== strpos( $val, 'Tỉnh Lào Cai' )
-			&& false !== strpos( $html, 'Tỉnh Lào Cai' );
-		$this->record( 'TC-EML-12', 'Render 2-tier Vietnam address cleanly in WC emails', $ok );
+		$ok = false !== strpos( $formatted_shipping, '10 Đường Hoàng Liên' )
+			&& false !== strpos( $formatted_shipping, 'Phường Lào Cai' )
+			&& false !== strpos( $formatted_shipping, 'Tỉnh Lào Cai' )
+			&& false !== strpos( $formatted_billing, '99 Phố Huế' )
+			&& ! isset( $fields['despace_shipping_address_line'] );
+		$this->record( 'TC-EML-12', 'Render 2-tier Vietnam address natively without duplication', $ok );
 	}
 
 	private function tc_13_legacy_order_address_fallback(): void {
@@ -309,6 +332,67 @@ class M3EmailUnitRunner {
 		$footer = apply_filters( 'woocommerce_email_footer_text', '' );
 		$ok     = false !== strpos( $footer, 'DeSpace' ) && true === EmailCustomizer::are_hooks_registered();
 		$this->record( 'TC-EML-15', 'Customize footer via filter without untriggered sends', $ok );
+	}
+
+	private function render_simulated_wc_email( Mock_Email_Order $order, bool $sent_to_admin, bool $plain_text, Mock_Email_Instance $email ): string {
+		$meta_fields = apply_filters( 'woocommerce_email_order_meta_fields', array(), $sent_to_admin, $order );
+		$out         = '';
+		foreach ( $meta_fields as $field ) {
+			$out .= ( $field['label'] ?? '' ) . ': ' . ( $field['value'] ?? '' ) . "\n";
+		}
+
+		// Native WC_Emails::email_addresses() renders formatted billing and shipping once.
+		$billing  = $order->get_formatted_billing_address();
+		$shipping = $order->get_formatted_shipping_address();
+		if ( $plain_text ) {
+			$out .= "BILLING ADDRESS\n" . preg_replace( '#<br\s*/?>#i', "\n", $billing ) . "\n";
+			$out .= "SHIPPING ADDRESS\n" . preg_replace( '#<br\s*/?>#i', "\n", $shipping ) . "\n";
+		} else {
+			$out .= '<address class="billing">' . $billing . '</address>';
+			$out .= '<address class="shipping">' . $shipping . '</address>';
+		}
+
+		ob_start();
+		do_action( 'woocommerce_email_customer_details', $order, $sent_to_admin, $plain_text, $email );
+		$out .= (string) ob_get_clean();
+
+		return $out;
+	}
+
+	private function tc_16_no_duplicate_address_in_html_plain_admin_customer(): void {
+		$order                     = new Mock_Email_Order();
+		$order->billing_address_1  = '99 Phố Huế';
+		$order->billing_state      = '01';
+		$order->billing_city       = 'Phường Hai Bà Trưng';
+		$order->meta['_billing_despace_region_code']  = '01';
+		$order->meta['_billing_despace_commune_code'] = '00004';
+
+		$cust_email  = new Mock_Email_Instance( 'customer_processing_order', true );
+		$admin_email = new Mock_Email_Instance( 'new_order', true );
+
+		$html_customer  = $this->render_simulated_wc_email( $order, false, false, $cust_email );
+		$plain_customer = $this->render_simulated_wc_email( $order, false, true, $cust_email );
+		$html_admin     = $this->render_simulated_wc_email( $order, true, false, $admin_email );
+		$plain_admin    = $this->render_simulated_wc_email( $order, true, true, $admin_email );
+
+		$legacy                     = new Mock_Email_Order();
+		$legacy->meta               = array();
+		$legacy->shipping_state     = 'Hồ Chí Minh';
+		$legacy->shipping_city      = 'Phường 22';
+		$legacy->shipping_address_1 = '12 Nguyễn Hữu Cảnh';
+		$legacy->shipping_address_2 = 'Quận Bình Thạnh';
+		$legacy_html                = $this->render_simulated_wc_email( $legacy, false, false, $cust_email );
+		$legacy_plain               = $this->render_simulated_wc_email( $legacy, false, true, $cust_email );
+
+		$ok = 1 === substr_count( $html_customer, '10 Đường Hoàng Liên' )
+			&& 1 === substr_count( $html_customer, '99 Phố Huế' )
+			&& 1 === substr_count( $plain_customer, '10 Đường Hoàng Liên' )
+			&& 1 === substr_count( $html_admin, '10 Đường Hoàng Liên' )
+			&& 1 === substr_count( $plain_admin, '10 Đường Hoàng Liên' )
+			&& false !== strpos( $html_customer, 'Tỉnh Lào Cai' )
+			&& 1 === substr_count( $legacy_html, 'Quận Bình Thạnh' )
+			&& 1 === substr_count( $legacy_plain, 'Quận Bình Thạnh' );
+		$this->record( 'TC-EML-16', 'Prevent duplicate addresses across HTML/plain/admin/legacy', $ok );
 	}
 }
 

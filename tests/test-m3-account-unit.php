@@ -24,6 +24,7 @@ $despace_mock_customers    = array();
 $despace_mock_orders       = array();
 $despace_mock_notices      = array();
 $despace_mock_current_user = 0;
+$despace_mock_order_queries = array();
 
 class WP_Error {
 	private array $errors = array();
@@ -116,13 +117,55 @@ function wp_update_user( array $data ) {
 	return $uid;
 }
 function wc_get_order( int $id ) { global $despace_mock_orders; return $despace_mock_orders[ $id ] ?? false; }
-function wc_get_orders( array $args = array() ): array {
-	global $despace_mock_orders;
+function wc_get_orders( array $args = array() ) {
+	global $despace_mock_orders, $despace_mock_order_queries;
+	$despace_mock_order_queries[] = $args;
+
+	$statuses = array();
+	if ( isset( $args['status'] ) ) {
+		$statuses = array_map(
+			function ( $s ) {
+				$clean = strtolower( (string) $s );
+				return 0 === strpos( $clean, 'wc-' ) ? substr( $clean, 3 ) : $clean;
+			},
+			(array) $args['status']
+		);
+	}
+
 	$out = array();
 	foreach ( $despace_mock_orders as $ord ) {
-		if ( isset( $args['customer_id'] ) && (int) $ord->get_customer_id() === (int) $args['customer_id'] ) {
-			$out[] = $ord;
+		if ( isset( $args['customer_id'] ) && (int) $ord->get_customer_id() !== (int) $args['customer_id'] ) {
+			continue;
 		}
+		if ( ! empty( $statuses ) && ! in_array( strtolower( (string) $ord->get_status() ), $statuses, true ) ) {
+			continue;
+		}
+		$out[] = $ord;
+	}
+
+	$order_dir = strtoupper( (string) ( $args['order'] ?? 'DESC' ) );
+	usort( $out, fn( $a, $b ) => 'ASC' === $order_dir ? ( $a->get_id() <=> $b->get_id() ) : ( $b->get_id() <=> $a->get_id() ) );
+
+	if ( 'ids' === ( $args['return'] ?? 'objects' ) ) {
+		$out = array_map( fn( $o ) => $o->get_id(), $out );
+	}
+
+	if ( ! empty( $args['paginate'] ) ) {
+		$limit         = max( 1, (int) ( $args['limit'] ?? 10 ) );
+		$page          = max( 1, (int) ( $args['page'] ?? 1 ) );
+		$total         = count( $out );
+		$max_num_pages = max( 1, (int) ceil( max( 1, $total ) / $limit ) );
+		$sliced        = array_slice( $out, ( $page - 1 ) * $limit, $limit );
+		return (object) array(
+			'orders'        => $sliced,
+			'total'         => $total,
+			'max_num_pages' => $max_num_pages,
+		);
+	}
+
+	$limit = isset( $args['limit'] ) ? (int) $args['limit'] : -1;
+	if ( $limit > 0 ) {
+		$out = array_slice( $out, 0, $limit );
 	}
 	return $out;
 }
@@ -351,6 +394,7 @@ class M3AccountUnitRunner {
 		$this->tc_24_hpos_compatibility_and_no_raw_sql();
 		$this->tc_25_payment_methods_native();
 		$this->tc_26_logout_and_handoff_contract();
+		$this->tc_27_over_100_orders_pagination_and_dashboard_stats();
 
 		$total  = count( $this->results );
 		$passed = count( array_filter( $this->results ) );
@@ -718,6 +762,83 @@ class M3AccountUnitRunner {
 			&& in_array( 'orders', $cfg['account']['native_endpoints'] ?? array(), true )
 			&& in_array( 'customer-logout', $cfg['account']['native_endpoints'] ?? array(), true );
 		$this->record( 'TC-ACC-26', 'Expose native logout URL & [woocommerce_my_account] contract', $ok );
+	}
+
+	private function tc_27_over_100_orders_pagination_and_dashboard_stats(): void {
+		global $despace_mock_orders, $despace_mock_order_queries;
+		reset_account_env();
+		$despace_mock_orders        = array();
+		$despace_mock_order_queries = array();
+
+		// Create 125 orders for customer 10 across statuses (15 pending, 20 on-hold, 40 processing, 50 completed).
+		$statuses = array_merge(
+			array_fill( 0, 15, 'pending' ),
+			array_fill( 0, 20, 'on-hold' ),
+			array_fill( 0, 40, 'processing' ),
+			array_fill( 0, 50, 'completed' )
+		);
+		$id = 10000;
+		foreach ( $statuses as $st ) {
+			$id++;
+			$o              = new Mock_Acc_Order( $id, 10, $st, 'hung@despace.test' );
+			$despace_mock_orders[ $id ] = $o;
+		}
+		// Add 10 orders for customer 20 and 10 guest orders with matching billing email (must remain isolated!).
+		for ( $i = 1; $i <= 10; $i++ ) {
+			$oid_b = 20000 + $i;
+			$despace_mock_orders[ $oid_b ] = new Mock_Acc_Order( $oid_b, 20, 'processing', 'lan@despace.test' );
+			$oid_g = 30000 + $i;
+			$og = new Mock_Acc_Order( $oid_g, 0, 'completed', 'hung@despace.test' );
+			$despace_mock_orders[ $oid_g ] = $og;
+		}
+
+		$page1 = AccountDataPresenter::get_customer_order_history( 1, 20 );
+		$page2 = AccountDataPresenter::get_customer_order_history( 2, 20 );
+		$last  = AccountDataPresenter::get_customer_order_history( 7, 20 );
+		$dash  = AccountDataPresenter::get_dashboard_summary( 5 );
+
+		$p1_ids   = array_map( fn( $o ) => (int) $o['order_number'], $page1['items'] ?? array() );
+		$p2_ids   = array_map( fn( $o ) => (int) $o['order_number'], $page2['items'] ?? array() );
+		$last_ids = array_map( fn( $o ) => (int) $o['order_number'], $last['items'] ?? array() );
+		$all_seen = array_merge( $p1_ids, $p2_ids, $last_ids );
+
+		// Confirm every query used paginate => true and never requested >= 100 objects at once.
+		$all_paginated = ! empty( $despace_mock_order_queries );
+		foreach ( $despace_mock_order_queries as $q ) {
+			if ( empty( $q['paginate'] ) || (int) ( $q['limit'] ?? 0 ) >= 100 ) {
+				$all_paginated = false;
+				break;
+			}
+		}
+
+		// Confirm all returned items belong strictly to customer 10 (10001..10125).
+		$strict_owner = true;
+		foreach ( $all_seen as $num ) {
+			if ( $num < 10001 || $num > 10125 ) {
+				$strict_owner = false;
+				break;
+			}
+		}
+
+		$ok = ! is_wp_error( $page1 ) && ! is_wp_error( $page2 ) && ! is_wp_error( $last ) && ! is_wp_error( $dash )
+			&& 125 === ( $page1['total'] ?? -1 )
+			&& 7 === ( $page1['max_num_pages'] ?? -1 )
+			&& 20 === ( $page1['limit'] ?? -1 )
+			&& 1 === ( $page1['page'] ?? -1 )
+			&& 20 === count( $p1_ids )
+			&& 2 === ( $page2['page'] ?? -1 )
+			&& 20 === count( $p2_ids )
+			&& empty( array_intersect( $p1_ids, $p2_ids ) )
+			&& 7 === ( $last['page'] ?? -1 )
+			&& 5 === count( $last_ids )
+			&& 125 === ( $dash['stats']['total_orders'] ?? -1 )
+			&& 35 === ( $dash['stats']['pending_on_hold_orders'] ?? -1 )
+			&& 40 === ( $dash['stats']['processing_orders'] ?? -1 )
+			&& 50 === ( $dash['stats']['completed_orders'] ?? -1 )
+			&& 5 === count( $dash['recent_orders'] ?? array() )
+			&& $all_paginated
+			&& $strict_owner;
+		$this->record( 'TC-ACC-27', 'Paginate >100 orders & compute dashboard status stats cleanly', $ok );
 	}
 }
 

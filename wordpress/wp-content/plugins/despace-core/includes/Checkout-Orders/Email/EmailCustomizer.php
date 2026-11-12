@@ -78,7 +78,8 @@ class EmailCustomizer {
 
 		add_filter( 'woocommerce_email_footer_text', array( __CLASS__, 'filter_email_footer_text' ), 20, 1 );
 		add_filter( 'woocommerce_email_order_meta_fields', array( __CLASS__, 'filter_email_order_meta_fields' ), 20, 3 );
-		add_action( 'woocommerce_email_customer_details', array( __CLASS__, 'render_vietnam_address_section' ), 25, 4 );
+		add_filter( 'woocommerce_order_formatted_shipping_address', array( __CLASS__, 'filter_formatted_shipping_address' ), 20, 2 );
+		add_filter( 'woocommerce_order_formatted_billing_address', array( __CLASS__, 'filter_formatted_billing_address' ), 20, 2 );
 	}
 
 	/**
@@ -201,8 +202,10 @@ class EmailCustomizer {
 	}
 
 	/**
-	 * Append sanitized Vietnam 2-tier shipping region summary to WooCommerce email order meta fields.
+	 * Append sanitized offline payment status note to WooCommerce email order meta fields.
 	 *
+	 * Intentionally excludes duplicate shipping/billing address lines (handled strictly once via
+	 * WooCommerce's native formatted address filters) and omits bank account info on COD orders.
 	 * Strictly omits bank account info on COD orders and never exposes sensitive internal keys
 	 * (`order_key`, `customer_id`, or payment references). Works gracefully on legacy orders lacking DeSpace meta.
 	 *
@@ -214,14 +217,6 @@ class EmailCustomizer {
 	public static function filter_email_order_meta_fields( array $fields, bool $sent_to_admin, $order ): array {
 		if ( ! is_object( $order ) ) {
 			return $fields;
-		}
-
-		$formatted_address = self::format_order_address_for_email( $order, 'shipping' );
-		if ( '' !== $formatted_address['formatted'] ) {
-			$fields['despace_shipping_address_line'] = array(
-				'label' => __( 'Địa chỉ giao hàng (2 cấp VN)', 'despace-core' ),
-				'value' => $formatted_address['formatted'],
-			);
 		}
 
 		$method = method_exists( $order, 'get_payment_method' ) ? sanitize_key( (string) $order->get_payment_method() ) : '';
@@ -244,39 +239,72 @@ class EmailCustomizer {
 	}
 
 	/**
-	 * Render clean Vietnamese 2-tier address block inside `woocommerce_email_customer_details`.
+	 * Format native WooCommerce shipping address array via single extension point for HTML & plain-text emails.
 	 *
-	 * Preserves legacy `address_2` on historical orders and never injects bank details or internal keys.
+	 * Ensures 2-tier Vietnam orders render Ward/Commune & Province/Municipality cleanly inside
+	 * WooCommerce's native `email-addresses.php` block without duplicating the address elsewhere,
+	 * while preserving legacy `address_2` untouched on historical orders.
 	 *
-	 * @param object $order         WC_Order instance.
-	 * @param bool   $sent_to_admin Sent to admin flag.
-	 * @param bool   $plain_text    Plain-text vs HTML email format.
-	 * @param object $email         WC_Email instance.
+	 * @param array       $address Raw WooCommerce address array.
+	 * @param object|null $order   WC_Order instance.
+	 * @return array
 	 */
-	public static function render_vietnam_address_section(
-		object $order,
-		bool $sent_to_admin = false,
-		bool $plain_text = false,
-		?object $email = null
-	): void {
-		if ( ! self::is_email_instance_enabled( $email ) ) {
-			return;
+	public static function filter_formatted_shipping_address( array $address, ?object $order = null ): array {
+		return self::normalize_native_order_address_array( $address, $order, 'shipping' );
+	}
+
+	/**
+	 * Format native WooCommerce billing address array cleanly for 2-tier Vietnam orders while preserving legacy lines.
+	 *
+	 * @param array       $address Raw WooCommerce address array.
+	 * @param object|null $order   WC_Order instance.
+	 * @return array
+	 */
+	public static function filter_formatted_billing_address( array $address, ?object $order = null ): array {
+		return self::normalize_native_order_address_array( $address, $order, 'billing' );
+	}
+
+	/**
+	 * Normalize a native WooCommerce raw address array using `VietnamRegions::extract_order_address()`.
+	 *
+	 * @param array       $address Raw WooCommerce address components.
+	 * @param object|null $order   WC_Order instance.
+	 * @param string      $type    'shipping' or 'billing'.
+	 * @return array
+	 */
+	private static function normalize_native_order_address_array( array $address, ?object $order, string $type ): array {
+		if ( ! is_object( $order ) ) {
+			return $address;
 		}
 
-		$ship_info = self::format_order_address_for_email( $order, 'shipping' );
-		if ( '' === $ship_info['formatted'] ) {
-			return;
+		$country = strtoupper( self::sanitize_text( (string) ( $address['country'] ?? '' ) ) );
+		if ( '' !== $country && 'VN' !== $country ) {
+			return $address;
 		}
 
-		if ( $plain_text ) {
-			echo "\n" . self::sanitize_text( __( 'Địa chỉ nhận hàng:', 'despace-core' ) ) . ' ' . $ship_info['formatted'] . "\n";
-			return;
+		$extracted = VietnamRegions::extract_order_address( $order, $type );
+		if ( ! empty( $extracted['is_legacy'] ) ) {
+			// Preserve historical address_2 (old district), city, state, and address_1 untouched.
+			return $address;
 		}
 
-		echo '<div class="despace-email-vn-address" style="margin-top:8px;">';
-		echo '<strong>' . self::esc_html( __( 'Địa chỉ nhận hàng chuẩn hóa:', 'despace-core' ) ) . '</strong> ';
-		echo '<span>' . self::esc_html( $ship_info['formatted'] ) . '</span>';
-		echo '</div>' . "\n";
+		$commune_name   = self::sanitize_text( (string) ( $extracted['commune_name'] ?? '' ) );
+		$region_name    = self::sanitize_text( (string) ( $extracted['region_name'] ?? '' ) );
+		$address_detail = self::sanitize_text( (string) ( $extracted['address_detail'] ?? '' ) );
+
+		if ( '' !== $address_detail ) {
+			$address['address_1'] = $address_detail;
+		}
+		if ( '' !== $commune_name ) {
+			$address['city'] = $commune_name;
+		}
+		if ( '' !== $region_name ) {
+			$address['state'] = $region_name;
+		}
+		// Never inject artificial district lines into modern 2-tier orders.
+		$address['address_2'] = '';
+
+		return $address;
 	}
 
 	/**

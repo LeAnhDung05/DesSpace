@@ -567,6 +567,7 @@ class M3CartUnitRunner {
 		$this->tc_14_cart_fragments();
 		$this->tc_15_deleted_or_unavailable_product();
 		$this->tc_16_no_stock_mutation_or_m4_inventory_logs();
+		$this->tc_17_bootstrap_order_and_submodule_isolation();
 
 		$this->print_summary();
 	}
@@ -857,6 +858,115 @@ class M3CartUnitRunner {
 			&& empty( $despace_mock_stock_hook_calls )
 			&& $clean_src;
 		$this->record( 'TC-M3-16', 'Cart never mutates stock or triggers M4 logs', $ok );
+	}
+
+	private function tc_17_bootstrap_order_and_submodule_isolation(): void {
+		$module_file = realpath( __DIR__ . '/../wordpress/wp-content/plugins/despace-core/includes/Checkout-Orders/CheckoutOrdersModule.php' );
+
+		// Subprocess 0: WooCommerce genuinely disabled/absent -> no fatal, initialized=false, healthy=false.
+		$no_wc_script = sprintf(
+			'define("ABSPATH", __DIR__ . "/"); function add_action(){} function add_filter(){} require_once %s; \DeSpace\CheckoutOrders\CheckoutOrdersModule::init(); echo json_encode(array("initialized" => \DeSpace\CheckoutOrders\CheckoutOrdersModule::is_initialized(), "healthy" => \DeSpace\CheckoutOrders\CheckoutOrdersModule::is_healthy(), "count" => count(\DeSpace\CheckoutOrders\CheckoutOrdersModule::get_initialized_submodules())));',
+			var_export( $module_file, true )
+		);
+		$res0 = json_decode( (string) shell_exec( 'php -r ' . escapeshellarg( $no_wc_script ) ), true );
+
+		// Subprocess 1: Exact WP load order (despace-core plugin file first, then woocommerce.php, then plugins_loaded -1 / 10).
+		$boot_script = <<<'PHP'
+define( 'ABSPATH', __DIR__ . '/' );
+$hooks = array();
+function add_action( string $tag, callable $cb, int $prio = 10, int $args = 1 ): bool { global $hooks; $hooks[$tag][] = array('cb' => $cb, 'p' => $prio); return true; }
+function add_filter( string $tag, callable $cb, int $prio = 10, int $args = 1 ): bool { global $hooks; $hooks[$tag][] = array('cb' => $cb, 'p' => $prio); return true; }
+function apply_filters( string $tag, $val ) { global $hooks; foreach ($hooks[$tag] ?? array() as $h) $val = call_user_func($h['cb'], $val); return $val; }
+function do_action( string $tag ): void {
+    global $hooks;
+    $list = $hooks[$tag] ?? array();
+    usort($list, fn($a, $b) => $a['p'] <=> $b['p']);
+    foreach ($list as $h) call_user_func($h['cb']);
+}
+function add_shortcode( string $t, callable $c ): void {}
+function sanitize_text_field( $s ): string { return trim( (string) $s ); }
+function __( string $t, string $d = 'default' ): string { return $t; }
+
+// 1. despace-core main plugin file loads first alphabetically & hooks plugins_loaded @ 10.
+require_once %s;
+add_action( 'plugins_loaded', function() {
+    \DeSpace\CheckoutOrders\CheckoutOrdersModule::init();
+}, 10 );
+
+// 2. woocommerce.php loads during plugin loading BEFORE plugins_loaded fires, defining WooCommerce & WC(), and registering -1.
+class WooCommerce {}
+function WC() { return new WooCommerce(); }
+add_action( 'plugins_loaded', function() { do_action( 'woocommerce_loaded' ); }, -1 );
+
+// 3. WP fires plugins_loaded.
+do_action( 'plugins_loaded' );
+
+echo json_encode( array(
+    'has_wc_class'   => class_exists( 'WooCommerce' ),
+    'has_wc_fn'      => function_exists( 'WC' ),
+    'initialized'    => \DeSpace\CheckoutOrders\CheckoutOrdersModule::is_initialized(),
+    'healthy'        => \DeSpace\CheckoutOrders\CheckoutOrdersModule::is_healthy(),
+    'sub_count'      => count( \DeSpace\CheckoutOrders\CheckoutOrdersModule::get_initialized_submodules() ),
+    'failed'         => \DeSpace\CheckoutOrders\CheckoutOrdersModule::get_failed_submodules(),
+    'cart_hook'      => ! empty( $hooks['wp_ajax_despace_cart_add'] ),
+) );
+PHP;
+		$code1 = sprintf( $boot_script, var_export( $module_file, true ) );
+		$out1  = shell_exec( 'php -r ' . escapeshellarg( $code1 ) );
+		$res1  = json_decode( (string) $out1, true );
+
+		// Subprocess 2: Failing submodule injected mid-bootstrap must log failure, keep others running, and set is_healthy()=false.
+		$iso_script = <<<'PHP'
+define( 'ABSPATH', __DIR__ . '/' );
+$hooks = array();
+function add_action( string $tag, callable $cb, int $prio = 10, int $args = 1 ): bool { global $hooks; $hooks[$tag][] = array('cb' => $cb, 'p' => $prio); return true; }
+function add_filter( string $tag, callable $cb, int $prio = 10, int $args = 1 ): bool { global $hooks; $hooks[$tag][] = array('cb' => $cb, 'p' => $prio); return true; }
+function apply_filters( string $tag, $val ) { global $hooks; foreach ($hooks[$tag] ?? array() as $h) $val = call_user_func($h['cb'], $val); return $val; }
+function add_shortcode( string $t, callable $c ): void {}
+function sanitize_text_field( $s ): string { return trim( (string) $s ); }
+function __( string $t, string $d = 'default' ): string { return $t; }
+class WooCommerce {}
+function WC() { return new WooCommerce(); }
+class Throwing_Submodule { public static function init(): void { throw new \RuntimeException('Simulated init crash'); } }
+require_once %s;
+add_filter( 'despace_m3_bootstrap_submodules', function( array $list ): array {
+    array_splice( $list, 2, 0, array( 'Throwing_Submodule' ) );
+    return $list;
+} );
+\DeSpace\CheckoutOrders\CheckoutOrdersModule::init();
+echo json_encode( array(
+    'initialized'   => \DeSpace\CheckoutOrders\CheckoutOrdersModule::is_initialized(),
+    'healthy'       => \DeSpace\CheckoutOrders\CheckoutOrdersModule::is_healthy(),
+    'init_count'    => count( \DeSpace\CheckoutOrders\CheckoutOrdersModule::get_initialized_submodules() ),
+    'failed'        => \DeSpace\CheckoutOrders\CheckoutOrdersModule::get_failed_submodules(),
+    'email_ok'      => \DeSpace\CheckoutOrders\Email\EmailCustomizer::are_hooks_registered(),
+    'notice_hooked' => ! empty( $hooks['admin_notices'] ),
+) );
+PHP;
+		$code2 = sprintf( $iso_script, var_export( $module_file, true ) );
+		$out2  = shell_exec( 'php -r ' . escapeshellarg( $code2 ) . ' 2>/dev/null' );
+		$res2  = json_decode( (string) $out2, true );
+
+		$ok = is_array( $res0 )
+			&& false === ( $res0['initialized'] ?? true )
+			&& false === ( $res0['healthy'] ?? true )
+			&& 0 === ( $res0['count'] ?? -1 )
+			&& is_array( $res1 )
+			&& true === ( $res1['has_wc_class'] ?? false )
+			&& true === ( $res1['has_wc_fn'] ?? false )
+			&& true === ( $res1['initialized'] ?? false )
+			&& true === ( $res1['healthy'] ?? false )
+			&& 15 === ( $res1['sub_count'] ?? 0 )
+			&& empty( $res1['failed'] )
+			&& true === ( $res1['cart_hook'] ?? false )
+			&& is_array( $res2 )
+			&& true === ( $res2['initialized'] ?? false )
+			&& false === ( $res2['healthy'] ?? true )
+			&& 15 === ( $res2['init_count'] ?? 0 )
+			&& 'Simulated init crash' === ( $res2['failed']['Throwing_Submodule'] ?? '' )
+			&& true === ( $res2['email_ok'] ?? false )
+			&& true === ( $res2['notice_hooked'] ?? false );
+		$this->record( 'TC-M3-17', 'Verify M5 bootstrap lifecycle & isolated submodule errors', $ok );
 	}
 
 	private function print_summary(): void {

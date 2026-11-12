@@ -120,30 +120,17 @@ class AccountDataPresenter {
 		$billing_addr  = AccountAddressHandler::get_customer_address( 'billing', $current_user_id );
 		$shipping_addr = AccountAddressHandler::get_customer_address( 'shipping', $current_user_id );
 
-		$orders = self::fetch_owned_orders( $current_user_id, 100 );
-
-		$total_orders       = 0;
-		$pending_or_on_hold = 0;
-		$processing_count   = 0;
-		$completed_count    = 0;
-		$recent_orders      = array();
 		$bounded_recent     = max( 1, min( 20, $recent_limit ) );
-
-		foreach ( $orders as $order ) {
-			$total_orders++;
-			$status = method_exists( $order, 'get_status' ) ? sanitize_key( (string) $order->get_status() ) : '';
-			if ( 'pending' === $status || 'on-hold' === $status ) {
-				$pending_or_on_hold++;
-			} elseif ( 'processing' === $status ) {
-				$processing_count++;
-			} elseif ( 'completed' === $status ) {
-				$completed_count++;
-			}
-
-			if ( count( $recent_orders ) < $bounded_recent ) {
-				$recent_orders[] = OrderTrackingPresenter::present_order( $order );
-			}
+		$recent_page        = self::fetch_paginated_owned_orders( $current_user_id, 1, $bounded_recent );
+		$recent_orders      = array();
+		foreach ( $recent_page['orders'] as $order ) {
+			$recent_orders[] = OrderTrackingPresenter::present_order( $order );
 		}
+
+		$total_orders       = $recent_page['total'];
+		$pending_or_on_hold = self::count_owned_orders_by_statuses( $current_user_id, array( 'pending', 'on-hold' ) );
+		$processing_count   = self::count_owned_orders_by_statuses( $current_user_id, array( 'processing' ) );
+		$completed_count    = self::count_owned_orders_by_statuses( $current_user_id, array( 'completed' ) );
 
 		$greeting_name = '' !== $profile['display_name']
 			? $profile['display_name']
@@ -169,7 +156,10 @@ class AccountDataPresenter {
 	}
 
 	/**
-	 * Fetch paginated order history owned strictly by the currently logged-in customer.
+	 * Fetch paginated order history owned strictly by the currently logged-in customer via HPOS pagination.
+	 *
+	 * Uses `wc_get_orders(['paginate' => true])` so only the requested page of orders is loaded
+	 * into PHP memory regardless of total order count (> 100 orders supported accurately).
 	 *
 	 * @param int $page     1-based page number.
 	 * @param int $per_page Items per page (1..50).
@@ -185,23 +175,24 @@ class AccountDataPresenter {
 			);
 		}
 
-		$page     = max( 1, $page );
-		$per_page = max( 1, min( 50, $per_page ) );
-		$orders   = self::fetch_owned_orders( $current_user_id, 100 );
-		$total    = count( $orders );
-		$slice    = array_slice( $orders, ( $page - 1 ) * $per_page, $per_page );
+		$page      = max( 1, $page );
+		$limit     = max( 1, min( 50, $per_page ) );
+		$paginated = self::fetch_paginated_owned_orders( $current_user_id, $page, $limit );
 
 		$items = array();
-		foreach ( $slice as $ord ) {
+		foreach ( $paginated['orders'] as $ord ) {
 			$items[] = OrderTrackingPresenter::present_order( $ord );
 		}
 
 		return array(
-			'items'       => $items,
-			'page'        => $page,
-			'per_page'    => $per_page,
-			'total_items' => $total,
-			'total_pages' => max( 1, (int) ceil( $total / $per_page ) ),
+			'items'         => $items,
+			'page'          => $page,
+			'limit'         => $limit,
+			'per_page'      => $limit,
+			'total'         => $paginated['total'],
+			'total_items'   => $paginated['total'],
+			'max_num_pages' => $paginated['max_num_pages'],
+			'total_pages'   => $paginated['max_num_pages'],
 		);
 	}
 
@@ -288,26 +279,45 @@ class AccountDataPresenter {
 	}
 
 	/**
-	 * Fetch WooCommerce orders via HPOS-compatible `wc_get_orders()` filtering strictly on `customer_id`.
+	 * Fetch a single page of WooCommerce orders via HPOS-compatible paginated `wc_get_orders()`.
 	 *
 	 * @param int $customer_id Authenticated user ID.
-	 * @param int $limit       Bounded fetch limit.
-	 * @return array<int, object>
+	 * @param int $page        1-based page number.
+	 * @param int $limit       Items per page (1..50).
+	 * @return array{orders: array<int, object>, total: int, max_num_pages: int}
 	 */
-	private static function fetch_owned_orders( int $customer_id, int $limit = 50 ): array {
+	private static function fetch_paginated_owned_orders( int $customer_id, int $page, int $limit ): array {
 		if ( $customer_id <= 0 || ! function_exists( 'wc_get_orders' ) ) {
-			return array();
+			return array(
+				'orders'        => array(),
+				'total'         => 0,
+				'max_num_pages' => 1,
+			);
 		}
+
+		$page  = max( 1, $page );
+		$limit = max( 1, min( 50, $limit ) );
 
 		$raw = wc_get_orders( array(
 			'customer_id' => $customer_id,
-			'limit'       => max( 1, min( 200, $limit ) ),
+			'limit'       => $limit,
+			'page'        => $page,
+			'paginate'    => true,
 			'orderby'     => 'date',
 			'order'       => 'DESC',
 			'return'      => 'objects',
 		) );
 
-		$list = is_object( $raw ) && isset( $raw->orders ) ? (array) $raw->orders : ( is_array( $raw ) ? $raw : array() );
+		if ( is_object( $raw ) && isset( $raw->orders ) ) {
+			$list          = (array) $raw->orders;
+			$total         = max( 0, (int) ( $raw->total ?? count( $list ) ) );
+			$max_num_pages = max( 1, (int) ( $raw->max_num_pages ?? (int) ceil( max( 1, $total ) / $limit ) ) );
+		} else {
+			$all           = is_array( $raw ) ? $raw : array();
+			$total         = count( $all );
+			$max_num_pages = max( 1, (int) ceil( max( 1, $total ) / $limit ) );
+			$list          = array_slice( $all, ( $page - 1 ) * $limit, $limit );
+		}
 
 		$owned = array();
 		foreach ( $list as $order ) {
@@ -321,7 +331,44 @@ class AccountDataPresenter {
 			}
 		}
 
-		return $owned;
+		return array(
+			'orders'        => $owned,
+			'total'         => $total,
+			'max_num_pages' => $max_num_pages,
+		);
+	}
+
+	/**
+	 * Count owned orders for specified statuses via paginated IDs query (`limit => 1, paginate => true`)
+	 * without hydrating order objects into PHP.
+	 *
+	 * @param int               $customer_id Authenticated user ID.
+	 * @param array<int,string> $statuses    WooCommerce status slugs (without `wc-`).
+	 * @return int
+	 */
+	private static function count_owned_orders_by_statuses( int $customer_id, array $statuses ): int {
+		if ( $customer_id <= 0 || ! function_exists( 'wc_get_orders' ) ) {
+			return 0;
+		}
+
+		$res = wc_get_orders( array(
+			'customer_id' => $customer_id,
+			'status'      => $statuses,
+			'limit'       => 1,
+			'page'        => 1,
+			'paginate'    => true,
+			'return'      => 'ids',
+		) );
+
+		if ( is_object( $res ) && isset( $res->total ) ) {
+			return max( 0, (int) $res->total );
+		}
+
+		if ( is_array( $res ) ) {
+			return count( $res );
+		}
+
+		return 0;
 	}
 }
 
