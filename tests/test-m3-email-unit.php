@@ -359,6 +359,13 @@ class M3EmailUnitRunner {
 		return $out;
 	}
 
+	/**
+	 * TC-EML-16: Verify duplicate address prevention in a simulated WooCommerce email rendering context.
+	 *
+	 * NOTE: This is a unit-level simulation of WooCommerce email output pipelines (meta fields + formatted addresses).
+	 * Actual end-to-end template verification with live WooCommerce email templates is performed in the integration
+	 * test suite (tests/test-m3-account-integration.php) on a live WordPress + WooCommerce runtime.
+	 */
 	private function tc_16_no_duplicate_address_in_html_plain_admin_customer(): void {
 		$order                     = new Mock_Email_Order();
 		$order->billing_address_1  = '99 Phố Huế';
@@ -392,7 +399,7 @@ class M3EmailUnitRunner {
 			&& false !== strpos( $html_customer, 'Tỉnh Lào Cai' )
 			&& 1 === substr_count( $legacy_html, 'Quận Bình Thạnh' )
 			&& 1 === substr_count( $legacy_plain, 'Quận Bình Thạnh' );
-		$this->record( 'TC-EML-16', 'Prevent duplicate addresses across HTML/plain/admin/legacy', $ok );
+		$this->record( 'TC-EML-16', 'Prevent duplicate address in simulated email render', $ok );
 	}
 }
 

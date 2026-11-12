@@ -274,7 +274,7 @@ class PaymentStatusGuard {
 	 *
 	 * @param int    $order_id       WooCommerce order ID.
 	 * @param string $bank_reference Optional real bank statement reference verified by admin.
-	 * @param array  $options        Safeguards: `nonce` (string), `confirmed_received` (bool/normalized), optional `lock_ttl` (int).
+	 * @param array  $options        Safeguards: `nonce` (string), `confirmed_received` (bool/normalized).
 	 * @return array|\WP_Error Result summary or WP_Error.
 	 */
 	public static function confirm_bacs_payment_by_admin( int $order_id, string $bank_reference = '', array $options = array() ) {
@@ -287,8 +287,8 @@ class PaymentStatusGuard {
 			return new \WP_Error( 'despace_woocommerce_unavailable', __( 'WooCommerce is not available.', 'despace-core' ), array( 'status' => 503 ) );
 		}
 
-		$ttl  = isset( $options['lock_ttl'] ) ? max( 1, (int) $options['lock_ttl'] ) : self::DEFAULT_LOCK_TTL;
-		$lock = self::acquire_bacs_lock( absint( $order_id ), $ttl );
+		// Always enforce fixed server-side lock TTL; ignore any caller-provided lock duration.
+		$lock = self::acquire_bacs_lock( absint( $order_id ), self::DEFAULT_LOCK_TTL );
 		if ( is_wp_error( $lock ) ) {
 			return $lock;
 		}
@@ -328,15 +328,16 @@ class PaymentStatusGuard {
 				);
 			}
 
-			$clean_ref = self::sanitize_text( $bank_reference );
-			$completed = false;
-
-			if ( method_exists( $order, 'payment_complete' ) ) {
-				$completed = (bool) $order->payment_complete( $clean_ref );
-			} elseif ( method_exists( $order, 'update_status' ) ) {
-				$order->update_status( 'processing', '', true );
-				$completed = true;
+			if ( ! method_exists( $order, 'payment_complete' ) ) {
+				return new \WP_Error(
+					'despace_bacs_payment_complete_unavailable',
+					__( 'Phương thức payment_complete() của WooCommerce không khả dụng trên đơn hàng này.', 'despace-core' ),
+					array( 'status' => 500 )
+				);
 			}
+
+			$clean_ref = self::sanitize_text( $bank_reference );
+			$completed = (bool) $order->payment_complete( $clean_ref );
 
 			if ( ! $completed ) {
 				return new \WP_Error(
@@ -346,20 +347,24 @@ class PaymentStatusGuard {
 				);
 			}
 
-			// Re-read order after payment_complete() to confirm payment status actually transitioned.
+			// Re-read order after payment_complete() to verify actual persisted payment state.
 			$verified_order = wc_get_order( absint( $order_id ) );
 			if ( ! $verified_order || ! is_object( $verified_order ) ) {
-				$verified_order = $order;
+				return new \WP_Error(
+					'despace_bacs_payment_not_recorded',
+					__( 'Không thể xác minh trạng thái thanh toán BACS từ hệ thống lưu trữ sau khi hoàn tất.', 'despace-core' ),
+					array( 'status' => 500 )
+				);
 			}
 
 			$verified_paid      = method_exists( $verified_order, 'is_paid' ) ? (bool) $verified_order->is_paid() : false;
 			$verified_date_paid = method_exists( $verified_order, 'get_date_paid' ) ? $verified_order->get_date_paid() : null;
 			$verified_status    = method_exists( $verified_order, 'get_status' ) ? sanitize_key( (string) $verified_order->get_status() ) : '';
 
-			if ( ( ! $verified_paid && null === $verified_date_paid ) || 'on-hold' === $verified_status || 'pending' === $verified_status ) {
+			if ( true !== $verified_paid || null === $verified_date_paid || '' === $verified_date_paid || 'on-hold' === $verified_status || 'pending' === $verified_status ) {
 				return new \WP_Error(
 					'despace_bacs_payment_not_recorded',
-					__( 'Trạng thái thanh toán BACS chưa được ghi nhận thực tế sau khi gọi payment_complete().', 'despace-core' ),
+					__( 'Trạng thái thanh toán BACS chưa được ghi nhận đầy đủ (yêu cầu đồng thời is_paid và date_paid).', 'despace-core' ),
 					array( 'status' => 500 )
 				);
 			}
@@ -466,8 +471,15 @@ class PaymentStatusGuard {
 			$payload,
 			'no'
 		);
-		$inserted = (int) $db->query( $insert_sql );
-		if ( 1 === $inserted ) {
+		$inserted = $db->query( $insert_sql );
+		if ( false === $inserted ) {
+			return new \WP_Error(
+				'despace_bacs_lock_database_error',
+				__( 'Lỗi cơ sở dữ liệu khi thiết lập khóa xử lý thanh toán BACS.', 'despace-core' ),
+				array( 'status' => 500 )
+			);
+		}
+		if ( 1 === (int) $inserted ) {
 			return array(
 				'key'        => $key,
 				'token'      => $token,
@@ -481,9 +493,17 @@ class PaymentStatusGuard {
 			$db->prepare( "SELECT option_value FROM {$table} WHERE option_name = %s LIMIT 1", $key )
 		);
 
-		if ( null === $existing_raw || false === $existing_raw ) {
+		if ( null === $existing_raw ) {
 			// Prior holder just released between INSERT IGNORE and SELECT; try atomic insert once more.
-			if ( 1 === (int) $db->query( $insert_sql ) ) {
+			$retry_inserted = $db->query( $insert_sql );
+			if ( false === $retry_inserted ) {
+				return new \WP_Error(
+					'despace_bacs_lock_database_error',
+					__( 'Lỗi cơ sở dữ liệu khi thử lại thiết lập khóa BACS.', 'despace-core' ),
+					array( 'status' => 500 )
+				);
+			}
+			if ( 1 === (int) $retry_inserted ) {
 				return array(
 					'key'        => $key,
 					'token'      => $token,
@@ -491,6 +511,12 @@ class PaymentStatusGuard {
 					'expires_at' => $expires,
 				);
 			}
+		} elseif ( false === $existing_raw ) {
+			return new \WP_Error(
+				'despace_bacs_lock_database_error',
+				__( 'Lỗi cơ sở dữ liệu khi đọc trạng thái khóa thanh toán BACS.', 'despace-core' ),
+				array( 'status' => 500 )
+			);
 		} else {
 			$decoded = json_decode( (string) $existing_raw, true );
 			$old_exp = is_array( $decoded ) ? (int) ( $decoded['expires_at'] ?? 0 ) : 0;
@@ -501,7 +527,15 @@ class PaymentStatusGuard {
 					$key,
 					(string) $existing_raw
 				);
-				if ( 1 === (int) $db->query( $cas_sql ) ) {
+				$cas_res = $db->query( $cas_sql );
+				if ( false === $cas_res ) {
+					return new \WP_Error(
+						'despace_bacs_lock_database_error',
+						__( 'Lỗi cơ sở dữ liệu khi cập nhật khóa hết hạn BACS.', 'despace-core' ),
+						array( 'status' => 500 )
+					);
+				}
+				if ( 1 === (int) $cas_res ) {
 					return array(
 						'key'        => $key,
 						'token'      => $token,
