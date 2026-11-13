@@ -5,7 +5,7 @@
 **Pull Request:** [#38](https://github.com/LeAnhDung05/DesSpace/pull/38)  
 **Nhánh nguồn:** `feature/member04-inventory`  
 **Nhánh đích:** `develop`  
-**Trạng thái kiểm thử:** 69 / 69 Test Cases PASS (100%), Exit Code: 0 trên cả 4 bộ test Staging (WordPress 7.1.4, WooCommerce 11.1.2, MariaDB 10.11, HPOS)  
+**Trạng thái kiểm thử:** 72 / 72 Test Cases PASS (100%), Exit Code: 0 trên cả 4 bộ test Staging (WordPress 7.1.4, WooCommerce 11.1.2, MariaDB 10.11, HPOS)  
 **Đánh giá kỹ thuật:** **GO (Đạt chuẩn release, sẵn sàng hợp nhất vào develop)**
 
 ---
@@ -32,7 +32,8 @@
 | [`e3d0f6d`](https://github.com/LeAnhDung05/DesSpace/commit/e3d0f6dc549e5fea13430196e19edc9cebf57af9) | **Xóa bỏ fallback `items_map` cũ & cô lập đột biến không khớp:** Loại bỏ fallback tra cứu mảng tĩnh. Khi hàng đợi rỗng hoặc sản phẩm đột biến không thuộc đơn hàng, cô lập thành `manual_adjustment` (`order_id = null`, `order_item_id = null`). Bổ sung ma trận kiểm thử biến thể (Case N), bộ lọc từ chối muộn (Case O1-O3) và kiểm thử an toàn FIFO (Case P). |
 | [`5c24fdf`](https://github.com/LeAnhDung05/DesSpace/commit/5c24fdf8b1d9bf5c117b1897cbb1936b85848bb2) | **Báo cáo nghiệm thu & phát hành ban đầu:** Tổng hợp kết quả kiểm thử trên môi trường Staging Docker, chuẩn bị hồ sơ release gate. |
 | [`37ca37f`](https://github.com/LeAnhDung05/DesSpace/commit/37ca37fdc8d6c52f2043496c771ee02086e57bfd) | **Giải quyết các phát hiện Conditional GO (M4-REV-001 đến M4-REV-004):**<br>• **M4-REV-001:** Chuẩn hóa đối soát biến thể do cha quản lý (`parent_managed_shared` scope, truy vấn cha).<br>• **M4-REV-002:** Bảo vệ tính năng xuất CSV bằng Nonce (`wp_nonce_url`, `wp_verify_nonce`).<br>• **M4-REV-003:** Đăng ký Action Scheduler & shutdown hook (priority 999) dọn dẹp ngữ cảnh bộ nhớ.<br>• **M4-REV-004:** Đối soát sản phẩm chưa có lịch sử log trả về `insufficient_history` và `is_reconciled = false`.<br>• **Legacy Cleanup:** Xóa bỏ hoàn toàn code chết `build_order_items_map()` và key `'items_map'`.<br>• **Boundary:** Nâng priority của guard dọn dẹp late denial lên `PHP_INT_MAX`. |
-| **Latest** | **Giải quyết toàn diện các phát hiện Final Sign-Off (M4-REV-006 đến M4-REV-008):**<br>• **M4-REV-006:** Chuẩn hóa Exit Codes cho tất cả test runners: Bổ sung nhánh `exit(1)` khi có bất kỳ assertion thất bại hoặc thiếu kịch bản; bọc `run()` bằng `try/catch` bắt ngoại lệ; kiểm chứng bằng test giả lập fail thực tế trả về exit code 1.<br>• **M4-REV-007:** Xác minh End-to-End luồng Admin CSV Export: Tách `validate_export_request()` độc lập; bổ sung direct stream cho `export_csv()`; kiểm chứng đăng ký hook `admin_init`, từ chối missing nonce, từ chối invalid nonce, chặn guest không có quyền, cấp phép admin, URL sinh đúng nonce, và stream trực tiếp CSV có UTF-8 BOM, đúng header và dữ liệu lọc.<br>• **M4-REV-008:** Phân tích ranh giới cùng priority tại `PHP_INT_MAX` (Case U-2) & kiểm thử Action Scheduler thực tế trên Staging (Case T): Chạy trực tiếp action qua `ActionScheduler::runner()->process_action()`; xác minh dọn dẹp tự động khi thành công lẫn khi ném exception; xác minh cách ly đột biến tiếp theo; ghi nhận rõ kiến trúc FIFO của WordPress `WP_Hook` vào Known Limitations. |
+| [`3e3dd03`](https://github.com/LeAnhDung05/DesSpace/commit/3e3dd03abedc3a483fa05d0243652661c0e69fa4) | **Giải quyết toàn diện các phát hiện Final Sign-Off (M4-REV-006 đến M4-REV-008):**<br>• **M4-REV-006:** Chuẩn hóa Exit Codes cho tất cả test runners: Bổ sung nhánh `exit(1)` khi có bất kỳ assertion thất bại hoặc thiếu kịch bản; bọc `run()` bằng `try/catch` bắt ngoại lệ; kiểm chứng bằng test giả lập fail thực tế trả về exit code 1.<br>• **M4-REV-007:** Xác minh End-to-End luồng Admin CSV Export: Tách `validate_export_request()` độc lập; bổ sung direct stream cho `export_csv()`; kiểm chứng đăng ký hook `admin_init`, từ chối missing nonce, từ chối invalid nonce, chặn guest không có quyền, cấp phép admin, URL sinh đúng nonce, và stream trực tiếp CSV có UTF-8 BOM, đúng header và dữ liệu lọc.<br>• **M4-REV-008:** Phân tích ranh giới cùng priority tại `PHP_INT_MAX` (Case U-2) & kiểm thử Action Scheduler thực tế trên Staging (Case T): Chạy trực tiếp action qua `ActionScheduler::runner()->process_action()`; xác minh dọn dẹp tự động khi thành công lẫn khi ném exception; xác minh cách ly đột biến tiếp theo; ghi nhận rõ kiến trúc FIFO của WordPress `WP_Hook` vào Known Limitations. |
+| **Latest** | **Khắc phục lỗi cô lập ngữ cảnh khi bị từ chối tại cùng priority PHP_INT_MAX (M4-REV-009):**<br>• Bổ sung cơ chế Active Caller Verification Guard (`is_in_stock_caller()`) kết hợp theo dõi ngữ cảnh `expected_caller` (`wc_reduce_stock_levels`, `wc_increase_stock_levels`, `wc_restock_refunded_items`).<br>• Khi filter bên ngoài từ chối thao tác ở cùng priority `PHP_INT_MAX`, mọi đột biến kho thủ công tiếp theo trên CÙNG SẢN PHẨM sẽ kích hoạt `on_set_stock()`, phát hiện sai lệch call stack, lập tức dọn sạch toàn bộ context/FIFO queue (`clear_all_context()`) và ghi nhận chính xác thành `manual_adjustment` (`order_id = null`, `order_item_id = null`, `refund_id = null`).<br>• Bổ sung 3 ca kiểm thử thực tế Cases U-3, U-4, U-5 kiểm chứng trên cả 3 luồng: Trừ tồn, Hoàn tồn và Hoàn tiền restock. Nâng tổng số ca kiểm thử lên 72/72 PASS (100%), Exit Code 0. |
 
 ---
 
@@ -78,6 +79,21 @@
   - Toàn bộ thân hàm `run()` được bọc trong `try ... catch (\Throwable $e)` xuất thông báo lỗi và gọi `exit( 1 )`.
   - Đã kiểm chứng với test giả lập assertion `false`, runner lập tức dừng và trả về Exit Code: 1.
 
+### 3.6. M4-REV-009 — Khắc phục rò rỉ ngữ cảnh & gán nhầm thao tác thủ công khi filter từ chối ở cùng Priority PHP_INT_MAX
+- **Vấn đề (Root Cause):**  
+  Trong WordPress, các callback ở cùng priority được thực thi theo thứ tự thêm vào (FIFO). Khi một external plugin đăng ký filter từ chối (`return false`) tại `PHP_INT_MAX` sau khi M4 đã nạp guard, guard của M4 chạy trước và thấy `$can = true`. Filter bên ngoài chạy sau và trả về `false`. WooCommerce lập tức hủy thao tác và return mà không gọi các hook hành động (`woocommerce_reduce_order_stock`, `woocommerce_restore_order_stock`, v.v.).  
+  Hậu quả: Ngữ cảnh đơn hàng và hàng đợi FIFO (`items_queue`) vẫn tồn đọng trong bộ nhớ. Nếu ngay sau đó xuất hiện thao tác điều chỉnh kho thủ công trên **CÙNG SẢN PHẨM** trong cùng PHP process, `on_set_stock()` sẽ dequeue sản phẩm này từ hàng đợi cũ và gán nhầm thành event của đơn hàng đã bị từ chối (`order_id`, `order_item_id`, `event_type` sai lệch)!
+- **Giải pháp thiết kế (Active Caller Verification Guard):**  
+  1. Khi các hook WooCommerce (`on_can_reduce_order_stock`, `on_can_restore_order_stock`, `on_can_restock_refunded_items`) khởi tạo ngữ cảnh, M4 ghi nhận `expected_caller`:
+     - Giảm tồn đơn hàng: `expected_caller = 'wc_reduce_stock_levels'`
+     - Hoàn tồn hủy đơn: `expected_caller = 'wc_increase_stock_levels'`
+     - Hoàn tiền restock: `expected_caller = 'wc_restock_refunded_items'`
+  2. Tại `InventoryStockObserver::on_set_stock()`, M4 bổ sung phương thức kiểm tra vết thực thi nhẹ `is_in_stock_caller( array $allowed_callers )` dựa trên `debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 25)`:
+     - Nếu ngữ cảnh in-memory đang có `expected_caller`, M4 đối soát xem call stack hiện tại có chứa hàm WooCommerce tương ứng hay không.
+     - Nếu call stack **KHÔNG** chứa hàm tương ứng (chứng tỏ thao tác WooCommerce đã bị từ chối/abort từ trước đó và stock mutation hiện tại là độc lập), M4 lập tức kích hoạt `self::clear_all_context()`, hủy sạch toàn bộ `order_id`, `refund_id`, `order_item_id` và xóa sạch hàng đợi `items_queue`!
+     - Thao tác đột biến hiện tại được phân loại chính xác 100% thành `manual_adjustment` (`order_id = null`, `order_item_id = null`, `refund_id = null`).
+  3. Bổ sung 3 ca kiểm thử chuyên biệt **Case U-3, U-4, U-5** xác thực triệt để trên cả 3 luồng nghiệp vụ. Hoàn toàn bảo vệ hệ thống trước mọi hình thức xung đột hook priority.
+
 ---
 
 ## 4. THÔNG SỐ MÔI TRƯỜNG STAGING CHUẨN
@@ -100,14 +116,14 @@ Kết quả kiểm thử được thực thi và chứng minh trên môi trườ
 |:---:|---|---|:---:|:---:|:---:|
 | 1 | **Đơn vị & Ma trận truy vết (T01–T28)** | `tests/test-inventory-matrix.php` | 28 / 28 | **0** | **28 / 28 PASS (100%)** |
 | 2 | **Tích hợp Live WooCommerce & DB (M4-INT)** | `tests/test-inventory-integration-live.php` | 9 / 9 | **0** | **9 / 9 PASS (100%)** |
-| 3 | **Ngữ cảnh đơn hàng & Vòng đời tồn kho (Cases A–U)** | `tests/test-m4-order-context-live.php` | 24 / 24 | **0** | **24 / 24 PASS (100%)** |
+| 3 | **Ngữ cảnh đơn hàng & Vòng đời tồn kho (Cases A–U)** | `tests/test-m4-order-context-live.php` | 27 / 27 | **0** | **27 / 27 PASS (100%)** |
 | 4 | **UAT Đối soát vòng đời đơn hàng BACS (Phase 6D)** | `tests/uat-m4-lifecycle-reconciliation.php` | 8 / 8 bước | **0** | **8 / 8 PASS (100%)** |
 
-**TỔNG CỘNG: 69 / 69 TEST CASES PASSED (100%), TẤT CẢ RUNNER TRẢ EXIT CODE 0**
+**TỔNG CỘNG: 72 / 72 TEST CASES PASSED (100%), TẤT CẢ RUNNER TRẢ EXIT CODE 0**
 
 ---
 
-## 6. CHI TIẾT 24 CA KIỂM THỬ NGỮ CẢNH ĐƠN HÀNG (`Cases A–U`)
+## 6. CHI TIẾT 27 CA KIỂM THỬ NGỮ CẢNH ĐƠN HÀNG (`Cases A–U`)
 
 1. **Case A (Trừ tồn đơn hàng đơn dòng):** Trừ 20 → 17, ghi nhận `order_reduction`, `order_id` và `order_item_id`.
 2. **Case B (Đơn hàng nhiều sản phẩm):** Phân bổ chính xác line-item ID cho từng sản phẩm, không xung đột `event_key`.
@@ -154,6 +170,19 @@ Kết quả kiểm thử được thực thi và chứng minh trên môi trườ
     - Xác nhận in-memory context tạm thời còn lưu do thứ tự FIFO của WordPress `WP_Hook`.
     - Xác nhận cơ chế cô lập Case P bảo vệ an toàn: sản phẩm khác đột biến trong cùng tiến trình được gán `manual_adjustment` độc lập (`order_id = null`).
     - Dọn sạch ngữ cảnh qua `clear_all_context()`.
+25. **Case U-3 (Đột biến thủ công trên CÙNG SẢN PHẨM sau khi bị từ chối trừ tồn tại PHP_INT_MAX - M4-REV-009):**
+    - Filter bên ngoài tại `PHP_INT_MAX` từ chối trừ tồn (`return false`). WooCommerce hủy trừ tồn kho.
+    - Đột biến kho thủ công tiếp theo trên **CÙNG SẢN PHẨM** kích hoạt `on_set_stock()`.
+    - Active Caller Guard phát hiện call stack không phải `wc_reduce_stock_levels`, lập tức kích hoạt `clear_all_context()`, xóa sạch ngữ cảnh và hàng đợi FIFO.
+    - Ghi nhận chính xác 100% thành `manual_adjustment`, `order_id = null`, `order_item_id = null`, delta -6.0, stock sau thay đổi = 14.0.
+26. **Case U-4 (Đột biến thủ công trên CÙNG SẢN PHẨM sau khi bị từ chối hoàn tồn tại PHP_INT_MAX - M4-REV-009):**
+    - Filter bên ngoài tại `PHP_INT_MAX` từ chối hoàn tồn `wc_increase_stock_levels`. WooCommerce hủy hoàn tồn (kho giữ nguyên 15.0).
+    - Đột biến kho thủ công tiếp theo trên **CÙNG SẢN PHẨM** kích hoạt `on_set_stock()`.
+    - Active Caller Guard phát hiện call stack không phải `wc_increase_stock_levels`, dọn sạch context/queue, ghi nhận chuẩn xác `manual_adjustment`, delta +3.0, `order_id = null`, `order_item_id = null`.
+27. **Case U-5 (Đột biến thủ công trên CÙNG SẢN PHẨM sau khi bị từ chối hoàn tiền restock tại PHP_INT_MAX - M4-REV-009):**
+    - Filter bên ngoài tại `PHP_INT_MAX` từ chối `wc_restock_refunded_items`. WooCommerce hủy restock (kho giữ nguyên 15.0).
+    - Đột biến kho thủ công tiếp theo trên **CÙNG SẢN PHẨM** kích hoạt `on_set_stock()`.
+    - Active Caller Guard phát hiện call stack không phải `wc_restock_refunded_items`, dọn sạch context/queue, ghi nhận chuẩn xác `manual_adjustment`, delta +2.0, `refund_id = null`, `order_id = null`, `order_item_id = null`.
 
 ---
 
@@ -198,15 +227,15 @@ Trích xuất trực tiếp từ bảng `wp_despace_inventory_logs` trên contai
    Chỉ người dùng có quyền `manage_woocommerce` hoặc custom capability `view_despace_inventory_logs` mới được phép xem nhật ký và tải xuất CSV. Người dùng thông thường (customer/subscriber) bị chặn tuyệt đối (HTTP 403 Forbidden).
 4. **Vận hành Batch / CLI Script ngoài luồng chuẩn:**  
    Khi phát triển các script đồng bộ kho bên ngoài (WP-CLI command hoặc custom daemon dài hạn) không thông qua Action Scheduler hoặc không kết thúc bằng WordPress `shutdown`, bắt buộc phải bao bọc logic trong khối `try/finally` và gọi `\DeSpace\Inventory\Events\InventoryStockObserver::clear_all_context()` trong khối `finally` để đảm bảo cô lập bộ nhớ hoàn toàn.
-5. **Ranh giới thực thi cùng priority tại `PHP_INT_MAX`:**  
-   Trong kiến trúc hook của WordPress (`WP_Hook`), các callback có cùng priority được thực thi theo thứ tự FIFO (thứ tự thêm vào). Do đó, nếu một plugin bên thứ ba đăng ký filter từ chối tồn kho tại `PHP_INT_MAX` *sau* khi M4 đã nạp guard, guard của M4 sẽ chạy trước. Trong tình huống này, WooCommerce vẫn hủy trừ tồn an toàn (0 log trừ tồn, kho không đổi), nhưng in-memory context có thể lưu lại cho đến khi gặp hook dọn dẹp tiếp theo (`action_scheduler_after_execute`, `action_scheduler_failed_execution`, `shutdown`, hoặc đơn hàng tiếp theo). Đối với các sản phẩm khác đột biến trong cùng tiến trình, cơ chế cô lập Case P (kiểm tra hàng đợi rỗng theo thực thể) bảo đảm an toàn, ghi nhận chúng thành `manual_adjustment` độc lập.
+5. **Ranh giới thực thi cùng priority tại `PHP_INT_MAX` (Đã được bảo vệ toàn diện bởi M4-REV-009):**  
+   Trong kiến trúc hook của WordPress (`WP_Hook`), các callback có cùng priority được thực thi theo thứ tự FIFO (thứ tự thêm vào). Khi một plugin bên thứ ba đăng ký filter từ chối tồn kho tại `PHP_INT_MAX` *sau* khi M4 đã nạp guard, guard của M4 chạy trước và nhận `$can = true`. Tuy nhiên, với cơ chế **Active Caller Verification Guard** (`is_in_stock_caller()` và `expected_caller`) được bổ sung trong M4-REV-009, mọi thao tác điều chỉnh kho tiếp theo trong cùng tiến trình (kể cả trên **CÙNG SẢN PHẨM** hay sản phẩm khác) đều được kiểm tra vết thực thi thực tế đối soát với hàm gốc (`wc_reduce_stock_levels`, `wc_increase_stock_levels`, `wc_restock_refunded_items`). Nếu phát hiện sai lệch stack, M4 lập tức dọn sạch toàn bộ context và hàng đợi FIFO, bảo đảm 100% bản ghi được ghi nhận chính xác thành `manual_adjustment` (`order_id = null`, `order_item_id = null`, `refund_id = null`).
 
 ---
 
 ## 9. KẾT LUẬN & ĐỀ NGHỊ HỢP NHẤT (FINAL RELEASE GATE: GO)
 
-Mã nguồn PR #38 đã hoàn thành khắc phục và xác minh có kiểm chứng toàn bộ các phát hiện kỹ thuật (`M4-REV-001`, `M4-REV-002`, `M4-REV-003`, `M4-REV-004`, `M4-REV-006`, `M4-REV-007`, `M4-REV-008`), chuẩn hóa exit codes cho 100% test runners, xác minh luồng xuất CSV end-to-end, kiểm thử thực tế Action Scheduler trên Staging, phân tích ranh giới `PHP_INT_MAX` và kiểm chứng phát hiện sai lệch đối soát tồn kho thực tế.
+Mã nguồn PR #38 đã hoàn thành khắc phục và xác minh có kiểm chứng toàn bộ các phát hiện kỹ thuật (`M4-REV-001`, `M4-REV-002`, `M4-REV-003`, `M4-REV-004`, `M4-REV-006`, `M4-REV-007`, `M4-REV-008`, `M4-REV-009`), chuẩn hóa exit codes cho 100% test runners, xác minh luồng xuất CSV end-to-end, kiểm thử thực tế Action Scheduler trên Staging, bảo vệ tuyệt đối ranh giới `PHP_INT_MAX` bằng Active Caller Verification Guard, và kiểm chứng phát hiện sai lệch đối soát tồn kho thực tế.
 
-Tất cả 4 bộ kiểm thử đạt **100% PASS (69/69 test cases)** và đều trả **Exit Code: 0** trên môi trường Staging Docker MariaDB/HPOS.
+Tất cả 4 bộ kiểm thử đạt **100% PASS (72/72 test cases)** và đều trả **Exit Code: 0** trên môi trường Staging Docker MariaDB/HPOS.
 
 **Trạng thái nghiệm thu cuối cùng: GO (SẴN SÀNG MERGE VÀO DEVELOP).**

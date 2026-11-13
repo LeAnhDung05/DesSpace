@@ -1488,6 +1488,217 @@ $case_u2_ok = $u2_wc_aborted_ok && $u2_context_lingered && $unrelated_isolated_o
 record_test( 'U-2', 'Same-priority PHP_INT_MAX boundary analysis & FIFO isolation verification', $case_u2_ok );
 
 // -------------------------------------------------------------------------
+// Case U-3: Same Product Manual Mutation After Denied Reduction at PHP_INT_MAX (M4-REV-009)
+// -------------------------------------------------------------------------
+$prod_u3 = new \WC_Product_Simple();
+$prod_u3->set_name( 'Case U3 Same-Product Reduction ' . time() );
+$prod_u3->set_manage_stock( true );
+$prod_u3->set_stock_quantity( 20 );
+$prod_u3_id = $prod_u3->save();
+
+$order_u3 = wc_create_order();
+$order_u3->add_product( $prod_u3, 5 );
+$order_u3->calculate_totals();
+$order_u3->save();
+$order_u3_id = $order_u3->get_id();
+
+// External filter at PHP_INT_MAX returns false after M4 registered guard
+$external_filter_u3 = function( $can, $order ) {
+	return false;
+};
+add_filter( 'woocommerce_can_reduce_order_stock', $external_filter_u3, PHP_INT_MAX, 2 );
+
+// Attempt reduction: external filter denies it
+wc_reduce_stock_levels( $order_u3 );
+remove_filter( 'woocommerce_can_reduce_order_stock', $external_filter_u3, PHP_INT_MAX );
+
+$stock_u3_after_abort = (float) wc_get_product( $prod_u3_id )->get_stock_quantity();
+$u3_reduction_logs    = (int) $wpdb->get_var( $wpdb->prepare(
+	"SELECT COUNT(*) FROM {$log_table} WHERE order_id = %d AND event_type = %s",
+	$order_u3_id,
+	'order_reduction'
+) );
+
+// Verify reduction was aborted by WooCommerce
+$u3_aborted_ok = ( 20.0 === $stock_u3_after_abort ) && ( 0 === $u3_reduction_logs );
+
+// Context initially lingered due to same-priority addition order
+$u3_lingered_ok = \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
+
+// Now perform a manual mutation ON THE SAME PRODUCT THAT WAS IN THE DENIED ORDER!
+$prod_u3->set_stock_quantity( 14 );
+$prod_u3->save();
+
+$log_u3 = $wpdb->get_row( $wpdb->prepare(
+	"SELECT * FROM {$log_table} WHERE product_id = %d ORDER BY id DESC LIMIT 1",
+	$prod_u3_id
+), ARRAY_A );
+
+// Verify: Active caller check detected that mutation was NOT from wc_reduce_stock_levels.
+// Correctly classified as manual_adjustment, order_id is null, order_item_id is null!
+$u3_isolated_ok = ! empty( $log_u3 )
+	&& empty( $log_u3['order_id'] )
+	&& empty( $log_u3['order_item_id'] )
+	&& ( 'manual_adjustment' === $log_u3['event_type'] )
+	&& ( -6.0 === (float) $log_u3['quantity_delta'] )
+	&& ( 14.0 === (float) $log_u3['stock_after'] );
+
+// Verify context is now completely cleaned
+$u3_clean_ok = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context()
+	&& ! \DeSpace\Inventory\Events\InventoryOrderContext::has_queued_items();
+
+$case_u3_ok = $u3_aborted_ok && $u3_lingered_ok && $u3_isolated_ok && $u3_clean_ok;
+record_test( 'U-3', 'Same-product manual mutation after denied reduction at PHP_INT_MAX (M4-REV-009)', $case_u3_ok );
+
+// -------------------------------------------------------------------------
+// Case U-4: Same Product Manual Mutation After Denied Restoration at PHP_INT_MAX (M4-REV-009)
+// -------------------------------------------------------------------------
+$prod_u4 = new \WC_Product_Simple();
+$prod_u4->set_name( 'Case U4 Same-Product Restoration ' . time() );
+$prod_u4->set_manage_stock( true );
+$prod_u4->set_stock_quantity( 20 );
+$prod_u4_id = $prod_u4->save();
+
+$order_u4 = wc_create_order();
+$order_u4->add_product( $prod_u4, 5 );
+$order_u4->calculate_totals();
+$order_u4->save();
+$order_u4_id = $order_u4->get_id();
+
+// Legitimate reduction first (20 -> 15)
+wc_reduce_stock_levels( $order_u4 );
+$stock_u4_reduced = (float) wc_get_product( $prod_u4_id )->get_stock_quantity();
+
+// External filter at PHP_INT_MAX denies restoration
+$external_filter_u4 = function( $can, $order ) {
+	return false;
+};
+add_filter( 'woocommerce_can_restore_order_stock', $external_filter_u4, PHP_INT_MAX, 2 );
+
+// Attempt restoration: external filter denies it
+wc_increase_stock_levels( $order_u4 );
+remove_filter( 'woocommerce_can_restore_order_stock', $external_filter_u4, PHP_INT_MAX );
+
+$stock_u4_after_abort = (float) wc_get_product( $prod_u4_id )->get_stock_quantity();
+$u4_restore_logs      = (int) $wpdb->get_var( $wpdb->prepare(
+	"SELECT COUNT(*) FROM {$log_table} WHERE order_id = %d AND event_type = %s",
+	$order_u4_id,
+	'stock_restoration'
+) );
+
+// Verify restoration was aborted by WooCommerce (stock remains 15.0, zero restoration logs)
+$u4_aborted_ok = ( 15.0 === $stock_u4_reduced )
+	&& ( 15.0 === $stock_u4_after_abort )
+	&& ( 0 === $u4_restore_logs );
+
+// Context initially lingered due to same-priority addition order
+$u4_lingered_ok = \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
+
+// Now perform a manual mutation ON THE SAME PRODUCT THAT WAS IN THE DENIED ORDER!
+$prod_u4 = wc_get_product( $prod_u4_id );
+$prod_u4->set_stock_quantity( 18 );
+$prod_u4->save();
+
+$log_u4 = $wpdb->get_row( $wpdb->prepare(
+	"SELECT * FROM {$log_table} WHERE product_id = %d ORDER BY id DESC LIMIT 1",
+	$prod_u4_id
+), ARRAY_A );
+
+// Verify: Active caller check detected that mutation was NOT from wc_increase_stock_levels.
+// Correctly classified as manual_adjustment, order_id is null, order_item_id is null!
+$u4_isolated_ok = ! empty( $log_u4 )
+	&& empty( $log_u4['order_id'] )
+	&& empty( $log_u4['order_item_id'] )
+	&& ( 'manual_adjustment' === $log_u4['event_type'] )
+	&& ( 3.0 === (float) $log_u4['quantity_delta'] )
+	&& ( 18.0 === (float) $log_u4['stock_after'] );
+
+// Verify context is now completely cleaned
+$u4_clean_ok = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context()
+	&& ! \DeSpace\Inventory\Events\InventoryOrderContext::has_queued_items();
+
+$case_u4_ok = $u4_aborted_ok && $u4_lingered_ok && $u4_isolated_ok && $u4_clean_ok;
+record_test( 'U-4', 'Same-product manual mutation after denied restoration at PHP_INT_MAX (M4-REV-009)', $case_u4_ok );
+
+// -------------------------------------------------------------------------
+// Case U-5: Same Product Manual Mutation After Denied Refund Restock at PHP_INT_MAX (M4-REV-009)
+// -------------------------------------------------------------------------
+$prod_u5 = new \WC_Product_Simple();
+$prod_u5->set_name( 'Case U5 Same-Product Refund ' . time() );
+$prod_u5->set_manage_stock( true );
+$prod_u5->set_stock_quantity( 20 );
+$prod_u5_id = $prod_u5->save();
+
+$order_u5 = wc_create_order();
+$item_u5_id = $order_u5->add_product( $prod_u5, 5 );
+$order_u5->calculate_totals();
+$order_u5->save();
+$order_u5_id = $order_u5->get_id();
+
+// Legitimate reduction first (20 -> 15)
+wc_reduce_stock_levels( $order_u5 );
+$order_u5 = wc_get_order( $order_u5_id ); // Reload order with _reduced_stock meta
+
+// External filter at PHP_INT_MAX denies refund restock
+$external_filter_u5 = function( $can, $order, $items ) {
+	return false;
+};
+add_filter( 'woocommerce_can_restock_refunded_items', $external_filter_u5, PHP_INT_MAX, 3 );
+
+// Attempt direct refund restock: external filter denies it
+wc_restock_refunded_items( $order_u5, array(
+	$item_u5_id => array(
+		'qty'          => 2,
+		'refund_total' => 10,
+		'refund_tax'   => array(),
+	),
+) );
+remove_filter( 'woocommerce_can_restock_refunded_items', $external_filter_u5, PHP_INT_MAX );
+
+$stock_u5_after_abort = (float) wc_get_product( $prod_u5_id )->get_stock_quantity();
+$u5_refund_logs       = (int) $wpdb->get_var( $wpdb->prepare(
+	"SELECT COUNT(*) FROM {$log_table} WHERE order_id = %d AND event_type = %s",
+	$order_u5_id,
+	'refund_restock'
+) );
+
+// Verify refund restock was aborted by WooCommerce (stock remains 15.0, zero refund_restock logs)
+$u5_aborted_ok = ( 15.0 === $stock_u5_after_abort ) && ( 0 === $u5_refund_logs );
+
+// Context initially lingered due to same-priority addition order
+$u5_lingered_ok = \DeSpace\Inventory\Events\InventoryOrderContext::has_refund_context()
+	|| \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context()
+	|| \DeSpace\Inventory\Events\InventoryOrderContext::has_queued_items();
+
+// Now perform a manual mutation ON THE SAME PRODUCT THAT WAS IN THE DENIED REFUND!
+$prod_u5 = wc_get_product( $prod_u5_id );
+$prod_u5->set_stock_quantity( 17 );
+$prod_u5->save();
+
+$log_u5 = $wpdb->get_row( $wpdb->prepare(
+	"SELECT * FROM {$log_table} WHERE product_id = %d ORDER BY id DESC LIMIT 1",
+	$prod_u5_id
+), ARRAY_A );
+
+// Verify: Active caller check detected that mutation was NOT from wc_restock_refunded_items.
+// Correctly classified as manual_adjustment, refund_id is null, order_id is null, order_item_id is null!
+$u5_isolated_ok = ! empty( $log_u5 )
+	&& empty( $log_u5['refund_id'] )
+	&& empty( $log_u5['order_id'] )
+	&& empty( $log_u5['order_item_id'] )
+	&& ( 'manual_adjustment' === $log_u5['event_type'] )
+	&& ( 2.0 === (float) $log_u5['quantity_delta'] )
+	&& ( 17.0 === (float) $log_u5['stock_after'] );
+
+// Verify context is now completely cleaned
+$u5_clean_ok = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_refund_context()
+	&& ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context()
+	&& ! \DeSpace\Inventory\Events\InventoryOrderContext::has_queued_items();
+
+$case_u5_ok = $u5_aborted_ok && $u5_lingered_ok && $u5_isolated_ok && $u5_clean_ok;
+record_test( 'U-5', 'Same-product manual mutation after denied refund restock at PHP_INT_MAX (M4-REV-009)', $case_u5_ok );
+
+// -------------------------------------------------------------------------
 // Cleanup
 // -------------------------------------------------------------------------
 $order_a->delete( true );
@@ -1506,6 +1717,12 @@ $order_q1->delete( true );
 $order_q2->delete( true );
 $order_u1->delete( true );
 $order_u2->delete( true );
+$order_u3->delete( true );
+$order_u4->delete( true );
+if ( isset( $refund_u5 ) && $refund_u5 instanceof \WC_Order_Refund ) {
+	$refund_u5->delete( true );
+}
+$order_u5->delete( true );
 $prod_a->delete( true );
 $prod_b1->delete( true );
 $prod_b2->delete( true );
@@ -1534,6 +1751,9 @@ $prod_r4->delete( true );
 $prod_t->delete( true );
 $prod_u1->delete( true );
 $prod_u2->delete( true );
+$prod_u3->delete( true );
+$prod_u4->delete( true );
+$prod_u5->delete( true );
 $prod_unrelated->delete( true );
 
 // -------------------------------------------------------------------------
@@ -1551,8 +1771,8 @@ $total_cases = count( $test_results );
 $passed_cases = count( array_filter( $test_results, function( $r ) { return $r['passed']; } ) );
 printf( "SUMMARY: %d Total Cases | %d Passed | %d Failed\n", $total_cases, $passed_cases, ( $total_cases - $passed_cases ) );
 
-if ( $all_cases_passed && 24 === $total_cases ) {
-	echo ">>> ALL 24 TEST CASES (A - U) PASSED ON LIVE WOOCOMMERCE & MYSQL! <<<\n";
+if ( $all_cases_passed && 27 === $total_cases ) {
+	echo ">>> ALL 27 TEST CASES (A - U) PASSED ON LIVE WOOCOMMERCE & MYSQL! <<<\n";
 	echo "========================================================================\n";
 	exit( 0 );
 } else {

@@ -30,6 +30,7 @@ class InventoryOrderContext {
 		'event_type'          => null,
 		'event_source'        => null,
 		'source_operation_id' => null,
+		'expected_caller'     => null,
 		'items_queue'         => array(),
 	);
 
@@ -147,6 +148,7 @@ class InventoryOrderContext {
 			'event_type'          => null,
 			'event_source'        => null,
 			'source_operation_id' => null,
+			'expected_caller'     => null,
 			'items_queue'         => array(),
 		);
 	}

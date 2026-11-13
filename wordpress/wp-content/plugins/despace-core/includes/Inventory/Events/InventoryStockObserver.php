@@ -81,6 +81,28 @@ class InventoryStockObserver {
 	}
 
 	/**
+	 * Verify if current call stack contains any of the specified caller functions.
+	 *
+	 * Used to protect against stale in-memory order context when an external filter
+	 * denies a stock operation at PHP_INT_MAX (M4-REV-009).
+	 *
+	 * @param array<string> $allowed_callers List of function names to match in backtrace.
+	 * @return bool
+	 */
+	private static function is_in_stock_caller( array $allowed_callers ): bool {
+		$trace           = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 25 );
+		$allowed_lowered = array_map( 'strtolower', $allowed_callers );
+
+		foreach ( $trace as $frame ) {
+			if ( isset( $frame['function'] ) && in_array( strtolower( $frame['function'] ), $allowed_lowered, true ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Final check on stock reduction permission: clear context if operation was denied.
 	 *
 	 * @param bool  $can   Whether stock reduction is permitted.
@@ -139,6 +161,7 @@ class InventoryStockObserver {
 		}
 
 		self::on_before_reduce_order_stock( $order );
+		InventoryOrderContext::set( array( 'expected_caller' => 'wc_reduce_stock_levels' ) );
 		return $can;
 	}
 
@@ -194,6 +217,7 @@ class InventoryStockObserver {
 		}
 
 		self::on_before_restore_order_stock( $order );
+		InventoryOrderContext::set( array( 'expected_caller' => 'wc_increase_stock_levels' ) );
 		return $can;
 	}
 
@@ -260,6 +284,7 @@ class InventoryStockObserver {
 			'event_type'          => InventoryEvent::TYPE_REFUND_RESTOCK,
 			'event_source'        => InventoryEvent::SOURCE_REFUND,
 			'source_operation_id' => 'refund_restock_' . $order_id . '_' . ( $refund_id ?? 0 ),
+			'expected_caller'     => 'wc_restock_refunded_items',
 		) );
 
 		// Enqueue eligible refunded line items in WooCommerce iteration order (FIFO).
@@ -368,6 +393,25 @@ class InventoryStockObserver {
 		$event_source  = $context['event_source'] ?? null;
 		$event_type    = $context['event_type'] ?? null;
 		$order_item_id = $context['order_item_id'] ?? null;
+
+		// Verify whether the active stock mutation is genuinely executing within
+		// the expected WooCommerce order/refund lifecycle function.
+		// If context exists with an expected caller, but the call stack does not match,
+		// the operation was denied/aborted (e.g. by a late external filter at PHP_INT_MAX)
+		// and any lingering context or queue is stale (M4-REV-009).
+		$expected_caller = $context['expected_caller'] ?? null;
+		if ( ! empty( $expected_caller ) ) {
+			if ( ! self::is_in_stock_caller( array( $expected_caller ) ) ) {
+				// The active stock mutation is NOT called by the expected WooCommerce operation.
+				// Purge stale context and queue completely to guarantee strict isolation.
+				self::clear_all_context();
+				$order_id      = null;
+				$refund_id     = null;
+				$order_item_id = null;
+				$event_source  = null;
+				$event_type    = null;
+			}
+		}
 
 		// If inside order or refund context, resolve exact order_item_id via FIFO queue.
 		$stock_entity_id = absint( $product->get_stock_managed_by_id() );
