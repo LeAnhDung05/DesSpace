@@ -1682,12 +1682,9 @@ $u5_refund_logs       = (int) $wpdb->get_var( $wpdb->prepare(
 // Verify refund restock was aborted by WooCommerce (stock remains 15.0, zero refund_restock logs)
 $u5_aborted_ok = ( 15.0 === $stock_u5_after_abort ) && ( 0 === $u5_refund_logs ) && ( $refund_u5_id > 0 );
 
-// Verify real refund_id existed in context before manual adjustment
+// Verify real refund_id existed in context before manual adjustment (strict equality, no fallback)
 $u5_context_before = \DeSpace\Inventory\Events\InventoryOrderContext::get();
-$u5_lingered_ok    = ( (int) ( $u5_context_before['refund_id'] ?? 0 ) === $refund_u5_id )
-	|| \DeSpace\Inventory\Events\InventoryOrderContext::has_refund_context()
-	|| \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context()
-	|| \DeSpace\Inventory\Events\InventoryOrderContext::has_queued_items();
+$u5_lingered_ok    = ( $refund_u5_id > 0 ) && ( (int) ( $u5_context_before['refund_id'] ?? 0 ) === $refund_u5_id );
 
 // Now perform a manual mutation ON THE SAME PRODUCT THAT WAS IN THE DENIED REFUND!
 $prod_u5 = wc_get_product( $prod_u5_id );
@@ -1700,11 +1697,11 @@ $log_u5 = $wpdb->get_row( $wpdb->prepare(
 ), ARRAY_A );
 
 // Verify: Active caller check detected that mutation was NOT from wc_restock_refunded_items.
-// Correctly classified as manual_adjustment, refund_id is null, order_id is null, order_item_id is null!
+// Correctly classified as manual_adjustment, and all 3 IDs (order_id, refund_id, order_item_id) are strictly null!
 $u5_isolated_ok = ! empty( $log_u5 )
-	&& empty( $log_u5['refund_id'] )
-	&& empty( $log_u5['order_id'] )
-	&& empty( $log_u5['order_item_id'] )
+	&& is_null( $log_u5['refund_id'] )
+	&& is_null( $log_u5['order_id'] )
+	&& is_null( $log_u5['order_item_id'] )
 	&& ( 'manual_adjustment' === $log_u5['event_type'] )
 	&& ( 2.0 === (float) $log_u5['quantity_delta'] )
 	&& ( 17.0 === (float) $log_u5['stock_after'] );
@@ -2023,6 +2020,186 @@ $case_u8_ok = ( $refund_u8_id > 0 ) && $u8_nested_executed && $u8a_restock_ok &&
 record_test( 'U-8', 'Nested stock mutation during active refund restock preserves refund context and attribution (M4-REV-010)', $case_u8_ok );
 
 // -------------------------------------------------------------------------
+// Case U-9: Nested mutation via wc_update_product_stock() (M4-REV-011)
+// -------------------------------------------------------------------------
+// Scenario: An active WooCommerce reduction processes Product A.
+// An intermediate callback directly calls wc_update_product_stock() to mutate Product B.
+// Requirements:
+// 1. Product B nested mutation must be recorded as manual_adjustment, order/refund/item IDs = null.
+// 2. FIFO queue must NOT be dequeued or corrupted by Product B's nested mutation.
+// 3. Legitimate reduction of Product A and Product B must record exact order and line-item IDs.
+$prod_u9a = new \WC_Product_Simple();
+$prod_u9a->set_name( 'Case U9A ' . time() );
+$prod_u9a->set_regular_price( '10.00' );
+$prod_u9a->set_manage_stock( true );
+$prod_u9a->set_stock_quantity( 20 );
+$prod_u9a_id = $prod_u9a->save();
+
+$prod_u9b = new \WC_Product_Simple();
+$prod_u9b->set_name( 'Case U9B ' . time() );
+$prod_u9b->set_regular_price( '15.00' );
+$prod_u9b->set_manage_stock( true );
+$prod_u9b->set_stock_quantity( 20 );
+$prod_u9b_id = $prod_u9b->save();
+
+$order_u9 = wc_create_order();
+$item_u9a_id = $order_u9->add_product( $prod_u9a, 2 );
+$item_u9b_id = $order_u9->add_product( $prod_u9b, 3 );
+$order_u9->calculate_totals();
+$order_u9->save();
+$order_u9_id = $order_u9->get_id();
+
+$u9_nested_executed = false;
+$u9_hook = function( $product ) use ( &$u9_nested_executed, $prod_u9a_id, $prod_u9b ) {
+	if ( ! $u9_nested_executed && $product->get_id() === $prod_u9a_id ) {
+		$u9_nested_executed = true;
+		// Intermediate callback directly calls wc_update_product_stock() on Product B
+		wc_update_product_stock( $prod_u9b, 26, 'set' );
+	}
+};
+add_action( 'woocommerce_product_set_stock', $u9_hook, 10, 1 );
+
+wc_reduce_stock_levels( $order_u9 );
+remove_action( 'woocommerce_product_set_stock', $u9_hook, 10 );
+
+// Verify Product A reduction
+$log_u9a = $wpdb->get_row( $wpdb->prepare(
+	"SELECT * FROM {$log_table} WHERE product_id = %d AND order_id = %d AND event_type = %s ORDER BY id DESC LIMIT 1",
+	$prod_u9a_id,
+	$order_u9_id,
+	'order_reduction'
+), ARRAY_A );
+
+$u9a_reduction_ok = ! empty( $log_u9a )
+	&& ( (int) $log_u9a['order_item_id'] === $item_u9a_id )
+	&& ( -2.0 === (float) $log_u9a['quantity_delta'] )
+	&& ( 18.0 === (float) $log_u9a['stock_after'] );
+
+// Verify Product B nested mutation via wc_update_product_stock()
+$log_u9b_nested = $wpdb->get_row( $wpdb->prepare(
+	"SELECT * FROM {$log_table} WHERE product_id = %d AND event_type = %s ORDER BY id DESC LIMIT 1",
+	$prod_u9b_id,
+	'manual_adjustment'
+), ARRAY_A );
+
+$u9b_nested_ok = ! empty( $log_u9b_nested )
+	&& is_null( $log_u9b_nested['order_id'] )
+	&& is_null( $log_u9b_nested['order_item_id'] )
+	&& is_null( $log_u9b_nested['refund_id'] )
+	&& ( 6.0 === (float) $log_u9b_nested['quantity_delta'] )
+	&& ( 26.0 === (float) $log_u9b_nested['stock_after'] );
+
+// Verify legitimate Product B reduction
+$log_u9b_reduction = $wpdb->get_row( $wpdb->prepare(
+	"SELECT * FROM {$log_table} WHERE product_id = %d AND order_id = %d AND event_type = %s ORDER BY id DESC LIMIT 1",
+	$prod_u9b_id,
+	$order_u9_id,
+	'order_reduction'
+), ARRAY_A );
+
+$u9b_reduction_ok = ! empty( $log_u9b_reduction )
+	&& ( (int) $log_u9b_reduction['order_item_id'] === $item_u9b_id )
+	&& ( -3.0 === (float) $log_u9b_reduction['quantity_delta'] )
+	&& ( 23.0 === (float) $log_u9b_reduction['stock_after'] );
+
+$case_u9_ok = $u9_nested_executed && $u9a_reduction_ok && $u9b_nested_ok && $u9b_reduction_ok;
+record_test( 'U-9', 'Nested mutation via wc_update_product_stock() isolated without FIFO dequeue disruption (M4-REV-011)', $case_u9_ok );
+
+// -------------------------------------------------------------------------
+// Case U-10: Unrecognized mutation call path (M4-REV-011)
+// -------------------------------------------------------------------------
+// Scenario: While wc_reduce_stock_levels is active as an ancestor, an unrecognized
+// test harness / custom mutator path triggers stock notification for Product B.
+// Requirements:
+// 1. Mutation must NOT be classified as direct (classified as unknown).
+// 2. Must be isolated locally as manual_adjustment without order attribution.
+// 3. Parent order context and FIFO queue must NOT be destroyed.
+// 4. Product A and Product B legitimate reductions succeed with exact item attribution.
+if ( ! function_exists( 'despace_test_unrecognized_harness_updater' ) ) {
+	function despace_test_unrecognized_harness_updater( $product, $new_stock ) {
+		$product->set_stock_quantity( $new_stock );
+		// Trigger hook directly from this custom harness function
+		do_action( 'woocommerce_product_set_stock', $product );
+	}
+}
+
+$prod_u10a = new \WC_Product_Simple();
+$prod_u10a->set_name( 'Case U10A ' . time() );
+$prod_u10a->set_regular_price( '10.00' );
+$prod_u10a->set_manage_stock( true );
+$prod_u10a->set_stock_quantity( 20 );
+$prod_u10a_id = $prod_u10a->save();
+
+$prod_u10b = new \WC_Product_Simple();
+$prod_u10b->set_name( 'Case U10B ' . time() );
+$prod_u10b->set_regular_price( '15.00' );
+$prod_u10b->set_manage_stock( true );
+$prod_u10b->set_stock_quantity( 20 );
+$prod_u10b_id = $prod_u10b->save();
+
+$order_u10 = wc_create_order();
+$item_u10a_id = $order_u10->add_product( $prod_u10a, 2 );
+$item_u10b_id = $order_u10->add_product( $prod_u10b, 3 );
+$order_u10->calculate_totals();
+$order_u10->save();
+$order_u10_id = $order_u10->get_id();
+
+$u10_unrecognized_executed = false;
+$u10_hook = function( $product ) use ( &$u10_unrecognized_executed, $prod_u10a_id, $prod_u10b ) {
+	if ( ! $u10_unrecognized_executed && $product->get_id() === $prod_u10a_id ) {
+		$u10_unrecognized_executed = true;
+		// Trigger stock mutation via unrecognized custom harness function
+		despace_test_unrecognized_harness_updater( $prod_u10b, 28 );
+	}
+};
+add_action( 'woocommerce_product_set_stock', $u10_hook, 10, 1 );
+
+wc_reduce_stock_levels( $order_u10 );
+remove_action( 'woocommerce_product_set_stock', $u10_hook, 10 );
+
+// Verify Product A reduction
+$log_u10a = $wpdb->get_row( $wpdb->prepare(
+	"SELECT * FROM {$log_table} WHERE product_id = %d AND order_id = %d AND event_type = %s ORDER BY id DESC LIMIT 1",
+	$prod_u10a_id,
+	$order_u10_id,
+	'order_reduction'
+), ARRAY_A );
+
+$u10a_reduction_ok = ! empty( $log_u10a )
+	&& ( (int) $log_u10a['order_item_id'] === $item_u10a_id )
+	&& ( -2.0 === (float) $log_u10a['quantity_delta'] )
+	&& ( 18.0 === (float) $log_u10a['stock_after'] );
+
+// Verify Product B unrecognized mutation was isolated as manual_adjustment
+$log_u10b_unrec = $wpdb->get_row( $wpdb->prepare(
+	"SELECT * FROM {$log_table} WHERE product_id = %d AND event_type = %s ORDER BY id DESC LIMIT 1",
+	$prod_u10b_id,
+	'manual_adjustment'
+), ARRAY_A );
+
+$u10b_unrec_ok = ! empty( $log_u10b_unrec )
+	&& is_null( $log_u10b_unrec['order_id'] )
+	&& is_null( $log_u10b_unrec['order_item_id'] )
+	&& is_null( $log_u10b_unrec['refund_id'] )
+	&& ( 8.0 === (float) $log_u10b_unrec['quantity_delta'] )
+	&& ( 28.0 === (float) $log_u10b_unrec['stock_after'] );
+
+// Verify legitimate Product B reduction
+$log_u10b_reduction = $wpdb->get_row( $wpdb->prepare(
+	"SELECT * FROM {$log_table} WHERE product_id = %d AND order_id = %d AND event_type = %s ORDER BY id DESC LIMIT 1",
+	$prod_u10b_id,
+	$order_u10_id,
+	'order_reduction'
+), ARRAY_A );
+
+$u10b_reduction_ok = ! empty( $log_u10b_reduction )
+	&& ( (int) $log_u10b_reduction['order_item_id'] === $item_u10b_id )
+	&& ( -3.0 === (float) $log_u10b_reduction['quantity_delta'] );
+
+$case_u10_ok = $u10_unrecognized_executed && $u10a_reduction_ok && $u10b_unrec_ok && $u10b_reduction_ok;
+record_test( 'U-10', 'Unrecognized mutation call path isolated locally without order attribution or queue loss (M4-REV-011)', $case_u10_ok, 'Unrecognized intermediate call path isolated locally (WooCommerce single source preserved)' );
+
+// -------------------------------------------------------------------------
 // Cleanup
 // -------------------------------------------------------------------------
 $order_a->delete( true );
@@ -2053,6 +2230,8 @@ if ( isset( $refund_u8 ) && $refund_u8 instanceof \WC_Order_Refund ) {
 	$refund_u8->delete( true );
 }
 $order_u8->delete( true );
+$order_u9->delete( true );
+$order_u10->delete( true );
 $prod_a->delete( true );
 $prod_b1->delete( true );
 $prod_b2->delete( true );
@@ -2090,6 +2269,10 @@ $prod_u7a->delete( true );
 $prod_u7b->delete( true );
 $prod_u8a->delete( true );
 $prod_u8b->delete( true );
+$prod_u9a->delete( true );
+$prod_u9b->delete( true );
+$prod_u10a->delete( true );
+$prod_u10b->delete( true );
 $prod_unrelated->delete( true );
 
 // -------------------------------------------------------------------------
@@ -2107,8 +2290,8 @@ $total_cases = count( $test_results );
 $passed_cases = count( array_filter( $test_results, function( $r ) { return $r['passed']; } ) );
 printf( "SUMMARY: %d Total Cases | %d Passed | %d Failed\n", $total_cases, $passed_cases, ( $total_cases - $passed_cases ) );
 
-if ( $all_cases_passed && 30 === $total_cases ) {
-	echo ">>> ALL 30 TEST CASES (A - U) PASSED ON LIVE WOOCOMMERCE & MYSQL! <<<\n";
+if ( $all_cases_passed && 32 === $total_cases ) {
+	echo ">>> ALL 32 TEST CASES (A - U) PASSED ON LIVE WOOCOMMERCE & MYSQL! <<<\n";
 	echo "========================================================================\n";
 	exit( 0 );
 } else {

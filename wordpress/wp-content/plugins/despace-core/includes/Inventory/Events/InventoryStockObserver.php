@@ -84,63 +84,106 @@ class InventoryStockObserver {
 	 * Classify the relationship between current stock mutation and active WooCommerce operation.
 	 *
 	 * Detects whether the current stock mutation is:
-	 * - 'direct': The mutation was directly initiated by the expected WooCommerce operation
-	 *             (e.g. wc_reduce_stock_levels calling wc_update_product_stock directly).
-	 * - 'nested': An expected WooCommerce operation is active on the call stack, but the current
-	 *             mutation was initiated by an intermediate caller (e.g. plugin hook callback) (M4-REV-010).
-	 * - 'stale':  Context has an expected caller, but that function is nowhere in the backtrace,
-	 *             indicating the WooCommerce operation was denied/aborted earlier (M4-REV-009).
-	 * - 'none':   No expected caller configured in context.
+	 * - 'direct':  The mutation was directly initiated by the expected WooCommerce operation
+	 *              (e.g. wc_reduce_stock_levels calling wc_update_product_stock directly).
+	 * - 'nested':  An expected WooCommerce operation is active on the call stack (ancestor), but
+	 *              the current mutation was initiated by an intermediate caller (e.g. plugin hook callback) (M4-REV-010).
+	 * - 'unknown': An expected WooCommerce operation is active on the call stack (ancestor), but
+	 *              the mutation was initiated through an unrecognized call path or custom mutator (M4-REV-011).
+	 * - 'stale':   Context has an expected caller, but that function is nowhere in the backtrace,
+	 *              indicating the WooCommerce operation was denied/aborted earlier (M4-REV-009).
+	 * - 'none':    No expected caller configured in context.
+	 *
+	 * Strict Guard (M4-REV-011):
+	 * Under NO circumstance will 'direct' be returned based on simple existence of expected_caller
+	 * anywhere in the backtrace. 'direct' is strictly reserved for verified mutators whose immediate
+	 * caller matches expected_caller exactly.
 	 *
 	 * @param string|null $expected_caller Expected WooCommerce function name.
-	 * @return string 'direct'|'nested'|'stale'|'none'
+	 * @return string 'direct'|'nested'|'unknown'|'stale'|'none'
 	 */
 	private static function classify_stock_mutation_caller( ?string $expected_caller ): string {
 		if ( empty( $expected_caller ) ) {
 			return 'none';
 		}
 
-		$trace         = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 35 );
-		$mutator_index = null;
+		// Use full backtrace without depth truncation to guarantee deep call stacks
+		// (e.g. custom checkouts, payment gateways, complex hook chains) are never lost.
+		$trace            = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS );
+		$expected_lowered = strtolower( $expected_caller );
 
-		foreach ( $trace as $i => $frame ) {
-			$func = strtolower( $frame['function'] ?? '' );
-			if ( 'wc_update_product_stock' === $func ) {
-				$mutator_index = $i;
+		// 1. Check whether expected_caller exists anywhere in the call stack.
+		$expected_caller_index = null;
+		foreach ( $trace as $idx => $frame ) {
+			if ( isset( $frame['function'] ) && strtolower( $frame['function'] ) === $expected_lowered ) {
+				$expected_caller_index = $idx;
 				break;
-			} elseif ( 'save' === $func && isset( $frame['class'] ) && false !== strpos( $frame['class'], 'WC_Product' ) ) {
-				$mutator_index = $i;
-				break;
+			}
+		}
+
+		// If expected_caller is nowhere in the stack, the operation was aborted or completed earlier.
+		if ( null === $expected_caller_index ) {
+			return 'stale';
+		}
+
+		// 2. Identify the specific mutator frame that triggered THIS stock change notification.
+		// Step past WordPress hook dispatch frames (do_action, WP_Hook methods, apply_filters).
+		$dispatch_index = null;
+		$mutator_index  = null;
+		$trace_count    = count( $trace );
+
+		for ( $i = 1; $i < $trace_count; $i++ ) {
+			$func = strtolower( $trace[ $i ]['function'] ?? '' );
+			$cls  = strtolower( $trace[ $i ]['class'] ?? '' );
+			if ( in_array( $func, array( 'do_action', 'do_action_ref_array', 'apply_filters', 'apply_filters_ref_array' ), true ) || 'wp_hook' === $cls ) {
+				$dispatch_index = $i;
+			} else {
+				if ( null !== $dispatch_index ) {
+					$mutator_index = $i;
+					break;
+				}
 			}
 		}
 
 		if ( null === $mutator_index ) {
-			// Fallback: check if expected caller is anywhere in stack.
-			$expected_lowered = strtolower( $expected_caller );
-			foreach ( $trace as $frame ) {
-				if ( isset( $frame['function'] ) && strtolower( $frame['function'] ) === $expected_lowered ) {
-					return 'direct';
-				}
+			// Direct invocation of on_set_stock without WordPress hook machinery.
+			$mutator_index = 2;
+		}
+
+		$mutator_func = strtolower( $trace[ $mutator_index ]['function'] ?? '' );
+
+		// 3. Verification Path A: wc_update_product_stock()
+		if ( 'wc_update_product_stock' === $mutator_func ) {
+			$immediate_caller = strtolower( $trace[ $mutator_index + 1 ]['function'] ?? '' );
+			if ( $immediate_caller === $expected_lowered ) {
+				return 'direct';
 			}
-			return 'stale';
+			// expected_caller was found at $expected_caller_index (> $mutator_index + 1),
+			// proving this is a nested stock mutation initiated by an intermediate caller.
+			return 'nested';
 		}
 
-		$immediate_caller = strtolower( $trace[ $mutator_index + 1 ]['function'] ?? '' );
-		$expected_lowered = strtolower( $expected_caller );
-
-		if ( $immediate_caller === $expected_lowered ) {
-			return 'direct';
-		}
-
-		// Check if expected_caller is higher up in the stack.
-		$trace_count = count( $trace );
-		for ( $j = $mutator_index + 2; $j < $trace_count; $j++ ) {
-			if ( strtolower( $trace[ $j ]['function'] ?? '' ) === $expected_lowered ) {
-				return 'nested';
+		// 4. Verification Path B: WC_Product::save() / data store
+		$save_index = null;
+		for ( $k = $mutator_index; $k < $trace_count; $k++ ) {
+			$f = strtolower( $trace[ $k ]['function'] ?? '' );
+			if ( 'save' === $f && isset( $trace[ $k ]['class'] ) && false !== strpos( $trace[ $k ]['class'], 'WC_Product' ) ) {
+				$save_index = $k;
+				break;
 			}
 		}
 
-		return 'stale';
+		if ( null !== $save_index ) {
+			$immediate_caller = strtolower( $trace[ $save_index + 1 ]['function'] ?? '' );
+			if ( $immediate_caller === $expected_lowered ) {
+				return 'direct';
+			}
+			return 'nested';
+		}
+
+		// 5. Unrecognized mutator: expected_caller is on the stack, but the direct mutator
+		// call path cannot be verified. Strictly isolate mutation locally; never treat as direct.
+		return 'unknown';
 	}
 
 	/**
@@ -410,18 +453,6 @@ class InventoryStockObserver {
 			return;
 		}
 
-		// Calculate delta.
-		$delta = 0.0;
-		if ( null !== $stock_before && null !== $stock_after_float ) {
-			$delta = $stock_after_float - $stock_before;
-		} elseif ( null === $stock_before && null !== $stock_after_float ) {
-			$delta = $stock_after_float;
-		}
-
-		if ( abs( $delta ) < 0.000001 ) {
-			return;
-		}
-
 		// Determine product vs variation entity.
 		$product_id   = $item_id;
 		$variation_id = null;
@@ -429,6 +460,40 @@ class InventoryStockObserver {
 		if ( $product->is_type( 'variation' ) ) {
 			$variation_id = $item_id;
 			$product_id   = $product->get_parent_id();
+		}
+
+		// Calculate delta.
+		$delta = 0.0;
+		if ( null !== $stock_before && null !== $stock_after_float ) {
+			$delta = $stock_after_float - $stock_before;
+		} elseif ( null === $stock_before && null !== $stock_after_float ) {
+			// Fallback: deduce previous stock from the latest logged stock_after in inventory logs table.
+			global $wpdb;
+			$log_table  = $wpdb->prefix . 'despace_inventory_logs';
+			$last_stock = null;
+			if ( null !== $variation_id ) {
+				$last_stock = $wpdb->get_var( $wpdb->prepare(
+					"SELECT stock_after FROM {$log_table} WHERE product_id = %d AND variation_id = %d ORDER BY id DESC LIMIT 1",
+					$product_id,
+					$variation_id
+				) );
+			} else {
+				$last_stock = $wpdb->get_var( $wpdb->prepare(
+					"SELECT stock_after FROM {$log_table} WHERE product_id = %d AND variation_id IS NULL ORDER BY id DESC LIMIT 1",
+					$product_id
+				) );
+			}
+
+			if ( null !== $last_stock && '' !== $last_stock ) {
+				$stock_before = (float) $last_stock;
+				$delta        = $stock_after_float - $stock_before;
+			} else {
+				$delta = $stock_after_float;
+			}
+		}
+
+		if ( abs( $delta ) < 0.000001 ) {
+			return;
 		}
 
 		// Contextual resolution.
@@ -454,8 +519,8 @@ class InventoryStockObserver {
 				$order_item_id = null;
 				$event_source  = null;
 				$event_type    = null;
-			} elseif ( 'nested' === $caller_status ) {
-				// A nested stock mutation occurred while a WooCommerce operation is active (M4-REV-010).
+			} elseif ( 'nested' === $caller_status || 'unknown' === $caller_status ) {
+				// A nested or unrecognized mutation occurred while a WooCommerce operation is active (M4-REV-010, M4-REV-011).
 				// Isolate THIS mutation as manual_adjustment without destroying the active
 				// order context or the FIFO queue for the outer WooCommerce operation.
 				$order_id      = null;
