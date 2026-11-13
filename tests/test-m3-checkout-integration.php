@@ -99,6 +99,7 @@ class M3CheckoutLiveIntegrationRunner {
 			$zone_lc = new \WC_Shipping_Zone();
 			$zone_lc->set_zone_name( 'M3 Test Lao Cai VN:15 ' . time() );
 			$zone_lc->add_location( 'VN:15', 'state' );
+			$zone_lc->set_zone_order( 1 );
 			$zone_lc->save();
 			$rate_instance_lc         = $zone_lc->add_shipping_method( 'flat_rate' );
 			$this->created_zone_ids[] = $zone_lc->get_id();
@@ -108,6 +109,7 @@ class M3CheckoutLiveIntegrationRunner {
 			$zone_pc->set_zone_name( 'M3 Test Postcode Hub ' . time() );
 			$zone_pc->add_location( 'VN', 'country' );
 			$zone_pc->add_location( '331000', 'postcode' );
+			$zone_pc->set_zone_order( 0 );
 			$zone_pc->save();
 			$rate_instance_pc         = $zone_pc->add_shipping_method( 'flat_rate' );
 			$this->created_zone_ids[] = $zone_pc->get_id();
@@ -162,6 +164,8 @@ class M3CheckoutLiveIntegrationRunner {
 				);
 
 				// Retry same cart hash pending order should resume rather than creating duplicate orders.
+				// In MariaDB/MySQL, ReserveStock timestamp uses 1s resolution; 1s interval allows ON DUPLICATE KEY UPDATE to increment affected rows.
+				sleep( 1 );
 				WC()->session->set( 'order_awaiting_payment', $order_id );
 				$resumed_id = $checkout->create_order( $guest_posted );
 				$this->record( 'M3-CHK-INT-03', 'Native cart_hash prevents duplicate orders on retry', (int) $resumed_id === (int) $order_id );
