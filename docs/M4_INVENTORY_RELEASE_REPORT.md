@@ -5,7 +5,7 @@
 **Pull Request:** [#38](https://github.com/LeAnhDung05/DesSpace/pull/38)  
 **Nhánh nguồn:** `feature/member04-inventory`  
 **Nhánh đích:** `develop`  
-**Trạng thái kiểm thử:** 72 / 72 Test Cases PASS (100%), Exit Code: 0 trên cả 4 bộ test Staging (WordPress 7.1.4, WooCommerce 11.1.2, MariaDB 10.11, HPOS)  
+**Trạng thái kiểm thử:** 75 / 75 Test Cases PASS (100%), Exit Code: 0 trên cả 4 bộ test Staging (WordPress 7.1.4, WooCommerce 11.1.2, MariaDB 10.11, HPOS)  
 **Đánh giá kỹ thuật:** **GO (Đạt chuẩn release, sẵn sàng hợp nhất vào develop)**
 
 ---
@@ -33,7 +33,8 @@
 | [`5c24fdf`](https://github.com/LeAnhDung05/DesSpace/commit/5c24fdf8b1d9bf5c117b1897cbb1936b85848bb2) | **Báo cáo nghiệm thu & phát hành ban đầu:** Tổng hợp kết quả kiểm thử trên môi trường Staging Docker, chuẩn bị hồ sơ release gate. |
 | [`37ca37f`](https://github.com/LeAnhDung05/DesSpace/commit/37ca37fdc8d6c52f2043496c771ee02086e57bfd) | **Giải quyết các phát hiện Conditional GO (M4-REV-001 đến M4-REV-004):**<br>• **M4-REV-001:** Chuẩn hóa đối soát biến thể do cha quản lý (`parent_managed_shared` scope, truy vấn cha).<br>• **M4-REV-002:** Bảo vệ tính năng xuất CSV bằng Nonce (`wp_nonce_url`, `wp_verify_nonce`).<br>• **M4-REV-003:** Đăng ký Action Scheduler & shutdown hook (priority 999) dọn dẹp ngữ cảnh bộ nhớ.<br>• **M4-REV-004:** Đối soát sản phẩm chưa có lịch sử log trả về `insufficient_history` và `is_reconciled = false`.<br>• **Legacy Cleanup:** Xóa bỏ hoàn toàn code chết `build_order_items_map()` và key `'items_map'`.<br>• **Boundary:** Nâng priority của guard dọn dẹp late denial lên `PHP_INT_MAX`. |
 | [`3e3dd03`](https://github.com/LeAnhDung05/DesSpace/commit/3e3dd03abedc3a483fa05d0243652661c0e69fa4) | **Giải quyết toàn diện các phát hiện Final Sign-Off (M4-REV-006 đến M4-REV-008):**<br>• **M4-REV-006:** Chuẩn hóa Exit Codes cho tất cả test runners: Bổ sung nhánh `exit(1)` khi có bất kỳ assertion thất bại hoặc thiếu kịch bản; bọc `run()` bằng `try/catch` bắt ngoại lệ; kiểm chứng bằng test giả lập fail thực tế trả về exit code 1.<br>• **M4-REV-007:** Xác minh End-to-End luồng Admin CSV Export: Tách `validate_export_request()` độc lập; bổ sung direct stream cho `export_csv()`; kiểm chứng đăng ký hook `admin_init`, từ chối missing nonce, từ chối invalid nonce, chặn guest không có quyền, cấp phép admin, URL sinh đúng nonce, và stream trực tiếp CSV có UTF-8 BOM, đúng header và dữ liệu lọc.<br>• **M4-REV-008:** Phân tích ranh giới cùng priority tại `PHP_INT_MAX` (Case U-2) & kiểm thử Action Scheduler thực tế trên Staging (Case T): Chạy trực tiếp action qua `ActionScheduler::runner()->process_action()`; xác minh dọn dẹp tự động khi thành công lẫn khi ném exception; xác minh cách ly đột biến tiếp theo; ghi nhận rõ kiến trúc FIFO của WordPress `WP_Hook` vào Known Limitations. |
-| **Latest** | **Khắc phục lỗi cô lập ngữ cảnh khi bị từ chối tại cùng priority PHP_INT_MAX (M4-REV-009):**<br>• Bổ sung cơ chế Active Caller Verification Guard (`is_in_stock_caller()`) kết hợp theo dõi ngữ cảnh `expected_caller` (`wc_reduce_stock_levels`, `wc_increase_stock_levels`, `wc_restock_refunded_items`).<br>• Khi filter bên ngoài từ chối thao tác ở cùng priority `PHP_INT_MAX`, mọi đột biến kho thủ công tiếp theo trên CÙNG SẢN PHẨM sẽ kích hoạt `on_set_stock()`, phát hiện sai lệch call stack, lập tức dọn sạch toàn bộ context/FIFO queue (`clear_all_context()`) và ghi nhận chính xác thành `manual_adjustment` (`order_id = null`, `order_item_id = null`, `refund_id = null`).<br>• Bổ sung 3 ca kiểm thử thực tế Cases U-3, U-4, U-5 kiểm chứng trên cả 3 luồng: Trừ tồn, Hoàn tồn và Hoàn tiền restock. Nâng tổng số ca kiểm thử lên 72/72 PASS (100%), Exit Code 0. |
+| [`a2bae1d`](https://github.com/LeAnhDung05/DesSpace/commit/a2bae1d8dc0ee6c196cb552b408e9d4237e0eab0) | **Khắc phục lỗi cô lập ngữ cảnh khi bị từ chối tại cùng priority PHP_INT_MAX (M4-REV-009):**<br>• Bổ sung cơ chế Active Caller Verification Guard (`is_in_stock_caller()`) kết hợp theo dõi ngữ cảnh `expected_caller` (`wc_reduce_stock_levels`, `wc_increase_stock_levels`, `wc_restock_refunded_items`).<br>• Khi filter bên ngoài từ chối thao tác ở cùng priority `PHP_INT_MAX`, mọi đột biến kho thủ công tiếp theo trên CÙNG SẢN PHẨM sẽ kích hoạt `on_set_stock()`, phát hiện sai lệch call stack, dọn sạch toàn bộ context/FIFO queue (`clear_all_context()`) và ghi nhận chính xác thành `manual_adjustment` (`order_id = null`, `order_item_id = null`, `refund_id = null`).<br>• Bổ sung 3 ca kiểm thử thực tế Cases U-3, U-4, U-5 kiểm chứng trên cả 3 luồng: Trừ tồn, Hoàn tồn và Hoàn tiền restock. Nâng tổng số ca kiểm thử lên 72/72 PASS (100%), Exit Code 0. |
+| **Latest** | **Cô lập đột biến tồn kho lồng nhau & Phân loại người gọi trực tiếp (M4-REV-010):**<br>• Thay thế kiểm tra boolean `is_in_stock_caller()` bằng `classify_stock_mutation_caller()` phân loại 4 trạng thái: `direct`, `nested`, `stale`, `none`.<br>• Khi phát hiện `nested` (hàm WooCommerce là ancestor trên stack nhưng đột biến do callback/hook trung gian gọi), cô lập cục bộ đột biến đó thành `manual_adjustment` (`order_id = null`, `order_item_id = null`, `refund_id = null`), TUYỆT ĐỐI KHÔNG xóa ngữ cảnh hoặc hàng đợi FIFO của đơn hàng cha đang xử lý.<br>• Theo dõi `active_stock_entity_id` trong `on_filter_order_item_quantity()` và đối soát với `stock_entity_id` hiện tại để chặn hành vi chiếm dụng line item trái phép.<br>• Hoàn thiện Case U-5 với thực thể hoàn tiền thực tế `WC_Order_Refund` (`refund_id > 0`), bổ sung Cases U-6, U-7, U-8 kiểm chứng đột biến lồng nhau trên cả 3 luồng (Trừ tồn, Hoàn tồn, Hoàn tiền restock). Nâng tổng số ca kiểm thử lên 75/75 PASS (100%), Exit Code 0. |
 
 ---
 
@@ -92,7 +93,25 @@
      - Nếu ngữ cảnh in-memory đang có `expected_caller`, M4 đối soát xem call stack hiện tại có chứa hàm WooCommerce tương ứng hay không.
      - Nếu call stack **KHÔNG** chứa hàm tương ứng (chứng tỏ thao tác WooCommerce đã bị từ chối/abort từ trước đó và stock mutation hiện tại là độc lập), M4 lập tức kích hoạt `self::clear_all_context()`, hủy sạch toàn bộ `order_id`, `refund_id`, `order_item_id` và xóa sạch hàng đợi `items_queue`!
      - Thao tác đột biến hiện tại được phân loại chính xác 100% thành `manual_adjustment` (`order_id = null`, `order_item_id = null`, `refund_id = null`).
-  3. Bổ sung 3 ca kiểm thử chuyên biệt **Case U-3, U-4, U-5** xác thực triệt để trên cả 3 luồng nghiệp vụ. Hoàn toàn bảo vệ hệ thống trước mọi hình thức xung đột hook priority.
+  3. Bổ sung 3 ca kiểm thử chuyên biệt **Case U-3, U-4, U-5** xác thực triệt để trên cả 3 luồng nghiệp vụ. Case U-5 được xác thực với đối tượng hoàn tiền thực tế `WC_Order_Refund` (`refund_id > 0`). Hoàn toàn bảo vệ hệ thống trước mọi hình thức xung đột hook priority.
+
+### 3.7. M4-REV-010 — Cô lập đột biến tồn kho lồng nhau (Nested Stock Mutation) và Phân loại người gọi trực tiếp
+- **Vấn đề (Root Cause):**  
+  M4-REV-009 xử lý triệt để tình huống đột biến thủ công diễn ra sau khi thao tác WooCommerce đã bị từ chối/kết thúc (`stale` context). Tuy nhiên, nếu một plugin bên thứ ba móc vào hook hành động (ví dụ `woocommerce_product_set_stock`) trong lúc hàm WooCommerce (`wc_reduce_stock_levels`, `wc_increase_stock_levels`, `wc_restock_refunded_items`) đang chạy cho Sản phẩm A, và plugin đó thực hiện thay đổi số lượng tồn kho của Sản phẩm B:
+  1. Trong call stack, hàm WooCommerce gốc (`wc_reduce_stock_levels`, v.v.) vẫn tồn tại ở các khung stack tổ tiên (ancestor frames).
+  2. Việc chỉ kiểm tra sự tồn tại boolean đơn thuần của hàm WooCommerce trong backtrace sẽ ngộ nhận đột biến của Sản phẩm B là thuộc về thao tác đơn hàng của Sản phẩm A.
+  3. Hậu quả: Đột biến thủ công của Sản phẩm B bị gán nhầm thành sự kiện đơn hàng của Sản phẩm A; hoặc nếu đột biến này kích hoạt xóa context, toàn bộ ngữ cảnh và hàng đợi FIFO của các sản phẩm còn lại trong đơn hàng sẽ bị xóa sổ; hoặc trong luồng hoàn tồn, đột biến của B sẽ "cướp" mất phần tử trong hàng đợi FIFO dành cho B, khiến thao tác hoàn tồn thật sự diễn ra sau đó bị mất ngữ cảnh và bị xếp nhầm thành `manual_adjustment`.
+- **Giải pháp thiết kế (Direct/Nested/Stale Caller Classification):**  
+  1. Thay thế kiểm tra boolean `is_in_stock_caller()` bằng `classify_stock_mutation_caller(?string $expected_caller): string` phân loại 4 trạng thái:
+     - `'direct'`: `wc_update_product_stock` hoặc `$product->save()` được gọi TRỰC TIẾP bởi chính hàm WooCommerce dự kiến (`wc_reduce_stock_levels`, `wc_increase_stock_levels`, `wc_restock_refunded_items`).
+     - `'nested'`: Hàm WooCommerce dự kiến có nằm trong call stack (ancestor), nhưng người gọi trực tiếp mutation là một hàm callback/hook trung gian.
+     - `'stale'`: Có `expected_caller` nhưng hàm đó hoàn toàn không có trong call stack (thao tác bị từ chối/abort từ trước).
+     - `'none'`: Không có ngữ cảnh đơn hàng/hoàn tiền.
+  2. Tại `InventoryStockObserver::on_set_stock()`:
+     - Khi trạng thái là `'stale'`: Kích hoạt `self::clear_all_context()` dọn sạch bộ nhớ (bảo vệ M4-REV-009).
+     - Khi trạng thái là `'nested'`: Chỉ nullify các biến ngữ cảnh cục bộ (`$order_id = null`, `$order_item_id = null`, `$refund_id = null`, v.v.) cho RIÊNG đột biến lồng nhau này để ghi nhận thành `manual_adjustment`. TUYỆT ĐỐI KHÔNG xóa ngữ cảnh in-memory và KHÔNG dequeue hàng đợi FIFO của đơn hàng đang chạy (bảo vệ M4-REV-010).
+     - Bổ sung theo dõi `'active_stock_entity_id'` trong `on_filter_order_item_quantity()` và đối soát với `stock_entity_id` hiện tại tại `on_set_stock()`. Nếu không khớp, cô lập thành `manual_adjustment`.
+  3. Bổ sung và kiểm chứng có kiểm chứng 3 ca kiểm thử **Case U-6, Case U-7, Case U-8** trên cả 3 luồng nghiệp vụ. Nâng tổng số ca kiểm thử lên 75/75 PASS (100%), Exit Code 0.
 
 ---
 
@@ -116,14 +135,14 @@ Kết quả kiểm thử được thực thi và chứng minh trên môi trườ
 |:---:|---|---|:---:|:---:|:---:|
 | 1 | **Đơn vị & Ma trận truy vết (T01–T28)** | `tests/test-inventory-matrix.php` | 28 / 28 | **0** | **28 / 28 PASS (100%)** |
 | 2 | **Tích hợp Live WooCommerce & DB (M4-INT)** | `tests/test-inventory-integration-live.php` | 9 / 9 | **0** | **9 / 9 PASS (100%)** |
-| 3 | **Ngữ cảnh đơn hàng & Vòng đời tồn kho (Cases A–U)** | `tests/test-m4-order-context-live.php` | 27 / 27 | **0** | **27 / 27 PASS (100%)** |
+| 3 | **Ngữ cảnh đơn hàng & Vòng đời tồn kho (Cases A–U)** | `tests/test-m4-order-context-live.php` | 30 / 30 | **0** | **30 / 30 PASS (100%)** |
 | 4 | **UAT Đối soát vòng đời đơn hàng BACS (Phase 6D)** | `tests/uat-m4-lifecycle-reconciliation.php` | 8 / 8 bước | **0** | **8 / 8 PASS (100%)** |
 
-**TỔNG CỘNG: 72 / 72 TEST CASES PASSED (100%), TẤT CẢ RUNNER TRẢ EXIT CODE 0**
+**TỔNG CỘNG: 75 / 75 TEST CASES PASSED (100%), TẤT CẢ RUNNER TRẢ EXIT CODE 0**
 
 ---
 
-## 6. CHI TIẾT 27 CA KIỂM THỬ NGỮ CẢNH ĐƠN HÀNG (`Cases A–U`)
+## 6. CHI TIẾT 30 CA KIỂM THỬ NGỮ CẢNH ĐƠN HÀNG (`Cases A–U`)
 
 1. **Case A (Trừ tồn đơn hàng đơn dòng):** Trừ 20 → 17, ghi nhận `order_reduction`, `order_id` và `order_item_id`.
 2. **Case B (Đơn hàng nhiều sản phẩm):** Phân bổ chính xác line-item ID cho từng sản phẩm, không xung đột `event_key`.
@@ -179,10 +198,24 @@ Kết quả kiểm thử được thực thi và chứng minh trên môi trườ
     - Filter bên ngoài tại `PHP_INT_MAX` từ chối hoàn tồn `wc_increase_stock_levels`. WooCommerce hủy hoàn tồn (kho giữ nguyên 15.0).
     - Đột biến kho thủ công tiếp theo trên **CÙNG SẢN PHẨM** kích hoạt `on_set_stock()`.
     - Active Caller Guard phát hiện call stack không phải `wc_increase_stock_levels`, dọn sạch context/queue, ghi nhận chuẩn xác `manual_adjustment`, delta +3.0, `order_id = null`, `order_item_id = null`.
-27. **Case U-5 (Đột biến thủ công trên CÙNG SẢN PHẨM sau khi bị từ chối hoàn tiền restock tại PHP_INT_MAX - M4-REV-009):**
+27. **Case U-5 (Đột biến thủ công trên CÙNG SẢN PHẨM sau khi bị từ chối hoàn tiền restock tại PHP_INT_MAX với Real Refund - M4-REV-009):**
+    - Tạo đối tượng hoàn tiền thực tế `WC_Order_Refund` (`refund_id > 0`).
     - Filter bên ngoài tại `PHP_INT_MAX` từ chối `wc_restock_refunded_items`. WooCommerce hủy restock (kho giữ nguyên 15.0).
+    - Xác nhận `refund_id > 0` thực tế tồn tại trong ngữ cảnh trước khi đột biến.
     - Đột biến kho thủ công tiếp theo trên **CÙNG SẢN PHẨM** kích hoạt `on_set_stock()`.
     - Active Caller Guard phát hiện call stack không phải `wc_restock_refunded_items`, dọn sạch context/queue, ghi nhận chuẩn xác `manual_adjustment`, delta +2.0, `refund_id = null`, `order_id = null`, `order_item_id = null`.
+28. **Case U-6 (Đột biến lồng nhau trong khi đang trừ tồn đơn hàng - M4-REV-010):**
+    - Đơn hàng 2 sản phẩm A & B. Khi Sản phẩm A đang giảm tồn, hook bên ngoài kích hoạt tăng tồn Sản phẩm B.
+    - M4 phân loại người gọi của B là `'nested'`, cô lập thành `manual_adjustment` (`order_id = null`, `order_item_id = null`, delta +5.0), không phá vỡ ngữ cảnh đơn hàng.
+    - Sản phẩm A ghi nhận đúng `order_reduction` (item A), và Sản phẩm B sau đó được trừ tồn chính xác `order_reduction` (item B, delta -3.0).
+29. **Case U-7 (Đột biến lồng nhau trong khi đang hoàn tồn đơn hàng - M4-REV-010):**
+    - Khi Sản phẩm A đang hoàn tồn trong `wc_increase_stock_levels`, hook bên ngoài kích hoạt giảm tồn Sản phẩm B.
+    - M4 phân loại người gọi của B là `'nested'`, cô lập thành `manual_adjustment` (`order_id = null`, `order_item_id = null`, delta -2.0).
+    - Hàng đợi FIFO của Sản phẩm B không bị chiếm dụng trái phép; Sản phẩm B sau đó hoàn tồn chuẩn xác với `stock_restoration` và đúng `order_item_id` (delta +3.0).
+30. **Case U-8 (Đột biến lồng nhau trong khi đang hoàn tiền restock - M4-REV-010):**
+    - Đơn hàng có refund thực tế cho cả Sản phẩm A & B. Khi A đang restock từ refund, hook bên ngoài kích hoạt giảm tồn Sản phẩm B.
+    - M4 phân loại người gọi của B là `'nested'`, cô lập thành `manual_adjustment` (`order_id = null`, `refund_id = null`, `order_item_id = null`, delta -3.0).
+    - Cả 2 sản phẩm A & B sau đó đều hoàn tất restock chính xác với `refund_restock`, kế thừa đúng `order_id`, `refund_id` thực tế và `order_item_id`.
 
 ---
 
@@ -191,26 +224,22 @@ Kết quả kiểm thử được thực thi và chứng minh trên môi trườ
 Trích xuất trực tiếp từ bảng `wp_despace_inventory_logs` trên container MariaDB 10.11 (`bttts5-db`) trong phiên chạy kiểm thử mới nhất:
 
 ```text
-+-----+------------------+-------------------+--------------+------------+--------------+----------+---------------+-----------+--------+-------+
-| id  | event_key        | event_type        | event_source | product_id | variation_id | order_id | order_item_id | refund_id | delta  | after |
-+-----+------------------+-------------------+--------------+------------+--------------+----------+---------------+-----------+--------+-------+
-| 742 | 93c83769c0d38101 | refund_restock    | refund       | 2656       | NULL         | 2657     | 639           | 2658      | +1.0   | 18.0  |
-| 741 | ad9350cb058e3926 | order_reduction   | order        | 2656       | NULL         | 2657     | 639           | NULL      | -3.0   | 17.0  |
-| 739 | a3ea3834125b29c1 | stock_restoration | order        | 2640       | NULL         | 2642     | 637           | NULL      | +3.0   | 20.0  |
-| 738 | 51048b29f798e604 | manual_adjustment | system       | 2641       | NULL         | NULL     | NULL          | NULL      | +5.0   | 15.0  |
-| 737 | b35bf320c156637b | order_reduction   | order        | 2640       | NULL         | 2642     | 637           | NULL      | -3.0   | 17.0  |
-| 734 | c7256561f7db16f4 | manual_adjustment | system       | 2637       | NULL         | NULL     | NULL          | NULL      | +2.0   | 9.0   |
-| 733 | a8c4b14d8dc3b5c6 | order_reduction   | order        | 2637       | NULL         | 2638     | 635           | NULL      | -3.0   | 7.0   |
-| 731 | 18454fcddcc3ef61 | manual_adjustment | system       | 2635       | NULL         | NULL     | NULL          | NULL      | +5.0   | 12.0  |
-| 730 | d748e718bbf14fb2 | order_reduction   | order        | 2635       | NULL         | 2636     | 634           | NULL      | -3.0   | 7.0   |
-| 728 | abf5339c7b9588b3 | manual_adjustment | system       | 2633       | NULL         | NULL     | NULL          | NULL      | +4.0   | 14.0  |
-| 726 | db7ce3d1797c413b | stock_restoration | order        | 2629       | NULL         | 2631     | 631           | NULL      | +2.0   | 20.0  |
-| 725 | dd6ae6ee788a1835 | refund_restock    | refund       | 2629       | NULL         | 2631     | 631           | 2632      | +1.0   | 18.0  |
-| 724 | c24c30c80088d929 | order_reduction   | order        | 2629       | NULL         | 2631     | 631           | NULL      | -3.0   | 17.0  |
-| 722 | cf0b5e4c6c04fdf8 | stock_restoration | order        | 2625       | 2626         | 2627     | 629           | NULL      | +2.0   | 15.0  |
-| 721 | 8e5bbefbb49f8027 | refund_restock    | refund       | 2625       | 2626         | 2627     | 629           | 2628      | +2.0   | 13.0  |
-| 720 | e55cfa8ba932e6fc | order_reduction   | order        | 2625       | 2626         | 2627     | 629           | NULL      | -4.0   | 11.0  |
-+-----+------------------+-------------------+--------------+------------+--------------+----------+---------------+-----------+--------+-------+
++------+------------------+-------------------+--------------+------------+--------------+----------+---------------+-----------+--------+-------+
+| id   | event_key        | event_type        | event_source | product_id | variation_id | order_id | order_item_id | refund_id | delta  | after |
++------+------------------+-------------------+--------------+------------+--------------+----------+---------------+-----------+--------+-------+
+| 1686 | 90c32f284bcc8172 | refund_restock    | refund       | 3176       | NULL         | 3177     | 936           | 3178      | +1.0   | 18.0  |
+| 1685 | dd5a7adc11396905 | order_reduction   | order        | 3176       | NULL         | 3177     | 936           | NULL      | -3.0   | 17.0  |
+| 1683 | d66494559a0f6bad | refund_restock    | refund       | 3173       | NULL         | 3174     | 933           | 3175      | +2.0   | 16.0  |
+| 1682 | 6021614fa40fdfae | manual_adjustment | system       | 3173       | NULL         | NULL     | NULL          | NULL      | -3.0   | 14.0  |
+| 1681 | d4c4741c1c2af219 | refund_restock    | refund       | 3172       | NULL         | 3174     | 932           | 3175      | +1.0   | 19.0  |
+| 1680 | f4c772e7ba418e24 | order_reduction   | order        | 3173       | NULL         | 3174     | 933           | NULL      | -3.0   | 17.0  |
+| 1679 | 7ee8da3b430c1ded | order_reduction   | order        | 3172       | NULL         | 3174     | 932           | NULL      | -2.0   | 18.0  |
+| 1676 | d3c405af1350be06 | stock_restoration | order        | 3170       | NULL         | 3171     | 931           | NULL      | +3.0   | 18.0  |
+| 1675 | 25fca339534a886c | manual_adjustment | system       | 3170       | NULL         | NULL     | NULL          | NULL      | -2.0   | 15.0  |
+| 1674 | 6e7c7d8b79706384 | stock_restoration | order        | 3169       | NULL         | 3171     | 930           | NULL      | +2.0   | 20.0  |
+| 1673 | b52b369e1d17841e | order_reduction   | order        | 3170       | NULL         | 3171     | 931           | NULL      | -3.0   | 17.0  |
+| 1672 | 21d3e520f2c02378 | order_reduction   | order        | 3169       | NULL         | 3171     | 930           | NULL      | -2.0   | 18.0  |
++------+------------------+-------------------+--------------+------------+--------------+----------+---------------+-----------+--------+-------+
 ```
 
 ---
@@ -227,15 +256,18 @@ Trích xuất trực tiếp từ bảng `wp_despace_inventory_logs` trên contai
    Chỉ người dùng có quyền `manage_woocommerce` hoặc custom capability `view_despace_inventory_logs` mới được phép xem nhật ký và tải xuất CSV. Người dùng thông thường (customer/subscriber) bị chặn tuyệt đối (HTTP 403 Forbidden).
 4. **Vận hành Batch / CLI Script ngoài luồng chuẩn:**  
    Khi phát triển các script đồng bộ kho bên ngoài (WP-CLI command hoặc custom daemon dài hạn) không thông qua Action Scheduler hoặc không kết thúc bằng WordPress `shutdown`, bắt buộc phải bao bọc logic trong khối `try/finally` và gọi `\DeSpace\Inventory\Events\InventoryStockObserver::clear_all_context()` trong khối `finally` để đảm bảo cô lập bộ nhớ hoàn toàn.
-5. **Ranh giới thực thi cùng priority tại `PHP_INT_MAX` (Đã được bảo vệ toàn diện bởi M4-REV-009):**  
-   Trong kiến trúc hook của WordPress (`WP_Hook`), các callback có cùng priority được thực thi theo thứ tự FIFO (thứ tự thêm vào). Khi một plugin bên thứ ba đăng ký filter từ chối tồn kho tại `PHP_INT_MAX` *sau* khi M4 đã nạp guard, guard của M4 chạy trước và nhận `$can = true`. Tuy nhiên, với cơ chế **Active Caller Verification Guard** (`is_in_stock_caller()` và `expected_caller`) được bổ sung trong M4-REV-009, mọi thao tác điều chỉnh kho tiếp theo trong cùng tiến trình (kể cả trên **CÙNG SẢN PHẨM** hay sản phẩm khác) đều được kiểm tra vết thực thi thực tế đối soát với hàm gốc (`wc_reduce_stock_levels`, `wc_increase_stock_levels`, `wc_restock_refunded_items`). Nếu phát hiện sai lệch stack, M4 lập tức dọn sạch toàn bộ context và hàng đợi FIFO, bảo đảm 100% bản ghi được ghi nhận chính xác thành `manual_adjustment` (`order_id = null`, `order_item_id = null`, `refund_id = null`).
+5. **Ranh giới thực thi cùng priority tại `PHP_INT_MAX` & Đột biến lồng nhau (Bảo vệ bởi M4-REV-009 & M4-REV-010):**  
+   - Khi một plugin bên thứ ba đăng ký filter từ chối tồn kho tại `PHP_INT_MAX` *sau* khi M4 đã nạp guard, guard của M4 chạy trước và nhận `$can = true`.
+   - Với cơ chế **Caller Classification Guard** (`classify_stock_mutation_caller()` phân loại `direct`, `nested`, `stale`) và theo dõi `active_stock_entity_id`, hệ thống phân biệt chính xác:
+     - Thao tác sau khi hàm WooCommerce đã abort (`stale`): Kích hoạt `clear_all_context()` dọn sạch toàn bộ context/FIFO queue, cô lập thành `manual_adjustment`.
+     - Thao tác lồng nhau trong khi hàm WooCommerce vẫn đang chạy (`nested`): Cô lập cục bộ thao tác lồng nhau thành `manual_adjustment` (`order_id = null`, `order_item_id = null`), bảo toàn nguyên vẹn ngữ cảnh và hàng đợi FIFO cho đơn hàng cha.
 
 ---
 
 ## 9. KẾT LUẬN & ĐỀ NGHỊ HỢP NHẤT (FINAL RELEASE GATE: GO)
 
-Mã nguồn PR #38 đã hoàn thành khắc phục và xác minh có kiểm chứng toàn bộ các phát hiện kỹ thuật (`M4-REV-001`, `M4-REV-002`, `M4-REV-003`, `M4-REV-004`, `M4-REV-006`, `M4-REV-007`, `M4-REV-008`, `M4-REV-009`), chuẩn hóa exit codes cho 100% test runners, xác minh luồng xuất CSV end-to-end, kiểm thử thực tế Action Scheduler trên Staging, bảo vệ tuyệt đối ranh giới `PHP_INT_MAX` bằng Active Caller Verification Guard, và kiểm chứng phát hiện sai lệch đối soát tồn kho thực tế.
+Mã nguồn PR #38 đã hoàn thành khắc phục và xác minh có kiểm chứng toàn bộ các phát hiện kỹ thuật (`M4-REV-001`, `M4-REV-002`, `M4-REV-003`, `M4-REV-004`, `M4-REV-006`, `M4-REV-007`, `M4-REV-008`, `M4-REV-009`, `M4-REV-010`), chuẩn hóa exit codes cho 100% test runners, xác minh luồng xuất CSV end-to-end, kiểm thử thực tế Action Scheduler trên Staging, bảo vệ tuyệt đối ranh giới `PHP_INT_MAX` bằng Active Caller Verification Guard, cô lập triệt để đột biến lồng nhau (nested mutations), và kiểm chứng phát hiện sai lệch đối soát tồn kho thực tế.
 
-Tất cả 4 bộ kiểm thử đạt **100% PASS (72/72 test cases)** và đều trả **Exit Code: 0** trên môi trường Staging Docker MariaDB/HPOS.
+Tất cả 4 bộ kiểm thử đạt **100% PASS (75/75 test cases)** và đều trả **Exit Code: 0** trên môi trường Staging Docker MariaDB/HPOS.
 
 **Trạng thái nghiệm thu cuối cùng: GO (SẴN SÀNG MERGE VÀO DEVELOP).**

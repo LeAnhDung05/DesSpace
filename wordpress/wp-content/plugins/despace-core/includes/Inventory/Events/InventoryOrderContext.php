@@ -24,14 +24,15 @@ class InventoryOrderContext {
 	 * @var array
 	 */
 	private static array $current_context = array(
-		'order_id'            => null,
-		'order_item_id'       => null,
-		'refund_id'           => null,
-		'event_type'          => null,
-		'event_source'        => null,
-		'source_operation_id' => null,
-		'expected_caller'     => null,
-		'items_queue'         => array(),
+		'order_id'               => null,
+		'order_item_id'          => null,
+		'refund_id'              => null,
+		'event_type'             => null,
+		'event_source'           => null,
+		'source_operation_id'    => null,
+		'expected_caller'        => null,
+		'active_stock_entity_id' => null,
+		'items_queue'            => array(),
 	);
 
 	/**
@@ -142,14 +143,15 @@ class InventoryOrderContext {
 	 */
 	public static function clear(): void {
 		self::$current_context = array(
-			'order_id'            => null,
-			'order_item_id'       => null,
-			'refund_id'           => null,
-			'event_type'          => null,
-			'event_source'        => null,
-			'source_operation_id' => null,
-			'expected_caller'     => null,
-			'items_queue'         => array(),
+			'order_id'               => null,
+			'order_item_id'          => null,
+			'refund_id'              => null,
+			'event_type'             => null,
+			'event_source'           => null,
+			'source_operation_id'    => null,
+			'expected_caller'        => null,
+			'active_stock_entity_id' => null,
+			'items_queue'            => array(),
 		);
 	}
 }

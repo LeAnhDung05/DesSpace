@@ -81,25 +81,66 @@ class InventoryStockObserver {
 	}
 
 	/**
-	 * Verify if current call stack contains any of the specified caller functions.
+	 * Classify the relationship between current stock mutation and active WooCommerce operation.
 	 *
-	 * Used to protect against stale in-memory order context when an external filter
-	 * denies a stock operation at PHP_INT_MAX (M4-REV-009).
+	 * Detects whether the current stock mutation is:
+	 * - 'direct': The mutation was directly initiated by the expected WooCommerce operation
+	 *             (e.g. wc_reduce_stock_levels calling wc_update_product_stock directly).
+	 * - 'nested': An expected WooCommerce operation is active on the call stack, but the current
+	 *             mutation was initiated by an intermediate caller (e.g. plugin hook callback) (M4-REV-010).
+	 * - 'stale':  Context has an expected caller, but that function is nowhere in the backtrace,
+	 *             indicating the WooCommerce operation was denied/aborted earlier (M4-REV-009).
+	 * - 'none':   No expected caller configured in context.
 	 *
-	 * @param array<string> $allowed_callers List of function names to match in backtrace.
-	 * @return bool
+	 * @param string|null $expected_caller Expected WooCommerce function name.
+	 * @return string 'direct'|'nested'|'stale'|'none'
 	 */
-	private static function is_in_stock_caller( array $allowed_callers ): bool {
-		$trace           = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 25 );
-		$allowed_lowered = array_map( 'strtolower', $allowed_callers );
+	private static function classify_stock_mutation_caller( ?string $expected_caller ): string {
+		if ( empty( $expected_caller ) ) {
+			return 'none';
+		}
 
-		foreach ( $trace as $frame ) {
-			if ( isset( $frame['function'] ) && in_array( strtolower( $frame['function'] ), $allowed_lowered, true ) ) {
-				return true;
+		$trace         = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 35 );
+		$mutator_index = null;
+
+		foreach ( $trace as $i => $frame ) {
+			$func = strtolower( $frame['function'] ?? '' );
+			if ( 'wc_update_product_stock' === $func ) {
+				$mutator_index = $i;
+				break;
+			} elseif ( 'save' === $func && isset( $frame['class'] ) && false !== strpos( $frame['class'], 'WC_Product' ) ) {
+				$mutator_index = $i;
+				break;
 			}
 		}
 
-		return false;
+		if ( null === $mutator_index ) {
+			// Fallback: check if expected caller is anywhere in stack.
+			$expected_lowered = strtolower( $expected_caller );
+			foreach ( $trace as $frame ) {
+				if ( isset( $frame['function'] ) && strtolower( $frame['function'] ) === $expected_lowered ) {
+					return 'direct';
+				}
+			}
+			return 'stale';
+		}
+
+		$immediate_caller = strtolower( $trace[ $mutator_index + 1 ]['function'] ?? '' );
+		$expected_lowered = strtolower( $expected_caller );
+
+		if ( $immediate_caller === $expected_lowered ) {
+			return 'direct';
+		}
+
+		// Check if expected_caller is higher up in the stack.
+		$trace_count = count( $trace );
+		for ( $j = $mutator_index + 2; $j < $trace_count; $j++ ) {
+			if ( strtolower( $trace[ $j ]['function'] ?? '' ) === $expected_lowered ) {
+				return 'nested';
+			}
+		}
+
+		return 'stale';
 	}
 
 	/**
@@ -177,13 +218,16 @@ class InventoryStockObserver {
 		if ( $order instanceof \WC_Order && $item instanceof \WC_Order_Item_Product ) {
 			$order_id      = absint( $order->get_id() );
 			$order_item_id = absint( $item->get_id() );
+			$product       = $item->get_product();
+			$stock_entity  = $product ? absint( $product->get_stock_managed_by_id() ) : 0;
 
 			InventoryOrderContext::set( array(
-				'order_id'            => $order_id,
-				'order_item_id'       => $order_item_id,
-				'event_type'          => InventoryEvent::TYPE_ORDER_REDUCTION,
-				'event_source'        => InventoryEvent::SOURCE_ORDER,
-				'source_operation_id' => 'order_reduce_' . $order_id . '_' . $order_item_id,
+				'order_id'               => $order_id,
+				'order_item_id'          => $order_item_id,
+				'active_stock_entity_id' => $stock_entity,
+				'event_type'             => InventoryEvent::TYPE_ORDER_REDUCTION,
+				'event_source'           => InventoryEvent::SOURCE_ORDER,
+				'source_operation_id'    => 'order_reduce_' . $order_id . '_' . $order_item_id,
 			) );
 		}
 
@@ -199,7 +243,8 @@ class InventoryStockObserver {
 	 */
 	public static function on_after_reduce_order_item_stock( $item, $change, $order ): void {
 		InventoryOrderContext::set( array(
-			'order_item_id' => null,
+			'order_item_id'          => null,
+			'active_stock_entity_id' => null,
 		) );
 	}
 
@@ -396,15 +441,23 @@ class InventoryStockObserver {
 
 		// Verify whether the active stock mutation is genuinely executing within
 		// the expected WooCommerce order/refund lifecycle function.
-		// If context exists with an expected caller, but the call stack does not match,
-		// the operation was denied/aborted (e.g. by a late external filter at PHP_INT_MAX)
-		// and any lingering context or queue is stale (M4-REV-009).
 		$expected_caller = $context['expected_caller'] ?? null;
 		if ( ! empty( $expected_caller ) ) {
-			if ( ! self::is_in_stock_caller( array( $expected_caller ) ) ) {
-				// The active stock mutation is NOT called by the expected WooCommerce operation.
+			$caller_status = self::classify_stock_mutation_caller( $expected_caller );
+
+			if ( 'stale' === $caller_status ) {
+				// The WooCommerce operation was denied/aborted (M4-REV-009).
 				// Purge stale context and queue completely to guarantee strict isolation.
 				self::clear_all_context();
+				$order_id      = null;
+				$refund_id     = null;
+				$order_item_id = null;
+				$event_source  = null;
+				$event_type    = null;
+			} elseif ( 'nested' === $caller_status ) {
+				// A nested stock mutation occurred while a WooCommerce operation is active (M4-REV-010).
+				// Isolate THIS mutation as manual_adjustment without destroying the active
+				// order context or the FIFO queue for the outer WooCommerce operation.
 				$order_id      = null;
 				$refund_id     = null;
 				$order_item_id = null;
@@ -437,10 +490,22 @@ class InventoryStockObserver {
 				}
 			} else {
 				// order_item_id was directly set (e.g. by on_filter_order_item_quantity).
-				// Synchronize queue if matching item is at head.
-				$peeked = InventoryOrderContext::peek_item( $stock_entity_id );
-				if ( null !== $peeked && (int) $peeked['order_item_id'] === (int) $order_item_id ) {
-					$queued_item = InventoryOrderContext::dequeue_item( $stock_entity_id );
+				// Verify that this order_item_id belongs to the product entity currently being updated!
+				$active_stock_entity = $context['active_stock_entity_id'] ?? null;
+				if ( ! empty( $active_stock_entity ) && (int) $active_stock_entity !== (int) $stock_entity_id ) {
+					// Mismatch: The active line item is for a different product entity!
+					// Isolate this mutation as manual_adjustment and do not steal the line item.
+					$order_id      = null;
+					$refund_id     = null;
+					$order_item_id = null;
+					$event_source  = null;
+					$event_type    = null;
+				} else {
+					// Synchronize queue if matching item is at head.
+					$peeked = InventoryOrderContext::peek_item( $stock_entity_id );
+					if ( null !== $peeked && (int) $peeked['order_item_id'] === (int) $order_item_id ) {
+						$queued_item = InventoryOrderContext::dequeue_item( $stock_entity_id );
+					}
 				}
 			}
 		}
