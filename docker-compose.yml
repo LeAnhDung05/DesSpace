@@ -1,0 +1,69 @@
+services:
+  db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_NAME:-despace}
+      MARIADB_USER: ${DB_USER:-despace}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-despace_local_only}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_local_only}
+    volumes:
+      - despace_db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  wordpress:
+    image: wordpress:php8.3-apache
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${WP_PORT:-8080}:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${DB_NAME:-despace}
+      WORDPRESS_DB_USER: ${DB_USER:-despace}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:-despace_local_only}
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_DEBUG', true);
+        define('WP_DEBUG_LOG', true);
+        define('WP_DEBUG_DISPLAY', false);
+        define('DISALLOW_FILE_EDIT', true);
+    volumes:
+      - wordpress_core:/var/www/html
+      - ./wordpress/wp-content:/var/www/html/wp-content
+      - despace_uploads:/var/www/html/wp-content/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "php -r '$s=@fsockopen(\"127.0.0.1\",80); exit($s ? 0 : 1);'"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  wpcli:
+    image: wordpress:cli-php8.3
+    depends_on:
+      db:
+        condition: service_healthy
+      wordpress:
+        condition: service_healthy
+    working_dir: /var/www/html
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${DB_NAME:-despace}
+      WORDPRESS_DB_USER: ${DB_USER:-despace}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:-despace_local_only}
+    volumes:
+      - wordpress_core:/var/www/html
+      - ./wordpress/wp-content:/var/www/html/wp-content
+      - despace_uploads:/var/www/html/wp-content/uploads
+    profiles: ["tools"]
+
+volumes:
+  despace_db:
+  wordpress_core:
+  despace_uploads:
