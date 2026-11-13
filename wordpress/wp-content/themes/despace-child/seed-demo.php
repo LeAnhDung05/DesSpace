@@ -7,6 +7,8 @@ if ( ! defined( 'ABSPATH' ) || ! class_exists( 'WooCommerce' ) ) {
 	WP_CLI::error( 'WordPress and WooCommerce must be active before seeding DeSpace demo data.' );
 }
 
+update_option( 'permalink_structure', '/%postname%/' );
+flush_rewrite_rules( false );
 update_option( 'woocommerce_currency', 'VND' );
 update_option( 'woocommerce_default_country', 'VN' );
 update_option( 'woocommerce_store_address', '01 Đường Mẫu' );
