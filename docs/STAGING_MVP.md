@@ -21,53 +21,30 @@ The temporary theme is not a substitute for the final approved M2 Figma implemen
 
 ## Quick start
 
-Run from the repository root:
+Requirements: Docker Desktop / Docker Engine with the Compose plugin, internet access for initial images/plugin download, and local port 8080 available.
+
+From the repository root:
 
 ```bash
 cp .env.example .env
-docker compose up -d db wordpress
 ```
 
-Install WordPress (replace the local-only password):
+Edit `.env` and replace `WP_ADMIN_PASSWORD` with a unique local password. Then run the one-command setup:
 
 ```bash
-docker compose --profile tools run --rm wpcli core install \
-  --url=http://localhost:8080 \
-  --title="DeSpace Staging MVP" \
-  --admin_user=despaceadmin \
-  --admin_password='Change-this-local-password-123!' \
-  --admin_email=admin@example.test
+bash scripts/bootstrap-staging.sh
 ```
 
-Install WooCommerce and activate DeSpace Core:
-
-```bash
-docker compose --profile tools run --rm wpcli plugin install woocommerce --version=11.1.2 --activate
-docker compose --profile tools run --rm wpcli plugin activate despace-core
-docker compose --profile tools run --rm wpcli theme activate despace-child
-```
-
-Create pages, demo products, VND currency, COD/BACS and sample shipping:
-
-```bash
-docker compose --profile tools run --rm wpcli eval-file wp-content/themes/despace-child/seed-demo.php
-```
+The bootstrap script starts MariaDB and WordPress, installs WordPress if the database is fresh, installs WooCommerce 11.1.2, activates DeSpace Core and the temporary storefront, creates pages/products/payment/shipping demo settings, and runs the smoke-verification script. It preserves an existing local database and admin account.
 
 Open:
-
-- Storefront: http://localhost:8080/
-- Products: http://localhost:8080/shop/
-- Cart: http://localhost:8080/cart/
-- Checkout: http://localhost:8080/checkout/
-- Account / login / registration: http://localhost:8080/my-account/
-- Guest order tracking: http://localhost:8080/order-tracking/
-- WordPress admin: http://localhost:8080/wp-admin/
-
-Run the staging smoke-verification script after seeding:
-
-\`\`\`bash
-bash scripts/verify-staging.sh
-\`\`\`
+- Storefront: ${WP_URL:-http://localhost:8080}/
+- Products: ${WP_URL:-http://localhost:8080}/shop/
+- Cart: ${WP_URL:-http://localhost:8080}/cart/
+- Checkout: ${WP_URL:-http://localhost:8080}/checkout/
+- Account / login / registration: ${WP_URL:-http://localhost:8080}/my-account/
+- Guest order tracking: ${WP_URL:-http://localhost:8080}/order-tracking/
+- WordPress admin: ${WP_URL:-http://localhost:8080}/wp-admin/
 
 ## First end-to-end test
 
