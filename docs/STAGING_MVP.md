@@ -42,7 +42,7 @@ docker compose --profile tools run --rm wpcli core install \
 Install WooCommerce and activate DeSpace Core:
 
 ```bash
-docker compose --profile tools run --rm wpcli plugin install woocommerce --activate
+docker compose --profile tools run --rm wpcli plugin install woocommerce --version=11.1.2 --activate
 docker compose --profile tools run --rm wpcli plugin activate despace-core
 docker compose --profile tools run --rm wpcli theme activate despace-child
 ```
@@ -62,6 +62,12 @@ Open:
 - Account / login / registration: http://localhost:8080/my-account/
 - Guest order tracking: http://localhost:8080/order-tracking/
 - WordPress admin: http://localhost:8080/wp-admin/
+
+Run the staging smoke-verification script after seeding:
+
+\`\`\`bash
+bash scripts/verify-staging.sh
+\`\`\`
 
 ## First end-to-end test
 
