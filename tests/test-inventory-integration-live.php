@@ -29,6 +29,11 @@ if ( ! $wp_load ) {
 
 require_once $wp_load;
 
+if ( ! class_exists( 'WooCommerce' ) ) {
+	fwrite( STDERR, "Error: WooCommerce is not active.\n" );
+	exit( 1 );
+}
+
 // Ensure M4 autoloader is active.
 require_once __DIR__ . '/../wordpress/wp-content/plugins/despace-core/includes/Inventory/InventoryModule.php';
 \DeSpace\Inventory\InventoryModule::init();
@@ -46,26 +51,32 @@ class LiveIntegrationTestRunner {
 	private ?int $test_product_id = null;
 
 	public function run(): void {
-		echo "========================================================================\n";
-		echo "      DeSpace M4 — LIVE WOOCOMMERCE & MYSQL INTEGRATION TESTS          \n";
-		echo "========================================================================\n\n";
+		try {
+			echo "========================================================================\n";
+			echo "      DeSpace M4 — LIVE WOOCOMMERCE & MYSQL INTEGRATION TESTS          \n";
+			echo "========================================================================\n\n";
 
-		global $wpdb;
-		echo "Target DB: " . DB_NAME . " | Table Prefix: " . $wpdb->prefix . "\n";
-		echo "WooCommerce Version: " . ( defined( 'WC_VERSION' ) ? WC_VERSION : 'Unknown' ) . "\n\n";
+			global $wpdb;
+			echo "Target DB: " . DB_NAME . " | Table Prefix: " . $wpdb->prefix . "\n";
+			echo "WooCommerce Version: " . ( defined( 'WC_VERSION' ) ? WC_VERSION : 'Unknown' ) . "\n\n";
 
-		$this->test_INT01_table_and_schema();
-		$this->test_INT02_real_product_initial_stock();
-		$this->test_INT03_real_product_stock_reduction();
-		$this->test_INT04_real_product_stock_increase();
-		$this->test_INT05_zero_delta_no_log();
-		$this->test_INT06_live_reconciliation();
-		$this->test_INT07_idempotency_duplicate_key();
-		$this->test_INT08_csv_formula_injection_defense();
-		$this->test_INT09_rest_date_range_validation();
-		$this->cleanup();
+			$this->test_INT01_table_and_schema();
+			$this->test_INT02_real_product_initial_stock();
+			$this->test_INT03_real_product_stock_reduction();
+			$this->test_INT04_real_product_stock_increase();
+			$this->test_INT05_zero_delta_no_log();
+			$this->test_INT06_live_reconciliation();
+			$this->test_INT07_idempotency_duplicate_key();
+			$this->test_INT08_csv_formula_injection_defense();
+			$this->test_INT09_rest_date_range_validation();
+			$this->cleanup();
 
-		$this->print_summary();
+			$this->print_summary();
+		} catch ( \Throwable $e ) {
+			$this->cleanup();
+			fwrite( STDERR, "\nFATAL EXCEPTION in LiveIntegrationTestRunner: " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n" );
+			exit( 1 );
+		}
 	}
 
 	private function assert_test( string $id, string $desc, bool $passed, string $details = '' ): void {
@@ -222,8 +233,12 @@ class LiveIntegrationTestRunner {
 		printf( "SUMMARY: %d Live Integration Tests | \033[32m%d Passed\033[0m | \033[31m%d Failed\033[0m\n", $total, $passed, $failed );
 		echo "========================================================================\n";
 
-		if ( 0 === $failed ) {
+		if ( 0 === $failed && 9 === $total ) {
 			echo "\n>>> ALL LIVE INTEGRATION TESTS PASSED ON REAL WOOCOMMERCE & MYSQL! <<<\n\n";
+			exit( 0 );
+		} else {
+			echo "\n>>> LIVE INTEGRATION TESTS FAILED (failures or incomplete count)! <<<\n\n";
+			exit( 1 );
 		}
 	}
 }

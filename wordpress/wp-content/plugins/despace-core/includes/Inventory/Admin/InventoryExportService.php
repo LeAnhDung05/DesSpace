@@ -19,9 +19,10 @@ class InventoryExportService {
 	/**
 	 * Export inventory logs matching filters as CSV.
 	 *
-	 * @param array $filters
+	 * @param array         $filters       Query filters.
+	 * @param resource|null $output_stream Optional writable stream for testing/direct export.
 	 */
-	public static function export_csv( array $filters = array() ): void {
+	public static function export_csv( array $filters = array(), $output_stream = null ): void {
 		if ( ! current_user_can( 'view_despace_inventory_logs' ) && ! current_user_can( 'manage_woocommerce' ) ) {
 			wp_die( esc_html__( 'Permission denied.', 'despace-core' ) );
 		}
@@ -59,19 +60,22 @@ class InventoryExportService {
 			? $wpdb->get_results( $wpdb->prepare( $query, $where_values ), ARRAY_A )
 			: $wpdb->get_results( $query, ARRAY_A );
 
-		// Clean output buffer.
-		if ( ob_get_level() ) {
-			ob_end_clean();
+		$is_direct_stream = null !== $output_stream && is_resource( $output_stream );
+		$output           = $is_direct_stream ? $output_stream : fopen( 'php://output', 'w' );
+
+		if ( ! $is_direct_stream ) {
+			// Clean output buffer.
+			if ( ob_get_level() ) {
+				ob_end_clean();
+			}
+
+			$filename = 'despace-inventory-logs-' . gmdate( 'Y-m-d-His' ) . '.csv';
+
+			header( 'Content-Type: text/csv; charset=UTF-8' );
+			header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+			header( 'Pragma: no-cache' );
+			header( 'Expires: 0' );
 		}
-
-		$filename = 'despace-inventory-logs-' . gmdate( 'Y-m-d-His' ) . '.csv';
-
-		header( 'Content-Type: text/csv; charset=UTF-8' );
-		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
-		header( 'Pragma: no-cache' );
-		header( 'Expires: 0' );
-
-		$output = fopen( 'php://output', 'w' );
 
 		// UTF-8 BOM for Excel compatibility.
 		fputs( $output, "\xEF\xBB\xBF" );
@@ -114,8 +118,10 @@ class InventoryExportService {
 			fputcsv( $output, $escaped_row );
 		}
 
-		fclose( $output );
-		exit;
+		if ( ! $is_direct_stream ) {
+			fclose( $output );
+			exit;
+		}
 	}
 
 	/**

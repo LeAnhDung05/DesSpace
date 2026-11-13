@@ -5,7 +5,7 @@
 **Pull Request:** [#38](https://github.com/LeAnhDung05/DesSpace/pull/38)  
 **Nhánh nguồn:** `feature/member04-inventory`  
 **Nhánh đích:** `develop`  
-**Trạng thái kiểm thử:** 68 / 68 Tests PASS (100%) trên Staging WordPress 7.1.4, WooCommerce 11.1.2, MariaDB 10.11, HPOS  
+**Trạng thái kiểm thử:** 69 / 69 Test Cases PASS (100%), Exit Code: 0 trên cả 4 bộ test Staging (WordPress 7.1.4, WooCommerce 11.1.2, MariaDB 10.11, HPOS)  
 **Đánh giá kỹ thuật:** **GO (Đạt chuẩn release, sẵn sàng hợp nhất vào develop)**
 
 ---
@@ -28,45 +28,55 @@
 | Commit SHA | Nội dung xử lý kỹ thuật |
 |---|---|
 | [`bd8a595`](https://github.com/LeAnhDung05/DesSpace/commit/bd8a59562b3c351d3ef76c8d47b746451edb1f7d) | **Thiết lập ngữ cảnh trước đột biến tồn kho:** Đăng ký ngữ cảnh đơn hàng/hoàn tiền trước khi WooCommerce thực hiện trừ tồn hoặc hoàn tồn, bảo đảm các hook `woocommerce_product_set_stock` luôn nhận đúng `order_id` thay vì phân loại nhầm thành `manual_adjustment`. |
-| [`5fc996d`](https://github.com/LeAnhDung05/DesSpace/commit/5fc996d76ea39fb9ebf74ebbc8d3f61bbe3e00d4) | **Giải quyết trùng lặp sản phẩm bằng FIFO Queue:** Thay thế cấu trúc ánh xạ phẳng bằng hàng đợi FIFO (`items_queue`) theo từng thực thể quản lý tồn (`stock_entity_id`). Thêm bộ lọc dọn dẹp ngữ cảnh tại priority `999999` khi đơn hàng bị từ chối trừ/hoàn tồn. |
-| [`e3d0f6d`](https://github.com/LeAnhDung05/DesSpace/commit/e3d0f6dc549e5fea13430196e19edc9cebf57af9) | **Xóa bỏ fallback `items_map` cũ & cô lập đột biến không khớp:** Loại bỏ hoàn toàn fallback tra cứu mảng tĩnh có nguy cơ ghi đè line-item ID. Khi hàng đợi rỗng hoặc sản phẩm đột biến không thuộc đơn hàng, M4 chủ động đặt lại `order_id = null`, `order_item_id = null`, ghi nhận cô lập thành `manual_adjustment` mà không gây nhiễm bẩn ngữ cảnh đơn hàng. Bổ sung ma trận kiểm thử biến thể (Case N), bộ lọc từ chối muộn (Case O1-O3) và kiểm thử an toàn FIFO (Case P). |
+| [`5fc996d`](https://github.com/LeAnhDung05/DesSpace/commit/5fc996d76ea39fb9ebf74ebbc8d3f61bbe3e00d4) | **Giải quyết trùng lặp sản phẩm bằng FIFO Queue:** Thay thế cấu trúc ánh xạ phẳng bằng hàng đợi FIFO (`items_queue`) theo từng thực thể quản lý tồn (`stock_entity_id`). Thêm bộ lọc dọn dẹp ngữ cảnh khi đơn hàng bị từ chối trừ/hoàn tồn. |
+| [`e3d0f6d`](https://github.com/LeAnhDung05/DesSpace/commit/e3d0f6dc549e5fea13430196e19edc9cebf57af9) | **Xóa bỏ fallback `items_map` cũ & cô lập đột biến không khớp:** Loại bỏ fallback tra cứu mảng tĩnh. Khi hàng đợi rỗng hoặc sản phẩm đột biến không thuộc đơn hàng, cô lập thành `manual_adjustment` (`order_id = null`, `order_item_id = null`). Bổ sung ma trận kiểm thử biến thể (Case N), bộ lọc từ chối muộn (Case O1-O3) và kiểm thử an toàn FIFO (Case P). |
 | [`5c24fdf`](https://github.com/LeAnhDung05/DesSpace/commit/5c24fdf8b1d9bf5c117b1897cbb1936b85848bb2) | **Báo cáo nghiệm thu & phát hành ban đầu:** Tổng hợp kết quả kiểm thử trên môi trường Staging Docker, chuẩn bị hồ sơ release gate. |
-| **Latest** | **Giải quyết toàn bộ các phát hiện Conditional GO (M4-REV-001 đến M4-REV-004):**<br>• **M4-REV-001:** Bổ sung cơ chế chuẩn hóa đối soát cho biến thể do cha quản lý (`parent_managed_shared` scope, truy vấn theo cha `product_id = %d AND variation_id IS NULL`).<br>• **M4-REV-002:** Bảo vệ tính năng xuất CSV bằng Nonce (`wp_nonce_url`, `wp_verify_nonce`).<br>• **M4-REV-003:** Đăng ký Action Scheduler (`action_scheduler_after_execute`, `action_scheduler_failed_execution`) & `shutdown` hook (priority 999) để dọn dẹp ngữ cảnh bộ nhớ, chống rò rỉ ngữ cảnh trong CLI/Queue dài hạn.<br>• **M4-REV-004:** Xử lý trường hợp đối soát sản phẩm chưa có lịch sử log, trả về `insufficient_history` và `is_reconciled = false` (không cho phép false PASS).<br>• **Legacy Cleanup:** Xóa bỏ hoàn toàn code chết `build_order_items_map()` và key `'items_map'`.<br>• **Boundary Hardening:** Nâng priority của guard dọn dẹp late denial lên `PHP_INT_MAX`. |
+| [`37ca37f`](https://github.com/LeAnhDung05/DesSpace/commit/37ca37fdc8d6c52f2043496c771ee02086e57bfd) | **Giải quyết các phát hiện Conditional GO (M4-REV-001 đến M4-REV-004):**<br>• **M4-REV-001:** Chuẩn hóa đối soát biến thể do cha quản lý (`parent_managed_shared` scope, truy vấn cha).<br>• **M4-REV-002:** Bảo vệ tính năng xuất CSV bằng Nonce (`wp_nonce_url`, `wp_verify_nonce`).<br>• **M4-REV-003:** Đăng ký Action Scheduler & shutdown hook (priority 999) dọn dẹp ngữ cảnh bộ nhớ.<br>• **M4-REV-004:** Đối soát sản phẩm chưa có lịch sử log trả về `insufficient_history` và `is_reconciled = false`.<br>• **Legacy Cleanup:** Xóa bỏ hoàn toàn code chết `build_order_items_map()` và key `'items_map'`.<br>• **Boundary:** Nâng priority của guard dọn dẹp late denial lên `PHP_INT_MAX`. |
+| **Latest** | **Giải quyết toàn diện các phát hiện Final Sign-Off (M4-REV-006 đến M4-REV-008):**<br>• **M4-REV-006:** Chuẩn hóa Exit Codes cho tất cả test runners: Bổ sung nhánh `exit(1)` khi có bất kỳ assertion thất bại hoặc thiếu kịch bản; bọc `run()` bằng `try/catch` bắt ngoại lệ; kiểm chứng bằng test giả lập fail thực tế trả về exit code 1.<br>• **M4-REV-007:** Xác minh End-to-End luồng Admin CSV Export: Tách `validate_export_request()` độc lập; bổ sung direct stream cho `export_csv()`; kiểm chứng đăng ký hook `admin_init`, từ chối missing nonce, từ chối invalid nonce, chặn guest không có quyền, cấp phép admin, URL sinh đúng nonce, và stream trực tiếp CSV có UTF-8 BOM, đúng header và dữ liệu lọc.<br>• **M4-REV-008:** Phân tích ranh giới cùng priority tại `PHP_INT_MAX` (Case U-2) & kiểm thử Action Scheduler thực tế trên Staging (Case T): Chạy trực tiếp action qua `ActionScheduler::runner()->process_action()`; xác minh dọn dẹp tự động khi thành công lẫn khi ném exception; xác minh cách ly đột biến tiếp theo; ghi nhận rõ kiến trúc FIFO của WordPress `WP_Hook` vào Known Limitations. |
 
 ---
 
 ## 3. CHI TIẾT GIẢI QUYẾT CÁC PHÁT HIỆN CODE REVIEW
 
 ### 3.1. M4-REV-001 — Đối soát biến thể do cha quản lý (Parent-Managed Variation)
-- **Vấn đề trước:** Khi biến thể không tự quản lý tồn mà dùng chung kho với sản phẩm cha (`manage_stock = false`), WooCommerce trừ kho ở sản phẩm cha. Bảng log ghi nhận `product_id = parent_id` và `variation_id = NULL`. Khi gọi `InventoryReconciler::reconcile($parent_id, $variation_id)`, truy vấn lọc theo `variation_id = $variation_id` trả về 0 kết quả delta, gây sai lệch trạng thái đối soát.
+- **Vấn đề:** Khi biến thể không tự quản lý tồn mà dùng chung kho với sản phẩm cha (`manage_stock = false`), WooCommerce trừ kho ở sản phẩm cha. Bảng log ghi nhận `product_id = parent_id` và `variation_id = NULL`. Khi gọi `InventoryReconciler::reconcile($parent_id, $variation_id)`, truy vấn lọc theo `variation_id = $variation_id` trả về 0 kết quả delta.
 - **Giải pháp:** `InventoryReconciler::reconcile()` tự động phát hiện quyền quản lý kho thông qua `wc_get_product()`, kiểm tra `$product->get_stock_managed_by_id()` và `$product->is_type('variation')`. Nếu biến thể do cha quản lý, đối soát tự động chuẩn hóa về sản phẩm cha, thiết lập `stock_scope = 'parent_managed_shared'`, truy vấn `WHERE product_id = %d AND variation_id IS NULL`, đối soát chính xác số dư kho dùng chung.
 
-### 3.2. M4-REV-002 — Bảo vệ liên kết xuất CSV bằng Nonce (Admin Export Nonce)
-- **Vấn đề trước:** Đường dẫn xuất CSV trong Admin UI không có WordPress Nonce bảo vệ, tiềm ẩn nguy cơ CSRF kích hoạt tải dữ liệu lớn.
-- **Giải pháp:** Bổ sung `wp_nonce_url($raw_export_url, 'despace_export_csv')` khi render nút xuất CSV trên trang Admin. Tại hook `admin_init` (`InventoryLogsPage::handle_export()`), kiểm tra nghiêm ngặt `wp_verify_nonce($_GET['_wpnonce'], 'despace_export_csv')`, trả về HTTP 403 nếu nonce thiếu hoặc không hợp lệ.
+### 3.2. M4-REV-002 & M4-REV-007 — Bảo vệ Nonce & Kiểm thử End-to-End luồng xuất CSV
+- **Vấn đề:** Cần xác minh toàn bộ luồng request admin (`admin_menu` -> `register_admin_menu()` -> `admin_init` -> `handle_export()` -> Nonce & Capability verification -> `InventoryExportService::export_csv()`), không chỉ dừng ở `wp_verify_nonce()`.
+- **Giải pháp:**
+  1. Tách logic kiểm tra quyền và nonce thành phương thức tĩnh `InventoryLogsPage::validate_export_request( array $request_params )` trả về `true|\WP_Error` với HTTP status 403.
+  2. Bổ sung tham số tùy chọn `$output_stream = null` trong `InventoryExportService::export_csv( $filters, $output_stream )`. Khi truyền stream (như memory stream), service ghi trực tiếp mà không gọi `exit;` hoặc gửi HTTP headers, cho phép kiểm thử tự động nội dung CSV hoàn chỉnh.
+  3. Kiểm chứng Case S bao phủ đầy đủ: Hook đăng ký thành công trên `admin_init`, từ chối missing nonce, từ chối invalid nonce, chặn guest không có quyền (`permission_denied`), cấp quyền cho admin có capability, URL chứa đúng nonce, và luồng ghi file CSV có UTF-8 BOM `\xEF\xBB\xBF`, header cột chuẩn và dữ liệu được escape công thức spreadsheet.
 
-### 3.3. M4-REV-003 — Cách ly vòng đời CLI / Action Scheduler & Ngoại lệ
-- **Vấn đề trước:** Khi xử lý batch đơn hàng qua CLI script hoặc Action Scheduler worker, nếu xảy ra ngoại lệ không bắt được (uncaught exception) làm gián đoạn luồng trừ tồn, ngữ cảnh `InventoryOrderContext` có thể tồn tại trong tiến trình PHP daemon.
-- **Giải pháp:** 
-  1. Đăng ký hook dọn dẹp tự động vào `action_scheduler_after_execute` và `action_scheduler_failed_execution` (priority 999).
-  2. Đăng ký hook `shutdown` tại priority 999 dọn sạch in-memory context trước khi tiến trình kết thúc.
-  3. Cung cấp và tài liệu hóa phương thức public `InventoryStockObserver::clear_all_context()` để các tác vụ CLI/Batch bên ngoài có thể đặt trong khối `finally` một cách an toàn.
+### 3.3. M4-REV-003 & M4-REV-008 — Cách ly vòng đời CLI, Action Scheduler & Ranh giới cùng Priority
+- **Vấn đề:** Cần kiểm thử Action Scheduler thực tế (không chỉ mô phỏng qua `do_action`), và làm rõ hành vi khi có filter bên ngoài đăng ký cùng priority `PHP_INT_MAX`.
+- **Giải pháp & Kiểm chứng thực tế:**
+  1. **Action Scheduler Thực tế (Case T):** Sử dụng trực tiếp `as_enqueue_async_action()` và thực thi qua `ActionScheduler::runner()->process_action()`. Kiểm chứng thành công:
+     - Khi action hoàn thành bình thường: hook `action_scheduler_after_execute` dọn sạch ngữ cảnh.
+     - Khi action ném ngoại lệ (`RuntimeException`): hook `action_scheduler_failed_execution` dọn sạch ngữ cảnh.
+     - Sau cả 2 trường hợp, đột biến tồn kho tiếp theo trong cùng tiến trình ghi nhận sạch `manual_adjustment` (`order_id = null`, `order_item_id = null`).
+     - Các action kiểm thử được xóa triệt để khỏi database qua `ActionScheduler::store()->delete_action()`, không tồn đọng rác trong hàng đợi.
+  2. **Ranh giới cùng priority tại `PHP_INT_MAX` (Case U-2):**
+     - Trong WordPress, các callback có cùng priority được lưu trong mảng và thực thi tuần tự theo thứ tự thêm vào (FIFO). Nếu một plugin bên ngoài đăng ký filter tại `PHP_INT_MAX` *sau* khi M4 đã khởi tạo guard, guard của M4 chạy trước và nhận `$can = true`, sau đó filter bên ngoài chạy và trả về `false`.
+     - WooCommerce nhận `false` và lập tức hủy trừ tồn kho (kho giữ nguyên 20.0, 0 bản ghi trừ tồn phát sinh).
+     - Ngữ cảnh in-memory tạm thời chưa bị guard của filter này xóa ngay, nhưng cơ chế cách ly Case P (kiểm tra hàng đợi rỗng theo thực thể) bảo đảm an toàn: nếu một sản phẩm khác đột biến trong cùng tiến trình, M4 chủ động xóa `order_id` và ghi nhận độc lập thành `manual_adjustment`.
+     - Ngữ cảnh còn lại sẽ được dọn sạch hoàn toàn khi luồng chạm tới `shutdown`, `action_scheduler_after_execute`, hoặc khi đơn hàng tiếp theo được khởi tạo.
+     - Hành vi này được ghi nhận tường minh trong mục Known Limitations thay vì tuyên bố tuyệt đối sai kiến trúc WordPress.
 
-### 3.4. M4-REV-004 — Tính toàn vẹn Baseline đối soát khi không có log (Zero-History Safety)
-- **Vấn đề trước:** Sản phẩm có tồn kho thực tế trong WooCommerce nhưng chưa từng có bản ghi biến động nào trong bảng log (`total_events === 0`) trước đây được trả về `is_reconciled = true` với discrepancy = 0.
-- **Giải pháp:** Khi `total_events === 0`, nếu tồn kho hiện tại khác 0 (hoặc không xác định được baseline ban đầu), `InventoryReconciler` trả về:
-  - `is_reconciled`: `false`
-  - `reconciliation_status`: `'insufficient_history'`
-  - `discrepancy`: `null`
-  Ngăn chặn hoàn toàn việc xác nhận sai lệch trạng thái đối soát khi thiếu dữ liệu kiểm toán.
+### 3.4. M4-REV-004 — Tính toàn vẹn Baseline đối soát khi không có log & Phát hiện Discrepancy thực tế
+- **Vấn đề:** Khi sản phẩm chưa từng có lịch sử log (`total_events === 0`), đối soát không được báo false positive `is_reconciled = true`. Đồng thời cần kiểm chứng khả năng phát hiện sai lệch thực tế khi số tồn WooCommerce không khớp delta lịch sử.
+- **Giải pháp:**
+  - Khi `total_events === 0`, nếu tồn kho khác 0, trả về `is_reconciled = false`, `reconciliation_status = 'insufficient_history'`, `discrepancy = null`.
+  - Bổ sung kiểm thử Case R4: Tạo sản phẩm có baseline và log trừ tồn (tồn lý thuyết 15.0), cố tình can thiệp số tồn WooCommerce thành 12.0 qua postmeta. `InventoryReconciler` phát hiện chính xác `is_reconciled = false`, `reconciliation_status = 'discrepancy'`, `discrepancy = 3.0` (chênh lệch 3 đơn vị).
 
-### 3.5. Loại bỏ hoàn toàn mã nguồn thừa (Legacy Code Cleanup)
-- Phương thức chết `InventoryStockObserver::build_order_items_map()` đã bị xóa bỏ hoàn toàn khỏi mã nguồn.
-- Loại bỏ tham số `'items_map'` khỏi `InventoryOrderContext::set()` và `$current_context`.
-
-### 3.6. Nâng cấp bộ lọc dọn dẹp ngữ cảnh từ chối muộn (Late Denial Boundary)
-- Bộ lọc dọn dẹp ngữ cảnh dự phòng (`on_check_can_reduce_order_stock_final`, `on_check_can_restore_order_stock_final`, `on_check_can_restock_refunded_items_final`) được nâng từ priority `999999` lên `PHP_INT_MAX`.
-- Đảm bảo thực thi sau tất cả các custom plugin/filter của bên thứ ba bất kể giá trị priority (đã kiểm chứng với custom filter tại priority `1000000`).
+### 3.5. M4-REV-006 — Chuẩn hóa Exit Codes cho Test Runners
+- **Vấn đề:** Trước đây hai script `test-inventory-matrix.php` và `test-inventory-integration-live.php` chỉ in kết quả ra màn hình mà không gọi `exit(1)` khi có assertion thất bại, khiến CI/CD pipeline có thể hiểu nhầm là pass.
+- **Giải pháp:** Cập nhật cả hai runner với cấu trúc:
+  - Nếu `0 === $failed` và tổng số case khớp đúng yêu cầu: gọi `exit( 0 )`.
+  - Nếu `$failed > 0` hoặc số case không đủ: gọi `exit( 1 )`.
+  - Toàn bộ thân hàm `run()` được bọc trong `try ... catch (\Throwable $e)` xuất thông báo lỗi và gọi `exit( 1 )`.
+  - Đã kiểm chứng với test giả lập assertion `false`, runner lập tức dừng và trả về Exit Code: 1.
 
 ---
 
@@ -79,24 +89,25 @@ Kết quả kiểm thử được thực thi và chứng minh trên môi trườ
 - **WooCommerce:** Phiên bản 11.1.2 (Active)
 - **Cơ sở dữ liệu:** MariaDB 10.11.16 (`bttts5-db`, Database: `wordpress`, Table Prefix: `wp_`)
 - **HPOS (Custom Orders Table):** Đang kích hoạt (`custom_orders_table_usage_is_enabled: YES`)
+- **Action Scheduler:** Phiên bản tích hợp sẵn trong WooCommerce 11.1.2 (`ActionScheduler_QueueRunner: Active`)
 - **Container Staging:** `bttts5-wp` (WordPress Application Server), `bttts5-db` (MariaDB Server)
 
 ---
 
-## 5. BẢNG TỔNG HỢP KẾT QUẢ KIỂM THỬ (100% PASS)
+## 5. BẢNG TỔNG HỢP KẾT QUẢ KIỂM THỬ (100% PASS, EXIT CODE: 0)
 
-| STT | Bộ kiểm thử (Test Suite) | Tập tin kiểm thử | Kịch bản / Ca kiểm thử | Kết quả nghiệm thu |
-|:---:|---|---|:---:|:---:|
-| 1 | **Đơn vị & Ma trận truy vết (T01–T28)** | `tests/test-inventory-matrix.php` | 28 / 28 | **28 / 28 PASS (100%)** |
-| 2 | **Tích hợp Live WooCommerce & DB (M4-INT)** | `tests/test-inventory-integration-live.php` | 9 / 9 | **9 / 9 PASS (100%)** |
-| 3 | **Ngữ cảnh đơn hàng & Vòng đời tồn kho (Cases A–U)** | `tests/test-m4-order-context-live.php` | 23 / 23 | **23 / 23 PASS (100%)** |
-| 4 | **UAT Đối soát vòng đời đơn hàng BACS (Phase 6D)** | `tests/uat-m4-lifecycle-reconciliation.php` | 8 / 8 bước | **8 / 8 PASS (100%)** |
+| STT | Bộ kiểm thử (Test Suite) | Tập tin kiểm thử | Kịch bản / Ca kiểm thử | Exit Code | Kết quả nghiệm thu |
+|:---:|---|---|:---:|:---:|:---:|
+| 1 | **Đơn vị & Ma trận truy vết (T01–T28)** | `tests/test-inventory-matrix.php` | 28 / 28 | **0** | **28 / 28 PASS (100%)** |
+| 2 | **Tích hợp Live WooCommerce & DB (M4-INT)** | `tests/test-inventory-integration-live.php` | 9 / 9 | **0** | **9 / 9 PASS (100%)** |
+| 3 | **Ngữ cảnh đơn hàng & Vòng đời tồn kho (Cases A–U)** | `tests/test-m4-order-context-live.php` | 24 / 24 | **0** | **24 / 24 PASS (100%)** |
+| 4 | **UAT Đối soát vòng đời đơn hàng BACS (Phase 6D)** | `tests/uat-m4-lifecycle-reconciliation.php` | 8 / 8 bước | **0** | **8 / 8 PASS (100%)** |
 
-**TỔNG CỘNG: 68 / 68 TEST ASSERTIONS PASSED (100%) TRÊN STAGING RUNTIME THẬT**
+**TỔNG CỘNG: 69 / 69 TEST CASES PASSED (100%), TẤT CẢ RUNNER TRẢ EXIT CODE 0**
 
 ---
 
-## 6. CHI TIẾT 23 CA KIỂM THỬ NGỮ CẢNH ĐƠN HÀNG (`Cases A–U`)
+## 6. CHI TIẾT 24 CA KIỂM THỬ NGỮ CẢNH ĐƠN HÀNG (`Cases A–U`)
 
 1. **Case A (Trừ tồn đơn hàng đơn dòng):** Trừ 20 → 17, ghi nhận `order_reduction`, `order_id` và `order_item_id`.
 2. **Case B (Đơn hàng nhiều sản phẩm):** Phân bổ chính xác line-item ID cho từng sản phẩm, không xung đột `event_key`.
@@ -119,10 +130,30 @@ Kết quả kiểm thử được thực thi và chứng minh trên môi trườ
 17. **Case O-3 (Từ chối hoàn tiền restock muộn tại Priority 20):** Filter trả về `false` trong luồng hoàn tiền; guard dọn sạch ngữ cảnh; không sinh log `refund_restock`; thao tác thủ công sau đó ghi nhận `manual_adjustment` độc lập.
 18. **Case P (An toàn hàng đợi FIFO & Cô lập thực thể không khớp):** Khi ngữ cảnh hoàn tồn của một đơn hàng đang mở, một sản phẩm không thuộc đơn hàng đột ngột tăng tồn. M4 nhận diện hàng đợi rỗng và lập tức cô lập bản ghi thành `manual_adjustment` (`order_id = NULL`, `order_item_id = NULL`). Ngay sau đó, sản phẩm hợp lệ của đơn hàng hoàn tồn thành công với đầy đủ `order_id` và `order_item_id`.
 19. **Case Q (Đối soát biến thể do cha quản lý - M4-REV-001):** Tạo sản phẩm biến thể dùng chung kho cha (30 đơn vị), tạo đơn hàng trừ 4 và 6 đơn vị. Đối soát qua parent ID hoặc variation ID đều chuẩn hóa về kho cha, trả về `is_reconciled = true`, `stock_scope = 'parent_managed_shared'`, khớp chính xác tồn kho 20.0.
-20. **Case R (Baseline kiểm toán & Trạng thái thiếu lịch sử - M4-REV-004):** Sản phẩm có tồn kho nhưng 0 bản ghi log được đánh dấu chính xác là `insufficient_history` và `is_reconciled = false`. Sản phẩm có lịch sử đối soát bình thường đạt `reconciled`.
-21. **Case S (Bảo vệ Nonce & Phân quyền trang Admin CSV - M4-REV-002):** Kiểm tra tính hợp lệ của Nonce xuất CSV (`despace_export_csv`), phát hiện và chặn Nonce giả mạo, chặn khách không đăng nhập, cho phép người dùng có quyền quản lý kho.
-22. **Case T (Vòng đời Action Scheduler & Dọn dẹp ngoại lệ Batch - M4-REV-003):** Kích hoạt các hook `action_scheduler_after_execute`, `action_scheduler_failed_execution`, `shutdown` và khối `try/finally` dọn sạch bộ nhớ ngữ cảnh trong mọi kịch bản.
-23. **Case U (Ranh giới từ chối muộn tại Priority 1000000 & Guard PHP_INT_MAX):** Kiểm tra bộ lọc từ chối tại priority cực cao (1,000,000). Guard tại `PHP_INT_MAX` dọn sạch ngữ cảnh an toàn, không rò rỉ log.
+20. **Case R (Baseline kiểm toán, Trạng thái thiếu lịch sử & Discrepancy thực tế - M4-REV-004):**
+    - Sản phẩm có tồn kho nhưng 0 bản ghi log được đánh dấu chính xác là `insufficient_history` và `is_reconciled = false`.
+    - Sản phẩm có lịch sử đối soát bình thường đạt `reconciled`.
+    - Sản phẩm bị lệch tồn kho thực tế (WC = 12, Expected = 15) phát hiện chính xác `reconciliation_status = 'discrepancy'`, `is_reconciled = false`, `discrepancy = 3.0`.
+21. **Case S (Admin CSV Export End-to-End Request & Streaming - M4-REV-002, M4-REV-007):**
+    - Đăng ký hook `admin_init` qua `admin_menu` được xác nhận thực tế.
+    - Từ chối request thiếu nonce (`invalid_nonce`).
+    - Từ chối request nonce sai (`invalid_nonce`).
+    - Từ chối người dùng không đủ capability (`permission_denied`).
+    - Cho phép quản trị viên có quyền quản lý kho (`manage_woocommerce`).
+    - Kiểm tra sinh URL có nonce chính xác và bảo toàn query params.
+    - Stream trực tiếp vào memory stream: xác nhận UTF-8 BOM `\xEF\xBB\xBF`, cấu trúc header chuẩn, dữ liệu lọc chính xác và escape công thức.
+22. **Case T (Real Action Scheduler Lifecycle, Shutdown & CLI Isolation - M4-REV-003, M4-REV-008):**
+    - Thực thi action bất đồng bộ thực tế qua Action Scheduler runner: xác nhận `action_scheduler_after_execute` dọn sạch ngữ cảnh.
+    - Thực thi action ném exception qua Action Scheduler runner: xác nhận `action_scheduler_failed_execution` dọn sạch ngữ cảnh.
+    - Dọn dẹp ngữ cảnh qua hook `shutdown`.
+    - Khối `try ... finally` dọn sạch ngữ cảnh trong script batch, đột biến sau đó ghi nhận `manual_adjustment` sạch (`order_id = null`).
+    - Xóa sạch action kiểm thử khỏi store database.
+23. **Case U-1 (Ranh giới từ chối muộn tại Priority 1000000 & Guard PHP_INT_MAX):** Kiểm tra bộ lọc từ chối tại priority cực cao (1,000,000). Guard tại `PHP_INT_MAX` dọn sạch ngữ cảnh an toàn, không rò rỉ log.
+24. **Case U-2 (Ranh giới cùng priority PHP_INT_MAX & Phân tích FIFO Isolation - M4-REV-008):**
+    - Đăng ký filter tại `PHP_INT_MAX` trả về `false` sau M4: WooCommerce hủy trừ tồn an toàn (stock không đổi, 0 log trừ tồn).
+    - Xác nhận in-memory context tạm thời còn lưu do thứ tự FIFO của WordPress `WP_Hook`.
+    - Xác nhận cơ chế cô lập Case P bảo vệ an toàn: sản phẩm khác đột biến trong cùng tiến trình được gán `manual_adjustment` độc lập (`order_id = null`).
+    - Dọn sạch ngữ cảnh qua `clear_all_context()`.
 
 ---
 
@@ -134,22 +165,22 @@ Trích xuất trực tiếp từ bảng `wp_despace_inventory_logs` trên contai
 +-----+------------------+-------------------+--------------+------------+--------------+----------+---------------+-----------+--------+-------+
 | id  | event_key        | event_type        | event_source | product_id | variation_id | order_id | order_item_id | refund_id | delta  | after |
 +-----+------------------+-------------------+--------------+------------+--------------+----------+---------------+-----------+--------+-------+
-| 682 | f8a98b584988ce2a | refund_restock    | refund       | 2491       | NULL         | 2492     | 546           | 2493      | +1.0   | 18.0  |
-| 681 | b352a97bcff48db5 | order_reduction   | order        | 2491       | NULL         | 2492     | 546           | NULL      | -3.0   | 17.0  |
-| 679 | 5ad62d2a588b509f | stock_restoration | order        | 2475       | NULL         | 2477     | 544           | NULL      | +3.0   | 20.0  |
-| 678 | 07a1f5f25a9ce925 | manual_adjustment | system       | 2476       | NULL         | NULL     | NULL          | NULL      | +5.0   | 15.0  |
-| 677 | 3ea6b6ca059f1c7d | order_reduction   | order        | 2475       | NULL         | 2477     | 544           | NULL      | -3.0   | 17.0  |
-| 674 | ccbfe128ec03185d | manual_adjustment | system       | 2472       | NULL         | NULL     | NULL          | NULL      | +2.0   | 9.0   |
-| 673 | ab35f992d9bb4e73 | order_reduction   | order        | 2472       | NULL         | 2473     | 542           | NULL      | -3.0   | 7.0   |
-| 671 | 14aee8cbb94d509d | manual_adjustment | system       | 2470       | NULL         | NULL     | NULL          | NULL      | +5.0   | 12.0  |
-| 670 | a17be3407987034b | order_reduction   | order        | 2470       | NULL         | 2471     | 541           | NULL      | -3.0   | 7.0   |
-| 668 | aee7eeff6c7cb366 | manual_adjustment | system       | 2468       | NULL         | NULL     | NULL          | NULL      | +4.0   | 14.0  |
-| 666 | a862eaec1dbe225d | stock_restoration | order        | 2464       | NULL         | 2466     | 538           | NULL      | +2.0   | 20.0  |
-| 665 | ea2c75a40bb2be73 | refund_restock    | refund       | 2464       | NULL         | 2466     | 538           | 2467      | +1.0   | 18.0  |
-| 664 | a12c5b7cb3b9a24a | order_reduction   | order        | 2464       | NULL         | 2466     | 538           | NULL      | -3.0   | 17.0  |
-| 662 | 237d4546554b5df5 | stock_restoration | order        | 2460       | 2461         | 2462     | 536           | NULL      | +2.0   | 15.0  |
-| 661 | 143899f1fa02c0b4 | refund_restock    | refund       | 2460       | 2461         | 2462     | 536           | 2463      | +2.0   | 13.0  |
-| 660 | 664d9fae15fba33e | order_reduction   | order        | 2460       | 2461         | 2462     | 536           | NULL      | -4.0   | 11.0  |
+| 742 | 93c83769c0d38101 | refund_restock    | refund       | 2656       | NULL         | 2657     | 639           | 2658      | +1.0   | 18.0  |
+| 741 | ad9350cb058e3926 | order_reduction   | order        | 2656       | NULL         | 2657     | 639           | NULL      | -3.0   | 17.0  |
+| 739 | a3ea3834125b29c1 | stock_restoration | order        | 2640       | NULL         | 2642     | 637           | NULL      | +3.0   | 20.0  |
+| 738 | 51048b29f798e604 | manual_adjustment | system       | 2641       | NULL         | NULL     | NULL          | NULL      | +5.0   | 15.0  |
+| 737 | b35bf320c156637b | order_reduction   | order        | 2640       | NULL         | 2642     | 637           | NULL      | -3.0   | 17.0  |
+| 734 | c7256561f7db16f4 | manual_adjustment | system       | 2637       | NULL         | NULL     | NULL          | NULL      | +2.0   | 9.0   |
+| 733 | a8c4b14d8dc3b5c6 | order_reduction   | order        | 2637       | NULL         | 2638     | 635           | NULL      | -3.0   | 7.0   |
+| 731 | 18454fcddcc3ef61 | manual_adjustment | system       | 2635       | NULL         | NULL     | NULL          | NULL      | +5.0   | 12.0  |
+| 730 | d748e718bbf14fb2 | order_reduction   | order        | 2635       | NULL         | 2636     | 634           | NULL      | -3.0   | 7.0   |
+| 728 | abf5339c7b9588b3 | manual_adjustment | system       | 2633       | NULL         | NULL     | NULL          | NULL      | +4.0   | 14.0  |
+| 726 | db7ce3d1797c413b | stock_restoration | order        | 2629       | NULL         | 2631     | 631           | NULL      | +2.0   | 20.0  |
+| 725 | dd6ae6ee788a1835 | refund_restock    | refund       | 2629       | NULL         | 2631     | 631           | 2632      | +1.0   | 18.0  |
+| 724 | c24c30c80088d929 | order_reduction   | order        | 2629       | NULL         | 2631     | 631           | NULL      | -3.0   | 17.0  |
+| 722 | cf0b5e4c6c04fdf8 | stock_restoration | order        | 2625       | 2626         | 2627     | 629           | NULL      | +2.0   | 15.0  |
+| 721 | 8e5bbefbb49f8027 | refund_restock    | refund       | 2625       | 2626         | 2627     | 629           | 2628      | +2.0   | 13.0  |
+| 720 | e55cfa8ba932e6fc | order_reduction   | order        | 2625       | 2626         | 2627     | 629           | NULL      | -4.0   | 11.0  |
 +-----+------------------+-------------------+--------------+------------+--------------+----------+---------------+-----------+--------+-------+
 ```
 
@@ -166,12 +197,16 @@ Trích xuất trực tiếp từ bảng `wp_despace_inventory_logs` trên contai
 3. **Quyền hạn truy cập Admin & REST API:**  
    Chỉ người dùng có quyền `manage_woocommerce` hoặc custom capability `view_despace_inventory_logs` mới được phép xem nhật ký và tải xuất CSV. Người dùng thông thường (customer/subscriber) bị chặn tuyệt đối (HTTP 403 Forbidden).
 4. **Vận hành Batch / CLI Script ngoài luồng chuẩn:**  
-   Khi phát triển các script đồng bộ kho bên ngoài (WP-CLI command hoặc custom daemon), khuyến nghị bao bọc logic trong khối `try/finally` và gọi `\DeSpace\Inventory\Events\InventoryStockObserver::clear_all_context()` để đảm bảo cô lập bộ nhớ hoàn toàn.
+   Khi phát triển các script đồng bộ kho bên ngoài (WP-CLI command hoặc custom daemon dài hạn) không thông qua Action Scheduler hoặc không kết thúc bằng WordPress `shutdown`, bắt buộc phải bao bọc logic trong khối `try/finally` và gọi `\DeSpace\Inventory\Events\InventoryStockObserver::clear_all_context()` trong khối `finally` để đảm bảo cô lập bộ nhớ hoàn toàn.
+5. **Ranh giới thực thi cùng priority tại `PHP_INT_MAX`:**  
+   Trong kiến trúc hook của WordPress (`WP_Hook`), các callback có cùng priority được thực thi theo thứ tự FIFO (thứ tự thêm vào). Do đó, nếu một plugin bên thứ ba đăng ký filter từ chối tồn kho tại `PHP_INT_MAX` *sau* khi M4 đã nạp guard, guard của M4 sẽ chạy trước. Trong tình huống này, WooCommerce vẫn hủy trừ tồn an toàn (0 log trừ tồn, kho không đổi), nhưng in-memory context có thể lưu lại cho đến khi gặp hook dọn dẹp tiếp theo (`action_scheduler_after_execute`, `action_scheduler_failed_execution`, `shutdown`, hoặc đơn hàng tiếp theo). Đối với các sản phẩm khác đột biến trong cùng tiến trình, cơ chế cô lập Case P (kiểm tra hàng đợi rỗng theo thực thể) bảo đảm an toàn, ghi nhận chúng thành `manual_adjustment` độc lập.
 
 ---
 
 ## 9. KẾT LUẬN & ĐỀ NGHỊ HỢP NHẤT (FINAL RELEASE GATE: GO)
 
-Mã nguồn PR #38 đã hoàn thành khắc phục toàn bộ 4 phát hiện kiểm tra độc lập (`M4-REV-001`, `M4-REV-002`, `M4-REV-003`, `M4-REV-004`), loại bỏ hoàn toàn code thừa `items_map`, vượt qua 100% các bộ kiểm thử tự động (68/68 test assertions) trên môi trường Staging Docker MariaDB/HPOS.
+Mã nguồn PR #38 đã hoàn thành khắc phục và xác minh có kiểm chứng toàn bộ các phát hiện kỹ thuật (`M4-REV-001`, `M4-REV-002`, `M4-REV-003`, `M4-REV-004`, `M4-REV-006`, `M4-REV-007`, `M4-REV-008`), chuẩn hóa exit codes cho 100% test runners, xác minh luồng xuất CSV end-to-end, kiểm thử thực tế Action Scheduler trên Staging, phân tích ranh giới `PHP_INT_MAX` và kiểm chứng phát hiện sai lệch đối soát tồn kho thực tế.
 
-**Trạng thái nghiệm thu cuối cùng: UNCONDITIONAL GO — SẴN SÀNG MERGE VÀO DEVELOP.**
+Tất cả 4 bộ kiểm thử đạt **100% PASS (69/69 test cases)** và đều trả **Exit Code: 0** trên môi trường Staging Docker MariaDB/HPOS.
+
+**Trạng thái nghiệm thu cuối cùng: GO (SẴN SÀNG MERGE VÀO DEVELOP).**

@@ -43,13 +43,44 @@ class InventoryLogsPage {
 	}
 
 	/**
+	 * Validate and authorize an incoming CSV export request.
+	 *
+	 * @param array $request_params Request parameters (defaults to $_GET).
+	 * @return true|\WP_Error True if request is valid and authorized, \WP_Error on failure.
+	 */
+	public static function validate_export_request( array $request_params = array() ) {
+		if ( empty( $request_params ) ) {
+			$request_params = $_GET;
+		}
+
+		$page   = $request_params['page'] ?? '';
+		$action = $request_params['action'] ?? '';
+
+		if ( 'despace-inventory-logs' !== $page || 'export_csv' !== $action ) {
+			return new \WP_Error( 'not_export_request', __( 'Not an export request.', 'despace-core' ) );
+		}
+
+		if ( ! current_user_can( 'view_despace_inventory_logs' ) && ! current_user_can( 'manage_woocommerce' ) ) {
+			return new \WP_Error( 'permission_denied', __( 'Permission denied.', 'despace-core' ), array( 'status' => 403 ) );
+		}
+
+		$nonce = isset( $request_params['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $request_params['_wpnonce'] ) ) : '';
+		if ( ! wp_verify_nonce( $nonce, 'despace_export_csv' ) ) {
+			return new \WP_Error( 'invalid_nonce', __( 'Action failed. Invalid or missing security nonce.', 'despace-core' ), array( 'status' => 403 ) );
+		}
+
+		return true;
+	}
+
+	/**
 	 * Handle CSV Export request.
 	 */
 	public static function handle_export(): void {
 		if ( isset( $_GET['page'], $_GET['action'] ) && 'despace-inventory-logs' === $_GET['page'] && 'export_csv' === $_GET['action'] ) {
-			$nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
-			if ( ! wp_verify_nonce( $nonce, 'despace_export_csv' ) ) {
-				wp_die( esc_html__( 'Action failed. Invalid or missing security nonce.', 'despace-core' ), 403 );
+			$validation = self::validate_export_request( $_GET );
+			if ( is_wp_error( $validation ) ) {
+				$status = (int) ( $validation->get_error_data()['status'] ?? 403 );
+				wp_die( esc_html( $validation->get_error_message() ), $status );
 			}
 			InventoryExportService::export_csv( $_GET );
 		}

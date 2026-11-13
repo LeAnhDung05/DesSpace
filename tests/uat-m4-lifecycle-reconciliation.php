@@ -26,8 +26,9 @@ echo "========================================================================\n
 echo "Active WC Version: " . WC_VERSION . "\n";
 echo "HPOS Active: " . ( \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled() ? 'YES' : 'NO' ) . "\n\n";
 
-global $wpdb;
-$log_table = InventoryLogInstaller::get_table_name();
+try {
+	global $wpdb;
+	$log_table = InventoryLogInstaller::get_table_name();
 
 // 1. Create a fresh stock-managed product with initial stock = 20
 $product = new \WC_Product_Simple();
@@ -205,17 +206,21 @@ echo "  -> Reconciliation Status: " . ( $reconcile_ok ? 'PASS' : 'FAIL' ) . "\n\
 $order->delete( true );
 $product->delete( true );
 
-// -------------------------------------------------------------------------
-// Final Verdict
-// -------------------------------------------------------------------------
-echo "========================================================================\n";
-if ( 20.0 === $stock_step1 && 17.0 === $stock_step2 && 17.0 === $stock_step3 && 18.0 === $stock_step5 && $reduction_ok && $refund_ok && $count_ok && $reconcile_ok ) {
-	echo ">>> FINAL STAGING UAT (PHASE 6D RECONCILIATION): ALL ASSERTIONS PASSED (100%) <<<\n";
+	// -------------------------------------------------------------------------
+	// Final Verdict
+	// -------------------------------------------------------------------------
 	echo "========================================================================\n";
-	exit( 0 );
-} else {
-	echo ">>> FINAL STAGING UAT: FAILED <<<\n";
-	echo "========================================================================\n";
+	if ( 20.0 === $stock_step1 && 17.0 === $stock_step2 && 17.0 === $stock_step3 && 18.0 === $stock_step5 && $reduction_ok && $refund_ok && $count_ok && $reconcile_ok ) {
+		echo ">>> FINAL STAGING UAT (PHASE 6D RECONCILIATION): ALL ASSERTIONS PASSED (100%) <<<\n";
+		echo "========================================================================\n";
+		exit( 0 );
+	} else {
+		echo ">>> FINAL STAGING UAT: FAILED <<<\n";
+		echo "========================================================================\n";
+		exit( 1 );
+	}
+} catch ( \Throwable $e ) {
+	fwrite( STDERR, "\nFATAL EXCEPTION in UAT Reconciliation: " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n" );
 	exit( 1 );
 }
 

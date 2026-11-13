@@ -54,40 +54,45 @@ class TestMatrixRunner {
 	private array $results = array();
 
 	public function run(): void {
-		echo "========================================================================\n";
-		echo "         DeSpace M4 — INVENTORY TRACEABILITY TEST MATRIX (T01–T28)       \n";
-		echo "========================================================================\n\n";
+		try {
+			echo "========================================================================\n";
+			echo "         DeSpace M4 — INVENTORY TRACEABILITY TEST MATRIX (T01–T28)       \n";
+			echo "========================================================================\n\n";
 
-		$this->test_T01_schema_definition();
-		$this->test_T02_migration_version_check();
-		$this->test_T03_schema_version_upgrade();
-		$this->test_T04_simple_stock_reduction();
-		$this->test_T05_simple_stock_increase();
-		$this->test_T06_zero_delta_rejected();
-		$this->test_T07_variation_stock_change();
-		$this->test_T08_parent_managed_stock();
-		$this->test_T09_multi_item_order();
-		$this->test_T10_retry_idempotency();
-		$this->test_T11_cancel_before_reduction();
-		$this->test_T12_cancel_after_reduction();
-		$this->test_T13_duplicate_restore_hooks();
-		$this->test_T14_refund_without_restock();
-		$this->test_T15_partial_refund_restock();
-		$this->test_T16_full_refund_restock();
-		$this->test_T17_multiple_refunds_idempotency();
-		$this->test_T18_manual_admin_adjustment();
-		$this->test_T19_system_cron_source();
-		$this->test_T20_unmanaged_stock_validation();
-		$this->test_T21_deleted_reference_preservation();
-		$this->test_T22_filter_bounds_and_dates();
-		$this->test_T23_pagination_offsets();
-		$this->test_T24_customer_permission_denied();
-		$this->test_T25_unauthorized_staff_denied();
-		$this->test_T26_authorized_staff_allowed();
-		$this->test_T27_hpos_crud_contract();
-		$this->test_T28_reconciliation_math();
+			$this->test_T01_schema_definition();
+			$this->test_T02_migration_version_check();
+			$this->test_T03_schema_version_upgrade();
+			$this->test_T04_simple_stock_reduction();
+			$this->test_T05_simple_stock_increase();
+			$this->test_T06_zero_delta_rejected();
+			$this->test_T07_variation_stock_change();
+			$this->test_T08_parent_managed_stock();
+			$this->test_T09_multi_item_order();
+			$this->test_T10_retry_idempotency();
+			$this->test_T11_cancel_before_reduction();
+			$this->test_T12_cancel_after_reduction();
+			$this->test_T13_duplicate_restore_hooks();
+			$this->test_T14_refund_without_restock();
+			$this->test_T15_partial_refund_restock();
+			$this->test_T16_full_refund_restock();
+			$this->test_T17_multiple_refunds_idempotency();
+			$this->test_T18_manual_admin_adjustment();
+			$this->test_T19_system_cron_source();
+			$this->test_T20_unmanaged_stock_validation();
+			$this->test_T21_deleted_reference_preservation();
+			$this->test_T22_filter_bounds_and_dates();
+			$this->test_T23_pagination_offsets();
+			$this->test_T24_customer_permission_denied();
+			$this->test_T25_unauthorized_staff_denied();
+			$this->test_T26_authorized_staff_allowed();
+			$this->test_T27_hpos_crud_contract();
+			$this->test_T28_reconciliation_math();
 
-		$this->print_summary();
+			$this->print_summary();
+		} catch ( \Throwable $e ) {
+			fwrite( STDERR, "\nFATAL EXCEPTION in TestMatrixRunner: " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n" );
+			exit( 1 );
+		}
 	}
 
 	private function assert_test( string $id, string $desc, bool $passed, string $details = '' ): void {
@@ -329,8 +334,12 @@ class TestMatrixRunner {
 		printf( "SUMMARY: %d Total | \033[32m%d Passed\033[0m | \033[31m%d Failed\033[0m\n", $total, $passed, $failed );
 		echo "========================================================================\n";
 
-		if ( 0 === $failed ) {
+		if ( 0 === $failed && 28 === $total ) {
 			echo "\n>>> ALL 28 MANDATORY TEST CASES (T01 - T28) PASSED SUCCESSFULLY! <<<\n\n";
+			exit( 0 );
+		} else {
+			echo "\n>>> TEST MATRIX FAILED (failures or incomplete count)! <<<\n\n";
+			exit( 1 );
 		}
 	}
 }

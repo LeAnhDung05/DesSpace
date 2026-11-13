@@ -64,6 +64,7 @@ function record_test( string $case_id, string $desc, bool $passed, string $detai
 	printf( "[CASE %-2s] %-54s : %s %s\n", $case_id, $desc, ( $passed ? 'PASS' : 'FAIL' ), ( $details ? "($details)" : '' ) );
 }
 
+try {
 // -------------------------------------------------------------------------
 // Case A: Order Reduction (Single Item)
 // -------------------------------------------------------------------------
@@ -1165,6 +1166,33 @@ $prod_r3_reloaded->save();
 
 $res_r3 = \DeSpace\Inventory\Audit\InventoryReconciler::reconcile( $prod_r3_id );
 
+// Subtest R4: Actual discrepancy detection (expected stock != current WC stock)
+$prod_r4 = new \WC_Product_Simple();
+$prod_r4->set_name( 'Case R4 Discrepancy ' . time() );
+$prod_r4->set_manage_stock( true );
+$prod_r4->set_stock_quantity( 20 );
+$prod_r4_id = $prod_r4->save();
+
+$wpdb->delete( $log_table, array( 'product_id' => $prod_r4_id ) );
+$ev_r4 = new \DeSpace\Inventory\Events\InventoryEvent( array(
+	'event_type'      => 'order_reduction',
+	'event_source'    => 'order',
+	'product_id'      => $prod_r4_id,
+	'order_id'        => 99999,
+	'quantity_before' => 20.0,
+	'quantity_delta'  => -5.0,
+	'stock_after'     => 15.0,
+) );
+$ev_r4->build_event_key( 'reconcile_disc_test_' . time() );
+\DeSpace\Inventory\Events\InventoryEventRecorder::record( $ev_r4 );
+
+// Tamper WC stock directly to 12 via postmeta (simulating unlogged stock movement)
+update_post_meta( $prod_r4_id, '_stock', 12 );
+wp_cache_delete( $prod_r4_id, 'post_meta' );
+clean_post_cache( $prod_r4_id );
+
+$res_r4 = \DeSpace\Inventory\Audit\InventoryReconciler::reconcile( $prod_r4_id );
+
 $case_r_ok = ( false === $res_r1['is_reconciled'] )
 	&& ( 'insufficient_history' === $res_r1['reconciliation_status'] )
 	&& ( null === $res_r1['discrepancy'] )
@@ -1174,103 +1202,290 @@ $case_r_ok = ( false === $res_r1['is_reconciled'] )
 	&& ( true === $res_r3['is_reconciled'] )
 	&& ( 'reconciled' === $res_r3['reconciliation_status'] )
 	&& ( 0.0 === (float) $res_r3['discrepancy'] )
-	&& ( 11.0 === (float) $res_r3['expected_stock'] );
+	&& ( 11.0 === (float) $res_r3['expected_stock'] )
+	&& ( false === $res_r4['is_reconciled'] )
+	&& ( 'discrepancy' === $res_r4['reconciliation_status'] )
+	&& ( 12.0 === (float) $res_r4['current_wc_stock'] )
+	&& ( 15.0 === (float) $res_r4['expected_stock'] )
+	&& ( 3.0 === (float) $res_r4['discrepancy'] );
 
-record_test( 'R', 'Reconciliation history baseline & non-zero audit safety (M4-REV-004)', $case_r_ok );
+record_test( 'R', 'Reconciliation baseline safety, zero-history handling & real discrepancy (M4-REV-004)', $case_r_ok );
 
 // -------------------------------------------------------------------------
-// Case S: Admin CSV Export Nonce Validation & Capability Protection (M4-REV-002)
+// Case S: Admin CSV Export End-to-End Request Lifecycle & Streaming Verification (M4-REV-002)
 // -------------------------------------------------------------------------
-$action_name = 'despace_export_csv';
-$valid_nonce = wp_create_nonce( $action_name );
+// 1. Hook registration in admin request flow
+$GLOBALS['menu'] = array();
+$GLOBALS['submenu'] = array();
+\DeSpace\Inventory\Admin\InventoryLogsPage::init();
+do_action( 'admin_menu' );
+$s_hook_registered = has_action( 'admin_init', array( 'DeSpace\\Inventory\\Admin\\InventoryLogsPage', 'handle_export' ) );
 
-$nonce_valid_check   = (bool) wp_verify_nonce( $valid_nonce, $action_name );
-$nonce_invalid_check = (false === wp_verify_nonce( 'tampered_nonce_999', $action_name ));
-$nonce_empty_check   = (false === wp_verify_nonce( '', $action_name ));
+// 2. Missing nonce validation check (Admin user)
+wp_set_current_user( 1 );
+$req_missing_nonce = array(
+	'page'   => 'despace-inventory-logs',
+	'action' => 'export_csv',
+);
+$res_missing_nonce = \DeSpace\Inventory\Admin\InventoryLogsPage::validate_export_request( $req_missing_nonce );
+$s_missing_nonce_ok = is_wp_error( $res_missing_nonce ) && 'invalid_nonce' === $res_missing_nonce->get_error_code();
 
-$test_export_base = admin_url( 'admin.php?page=despace-inventory-logs&action=export_csv' );
-$test_nonce_url   = wp_nonce_url( $test_export_base, $action_name );
+// 3. Invalid/tampered nonce validation check (Admin user)
+$req_invalid_nonce = array(
+	'page'     => 'despace-inventory-logs',
+	'action'   => 'export_csv',
+	'_wpnonce' => 'tampered_nonce_999',
+);
+$res_invalid_nonce = \DeSpace\Inventory\Admin\InventoryLogsPage::validate_export_request( $req_invalid_nonce );
+$s_invalid_nonce_ok = is_wp_error( $res_invalid_nonce ) && 'invalid_nonce' === $res_invalid_nonce->get_error_code();
+
+// 4. Valid nonce but unauthorized user (Guest user 0 with guest nonce)
+wp_set_current_user( 0 );
+$guest_nonce = wp_create_nonce( 'despace_export_csv' );
+$req_guest = array(
+	'page'       => 'despace-inventory-logs',
+	'action'     => 'export_csv',
+	'_wpnonce'   => $guest_nonce,
+	'event_type' => 'order_reduction',
+	'product_id' => $prod_a_id,
+);
+$res_guest = \DeSpace\Inventory\Admin\InventoryLogsPage::validate_export_request( $req_guest );
+$s_guest_blocked_ok = is_wp_error( $res_guest ) && 'permission_denied' === $res_guest->get_error_code();
+
+// 5. Valid nonce and authorized user (Admin user 1 with admin nonce)
+wp_set_current_user( 1 );
+$admin_nonce = wp_create_nonce( 'despace_export_csv' );
+$req_admin = array(
+	'page'       => 'despace-inventory-logs',
+	'action'     => 'export_csv',
+	'_wpnonce'   => $admin_nonce,
+	'event_type' => 'order_reduction',
+	'product_id' => $prod_a_id,
+);
+$res_admin = \DeSpace\Inventory\Admin\InventoryLogsPage::validate_export_request( $req_admin );
+$s_admin_allowed_ok = ( true === $res_admin );
+
+// 6. Export URL with exact nonce and preserved query parameters
+$test_export_base = admin_url( 'admin.php?page=despace-inventory-logs&action=export_csv&event_type=order_reduction&product_id=' . $prod_a_id );
+$test_nonce_url   = wp_nonce_url( $test_export_base, 'despace_export_csv' );
 parse_str( (string) wp_parse_url( html_entity_decode( $test_nonce_url ), PHP_URL_QUERY ), $url_query_params );
-$url_has_nonce = ! empty( $url_query_params['_wpnonce'] ) && wp_verify_nonce( $url_query_params['_wpnonce'], $action_name );
+$s_url_ok = ! empty( $url_query_params['_wpnonce'] )
+	&& wp_verify_nonce( $url_query_params['_wpnonce'], 'despace_export_csv' )
+	&& ( 'order_reduction' === ( $url_query_params['event_type'] ?? '' ) )
+	&& ( (int) $url_query_params['product_id'] === (int) $prod_a_id );
 
-wp_set_current_user( 0 ); // Guest
-$guest_can_export = current_user_can( 'manage_woocommerce' ) || current_user_can( 'view_despace_inventory_logs' );
-wp_set_current_user( 1 ); // Admin
-$admin_can_export = current_user_can( 'manage_woocommerce' ) || current_user_can( 'view_despace_inventory_logs' );
+// 7. End-to-End CSV output generation: verify UTF-8 BOM, headers, and filtered rows
+$csv_memory_stream = fopen( 'php://memory', 'r+' );
+\DeSpace\Inventory\Admin\InventoryExportService::export_csv( array(
+	'event_type' => 'order_reduction',
+	'product_id' => $prod_a_id,
+), $csv_memory_stream );
+rewind( $csv_memory_stream );
+$csv_content = stream_get_contents( $csv_memory_stream );
+fclose( $csv_memory_stream );
 
-$case_s_ok = $nonce_valid_check
-	&& $nonce_invalid_check
-	&& $nonce_empty_check
-	&& $url_has_nonce
-	&& ( ! $guest_can_export )
-	&& $admin_can_export;
+$s_bom_ok    = ( 0 === strpos( $csv_content, "\xEF\xBB\xBF" ) );
+$s_header_ok = ( false !== strpos( $csv_content, 'Event Type' ) ) && ( false !== strpos( $csv_content, 'Product ID' ) );
+$s_row_ok    = ( false !== strpos( $csv_content, (string) $prod_a_id ) ) && ( false !== strpos( $csv_content, 'order_reduction' ) );
 
-record_test( 'S', 'Admin CSV export nonce verification & capability protection (M4-REV-002)', $case_s_ok );
+$case_s_ok = (bool) $s_hook_registered
+	&& $s_missing_nonce_ok
+	&& $s_invalid_nonce_ok
+	&& $s_guest_blocked_ok
+	&& $s_admin_allowed_ok
+	&& $s_url_ok
+	&& $s_bom_ok
+	&& $s_header_ok
+	&& $s_row_ok;
+
+record_test( 'S', 'Admin CSV export end-to-end request lifecycle & streaming verification (M4-REV-002)', $case_s_ok );
 
 // -------------------------------------------------------------------------
-// Case T: CLI / Batch Execution Lifecycle & Exception Isolation (M4-REV-003)
+// Case T: Real Action Scheduler Lifecycle, Shutdown & CLI Exception Isolation (M4-REV-003)
 // -------------------------------------------------------------------------
-\DeSpace\Inventory\Events\InventoryOrderContext::set( array( 'order_id' => 777777 ) );
-$as_set_ok = \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
-do_action( 'action_scheduler_after_execute', 991, null, null );
-$as_after_ok = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
+$as_after_ok  = false;
+$as_failed_ok = false;
 
-\DeSpace\Inventory\Events\InventoryOrderContext::set( array( 'order_id' => 777778 ) );
-do_action( 'action_scheduler_failed_execution', 992, new \RuntimeException( 'Simulated action failure' ), null );
-$as_failed_ok = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
+if ( class_exists( 'ActionScheduler' ) && function_exists( 'as_enqueue_async_action' ) ) {
+	// Subtest T1: Real Action Scheduler success lifecycle
+	$hook_t1 = 'despace_test_as_success_' . time();
+	add_action( $hook_t1, function() {
+		\DeSpace\Inventory\Events\InventoryOrderContext::set( array( 'order_id' => 777111 ) );
+	} );
+	$as_action_id1 = as_enqueue_async_action( $hook_t1 );
+	\ActionScheduler::runner()->process_action( $as_action_id1 );
+	$as_after_ok = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
+	\ActionScheduler::store()->delete_action( $as_action_id1 );
 
+	// Subtest T2: Real Action Scheduler exception/failure lifecycle
+	$hook_t2 = 'despace_test_as_fail_' . time();
+	add_action( $hook_t2, function() {
+		\DeSpace\Inventory\Events\InventoryOrderContext::set( array( 'order_id' => 777222 ) );
+		throw new \RuntimeException( 'Simulated action failure' );
+	} );
+	$as_action_id2 = as_enqueue_async_action( $hook_t2 );
+	try {
+		\ActionScheduler::runner()->process_action( $as_action_id2 );
+	} catch ( \Throwable $e ) {
+		// ActionScheduler caught and triggered action_scheduler_failed_execution
+	}
+	$as_failed_ok = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
+	\ActionScheduler::store()->delete_action( $as_action_id2 );
+} else {
+	// Fallback to simulated hooks if ActionScheduler class not present
+	\DeSpace\Inventory\Events\InventoryOrderContext::set( array( 'order_id' => 777777 ) );
+	do_action( 'action_scheduler_after_execute', 991, null, null );
+	$as_after_ok = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
+
+	\DeSpace\Inventory\Events\InventoryOrderContext::set( array( 'order_id' => 777778 ) );
+	do_action( 'action_scheduler_failed_execution', 992, new \RuntimeException( 'Simulated action failure' ), null );
+	$as_failed_ok = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
+}
+
+// Subtest T3: Shutdown hook cleanup
 \DeSpace\Inventory\Events\InventoryOrderContext::set( array( 'order_id' => 777779 ) );
 do_action( 'shutdown' );
 $shutdown_clean_ok = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
 
-\DeSpace\Inventory\Events\InventoryOrderContext::set( array( 'order_id' => 777780 ) );
+// Subtest T4: CLI / Batch script try / finally pattern with subsequent stock mutation isolation
+$prod_t = new \WC_Product_Simple();
+$prod_t->set_name( 'Case T Batch Product ' . time() );
+$prod_t->set_manage_stock( true );
+$prod_t->set_stock_quantity( 10 );
+$prod_t_id = $prod_t->save();
+
 try {
+	\DeSpace\Inventory\Events\InventoryOrderContext::set( array( 'order_id' => 777780 ) );
 	throw new \RuntimeException( 'Simulated batch step failure' );
 } catch ( \Exception $e ) {
+	// Caught
+} finally {
 	\DeSpace\Inventory\Events\InventoryStockObserver::clear_all_context();
 }
 $batch_finally_ok = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
 
-$case_t_ok = $as_set_ok && $as_after_ok && $as_failed_ok && $shutdown_clean_ok && $batch_finally_ok;
-record_test( 'T', 'CLI / Batch lifecycle cleanup & exception isolation (M4-REV-003)', $case_t_ok );
+// Verify subsequent stock mutation in same PHP process is cleanly isolated
+$prod_t->set_stock_quantity( 14 );
+$prod_t->save();
+$log_t = $wpdb->get_row( $wpdb->prepare(
+	"SELECT * FROM {$log_table} WHERE product_id = %d ORDER BY id DESC LIMIT 1",
+	$prod_t_id
+), ARRAY_A );
+
+$subsequent_isolated_ok = ! empty( $log_t )
+	&& empty( $log_t['order_id'] )
+	&& empty( $log_t['order_item_id'] )
+	&& ( 'manual_adjustment' === $log_t['event_type'] );
+
+$case_t_ok = $as_after_ok && $as_failed_ok && $shutdown_clean_ok && $batch_finally_ok && $subsequent_isolated_ok;
+record_test( 'T', 'Real Action Scheduler lifecycle, shutdown & CLI exception isolation (M4-REV-003)', $case_t_ok );
 
 // -------------------------------------------------------------------------
-// Case U: Late Denial Priority Boundary (Priority 20, 999999, 1000000, PHP_INT_MAX)
+// Case U-1: Late Denial Priority Boundary at Priority 1000000 with PHP_INT_MAX Guard
 // -------------------------------------------------------------------------
-$prod_u = new \WC_Product_Simple();
-$prod_u->set_name( 'Case U Late Boundary ' . time() );
-$prod_u->set_manage_stock( true );
-$prod_u->set_stock_quantity( 20 );
-$prod_u_id = $prod_u->save();
+$prod_u1 = new \WC_Product_Simple();
+$prod_u1->set_name( 'Case U1 Late Boundary ' . time() );
+$prod_u1->set_manage_stock( true );
+$prod_u1->set_stock_quantity( 20 );
+$prod_u1_id = $prod_u1->save();
 
-$order_u = wc_create_order();
-$order_u->add_product( $prod_u, 5 );
-$order_u->calculate_totals();
-$order_u->save();
-$order_u_id = $order_u->get_id();
+$order_u1 = wc_create_order();
+$order_u1->add_product( $prod_u1, 5 );
+$order_u1->calculate_totals();
+$order_u1->save();
+$order_u1_id = $order_u1->get_id();
 
 $ultra_late_filter = function( $can, $order ) {
 	return false;
 };
 add_filter( 'woocommerce_can_reduce_order_stock', $ultra_late_filter, 1000000, 2 );
 
-wc_reduce_stock_levels( $order_u );
+wc_reduce_stock_levels( $order_u1 );
 
 remove_filter( 'woocommerce_can_reduce_order_stock', $ultra_late_filter, 1000000 );
 
-$stock_u_after = (float) wc_get_product( $prod_u_id )->get_stock_quantity();
-$u_logs_count = (int) $wpdb->get_var( $wpdb->prepare(
+$stock_u1_after = (float) wc_get_product( $prod_u1_id )->get_stock_quantity();
+$u1_logs_count = (int) $wpdb->get_var( $wpdb->prepare(
 	"SELECT COUNT(*) FROM {$log_table} WHERE order_id = %d AND event_type = %s",
-	$order_u_id,
+	$order_u1_id,
 	'order_reduction'
 ) );
-$u_context_clean = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
+$u1_context_clean = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
 
-$case_u_ok = ( 20.0 === $stock_u_after )
-	&& ( 0 === $u_logs_count )
-	&& $u_context_clean;
+$case_u1_ok = ( 20.0 === $stock_u1_after )
+	&& ( 0 === $u1_logs_count )
+	&& $u1_context_clean;
 
-record_test( 'U', 'Late denial boundary at priority 1000000 and PHP_INT_MAX cleanup guard', $case_u_ok );
+record_test( 'U-1', 'Late denial boundary at priority 1000000 and PHP_INT_MAX cleanup guard', $case_u1_ok );
+
+// -------------------------------------------------------------------------
+// Case U-2: Same-Priority Boundary Verification at PHP_INT_MAX
+// -------------------------------------------------------------------------
+$prod_u2 = new \WC_Product_Simple();
+$prod_u2->set_name( 'Case U2 Same-Priority Boundary ' . time() );
+$prod_u2->set_manage_stock( true );
+$prod_u2->set_stock_quantity( 20 );
+$prod_u2_id = $prod_u2->save();
+
+$order_u2 = wc_create_order();
+$order_u2->add_product( $prod_u2, 5 );
+$order_u2->calculate_totals();
+$order_u2->save();
+$order_u2_id = $order_u2->get_id();
+
+// Register external filter at PHP_INT_MAX returning false AFTER M4 was loaded
+$external_same_priority_filter = function( $can, $order ) {
+	return false;
+};
+add_filter( 'woocommerce_can_reduce_order_stock', $external_same_priority_filter, PHP_INT_MAX, 2 );
+
+// Execute reduction: external filter denies it
+wc_reduce_stock_levels( $order_u2 );
+remove_filter( 'woocommerce_can_reduce_order_stock', $external_same_priority_filter, PHP_INT_MAX );
+
+$stock_u2_after = (float) wc_get_product( $prod_u2_id )->get_stock_quantity();
+$u2_logs_count  = (int) $wpdb->get_var( $wpdb->prepare(
+	"SELECT COUNT(*) FROM {$log_table} WHERE order_id = %d AND event_type = %s",
+	$order_u2_id,
+	'order_reduction'
+) );
+
+// Verify: WooCommerce stock was NOT reduced (stock unchanged = 20.0, zero order logs)
+$u2_wc_aborted_ok = ( 20.0 === $stock_u2_after ) && ( 0 === $u2_logs_count );
+
+// Inspect same-priority execution order:
+// In WordPress, callbacks at the same priority execute in FIFO order of addition.
+// Because the external filter was added after M4, M4's guard ran first when $can was true.
+// Thus, in-memory context remained open.
+$u2_context_lingered = \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
+
+// Test subsequent mutation for an UNRELATED product:
+$prod_unrelated = new \WC_Product_Simple();
+$prod_unrelated->set_name( 'Case U2 Unrelated ' . time() );
+$prod_unrelated->set_manage_stock( true );
+$prod_unrelated->set_stock_quantity( 10 );
+$prod_unrelated_id = $prod_unrelated->save();
+
+$prod_unrelated->set_stock_quantity( 14 );
+$prod_unrelated->save();
+
+$log_unrelated = $wpdb->get_row( $wpdb->prepare(
+	"SELECT * FROM {$log_table} WHERE product_id = %d ORDER BY id DESC LIMIT 1",
+	$prod_unrelated_id
+), ARRAY_A );
+
+// Case P safety mechanism: unrelated entity has empty queue, so M4 cleanly isolates as manual_adjustment!
+$unrelated_isolated_ok = ! empty( $log_unrelated )
+	&& empty( $log_unrelated['order_id'] )
+	&& empty( $log_unrelated['order_item_id'] )
+	&& ( 'manual_adjustment' === $log_unrelated['event_type'] );
+
+// Clean up context explicitly
+\DeSpace\Inventory\Events\InventoryStockObserver::clear_all_context();
+$u2_finally_clean = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
+
+$case_u2_ok = $u2_wc_aborted_ok && $u2_context_lingered && $unrelated_isolated_ok && $u2_finally_clean;
+record_test( 'U-2', 'Same-priority PHP_INT_MAX boundary analysis & FIFO isolation verification', $case_u2_ok );
 
 // -------------------------------------------------------------------------
 // Cleanup
@@ -1289,7 +1504,8 @@ $order_o3->delete( true );
 $order_p->delete( true );
 $order_q1->delete( true );
 $order_q2->delete( true );
-$order_u->delete( true );
+$order_u1->delete( true );
+$order_u2->delete( true );
 $prod_a->delete( true );
 $prod_b1->delete( true );
 $prod_b2->delete( true );
@@ -1314,7 +1530,11 @@ $var_parent_q->delete( true );
 $prod_r1->delete( true );
 $prod_r2->delete( true );
 $prod_r3->delete( true );
-$prod_u->delete( true );
+$prod_r4->delete( true );
+$prod_t->delete( true );
+$prod_u1->delete( true );
+$prod_u2->delete( true );
+$prod_unrelated->delete( true );
 
 // -------------------------------------------------------------------------
 // Summary
@@ -1327,13 +1547,21 @@ foreach ( $test_results as $tr ) {
 	}
 }
 
-if ( $all_cases_passed ) {
-	echo ">>> ALL 23 TEST CASES (A - U) PASSED ON LIVE WOOCOMMERCE & MYSQL! <<<\n";
+$total_cases = count( $test_results );
+$passed_cases = count( array_filter( $test_results, function( $r ) { return $r['passed']; } ) );
+printf( "SUMMARY: %d Total Cases | %d Passed | %d Failed\n", $total_cases, $passed_cases, ( $total_cases - $passed_cases ) );
+
+if ( $all_cases_passed && 24 === $total_cases ) {
+	echo ">>> ALL 24 TEST CASES (A - U) PASSED ON LIVE WOOCOMMERCE & MYSQL! <<<\n";
 	echo "========================================================================\n";
 	exit( 0 );
 } else {
-	echo ">>> SOME CASES FAILED <<<\n";
+	echo ">>> SOME CASES FAILED OR INCOMPLETE RUN! <<<\n";
 	echo "========================================================================\n";
+	exit( 1 );
+}
+} catch ( \Throwable $e ) {
+	fwrite( STDERR, "\nFATAL EXCEPTION in Live Order Context Suite: " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n" );
 	exit( 1 );
 }
 
