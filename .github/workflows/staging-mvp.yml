@@ -34,6 +34,9 @@ jobs:
             php -l "$file"
           done
 
+      - name: Validate shell scripts
+        run: bash -n scripts/*.sh
+
       - name: Validate required staging files
         run: |
           test -f wordpress/wp-content/plugins/despace-core/despace-core.php
