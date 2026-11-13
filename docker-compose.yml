@@ -58,6 +58,7 @@ services:
       WORDPRESS_DB_USER: ${DB_USER:-despace}
       WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:-despace_local_only}
     volumes:
+      - wordpress_core:/var/www/html
       - ./wordpress/wp-content:/var/www/html/wp-content
       - despace_uploads:/var/www/html/wp-content/uploads
     profiles: ["tools"]
