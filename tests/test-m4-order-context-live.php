@@ -43,7 +43,7 @@ use DeSpace\Inventory\Events\InventoryStockObserver;
 use DeSpace\Inventory\Events\InventoryOrderContext;
 
 echo "========================================================================\n";
-echo "   DeSpace M4 — LIVE INVENTORY ORDER CONTEXT TEST SUITE (CASES A-O)     \n";
+echo "   DeSpace M4 — LIVE INVENTORY ORDER CONTEXT TEST SUITE (CASES A-P)     \n";
 echo "========================================================================\n";
 echo "Active WC Version: " . WC_VERSION . "\n";
 echo "HPOS Active: " . ( \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled() ? 'YES' : 'NO' ) . "\n\n";
@@ -580,7 +580,7 @@ $case_m_ok = ( $refund_m1_id > 0 )
 record_test( 'M', 'Multiple partial refunds (distinct refund IDs, correct item IDs & distinct keys)', $case_m_ok, "Refunds #{$refund_m1_id} & #{$refund_m2_id}" );
 
 // -------------------------------------------------------------------------
-// Case N: Variation Restoration and Refund (Individual & Parent-Managed)
+// Case N: Complete Variation Lifecycle Assertions (Individual & Parent-Managed)
 // -------------------------------------------------------------------------
 // Part 1: Individually stock-managed variation
 $var_parent_n1 = new \WC_Product_Variable();
@@ -594,14 +594,19 @@ $var_n1->set_manage_stock( true );
 $var_n1->set_stock_quantity( 15 );
 $var_n1_id = $var_n1->save();
 
+$wpdb->delete( $log_table, array( 'product_id' => $var_parent_n1_id ) );
+
 $order_n1 = wc_create_order();
 $item_n1_id = $order_n1->add_product( wc_get_product( $var_n1_id ), 4 );
 $order_n1->calculate_totals();
 $order_n1->save();
 $order_n1_id = $order_n1->get_id();
 
-wc_reduce_stock_levels( $order_n1 ); // stock 15 -> 11
+// 1. Reduction: 15 -> 11
+wc_reduce_stock_levels( $order_n1 );
+$var_n1_stock_after_reduce = (float) wc_get_product( $var_n1_id )->get_stock_quantity();
 
+// 2. Refund Restock: 11 -> 13
 $refund_n1 = wc_create_refund( array(
 	'amount'         => 240000,
 	'reason'         => 'Case N Variation Refund',
@@ -616,13 +621,12 @@ $refund_n1 = wc_create_refund( array(
 	'restock_items'  => true,
 ) );
 $refund_n1_id = $refund_n1 instanceof \WC_Order_Refund ? $refund_n1->get_id() : 0;
-// stock 11 -> 13
+$var_n1_stock_after_refund = (float) wc_get_product( $var_n1_id )->get_stock_quantity();
 
-// Restore remaining reduced stock
+// 3. Restoration: 13 -> 15 (restore remaining 2 reduced units)
 $order_n1 = wc_get_order( $order_n1_id );
-wc_increase_stock_levels( $order_n1 ); // stock 13 -> 15
-
-$var_n1_final_stock = (float) wc_get_product( $var_n1_id )->get_stock_quantity();
+wc_increase_stock_levels( $order_n1 );
+$var_n1_stock_after_restore = (float) wc_get_product( $var_n1_id )->get_stock_quantity();
 
 $log_n1_reduce = $wpdb->get_row( $wpdb->prepare(
 	"SELECT * FROM {$log_table} WHERE variation_id = %d AND event_type = %s",
@@ -642,6 +646,53 @@ $log_n1_restore = $wpdb->get_row( $wpdb->prepare(
 	'stock_restoration'
 ), ARRAY_A );
 
+$case_n1_ok = ( 11.0 === $var_n1_stock_after_reduce )
+	&& ( 13.0 === $var_n1_stock_after_refund )
+	&& ( 15.0 === $var_n1_stock_after_restore )
+	// Reduction row assertions
+	&& ( ! empty( $log_n1_reduce ) )
+	&& ( 'order_reduction' === $log_n1_reduce['event_type'] )
+	&& ( 'order' === $log_n1_reduce['event_source'] )
+	&& ( (int) $log_n1_reduce['product_id'] === (int) $var_parent_n1_id )
+	&& ( (int) $log_n1_reduce['variation_id'] === (int) $var_n1_id )
+	&& ( (int) $log_n1_reduce['order_id'] === (int) $order_n1_id )
+	&& ( (int) $log_n1_reduce['order_item_id'] === (int) $item_n1_id )
+	&& ( empty( $log_n1_reduce['refund_id'] ) )
+	&& ( -4.0 === (float) $log_n1_reduce['quantity_delta'] )
+	&& ( 15.0 === (float) $log_n1_reduce['quantity_before'] )
+	&& ( 11.0 === (float) $log_n1_reduce['stock_after'] )
+	&& ( ! empty( $log_n1_reduce['event_key'] ) )
+	// Refund restock row assertions
+	&& ( ! empty( $log_n1_refund ) )
+	&& ( 'refund_restock' === $log_n1_refund['event_type'] )
+	&& ( 'refund' === $log_n1_refund['event_source'] )
+	&& ( (int) $log_n1_refund['product_id'] === (int) $var_parent_n1_id )
+	&& ( (int) $log_n1_refund['variation_id'] === (int) $var_n1_id )
+	&& ( (int) $log_n1_refund['order_id'] === (int) $order_n1_id )
+	&& ( (int) $log_n1_refund['order_item_id'] === (int) $item_n1_id )
+	&& ( (int) $log_n1_refund['refund_id'] === (int) $refund_n1_id )
+	&& ( 2.0 === (float) $log_n1_refund['quantity_delta'] )
+	&& ( 11.0 === (float) $log_n1_refund['quantity_before'] )
+	&& ( 13.0 === (float) $log_n1_refund['stock_after'] )
+	&& ( ! empty( $log_n1_refund['event_key'] ) )
+	// Restoration row assertions
+	&& ( ! empty( $log_n1_restore ) )
+	&& ( 'stock_restoration' === $log_n1_restore['event_type'] )
+	&& ( 'order' === $log_n1_restore['event_source'] )
+	&& ( (int) $log_n1_restore['product_id'] === (int) $var_parent_n1_id )
+	&& ( (int) $log_n1_restore['variation_id'] === (int) $var_n1_id )
+	&& ( (int) $log_n1_restore['order_id'] === (int) $order_n1_id )
+	&& ( (int) $log_n1_restore['order_item_id'] === (int) $item_n1_id )
+	&& ( empty( $log_n1_restore['refund_id'] ) )
+	&& ( 2.0 === (float) $log_n1_restore['quantity_delta'] )
+	&& ( 13.0 === (float) $log_n1_restore['quantity_before'] )
+	&& ( 15.0 === (float) $log_n1_restore['stock_after'] )
+	&& ( ! empty( $log_n1_restore['event_key'] ) )
+	// Distinct keys
+	&& ( $log_n1_reduce['event_key'] !== $log_n1_refund['event_key'] )
+	&& ( $log_n1_refund['event_key'] !== $log_n1_restore['event_key'] )
+	&& ( $log_n1_reduce['event_key'] !== $log_n1_restore['event_key'] );
+
 // Part 2: Parent-managed stock variation
 $var_parent_n2 = new \WC_Product_Variable();
 $var_parent_n2->set_name( 'Case N Parent-Managed Variable ' . time() );
@@ -655,14 +706,39 @@ $var_n2->set_regular_price( '150000' );
 $var_n2->set_manage_stock( false );
 $var_n2_id = $var_n2->save();
 
+$wpdb->delete( $log_table, array( 'product_id' => $var_parent_n2_id ) );
+
 $order_n2 = wc_create_order();
 $item_n2_id = $order_n2->add_product( wc_get_product( $var_n2_id ), 3 );
 $order_n2->calculate_totals();
 $order_n2->save();
 $order_n2_id = $order_n2->get_id();
 
-wc_reduce_stock_levels( $order_n2 ); // parent stock 20 -> 17
-$parent_n2_reduced_stock = (float) wc_get_product( $var_parent_n2_id )->get_stock_quantity();
+// 1. Reduction: 20 -> 17
+wc_reduce_stock_levels( $order_n2 );
+$parent_n2_stock_after_reduce = (float) wc_get_product( $var_parent_n2_id )->get_stock_quantity();
+
+// 2. Refund Restock: 17 -> 18 (refund 1 item)
+$refund_n2 = wc_create_refund( array(
+	'amount'         => 150000,
+	'reason'         => 'Case N Parent Var Refund',
+	'order_id'       => $order_n2_id,
+	'line_items'     => array(
+		$item_n2_id => array(
+			'qty'          => 1,
+			'refund_total' => 150000,
+			'refund_tax'   => array(),
+		),
+	),
+	'restock_items'  => true,
+) );
+$refund_n2_id = $refund_n2 instanceof \WC_Order_Refund ? $refund_n2->get_id() : 0;
+$parent_n2_stock_after_refund = (float) wc_get_product( $var_parent_n2_id )->get_stock_quantity();
+
+// 3. Restoration: 18 -> 20 (restore remaining 2 units)
+$order_n2 = wc_get_order( $order_n2_id );
+wc_increase_stock_levels( $order_n2 );
+$parent_n2_stock_after_restore = (float) wc_get_product( $var_parent_n2_id )->get_stock_quantity();
 
 $log_n2_reduce = $wpdb->get_row( $wpdb->prepare(
 	"SELECT * FROM {$log_table} WHERE product_id = %d AND order_id = %d AND event_type = %s",
@@ -671,73 +747,318 @@ $log_n2_reduce = $wpdb->get_row( $wpdb->prepare(
 	'order_reduction'
 ), ARRAY_A );
 
-$case_n_ok = ( 15.0 === $var_n1_final_stock )
-	&& ( ! empty( $log_n1_reduce ) && (int) $log_n1_reduce['product_id'] === (int) $var_parent_n1_id && (int) $log_n1_reduce['order_item_id'] === (int) $item_n1_id )
-	&& ( ! empty( $log_n1_refund ) && (int) $log_n1_refund['product_id'] === (int) $var_parent_n1_id && (int) $log_n1_refund['refund_id'] === (int) $refund_n1_id )
-	&& ( ! empty( $log_n1_restore ) && (int) $log_n1_restore['product_id'] === (int) $var_parent_n1_id && ( 2.0 === (float) $log_n1_restore['quantity_delta'] ) )
-	&& ( 17.0 === $parent_n2_reduced_stock )
-	&& ( ! empty( $log_n2_reduce ) && null === $log_n2_reduce['variation_id'] && (int) $log_n2_reduce['order_item_id'] === (int) $item_n2_id );
-
-record_test( 'N', 'Variation restoration/refund (own-stock & parent-managed stock attributed)', $case_n_ok, "Var stock: {$var_n1_final_stock}, Parent stock: {$parent_n2_reduced_stock}" );
-
-// -------------------------------------------------------------------------
-// Case O: Denied Operation & Stale Context Cleanup
-// -------------------------------------------------------------------------
-$prod_o = new \WC_Product_Simple();
-$prod_o->set_name( 'Case O Denied Prod ' . time() );
-$prod_o->set_regular_price( '75000' );
-$prod_o->set_manage_stock( true );
-$prod_o->set_stock_quantity( 10 );
-$prod_o_id = $prod_o->save();
-
-$wpdb->delete( $log_table, array( 'product_id' => $prod_o_id ) );
-
-$order_o = wc_create_order();
-$item_o_id = $order_o->add_product( $prod_o, 3 );
-$order_o->calculate_totals();
-$order_o->save();
-$order_o_id = $order_o->get_id();
-
-// Hook filter to DENY stock reduction
-$deny_filter = function() { return false; };
-add_filter( 'woocommerce_can_reduce_order_stock', $deny_filter, 1 );
-
-wc_reduce_stock_levels( $order_o );
-
-remove_filter( 'woocommerce_can_reduce_order_stock', $deny_filter, 1 );
-
-$stock_o_after_denied = (float) wc_get_product( $prod_o_id )->get_stock_quantity();
-$logs_count_o_denied = (int) $wpdb->get_var( $wpdb->prepare(
-	"SELECT COUNT(*) FROM {$log_table} WHERE product_id = %d",
-	$prod_o_id
-) );
-
-$context_clean_after_denied = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context()
-	&& ! \DeSpace\Inventory\Events\InventoryOrderContext::has_refund_context();
-
-// Trigger an unrelated manual stock update by an admin
-wp_set_current_user( 1 );
-$prod_o->set_stock_quantity( 18 );
-$prod_o->save();
-
-$manual_log_o = $wpdb->get_row( $wpdb->prepare(
-	"SELECT * FROM {$log_table} WHERE product_id = %d ORDER BY id DESC LIMIT 1",
-	$prod_o_id
+$log_n2_refund = $wpdb->get_row( $wpdb->prepare(
+	"SELECT * FROM {$log_table} WHERE product_id = %d AND order_id = %d AND event_type = %s",
+	$var_parent_n2_id,
+	$order_n2_id,
+	'refund_restock'
 ), ARRAY_A );
 
-$case_o_ok = ( 10.0 === $stock_o_after_denied )
-	&& ( 0 === $logs_count_o_denied )
-	&& $context_clean_after_denied
-	&& ( ! empty( $manual_log_o ) )
-	&& ( 'manual_adjustment' === $manual_log_o['event_type'] )
-	&& ( empty( $manual_log_o['order_id'] ) )
-	&& ( empty( $manual_log_o['refund_id'] ) )
-	&& ( empty( $manual_log_o['order_item_id'] ) )
-	&& ( (int) $manual_log_o['actor_user_id'] === 1 )
-	&& ( 8.0 === (float) $manual_log_o['quantity_delta'] )
-	&& ( 18.0 === (float) $manual_log_o['stock_after'] );
+$log_n2_restore = $wpdb->get_row( $wpdb->prepare(
+	"SELECT * FROM {$log_table} WHERE product_id = %d AND order_id = %d AND event_type = %s",
+	$var_parent_n2_id,
+	$order_n2_id,
+	'stock_restoration'
+), ARRAY_A );
 
-record_test( 'O', 'Denied operation / context cleanup (zero logs when denied, clean manual adjustment)', $case_o_ok, "Manual event_type: {$manual_log_o['event_type']}, actor: {$manual_log_o['actor_user_id']}" );
+$case_n2_ok = ( 17.0 === $parent_n2_stock_after_reduce )
+	&& ( 18.0 === $parent_n2_stock_after_refund )
+	&& ( 20.0 === $parent_n2_stock_after_restore )
+	// Reduction row assertions
+	&& ( ! empty( $log_n2_reduce ) )
+	&& ( 'order_reduction' === $log_n2_reduce['event_type'] )
+	&& ( (int) $log_n2_reduce['product_id'] === (int) $var_parent_n2_id )
+	&& ( null === $log_n2_reduce['variation_id'] )
+	&& ( (int) $log_n2_reduce['order_item_id'] === (int) $item_n2_id )
+	&& ( empty( $log_n2_reduce['refund_id'] ) )
+	&& ( -3.0 === (float) $log_n2_reduce['quantity_delta'] )
+	&& ( 20.0 === (float) $log_n2_reduce['quantity_before'] )
+	&& ( 17.0 === (float) $log_n2_reduce['stock_after'] )
+	// Refund restock row assertions
+	&& ( ! empty( $log_n2_refund ) )
+	&& ( 'refund_restock' === $log_n2_refund['event_type'] )
+	&& ( (int) $log_n2_refund['product_id'] === (int) $var_parent_n2_id )
+	&& ( null === $log_n2_refund['variation_id'] )
+	&& ( (int) $log_n2_refund['order_item_id'] === (int) $item_n2_id )
+	&& ( (int) $log_n2_refund['refund_id'] === (int) $refund_n2_id )
+	&& ( 1.0 === (float) $log_n2_refund['quantity_delta'] )
+	&& ( 17.0 === (float) $log_n2_refund['quantity_before'] )
+	&& ( 18.0 === (float) $log_n2_refund['stock_after'] )
+	// Restoration row assertions
+	&& ( ! empty( $log_n2_restore ) )
+	&& ( 'stock_restoration' === $log_n2_restore['event_type'] )
+	&& ( (int) $log_n2_restore['product_id'] === (int) $var_parent_n2_id )
+	&& ( null === $log_n2_restore['variation_id'] )
+	&& ( (int) $log_n2_restore['order_item_id'] === (int) $item_n2_id )
+	&& ( empty( $log_n2_restore['refund_id'] ) )
+	&& ( 2.0 === (float) $log_n2_restore['quantity_delta'] )
+	&& ( 18.0 === (float) $log_n2_restore['quantity_before'] )
+	&& ( 20.0 === (float) $log_n2_restore['stock_after'] )
+	// Distinct keys
+	&& ( $log_n2_reduce['event_key'] !== $log_n2_refund['event_key'] )
+	&& ( $log_n2_refund['event_key'] !== $log_n2_restore['event_key'] )
+	&& ( $log_n2_reduce['event_key'] !== $log_n2_restore['event_key'] );
+
+$case_n_ok = $case_n1_ok && $case_n2_ok;
+record_test( 'N', 'Variation complete lifecycle assertions (own-stock & parent-managed: reduce, refund, restore)', $case_n_ok, "Part 1 & 2 fully verified" );
+
+// -------------------------------------------------------------------------
+// Case O-1: Late-Denied Stock Reduction (Priority 20)
+// -------------------------------------------------------------------------
+$prod_o1 = new \WC_Product_Simple();
+$prod_o1->set_name( 'Case O1 Late Denied Reduce ' . time() );
+$prod_o1->set_regular_price( '75000' );
+$prod_o1->set_manage_stock( true );
+$prod_o1->set_stock_quantity( 10 );
+$prod_o1_id = $prod_o1->save();
+
+$wpdb->delete( $log_table, array( 'product_id' => $prod_o1_id ) );
+
+$order_o1 = wc_create_order();
+$item_o1_id = $order_o1->add_product( $prod_o1, 3 );
+$order_o1->calculate_totals();
+$order_o1->save();
+$order_o1_id = $order_o1->get_id();
+
+// External filter returns false at priority 20 (after M4 priority 10 initialization)
+$late_filter_reduce = function( $can, $order ) { return false; };
+add_filter( 'woocommerce_can_reduce_order_stock', $late_filter_reduce, 20, 2 );
+
+wc_reduce_stock_levels( $order_o1 );
+
+remove_filter( 'woocommerce_can_reduce_order_stock', $late_filter_reduce, 20 );
+
+$stock_o1_after_denied = (float) wc_get_product( $prod_o1_id )->get_stock_quantity();
+$logs_count_o1_order = (int) $wpdb->get_var( $wpdb->prepare(
+	"SELECT COUNT(*) FROM {$log_table} WHERE order_id = %d",
+	$order_o1_id
+) );
+
+$context_clean_o1 = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context()
+	&& ! \DeSpace\Inventory\Events\InventoryOrderContext::has_refund_context();
+
+// Subsequent manual update
+wp_set_current_user( 1 );
+$prod_o1->set_stock_quantity( 14 );
+$prod_o1->save();
+
+$manual_log_o1 = $wpdb->get_row( $wpdb->prepare(
+	"SELECT * FROM {$log_table} WHERE product_id = %d ORDER BY id DESC LIMIT 1",
+	$prod_o1_id
+), ARRAY_A );
+
+$case_o1_ok = ( 10.0 === $stock_o1_after_denied )
+	&& ( 0 === $logs_count_o1_order )
+	&& $context_clean_o1
+	&& ( ! empty( $manual_log_o1 ) )
+	&& ( 'manual_adjustment' === $manual_log_o1['event_type'] )
+	&& ( empty( $manual_log_o1['order_id'] ) )
+	&& ( empty( $manual_log_o1['refund_id'] ) )
+	&& ( empty( $manual_log_o1['order_item_id'] ) )
+	&& ( (int) $manual_log_o1['actor_user_id'] === 1 )
+	&& ( 4.0 === (float) $manual_log_o1['quantity_delta'] )
+	&& ( 14.0 === (float) $manual_log_o1['stock_after'] );
+
+record_test( 'O-1', 'Late-denied reduction at priority 20 (clean context, zero order logs, manual adjustment)', $case_o1_ok );
+
+// -------------------------------------------------------------------------
+// Case O-2: Late-Denied Stock Restoration (Priority 20)
+// -------------------------------------------------------------------------
+$prod_o2 = new \WC_Product_Simple();
+$prod_o2->set_name( 'Case O2 Late Denied Restore ' . time() );
+$prod_o2->set_regular_price( '80000' );
+$prod_o2->set_manage_stock( true );
+$prod_o2->set_stock_quantity( 10 );
+$prod_o2_id = $prod_o2->save();
+
+$order_o2 = wc_create_order();
+$item_o2_id = $order_o2->add_product( $prod_o2, 3 );
+$order_o2->calculate_totals();
+$order_o2->save();
+$order_o2_id = $order_o2->get_id();
+
+wc_reduce_stock_levels( $order_o2 ); // 10 -> 7
+$stock_o2_reduced = (float) wc_get_product( $prod_o2_id )->get_stock_quantity();
+
+// External filter returns false at priority 20 during restore
+$late_filter_restore = function( $can, $order ) { return false; };
+add_filter( 'woocommerce_can_restore_order_stock', $late_filter_restore, 20, 2 );
+
+wc_increase_stock_levels( $order_o2 );
+
+remove_filter( 'woocommerce_can_restore_order_stock', $late_filter_restore, 20 );
+
+$stock_o2_after_denied = (float) wc_get_product( $prod_o2_id )->get_stock_quantity();
+$logs_count_o2_restore = (int) $wpdb->get_var( $wpdb->prepare(
+	"SELECT COUNT(*) FROM {$log_table} WHERE order_id = %d AND event_type = %s",
+	$order_o2_id,
+	'stock_restoration'
+) );
+
+$context_clean_o2 = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context()
+	&& ! \DeSpace\Inventory\Events\InventoryOrderContext::has_refund_context();
+
+// Subsequent manual update
+wp_set_current_user( 1 );
+$prod_o2 = wc_get_product( $prod_o2_id );
+$prod_o2->set_stock_quantity( 12 );
+$prod_o2->save();
+
+$manual_log_o2 = $wpdb->get_row( $wpdb->prepare(
+	"SELECT * FROM {$log_table} WHERE product_id = %d ORDER BY id DESC LIMIT 1",
+	$prod_o2_id
+), ARRAY_A );
+
+$case_o2_ok = ( 7.0 === $stock_o2_reduced )
+	&& ( 7.0 === $stock_o2_after_denied )
+	&& ( 0 === $logs_count_o2_restore )
+	&& $context_clean_o2
+	&& ( ! empty( $manual_log_o2 ) )
+	&& ( 'manual_adjustment' === $manual_log_o2['event_type'] )
+	&& ( empty( $manual_log_o2['order_id'] ) )
+	&& ( empty( $manual_log_o2['refund_id'] ) )
+	&& ( empty( $manual_log_o2['order_item_id'] ) )
+	&& ( (int) $manual_log_o2['actor_user_id'] === 1 )
+	&& ( 5.0 === (float) $manual_log_o2['quantity_delta'] )
+	&& ( 12.0 === (float) $manual_log_o2['stock_after'] );
+
+record_test( 'O-2', 'Late-denied restoration at priority 20 (clean context, zero restore logs, manual adjustment)', $case_o2_ok );
+
+// -------------------------------------------------------------------------
+// Case O-3: Late-Denied Refund Restock (Priority 20)
+// -------------------------------------------------------------------------
+$prod_o3 = new \WC_Product_Simple();
+$prod_o3->set_name( 'Case O3 Late Denied Refund ' . time() );
+$prod_o3->set_regular_price( '100000' );
+$prod_o3->set_manage_stock( true );
+$prod_o3->set_stock_quantity( 10 );
+$prod_o3_id = $prod_o3->save();
+
+$order_o3 = wc_create_order();
+$item_o3_id = $order_o3->add_product( $prod_o3, 3 );
+$order_o3->calculate_totals();
+$order_o3->save();
+$order_o3_id = $order_o3->get_id();
+
+wc_reduce_stock_levels( $order_o3 ); // 10 -> 7
+
+// External filter returns false at priority 20 during refund restock
+$late_filter_restock = function( $can, $order, $items ) { return false; };
+add_filter( 'woocommerce_can_restock_refunded_items', $late_filter_restock, 20, 3 );
+
+$refund_o3 = wc_create_refund( array(
+	'amount'         => 100000,
+	'order_id'       => $order_o3_id,
+	'line_items'     => array(
+		$item_o3_id => array(
+			'qty'          => 1,
+			'refund_total' => 100000,
+			'refund_tax'   => array(),
+		),
+	),
+	'restock_items'  => true,
+) );
+
+remove_filter( 'woocommerce_can_restock_refunded_items', $late_filter_restock, 20 );
+
+$stock_o3_after_denied = (float) wc_get_product( $prod_o3_id )->get_stock_quantity();
+$logs_count_o3_refund = (int) $wpdb->get_var( $wpdb->prepare(
+	"SELECT COUNT(*) FROM {$log_table} WHERE order_id = %d AND event_type = %s",
+	$order_o3_id,
+	'refund_restock'
+) );
+
+$context_clean_o3 = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context()
+	&& ! \DeSpace\Inventory\Events\InventoryOrderContext::has_refund_context();
+
+// Subsequent manual update
+wp_set_current_user( 1 );
+$prod_o3 = wc_get_product( $prod_o3_id );
+$prod_o3->set_stock_quantity( 9 );
+$prod_o3->save();
+
+$manual_log_o3 = $wpdb->get_row( $wpdb->prepare(
+	"SELECT * FROM {$log_table} WHERE product_id = %d ORDER BY id DESC LIMIT 1",
+	$prod_o3_id
+), ARRAY_A );
+
+$case_o3_ok = ( 7.0 === $stock_o3_after_denied )
+	&& ( 0 === $logs_count_o3_refund )
+	&& $context_clean_o3
+	&& ( ! empty( $manual_log_o3 ) )
+	&& ( 'manual_adjustment' === $manual_log_o3['event_type'] )
+	&& ( empty( $manual_log_o3['order_id'] ) )
+	&& ( empty( $manual_log_o3['refund_id'] ) )
+	&& ( empty( $manual_log_o3['order_item_id'] ) )
+	&& ( (int) $manual_log_o3['actor_user_id'] === 1 )
+	&& ( 2.0 === (float) $manual_log_o3['quantity_delta'] )
+	&& ( 9.0 === (float) $manual_log_o3['stock_after'] );
+
+record_test( 'O-3', 'Late-denied refund restock at priority 20 (clean context, zero refund logs, manual adjustment)', $case_o3_ok );
+
+// -------------------------------------------------------------------------
+// Case P: FIFO Fallback Safety & Unmatched Entity Isolation
+// -------------------------------------------------------------------------
+$prod_p1 = new \WC_Product_Simple();
+$prod_p1->set_name( 'Case P1 Queued Prod ' . time() );
+$prod_p1->set_manage_stock( true );
+$prod_p1->set_stock_quantity( 20 );
+$prod_p1_id = $prod_p1->save();
+
+$prod_p2 = new \WC_Product_Simple();
+$prod_p2->set_name( 'Case P2 Unmatched Prod ' . time() );
+$prod_p2->set_manage_stock( true );
+$prod_p2->set_stock_quantity( 10 );
+$prod_p2_id = $prod_p2->save();
+
+$wpdb->delete( $log_table, array( 'product_id' => $prod_p1_id ) );
+$wpdb->delete( $log_table, array( 'product_id' => $prod_p2_id ) );
+
+$order_p = wc_create_order();
+$item_p1_id = $order_p->add_product( $prod_p1, 3 );
+$order_p->calculate_totals();
+$order_p->save();
+$order_p_id = $order_p->get_id();
+
+wc_reduce_stock_levels( $order_p ); // prod_p1 stock: 20 -> 17
+
+// Now, start restoration context for order_p
+\DeSpace\Inventory\Events\InventoryStockObserver::on_before_restore_order_stock( $order_p );
+
+// While order_p restoration context is open, an UNMATCHED stock mutation occurs on prod_p2 (not in order)
+$prod_p2 = wc_get_product( $prod_p2_id );
+wc_update_product_stock( $prod_p2, 5, 'increase' ); // 10 -> 15
+
+// Now complete the valid restoration for prod_p1
+$prod_p1 = wc_get_product( $prod_p1_id );
+wc_update_product_stock( $prod_p1, 3, 'increase' ); // 17 -> 20
+
+\DeSpace\Inventory\Events\InventoryStockObserver::clear_all_context();
+
+$log_p2_unmatched = $wpdb->get_row( $wpdb->prepare(
+	"SELECT * FROM {$log_table} WHERE product_id = %d ORDER BY id DESC LIMIT 1",
+	$prod_p2_id
+), ARRAY_A );
+
+$log_p1_valid = $wpdb->get_row( $wpdb->prepare(
+	"SELECT * FROM {$log_table} WHERE product_id = %d AND event_type = %s ORDER BY id DESC LIMIT 1",
+	$prod_p1_id,
+	'stock_restoration'
+), ARRAY_A );
+
+$case_p_ok = ( ! empty( $log_p2_unmatched ) )
+	&& ( 'manual_adjustment' === $log_p2_unmatched['event_type'] )
+	&& ( empty( $log_p2_unmatched['order_id'] ) )
+	&& ( empty( $log_p2_unmatched['order_item_id'] ) )
+	&& ( empty( $log_p2_unmatched['refund_id'] ) )
+	&& ( 5.0 === (float) $log_p2_unmatched['quantity_delta'] )
+	&& ( ! empty( $log_p1_valid ) )
+	&& ( 'stock_restoration' === $log_p1_valid['event_type'] )
+	&& ( (int) $log_p1_valid['order_id'] === (int) $order_p_id )
+	&& ( (int) $log_p1_valid['order_item_id'] === (int) $item_p1_id )
+	&& ( 3.0 === (float) $log_p1_valid['quantity_delta'] );
+
+record_test( 'P', 'FIFO fallback safety (unmatched stock entity isolated as manual_adjustment, queue intact)', $case_p_ok );
 
 // -------------------------------------------------------------------------
 // Cleanup
@@ -750,7 +1071,10 @@ $order_l->delete( true );
 $order_m->delete( true );
 $order_n1->delete( true );
 $order_n2->delete( true );
-$order_o->delete( true );
+$order_o1->delete( true );
+$order_o2->delete( true );
+$order_o3->delete( true );
+$order_p->delete( true );
 $prod_a->delete( true );
 $prod_b1->delete( true );
 $prod_b2->delete( true );
@@ -764,7 +1088,11 @@ $var_n1->delete( true );
 $var_parent_n1->delete( true );
 $var_n2->delete( true );
 $var_parent_n2->delete( true );
-$prod_o->delete( true );
+$prod_o1->delete( true );
+$prod_o2->delete( true );
+$prod_o3->delete( true );
+$prod_p1->delete( true );
+$prod_p2->delete( true );
 
 // -------------------------------------------------------------------------
 // Summary
@@ -778,7 +1106,7 @@ foreach ( $test_results as $tr ) {
 }
 
 if ( $all_cases_passed ) {
-	echo ">>> ALL 15 MANDATORY CASES (A - O) PASSED ON LIVE WOOCOMMERCE & MYSQL! <<<\n";
+	echo ">>> ALL 18 TEST CASES (A - P) PASSED ON LIVE WOOCOMMERCE & MYSQL! <<<\n";
 	echo "========================================================================\n";
 	exit( 0 );
 } else {

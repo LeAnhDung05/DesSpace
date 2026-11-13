@@ -405,6 +405,15 @@ class InventoryStockObserver {
 				}
 				if ( null !== $queued_item ) {
 					$order_item_id = $queued_item['order_item_id'];
+				} else {
+					// Queue exhausted or unmatched stock entity:
+					// Do not assign an arbitrary/overwritten line-item ID.
+					// An unrelated stock mutation occurring during order context must not be falsely attributed.
+					$order_id      = null;
+					$refund_id     = null;
+					$order_item_id = null;
+					$event_source  = null;
+					$event_type    = null;
 				}
 			} else {
 				// order_item_id was directly set (e.g. by on_filter_order_item_quantity).
@@ -413,17 +422,6 @@ class InventoryStockObserver {
 				if ( null !== $peeked && (int) $peeked['order_item_id'] === (int) $order_item_id ) {
 					$queued_item = InventoryOrderContext::dequeue_item( $stock_entity_id );
 				}
-			}
-		}
-
-		// Fallback to legacy map if queue was not populated.
-		if ( empty( $order_item_id ) && ! empty( $context['items_map'] ) && is_array( $context['items_map'] ) ) {
-			if ( ! empty( $variation_id ) && isset( $context['items_map'][ $variation_id ] ) ) {
-				$order_item_id = $context['items_map'][ $variation_id ];
-			} elseif ( isset( $context['items_map'][ $product_id ] ) ) {
-				$order_item_id = $context['items_map'][ $product_id ];
-			} elseif ( isset( $context['items_map'][ $item_id ] ) ) {
-				$order_item_id = $context['items_map'][ $item_id ];
 			}
 		}
 
