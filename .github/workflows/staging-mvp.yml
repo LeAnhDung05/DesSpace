@@ -1,0 +1,49 @@
+name: DeSpace Staging MVP Checks
+
+on:
+  push:
+    branches:
+      - integration/staging-mvp
+  pull_request:
+    branches:
+      - integration/staging-mvp
+
+permissions:
+  contents: read
+
+jobs:
+  php-lint-and-compose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout staging branch
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - name: Lint all project PHP files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' files < <(find wordpress/wp-content -type f -name '*.php' -print0)
+          test "${#files[@]}" -gt 0
+          for file in "${files[@]}"; do
+            php -l "$file"
+          done
+
+      - name: Validate required staging files
+        run: |
+          test -f wordpress/wp-content/plugins/despace-core/despace-core.php
+          test -f wordpress/wp-content/plugins/despace-core/includes/Plugin.php
+          test -f wordpress/wp-content/plugins/despace-core/includes/Checkout-Orders/CheckoutOrdersModule.php
+          test -f wordpress/wp-content/plugins/despace-core/includes/Inventory/InventoryModule.php
+          test -f wordpress/wp-content/themes/despace-child/style.css
+          test -f wordpress/wp-content/themes/despace-child/seed-demo.php
+          test -f docs/STAGING_MVP.md
+          test -f docker-compose.yml
+
+      - name: Validate Docker Compose
+        run: docker compose config --quiet
