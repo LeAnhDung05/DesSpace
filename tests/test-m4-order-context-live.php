@@ -43,7 +43,7 @@ use DeSpace\Inventory\Events\InventoryStockObserver;
 use DeSpace\Inventory\Events\InventoryOrderContext;
 
 echo "========================================================================\n";
-echo "   DeSpace M4 — LIVE INVENTORY ORDER CONTEXT TEST SUITE (CASES A-P)     \n";
+echo "   DeSpace M4 — LIVE INVENTORY ORDER CONTEXT TEST SUITE (CASES A-U)     \n";
 echo "========================================================================\n";
 echo "Active WC Version: " . WC_VERSION . "\n";
 echo "HPOS Active: " . ( \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled() ? 'YES' : 'NO' ) . "\n\n";
@@ -1061,6 +1061,218 @@ $case_p_ok = ( ! empty( $log_p2_unmatched ) )
 record_test( 'P', 'FIFO fallback safety (unmatched stock entity isolated as manual_adjustment, queue intact)', $case_p_ok );
 
 // -------------------------------------------------------------------------
+// Case Q: Parent-Managed Variation Reconciliation (M4-REV-001)
+// -------------------------------------------------------------------------
+$var_parent_q = new \WC_Product_Variable();
+$var_parent_q->set_name( 'Case Q Shared Parent ' . time() );
+$var_parent_q->set_manage_stock( true );
+$var_parent_q->set_stock_quantity( 30 );
+$var_parent_q_id = $var_parent_q->save();
+
+$var_q1 = new \WC_Product_Variation();
+$var_q1->set_parent_id( $var_parent_q_id );
+$var_q1->set_regular_price( '100000' );
+$var_q1->set_manage_stock( false ); // Parent managed
+$var_q1_id = $var_q1->save();
+
+$var_q2 = new \WC_Product_Variation();
+$var_q2->set_parent_id( $var_parent_q_id );
+$var_q2->set_regular_price( '120000' );
+$var_q2->set_manage_stock( false ); // Parent managed
+$var_q2_id = $var_q2->save();
+
+$wpdb->delete( $log_table, array( 'product_id' => $var_parent_q_id ) );
+
+// Place order for variation 1 (qty 4) -> 30 to 26
+$order_q1 = wc_create_order();
+$order_q1->add_product( wc_get_product( $var_q1_id ), 4 );
+$order_q1->calculate_totals();
+$order_q1->save();
+wc_reduce_stock_levels( $order_q1 );
+
+// Place order for variation 2 (qty 6) -> 26 to 20
+$order_q2 = wc_create_order();
+$order_q2->add_product( wc_get_product( $var_q2_id ), 6 );
+$order_q2->calculate_totals();
+$order_q2->save();
+wc_reduce_stock_levels( $order_q2 );
+
+$parent_q_stock = (float) wc_get_product( $var_parent_q_id )->get_stock_quantity();
+
+// Test A: Reconcile by parent ID
+$res_q_parent = \DeSpace\Inventory\Audit\InventoryReconciler::reconcile( $var_parent_q_id );
+
+// Test B: Reconcile by variation 1 ID (M4-REV-001 normalization)
+$res_q_var1 = \DeSpace\Inventory\Audit\InventoryReconciler::reconcile( $var_parent_q_id, $var_q1_id );
+
+// Test C: Reconcile by variation 2 ID
+$res_q_var2 = \DeSpace\Inventory\Audit\InventoryReconciler::reconcile( $var_parent_q_id, $var_q2_id );
+
+// Test D: Reconcile with non-existent IDs
+$res_q_missing_parent = \DeSpace\Inventory\Audit\InventoryReconciler::reconcile( 99999999 );
+$res_q_missing_var    = \DeSpace\Inventory\Audit\InventoryReconciler::reconcile( $var_parent_q_id, 99999999 );
+
+$case_q_ok = ( 20.0 === $parent_q_stock )
+	&& ( 'reconciled' === $res_q_parent['reconciliation_status'] )
+	&& ( true === $res_q_parent['is_reconciled'] )
+	&& ( 20.0 === (float) $res_q_parent['current_wc_stock'] )
+	&& ( 20.0 === (float) $res_q_parent['expected_stock'] )
+	&& ( -10.0 === (float) $res_q_parent['total_logged_delta'] )
+	&& ( 'parent_managed_shared' === $res_q_parent['stock_scope'] )
+	&& ( 'reconciled' === $res_q_var1['reconciliation_status'] )
+	&& ( true === $res_q_var1['is_reconciled'] )
+	&& ( 'parent_managed_shared' === $res_q_var1['stock_scope'] )
+	&& ( (int) $res_q_var1['stock_managed_by_id'] === (int) $var_parent_q_id )
+	&& ( 20.0 === (float) $res_q_var1['current_wc_stock'] )
+	&& ( 'reconciled' === $res_q_var2['reconciliation_status'] )
+	&& ( true === $res_q_var2['is_reconciled'] )
+	&& ( 'product_not_found' === $res_q_missing_parent['reconciliation_status'] )
+	&& ( false === $res_q_missing_parent['is_reconciled'] )
+	&& ( 'product_not_found' === $res_q_missing_var['reconciliation_status'] )
+	&& ( false === $res_q_missing_var['is_reconciled'] );
+
+record_test( 'Q', 'Parent-managed variation reconciliation & shared pool normalization (M4-REV-001)', $case_q_ok );
+
+// -------------------------------------------------------------------------
+// Case R: Reconciliation History Baseline & Status Validation (M4-REV-004)
+// -------------------------------------------------------------------------
+$prod_r1 = new \WC_Product_Simple();
+$prod_r1->set_name( 'Case R1 No Log ' . time() );
+$prod_r1->set_manage_stock( true );
+$prod_r1->set_stock_quantity( 10 );
+$prod_r1_id = $prod_r1->save();
+$wpdb->delete( $log_table, array( 'product_id' => $prod_r1_id ) );
+
+$res_r1 = \DeSpace\Inventory\Audit\InventoryReconciler::reconcile( $prod_r1_id );
+
+$prod_r2 = new \WC_Product_Simple();
+$prod_r2->set_name( 'Case R2 Zero Stock No Log ' . time() );
+$prod_r2->set_manage_stock( true );
+$prod_r2->set_stock_quantity( 0 );
+$prod_r2_id = $prod_r2->save();
+$wpdb->delete( $log_table, array( 'product_id' => $prod_r2_id ) );
+
+$res_r2 = \DeSpace\Inventory\Audit\InventoryReconciler::reconcile( $prod_r2_id );
+
+$prod_r3 = new \WC_Product_Simple();
+$prod_r3->set_name( 'Case R3 Valid Baseline ' . time() );
+$prod_r3->set_manage_stock( true );
+$prod_r3->set_stock_quantity( 15 );
+$prod_r3_id = $prod_r3->save();
+$prod_r3_reloaded = wc_get_product( $prod_r3_id );
+$prod_r3_reloaded->set_stock_quantity( 11 );
+$prod_r3_reloaded->save();
+
+$res_r3 = \DeSpace\Inventory\Audit\InventoryReconciler::reconcile( $prod_r3_id );
+
+$case_r_ok = ( false === $res_r1['is_reconciled'] )
+	&& ( 'insufficient_history' === $res_r1['reconciliation_status'] )
+	&& ( null === $res_r1['discrepancy'] )
+	&& ( false === $res_r2['is_reconciled'] )
+	&& ( 'insufficient_history' === $res_r2['reconciliation_status'] )
+	&& ( null === $res_r2['discrepancy'] )
+	&& ( true === $res_r3['is_reconciled'] )
+	&& ( 'reconciled' === $res_r3['reconciliation_status'] )
+	&& ( 0.0 === (float) $res_r3['discrepancy'] )
+	&& ( 11.0 === (float) $res_r3['expected_stock'] );
+
+record_test( 'R', 'Reconciliation history baseline & non-zero audit safety (M4-REV-004)', $case_r_ok );
+
+// -------------------------------------------------------------------------
+// Case S: Admin CSV Export Nonce Validation & Capability Protection (M4-REV-002)
+// -------------------------------------------------------------------------
+$action_name = 'despace_export_csv';
+$valid_nonce = wp_create_nonce( $action_name );
+
+$nonce_valid_check   = (bool) wp_verify_nonce( $valid_nonce, $action_name );
+$nonce_invalid_check = (false === wp_verify_nonce( 'tampered_nonce_999', $action_name ));
+$nonce_empty_check   = (false === wp_verify_nonce( '', $action_name ));
+
+$test_export_base = admin_url( 'admin.php?page=despace-inventory-logs&action=export_csv' );
+$test_nonce_url   = wp_nonce_url( $test_export_base, $action_name );
+parse_str( (string) wp_parse_url( html_entity_decode( $test_nonce_url ), PHP_URL_QUERY ), $url_query_params );
+$url_has_nonce = ! empty( $url_query_params['_wpnonce'] ) && wp_verify_nonce( $url_query_params['_wpnonce'], $action_name );
+
+wp_set_current_user( 0 ); // Guest
+$guest_can_export = current_user_can( 'manage_woocommerce' ) || current_user_can( 'view_despace_inventory_logs' );
+wp_set_current_user( 1 ); // Admin
+$admin_can_export = current_user_can( 'manage_woocommerce' ) || current_user_can( 'view_despace_inventory_logs' );
+
+$case_s_ok = $nonce_valid_check
+	&& $nonce_invalid_check
+	&& $nonce_empty_check
+	&& $url_has_nonce
+	&& ( ! $guest_can_export )
+	&& $admin_can_export;
+
+record_test( 'S', 'Admin CSV export nonce verification & capability protection (M4-REV-002)', $case_s_ok );
+
+// -------------------------------------------------------------------------
+// Case T: CLI / Batch Execution Lifecycle & Exception Isolation (M4-REV-003)
+// -------------------------------------------------------------------------
+\DeSpace\Inventory\Events\InventoryOrderContext::set( array( 'order_id' => 777777 ) );
+$as_set_ok = \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
+do_action( 'action_scheduler_after_execute', 991, null, null );
+$as_after_ok = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
+
+\DeSpace\Inventory\Events\InventoryOrderContext::set( array( 'order_id' => 777778 ) );
+do_action( 'action_scheduler_failed_execution', 992, new \RuntimeException( 'Simulated action failure' ), null );
+$as_failed_ok = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
+
+\DeSpace\Inventory\Events\InventoryOrderContext::set( array( 'order_id' => 777779 ) );
+do_action( 'shutdown' );
+$shutdown_clean_ok = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
+
+\DeSpace\Inventory\Events\InventoryOrderContext::set( array( 'order_id' => 777780 ) );
+try {
+	throw new \RuntimeException( 'Simulated batch step failure' );
+} catch ( \Exception $e ) {
+	\DeSpace\Inventory\Events\InventoryStockObserver::clear_all_context();
+}
+$batch_finally_ok = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
+
+$case_t_ok = $as_set_ok && $as_after_ok && $as_failed_ok && $shutdown_clean_ok && $batch_finally_ok;
+record_test( 'T', 'CLI / Batch lifecycle cleanup & exception isolation (M4-REV-003)', $case_t_ok );
+
+// -------------------------------------------------------------------------
+// Case U: Late Denial Priority Boundary (Priority 20, 999999, 1000000, PHP_INT_MAX)
+// -------------------------------------------------------------------------
+$prod_u = new \WC_Product_Simple();
+$prod_u->set_name( 'Case U Late Boundary ' . time() );
+$prod_u->set_manage_stock( true );
+$prod_u->set_stock_quantity( 20 );
+$prod_u_id = $prod_u->save();
+
+$order_u = wc_create_order();
+$order_u->add_product( $prod_u, 5 );
+$order_u->calculate_totals();
+$order_u->save();
+$order_u_id = $order_u->get_id();
+
+$ultra_late_filter = function( $can, $order ) {
+	return false;
+};
+add_filter( 'woocommerce_can_reduce_order_stock', $ultra_late_filter, 1000000, 2 );
+
+wc_reduce_stock_levels( $order_u );
+
+remove_filter( 'woocommerce_can_reduce_order_stock', $ultra_late_filter, 1000000 );
+
+$stock_u_after = (float) wc_get_product( $prod_u_id )->get_stock_quantity();
+$u_logs_count = (int) $wpdb->get_var( $wpdb->prepare(
+	"SELECT COUNT(*) FROM {$log_table} WHERE order_id = %d AND event_type = %s",
+	$order_u_id,
+	'order_reduction'
+) );
+$u_context_clean = ! \DeSpace\Inventory\Events\InventoryOrderContext::has_order_context();
+
+$case_u_ok = ( 20.0 === $stock_u_after )
+	&& ( 0 === $u_logs_count )
+	&& $u_context_clean;
+
+record_test( 'U', 'Late denial boundary at priority 1000000 and PHP_INT_MAX cleanup guard', $case_u_ok );
+
+// -------------------------------------------------------------------------
 // Cleanup
 // -------------------------------------------------------------------------
 $order_a->delete( true );
@@ -1075,6 +1287,9 @@ $order_o1->delete( true );
 $order_o2->delete( true );
 $order_o3->delete( true );
 $order_p->delete( true );
+$order_q1->delete( true );
+$order_q2->delete( true );
+$order_u->delete( true );
 $prod_a->delete( true );
 $prod_b1->delete( true );
 $prod_b2->delete( true );
@@ -1093,6 +1308,13 @@ $prod_o2->delete( true );
 $prod_o3->delete( true );
 $prod_p1->delete( true );
 $prod_p2->delete( true );
+$var_q1->delete( true );
+$var_q2->delete( true );
+$var_parent_q->delete( true );
+$prod_r1->delete( true );
+$prod_r2->delete( true );
+$prod_r3->delete( true );
+$prod_u->delete( true );
 
 // -------------------------------------------------------------------------
 // Summary
@@ -1106,7 +1328,7 @@ foreach ( $test_results as $tr ) {
 }
 
 if ( $all_cases_passed ) {
-	echo ">>> ALL 18 TEST CASES (A - P) PASSED ON LIVE WOOCOMMERCE & MYSQL! <<<\n";
+	echo ">>> ALL 23 TEST CASES (A - U) PASSED ON LIVE WOOCOMMERCE & MYSQL! <<<\n";
 	echo "========================================================================\n";
 	exit( 0 );
 } else {

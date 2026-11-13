@@ -39,21 +39,21 @@ class InventoryStockObserver {
 	public static function init(): void {
 		// 1. Order Stock Reduction lifecycle hooks.
 		add_filter( 'woocommerce_can_reduce_order_stock', array( __CLASS__, 'on_can_reduce_order_stock' ), 10, 2 );
-		add_filter( 'woocommerce_can_reduce_order_stock', array( __CLASS__, 'on_check_can_reduce_order_stock_final' ), 999999, 2 );
+		add_filter( 'woocommerce_can_reduce_order_stock', array( __CLASS__, 'on_check_can_reduce_order_stock_final' ), PHP_INT_MAX, 2 );
 		add_filter( 'woocommerce_order_item_quantity', array( __CLASS__, 'on_filter_order_item_quantity' ), 10, 3 );
 		add_action( 'woocommerce_reduce_order_item_stock', array( __CLASS__, 'on_after_reduce_order_item_stock' ), 999, 3 );
 		add_action( 'woocommerce_reduce_order_stock', array( __CLASS__, 'on_after_order_stock_action' ), 999, 1 );
 
 		// 2. Order Stock Restoration lifecycle hooks (cancelled, pending, failed, or programmatic increase).
 		add_filter( 'woocommerce_can_restore_order_stock', array( __CLASS__, 'on_can_restore_order_stock' ), 10, 2 );
-		add_filter( 'woocommerce_can_restore_order_stock', array( __CLASS__, 'on_check_can_restore_order_stock_final' ), 999999, 2 );
+		add_filter( 'woocommerce_can_restore_order_stock', array( __CLASS__, 'on_check_can_restore_order_stock_final' ), PHP_INT_MAX, 2 );
 		add_action( 'woocommerce_restore_order_item_stock', array( __CLASS__, 'on_restore_order_item_stock' ), 999, 4 );
 		add_action( 'woocommerce_restore_order_stock', array( __CLASS__, 'on_after_order_stock_action' ), 999, 1 );
 
 		// 3. Refund Restock lifecycle hooks.
 		add_action( 'woocommerce_create_refund', array( __CLASS__, 'on_woocommerce_create_refund' ), 10, 2 );
 		add_filter( 'woocommerce_can_restock_refunded_items', array( __CLASS__, 'on_can_restock_refunded_items' ), 10, 3 );
-		add_filter( 'woocommerce_can_restock_refunded_items', array( __CLASS__, 'on_check_can_restock_refunded_items_final' ), 999999, 3 );
+		add_filter( 'woocommerce_can_restock_refunded_items', array( __CLASS__, 'on_check_can_restock_refunded_items_final' ), PHP_INT_MAX, 3 );
 		add_action( 'woocommerce_restock_refunded_item', array( __CLASS__, 'on_restock_refunded_item' ), 10, 5 );
 		add_action( 'woocommerce_order_partially_refunded', array( __CLASS__, 'on_after_refund_action' ), 999, 2 );
 		add_action( 'woocommerce_order_fully_refunded', array( __CLASS__, 'on_after_refund_action' ), 999, 2 );
@@ -64,6 +64,11 @@ class InventoryStockObserver {
 
 		add_action( 'woocommerce_product_set_stock', array( __CLASS__, 'on_set_stock' ), 10, 1 );
 		add_action( 'woocommerce_variation_set_stock', array( __CLASS__, 'on_set_stock' ), 10, 1 );
+
+		// 5. Asynchronous Queue & CLI Batch Cleanup Hooks (Action Scheduler & Shutdown).
+		add_action( 'action_scheduler_after_execute', array( __CLASS__, 'clear_all_context' ), 999 );
+		add_action( 'action_scheduler_failed_execution', array( __CLASS__, 'clear_all_context' ), 999 );
+		add_action( 'shutdown', array( __CLASS__, 'clear_all_context' ), 999 );
 	}
 
 	/**
@@ -118,36 +123,7 @@ class InventoryStockObserver {
 		return $can;
 	}
 
-	/**
-	 * Helper to build product_id/variation_id to order_item_id map for an order (legacy fallback).
-	 *
-	 * @param mixed $order WC_Order object or null.
-	 * @return array<int, int>
-	 */
-	public static function build_order_items_map( $order ): array {
-		$map = array();
-		if ( ! $order instanceof \WC_Order ) {
-			return $map;
-		}
 
-		foreach ( $order->get_items() as $item_id => $item ) {
-			if ( ! is_object( $item ) || ! method_exists( $item, 'get_product_id' ) ) {
-				continue;
-			}
-			$pid = absint( $item->get_product_id() );
-			$vid = method_exists( $item, 'get_variation_id' ) ? absint( $item->get_variation_id() ) : 0;
-			$iid = absint( $item_id );
-
-			if ( $vid > 0 ) {
-				$map[ $vid ] = $iid;
-			}
-			if ( $pid > 0 ) {
-				$map[ $pid ] = $iid;
-			}
-		}
-
-		return $map;
-	}
 
 	/**
 	 * Pre-reduction hook establishing order reduction context.
@@ -509,13 +485,11 @@ class InventoryStockObserver {
 		if ( $order_id > 0 ) {
 			self::clear_all_context();
 			$order_obj = is_numeric( $order ) ? wc_get_order( $order_id ) : $order;
-			$items_map = self::build_order_items_map( $order_obj );
 
 			InventoryOrderContext::set( array(
 				'order_id'            => $order_id,
 				'event_type'          => InventoryEvent::TYPE_ORDER_REDUCTION,
 				'event_source'        => InventoryEvent::SOURCE_ORDER,
-				'items_map'           => $items_map,
 				'source_operation_id' => 'order_reduce_' . $order_id,
 			) );
 
@@ -551,13 +525,11 @@ class InventoryStockObserver {
 		if ( $order_id > 0 ) {
 			self::clear_all_context();
 			$order_obj = is_numeric( $order ) ? wc_get_order( $order_id ) : $order;
-			$items_map = self::build_order_items_map( $order_obj );
 
 			InventoryOrderContext::set( array(
 				'order_id'            => $order_id,
 				'event_type'          => InventoryEvent::TYPE_STOCK_RESTORATION,
 				'event_source'        => InventoryEvent::SOURCE_ORDER,
-				'items_map'           => $items_map,
 				'source_operation_id' => 'order_restore_' . $order_id,
 			) );
 

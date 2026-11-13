@@ -46,8 +46,12 @@ class InventoryLogsPage {
 	 * Handle CSV Export request.
 	 */
 	public static function handle_export(): void {
-		if ( isset( $_GET['page'], $_GET['action'] ) && 'despace-inventory-logs' === $_GET['page'] && 'export_csv' === $_GET['action'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			InventoryExportService::export_csv( $_GET ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['page'], $_GET['action'] ) && 'despace-inventory-logs' === $_GET['page'] && 'export_csv' === $_GET['action'] ) {
+			$nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+			if ( ! wp_verify_nonce( $nonce, 'despace_export_csv' ) ) {
+				wp_die( esc_html__( 'Action failed. Invalid or missing security nonce.', 'despace-core' ), 403 );
+			}
+			InventoryExportService::export_csv( $_GET );
 		}
 	}
 
@@ -96,7 +100,7 @@ class InventoryLogsPage {
 
 					<input type="submit" class="button" value="<?php esc_attr_e( 'Filter', 'despace-core' ); ?>" />
 					<?php
-					$export_url = add_query_arg(
+					$raw_export_url = add_query_arg(
 						array(
 							'page'       => 'despace-inventory-logs',
 							'action'     => 'export_csv',
@@ -107,6 +111,7 @@ class InventoryLogsPage {
 						),
 						admin_url( 'admin.php' )
 					);
+					$export_url = wp_nonce_url( $raw_export_url, 'despace_export_csv' );
 					?>
 					<a href="<?php echo esc_url( $export_url ); ?>" class="button button-secondary"><?php esc_html_e( 'Export CSV', 'despace-core' ); ?></a>
 					<?php if ( ! empty( $current_event_type ) || ! empty( $current_product_id ) || ! empty( $current_date_from ) || ! empty( $current_date_to ) ) : ?>
