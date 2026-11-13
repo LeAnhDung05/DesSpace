@@ -36,6 +36,12 @@ services:
     volumes:
       - ./wordpress/wp-content:/var/www/html/wp-content
       - despace_uploads:/var/www/html/wp-content/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "php -r '$s=@fsockopen(\"127.0.0.1\",80); exit($s ? 0 : 1);'"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
 
   wpcli:
     image: wordpress:cli-php8.3
@@ -43,7 +49,7 @@ services:
       db:
         condition: service_healthy
       wordpress:
-        condition: service_started
+        condition: service_healthy
     working_dir: /var/www/html
     environment:
       WORDPRESS_DB_HOST: db:3306
