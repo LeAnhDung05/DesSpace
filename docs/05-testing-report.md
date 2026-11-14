@@ -136,3 +136,16 @@ Toàn bộ các tiêu chí kỹ thuật, dữ liệu và giao diện của dự 
 - **Tính ổn định:** Hệ thống hoạt động trơn tru trên môi trường Docker với MySQL 8.4 Strict Mode và PHP 8.3. Không phát sinh bất kỳ lỗi nghiêm trọng (Fatal error) nào.
 
 **ĐÁNH GIÁ CHUNG: HỆ THỐNG ĐẠT CHUẨN NGHIỆM THU VÀ SẴN SÀNG TRIỂN KHAI VẬN HÀNH CHÍNH THỨC.**
+
+---
+
+## 6. SPRINT POLISH & UI/3D FINE-TUNING REPORT (2026-11-14)
+
+### 6.1. Hạng mục xử lý & Kết quả kiểm chứng
+
+| STT | Vấn đề phản hồi | Nguyên nhân gốc | Giải pháp kỹ thuật đã áp dụng | Trạng thái |
+|:---:|:---|:---|:---|:---:|
+| **1** | Thanh Sticky Add to Cart bị lỗi hiển thị đè ảnh sản phẩm với chữ xếp dọc (Photo 1) | Thẻ `<img>` gọi `thumbnail` (150x150) trả về 404, alt text bị Chromium render dọc 44px làm vỡ bóng capsule. Trigger scroll tính theo form ẩn khiến bar hiển thị ngay đầu trang. | Cập nhật `woocommerce_thumbnail` (300x300 - HTTP 200 OK), bọc trong `.f-sticky-img-box` với `overflow: hidden; font-size: 0; text-indent: -9999px;`. Gắn scroll trigger vào `.ax-buy-actions:visible` (chỉ hiện khi cuộn qua nút mua chính). | **VERIFIED** |
+| **2** | Bấm thanh chữ chạy (Marquee Header) hiện popup trống chỉ có nút `[ → ]` và `( X )` (Photo 2) | Các thẻ `.fv-announcement__item` thiếu `data-dialog-title`, `data-dialog-content`, `data-dialog-action`, `data-dialog-url`. | Bổ sung đầy đủ 6 thông điệp chi tiết song ngữ (WELCOME10, freeship, triết lý thiết kế, bảo hành 5 năm, tư vấn 1-1, BST 2026) kèm fallback thông minh trong JavaScript. | **VERIFIED** |
+| **3** | Phối cảnh Shop the Look hiển thị sai sản phẩm với vị trí chấm tròn (Photo 3) | Ảnh danh mục fallback dùng `prod-sofa.jpg` cho mọi danh mục; tọa độ chấm tròn đặt ngẫu nhiên trên đệm sofa nhưng gán sản phẩm tủ giày. | Thay thế bằng ảnh phối cảnh nội thất Bắc Âu chuẩn xác theo từng phòng (`room-entryway.jpg`, `room-bedroom.jpg`, `room-office.jpg`), hiệu chỉnh tọa độ điểm bấm từng món đồ chuẩn xác 100% (bấm tủ giày ra tủ giày, bấm tủ quần áo ra tủ quần áo). | **VERIFIED** |
+| **4** | Lệch mô hình 3D GLB so với ảnh sản phẩm | 6 sản phẩm bị trỏ sang placeholder chung (`AXG-DRAWER-001`, `AXG-KITCHEN-001`, `AXG-BOOKSHELF-001`, `AXG-WARDROBE-001`, `AXG-METRO-003`). | Cập nhật lại toàn bộ `wp_postmeta` (`_axgnud_model_glb`, `_glb_file`, `_ar_glb_url`, `_axgnud_model_usdz`) trỏ về đúng model 3D tương ứng trong `uploads/3d/`. Đã xác minh 0 generic placeholders còn lại. | **VERIFIED** |
