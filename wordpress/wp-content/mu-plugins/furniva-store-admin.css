@@ -1,0 +1,843 @@
+/* Keep the admin navigation consistent with Furniva's warm, restrained palette. */
+#adminmenuback,
+#adminmenuwrap,
+#adminmenu {
+	background: #292923;
+}
+
+#wpadminbar {
+	background: #292923;
+}
+
+#adminmenu a,
+#adminmenu .wp-submenu a {
+	color: #e2ded5;
+}
+
+#adminmenu .wp-menu-image:before {
+	color: #b8b1a4;
+}
+
+#adminmenu .wp-submenu,
+#adminmenu .wp-has-current-submenu .wp-submenu,
+#adminmenu .wp-has-current-submenu.opensub .wp-submenu {
+	background: #23231f;
+}
+
+#adminmenu li.menu-top:hover,
+#adminmenu li.opensub > a.menu-top,
+#adminmenu li > a.menu-top:focus {
+	background: #3a3932;
+	color: #fffdf7;
+}
+
+#adminmenu li.current > a.menu-top,
+#adminmenu li.wp-has-current-submenu > a.wp-has-current-submenu {
+	background: #9c7148;
+	color: #fffdf7;
+}
+
+#adminmenu li.wp-has-current-submenu .wp-submenu a.current,
+#adminmenu .wp-submenu a:focus,
+#adminmenu .wp-submenu a:hover {
+	color: #e3c59d;
+}
+
+#wpadminbar .ab-item,
+#wpadminbar a.ab-item,
+#wpadminbar > #wp-toolbar span.ab-label {
+	color: #e2ded5;
+}
+
+#wpadminbar .ab-item:hover,
+#wpadminbar a.ab-item:hover {
+	color: #e3c59d;
+}
+
+body.index-php #wpcontent {
+	background: #f5f3ee;
+	padding-left: 24px;
+}
+
+body.index-php #wpbody-content > .wrap > h1 {
+	display: none;
+}
+
+body.index-php #dashboard-widgets-wrap {
+	display: none !important;
+}
+
+body.index-php #wpbody-content .notice {
+	margin: 12px 20px 12px 0;
+}
+
+.furniva-admin-dashboard {
+	--furniva-ink: #282721;
+	--furniva-muted: #77746c;
+	--furniva-line: #e9e5dc;
+	--furniva-paper: #fffefa;
+	--furniva-accent: #a67645;
+	width: calc(100% - 20px);
+	max-width: 1580px;
+	margin: 0 20px 32px 0;
+	color: var(--furniva-ink);
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.furniva-admin-dashboard * {
+	box-sizing: border-box;
+}
+
+.furniva-admin-dashboard a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.furniva-admin-dashboard a:focus-visible {
+	outline: 2px solid #8f6338;
+	outline-offset: 3px;
+}
+
+.furniva-admin-hero {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 28px;
+	width: 100%;
+	min-height: 218px;
+	padding: 34px 40px;
+	border: 1px solid #33322c;
+	border-radius: 8px;
+	background: #292923;
+	color: #fbf9f4;
+}
+
+.furniva-admin-hero__copy {
+	max-width: 760px;
+}
+
+.furniva-admin-eyebrow {
+	margin: 0 0 12px;
+	color: #d4b58d;
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: .17em;
+}
+
+.furniva-admin-eyebrow span {
+	padding: 0 4px;
+	color: #a18a6c;
+}
+
+.furniva-admin-hero h1 {
+	margin: 0;
+	color: #fbf9f4;
+	font-family: Georgia, "Times New Roman", serif;
+	font-size: clamp(28px, 3vw, 39px);
+	font-weight: 400;
+	letter-spacing: -.035em;
+	line-height: 1.16;
+}
+
+.furniva-admin-hero h1 em {
+	color: #d6c3a9;
+	font-weight: 400;
+}
+
+.furniva-admin-hero__description {
+	margin: 12px 0 0;
+	color: #d0cec7;
+	font-size: 13px;
+	line-height: 1.6;
+}
+
+.furniva-admin-date {
+	margin: 14px 0 0;
+	color: #aaa89f;
+	font-size: 11px;
+	letter-spacing: .04em;
+}
+
+.furniva-admin-hero__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	flex: 0 0 auto;
+}
+
+.furniva-admin-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 40px;
+	padding: 0 16px;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	font-size: 12px;
+	font-weight: 600;
+	transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.furniva-admin-button--light {
+	background: #f3e8d8;
+	color: #352b20 !important;
+}
+
+.furniva-admin-button--light:hover {
+	background: #fff7eb;
+}
+
+.furniva-admin-button--outline {
+	border-color: #68665d;
+	background: transparent;
+	color: #f8f5ee !important;
+}
+
+.furniva-admin-button--outline:hover {
+	border-color: #c4a77f;
+	background: #35352e;
+}
+
+.furniva-admin-button--dark {
+	background: #2d2d27;
+	color: #fffefa !important;
+}
+
+.furniva-admin-button--dark:hover {
+	background: #4a463d;
+}
+
+.furniva-admin-stats {
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: 12px;
+	margin: 14px 0;
+}
+
+.furniva-admin-stat {
+	display: flex;
+	min-height: 142px;
+	flex-direction: column;
+	align-items: flex-start;
+	padding: 19px 20px 17px;
+	border: 1px solid var(--furniva-line);
+	border-radius: 6px;
+	background: var(--furniva-paper);
+	transition: border-color .15s ease, transform .15s ease;
+}
+
+.furniva-admin-stat:hover {
+	transform: translateY(-2px);
+	border-color: #d2c4ae;
+}
+
+.furniva-admin-stat--priority {
+	border-top: 2px solid #b08352;
+}
+
+.furniva-admin-stat--pending {
+	border-top: 2px solid #c29b6c;
+}
+
+.furniva-admin-stat--hold {
+	border-top: 2px solid #9c786c;
+}
+
+.furniva-admin-stat--stock {
+	border-top: 2px solid #8d9b84;
+}
+
+.furniva-admin-stat__label {
+	color: #67645d;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.furniva-admin-stat__value {
+	margin-top: 7px;
+	color: #24231e;
+	font-family: Georgia, "Times New Roman", serif;
+	font-size: 32px;
+	font-weight: 400;
+	line-height: 1.1;
+}
+
+.furniva-admin-stat__note {
+	margin-top: 8px;
+	color: #89867e;
+	font-size: 11px;
+	line-height: 1.4;
+}
+
+.furniva-admin-main-grid,
+.furniva-admin-lower-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1.8fr) minmax(300px, .9fr);
+	gap: 14px;
+	margin-top: 14px;
+}
+
+.furniva-admin-panel {
+	min-width: 0;
+	padding: 23px 24px;
+	border: 1px solid var(--furniva-line);
+	border-radius: 6px;
+	background: var(--furniva-paper);
+}
+
+.furniva-admin-panel__heading {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 16px;
+	margin-bottom: 16px;
+}
+
+.furniva-admin-eyebrow--muted {
+	margin-bottom: 7px;
+	color: #9a7957;
+	font-size: 9px;
+}
+
+.furniva-admin-panel h3 {
+	margin: 0;
+	color: #302e28;
+	font-family: Georgia, "Times New Roman", serif;
+	font-size: 21px;
+	font-weight: 400;
+	letter-spacing: -.02em;
+}
+
+.furniva-admin-text-link {
+	flex: 0 0 auto;
+	color: #815a35 !important;
+	font-size: 11px;
+	font-weight: 600;
+}
+
+.furniva-admin-text-link span {
+	padding-left: 4px;
+}
+
+.furniva-admin-table-wrap {
+	overflow-x: auto;
+}
+
+.furniva-admin-table {
+	width: 100%;
+	border-collapse: collapse;
+	text-align: left;
+}
+
+.furniva-admin-table th {
+	padding: 10px 12px;
+	border-top: 1px solid #eeeae2;
+	border-bottom: 1px solid #e9e5dc;
+	color: #8b877f;
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: .08em;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.furniva-admin-table td {
+	padding: 13px 12px;
+	border-bottom: 1px solid #efede7;
+	color: #4d4a43;
+	font-size: 11px;
+	white-space: nowrap;
+}
+
+.furniva-admin-table tbody tr:last-child td {
+	border-bottom: 0;
+}
+
+.furniva-admin-order-number {
+	color: #6e4d2f !important;
+	font-weight: 700;
+}
+
+.furniva-admin-table-subtext {
+	display: block;
+	margin-top: 4px;
+	color: #99958d;
+	font-size: 10px;
+}
+
+.furniva-admin-status {
+	display: inline-flex;
+	align-items: center;
+	min-height: 23px;
+	padding: 2px 8px;
+	border-radius: 99px;
+	background: #f2eee6;
+	color: #675d4d;
+	font-size: 10px;
+	font-weight: 600;
+}
+
+.furniva-admin-status--processing {
+	background: #edf2e9;
+	color: #53664c;
+}
+
+.furniva-admin-status--pending {
+	background: #f8eedf;
+	color: #8a6033;
+}
+
+.furniva-admin-status--on-hold {
+	background: #f4e9e5;
+	color: #895a49;
+}
+
+.furniva-admin-empty-state {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	min-height: 115px;
+	padding: 18px;
+	border: 1px dashed #dcd6ca;
+	background: #fbfaf7;
+}
+
+.furniva-admin-empty-state__mark {
+	display: grid;
+	width: 34px;
+	height: 34px;
+	place-items: center;
+	border-radius: 50%;
+	background: #edf2e9;
+	color: #617256;
+	font-weight: 700;
+}
+
+.furniva-admin-empty-state strong {
+	font-size: 12px;
+}
+
+.furniva-admin-empty-state p {
+	margin: 4px 0 0;
+	color: var(--furniva-muted);
+	font-size: 11px;
+}
+
+.furniva-admin-stock-panel {
+	margin-top: 14px;
+}
+
+.furniva-admin-stock-table th:first-child,
+.furniva-admin-stock-table td:first-child {
+	min-width: 240px;
+}
+
+.furniva-admin-stock-table td {
+	white-space: normal;
+}
+
+.furniva-admin-stock-quantity {
+	color: #76512f;
+	font-weight: 700;
+}
+
+.furniva-admin-stock-empty {
+	min-height: 88px;
+}
+
+.furniva-admin-link-list {
+	display: flex;
+	flex-direction: column;
+}
+
+.furniva-admin-link-list a {
+	display: grid;
+	grid-template-columns: 30px minmax(0, 1fr) 14px;
+	align-items: center;
+	gap: 10px;
+	min-height: 54px;
+	border-top: 1px solid #efede7;
+}
+
+.furniva-admin-link-list a:first-child {
+	border-top: 0;
+}
+
+.furniva-admin-link-icon {
+	display: grid;
+	width: 28px;
+	height: 28px;
+	place-items: center;
+	border: 1px solid #e8e1d5;
+	border-radius: 4px;
+	color: #8a6947;
+	font-size: 15px;
+}
+
+.furniva-admin-link-list strong,
+.furniva-admin-link-list small {
+	display: block;
+}
+
+.furniva-admin-link-list strong {
+	color: #38362f;
+	font-size: 11px;
+	font-weight: 600;
+}
+
+.furniva-admin-link-list small {
+	margin-top: 3px;
+	color: #89867f;
+	font-size: 10px;
+}
+
+.furniva-admin-link-arrow {
+	color: #9d8a72;
+	font-size: 15px;
+}
+
+.furniva-admin-link-list a:hover strong,
+.furniva-admin-link-list a:hover .furniva-admin-link-arrow {
+	color: #825d38;
+}
+
+.furniva-admin-lower-grid {
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.furniva-admin-content-summary {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 18px;
+	padding-top: 6px;
+}
+
+.furniva-admin-content-summary p {
+	max-width: 460px;
+	margin: 0;
+	color: #77736b;
+	font-size: 12px;
+	line-height: 1.7;
+}
+
+.furniva-admin-content-summary strong {
+	color: #35332d;
+}
+
+.furniva-admin-content-summary .furniva-admin-button {
+	flex: 0 0 auto;
+}
+
+.furniva-admin-steps {
+	display: grid;
+	gap: 10px;
+	margin: 4px 0 15px;
+	padding: 0;
+	list-style: none;
+}
+
+.furniva-admin-steps li {
+	display: grid;
+	grid-template-columns: 28px minmax(0, 1fr);
+	align-items: start;
+	gap: 10px;
+}
+
+.furniva-admin-steps li > span {
+	padding-top: 1px;
+	color: #a17d56;
+	font-family: Georgia, "Times New Roman", serif;
+	font-size: 13px;
+}
+
+.furniva-admin-steps p {
+	margin: 0;
+	color: #77736b;
+	font-size: 11px;
+	line-height: 1.55;
+}
+
+.furniva-admin-steps strong {
+	color: #34322d;
+}
+
+.furniva-admin-guide__link {
+	display: inline-block;
+	padding-top: 2px;
+}
+
+.furniva-admin-footer {
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 18px 2px 2px;
+	color: #918d84;
+	font-size: 9px;
+	letter-spacing: .04em;
+}
+
+.furniva-admin-footer span:first-child {
+	color: #9a7957;
+	font-weight: 700;
+	letter-spacing: .15em;
+}
+
+.furniva-admin-footer a {
+	color: #815a35 !important;
+	font-weight: 600;
+}
+
+.furniva-admin-footer i {
+	padding: 0 5px;
+	font-style: normal;
+}
+
+/* Bring the product list's working columns into a quick-scan order. */
+body.post-type-product .wp-list-table .column-thumb {
+	width: 64px;
+}
+
+body.post-type-product .wp-list-table .column-thumb img {
+	width: 48px;
+	height: 48px;
+	border-radius: 3px;
+	object-fit: cover;
+}
+
+body.post-type-product .wp-list-table .column-name {
+	min-width: 210px;
+}
+
+body.post-type-product .wp-list-table .column-sku {
+	width: 110px;
+}
+
+body.post-type-product .wp-list-table .column-is_in_stock {
+	min-width: 145px;
+}
+
+body.post-type-product .wp-list-table .column-price {
+	width: 120px;
+}
+
+body.post-type-product .wp-list-table .column-product_cat {
+	min-width: 150px;
+}
+
+body.post-type-product .wp-list-table td {
+	vertical-align: middle;
+}
+
+/* Make the order list easier to scan while keeping WooCommerce's own controls. */
+body.post-type-shop_order .wp-list-table .column-furniva_customer,
+body.woocommerce_page_wc-orders .wp-list-table .column-furniva_customer {
+	min-width: 220px;
+}
+
+body.post-type-shop_order .wp-list-table .column-order_number,
+body.woocommerce_page_wc-orders .wp-list-table .column-order_number {
+	width: 118px;
+}
+
+body.post-type-shop_order .wp-list-table .column-order_status,
+body.woocommerce_page_wc-orders .wp-list-table .column-order_status {
+	width: 128px;
+}
+
+body.post-type-shop_order .wp-list-table .column-order_date,
+body.woocommerce_page_wc-orders .wp-list-table .column-order_date {
+	width: 142px;
+}
+
+body.post-type-shop_order .wp-list-table .column-order_total,
+body.woocommerce_page_wc-orders .wp-list-table .column-order_total {
+	width: 116px;
+}
+
+body.post-type-shop_order .wp-list-table td,
+body.woocommerce_page_wc-orders .wp-list-table td {
+	vertical-align: middle;
+}
+
+.furniva-order-customer {
+	line-height: 1.45;
+}
+
+.furniva-order-customer__name,
+.furniva-order-customer__detail {
+	display: block;
+}
+
+.furniva-order-customer__name {
+	color: #34322d;
+	font-size: 12px;
+}
+
+.furniva-order-customer__detail {
+	margin-top: 3px;
+	color: #77736b !important;
+	font-size: 11px;
+}
+
+body.post-type-shop_order .subsubsub a,
+body.woocommerce_page_wc-orders .subsubsub a {
+	color: #725337;
+}
+
+body.post-type-shop_order .subsubsub a.current,
+body.woocommerce_page_wc-orders .subsubsub a.current {
+	color: #292923;
+}
+
+body.post-type-shop_order .wp-list-table mark.order-status,
+body.woocommerce_page_wc-orders .wp-list-table mark.order-status {
+	min-height: 24px;
+	padding: 4px 8px;
+	border: 0;
+	border-radius: 99px;
+	background: #f2eee6;
+	color: #675d4d;
+	font-size: 11px;
+	font-weight: 600;
+}
+
+body.post-type-shop_order .wp-list-table mark.order-status.status-processing,
+body.woocommerce_page_wc-orders .wp-list-table mark.order-status.status-processing {
+	background: #edf2e9;
+	color: #53664c;
+}
+
+body.post-type-shop_order .wp-list-table mark.order-status.status-pending,
+body.woocommerce_page_wc-orders .wp-list-table mark.order-status.status-pending {
+	background: #f8eedf;
+	color: #805c34;
+}
+
+body.post-type-shop_order .wp-list-table mark.order-status.status-on-hold,
+body.woocommerce_page_wc-orders .wp-list-table mark.order-status.status-on-hold {
+	background: #f4e9e5;
+	color: #895a49;
+}
+
+@media (max-width: 1200px) {
+	.furniva-admin-hero {
+		padding: 30px;
+	}
+
+	.furniva-admin-stats {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
+	.furniva-admin-main-grid {
+		grid-template-columns: minmax(0, 1.5fr) minmax(280px, .9fr);
+	}
+
+	.furniva-admin-table th,
+	.furniva-admin-table td {
+		padding-right: 9px;
+		padding-left: 9px;
+	}
+}
+
+@media (max-width: 900px) {
+	body.index-php #wpcontent {
+		padding-left: 12px;
+	}
+
+	.furniva-admin-dashboard {
+	width: calc(100% - 12px);
+		margin-right: 12px;
+	}
+
+	.furniva-admin-hero {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.furniva-admin-hero__copy,
+	.furniva-admin-hero__actions {
+		width: 100%;
+	}
+
+	.furniva-admin-main-grid,
+	.furniva-admin-lower-grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.furniva-admin-orders {
+		order: 1;
+	}
+}
+
+@media (max-width: 600px) {
+	body.index-php #wpcontent {
+		padding-left: 8px;
+	}
+
+	body.index-php #wpbody-content > .wrap > h1 {
+		margin-top: 18px;
+		font-size: 22px;
+	}
+
+	.furniva-admin-dashboard {
+		width: calc(100% - 8px);
+		margin-right: 8px;
+	}
+
+	.furniva-admin-hero {
+		align-items: flex-start;
+		flex-direction: column;
+		gap: 22px;
+		min-height: 0;
+		padding: 25px 22px;
+	}
+
+	.furniva-admin-hero h1 {
+		font-size: 29px;
+	}
+
+	.furniva-admin-hero__actions {
+		width: 100%;
+	}
+
+	.furniva-admin-button {
+		min-height: 38px;
+	}
+
+	.furniva-admin-stats {
+		gap: 8px;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.furniva-admin-stat {
+		min-height: 126px;
+		padding: 15px;
+	}
+
+	.furniva-admin-stat__value {
+		font-size: 28px;
+	}
+
+	.furniva-admin-panel {
+		padding: 19px 16px;
+	}
+
+	.furniva-admin-panel__heading {
+		align-items: flex-start;
+	}
+
+	.furniva-admin-panel h3 {
+		font-size: 19px;
+	}
+
+	.furniva-admin-content-summary {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.furniva-admin-footer {
+		flex-direction: column;
+		gap: 7px;
+	}
+}

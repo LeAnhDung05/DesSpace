@@ -1,0 +1,1987 @@
+/**
+ * AXGNUD — Luxury My Account Stylesheet
+ * Brand: Warm black, charcoal, sand, gold accents, Newsreader & Plus Jakarta Sans typography.
+ */
+
+/* ==========================================================================
+   Variables & Scope
+   ========================================================================== */
+:root {
+	--ax-account-bg: #faf8f5;
+	--ax-account-surface: #ffffff;
+	--ax-account-surface-alt: #f6f3ee;
+	--ax-account-border: #e9e4dc;
+	--ax-account-border-focus: #c9933f;
+	--ax-account-text-dark: #191715;
+	--ax-account-text-body: #4a4540;
+	--ax-account-text-muted: #857e76;
+	--ax-account-gold: #c9933f;
+	--ax-account-gold-dark: #a9752b;
+	--ax-account-gold-light: #fdf8f0;
+	--ax-account-gold-border: rgba(201, 147, 63, 0.35);
+	--ax-account-radius: 14px;
+	--ax-account-radius-sm: 8px;
+	--ax-account-radius-lg: 20px;
+	--ax-account-shadow-sm: 0 2px 8px rgba(22, 20, 18, 0.04);
+	--ax-account-shadow-md: 0 10px 30px rgba(22, 20, 18, 0.07);
+	--ax-account-shadow-lg: 0 20px 45px rgba(22, 20, 18, 0.11);
+}
+
+.ax-account-page-wrap {
+	background-color: var(--ax-account-bg);
+	min-height: calc(100vh - 200px);
+	padding: 40px 20px 80px;
+	color: var(--ax-account-text-dark);
+	font-family: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	-webkit-font-smoothing: antialiased;
+}
+
+.ax-account-container {
+	max-width: 1240px;
+	margin: 0 auto;
+}
+
+/* ==========================================================================
+   WooCommerce Notices & Alerts Refinement
+   ========================================================================== */
+.ax-account-page-wrap .woocommerce-notices-wrapper,
+.ax-account-page-wrap .woocommerce-NoticeGroup {
+	max-width: 1240px;
+	margin: 0 auto 30px;
+}
+
+.ax-account-page-wrap .woocommerce-error,
+.ax-account-page-wrap .woocommerce-message,
+.ax-account-page-wrap .woocommerce-info {
+	border-radius: var(--ax-account-radius-sm);
+	padding: 16px 22px 16px 52px !important;
+	font-size: 14.5px;
+	line-height: 1.5;
+	position: relative;
+	border: 1px solid transparent !important;
+	box-shadow: var(--ax-account-shadow-sm);
+	margin-bottom: 20px !important;
+	list-style: none !important;
+}
+
+.ax-account-page-wrap .woocommerce-error {
+	background-color: #fff6f6 !important;
+	border-color: #ffd6d6 !important;
+	color: #9e2a2b !important;
+}
+.ax-account-page-wrap .woocommerce-error::before {
+	content: "✕";
+	position: absolute;
+	left: 20px;
+	top: 16px;
+	font-size: 16px;
+	font-weight: 700;
+	color: #9e2a2b;
+}
+
+.ax-account-page-wrap .woocommerce-message {
+	background-color: #f4faf6 !important;
+	border-color: #c8ebd5 !important;
+	color: #1e5a32 !important;
+}
+.ax-account-page-wrap .woocommerce-message::before {
+	content: "✓";
+	position: absolute;
+	left: 20px;
+	top: 16px;
+	font-size: 18px;
+	font-weight: 700;
+	color: #1e5a32;
+}
+
+.ax-account-page-wrap .woocommerce-info {
+	background-color: var(--ax-account-gold-light) !important;
+	border-color: var(--ax-account-gold-border) !important;
+	color: #6d4b1a !important;
+}
+.ax-account-page-wrap .woocommerce-info::before {
+	content: "✦";
+	position: absolute;
+	left: 20px;
+	top: 16px;
+	font-size: 16px;
+	color: var(--ax-account-gold);
+}
+
+/* ==========================================================================
+   Guest / Logged-Out Authentication Layout
+   ========================================================================== */
+.ax-auth-header {
+	text-align: center;
+	max-width: 680px;
+	margin: 10px auto 40px;
+}
+
+.ax-auth-eyebrow {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 11.5px;
+	font-weight: 700;
+	letter-spacing: 2.2px;
+	text-transform: uppercase;
+	color: var(--ax-account-gold);
+	margin-bottom: 12px;
+	background: rgba(201, 147, 63, 0.08);
+	padding: 5px 14px;
+	border-radius: 30px;
+	border: 1px solid rgba(201, 147, 63, 0.2);
+}
+
+.ax-auth-title {
+	font-family: "Newsreader", "Playfair Display", Georgia, serif;
+	font-size: 38px;
+	font-weight: 500;
+	letter-spacing: -0.5px;
+	color: var(--ax-account-text-dark);
+	line-height: 1.25;
+	margin: 0 0 14px;
+}
+
+.ax-auth-subtitle {
+	font-size: 15px;
+	line-height: 1.6;
+	color: var(--ax-account-text-muted);
+	margin: 0;
+}
+
+.ax-auth-layout {
+	display: grid;
+	grid-template-columns: 1.15fr 0.85fr;
+	gap: 36px;
+	align-items: start;
+	max-width: 1140px;
+	margin: 0 auto;
+}
+
+/* Left: Interactive Auth Card */
+.ax-auth-card {
+	background: var(--ax-account-surface);
+	border-radius: var(--ax-account-radius-lg);
+	border: 1px solid var(--ax-account-border);
+	box-shadow: var(--ax-account-shadow-md);
+	padding: 38px 42px;
+}
+
+/* Segmented Tabs Switcher */
+.ax-auth-tabs {
+	display: flex;
+	background: var(--ax-account-surface-alt);
+	padding: 5px;
+	border-radius: 12px;
+	margin-bottom: 30px;
+	border: 1px solid var(--ax-account-border);
+	position: relative;
+}
+
+.ax-auth-tab {
+	flex: 1;
+	border: none;
+	background: transparent;
+	padding: 12px 18px;
+	font-family: "Plus Jakarta Sans", sans-serif;
+	font-size: 14.5px;
+	font-weight: 600;
+	color: var(--ax-account-text-muted);
+	border-radius: 9px;
+	cursor: pointer;
+	transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+}
+
+.ax-auth-tab:hover {
+	color: var(--ax-account-text-dark);
+}
+
+.ax-auth-tab.is-active {
+	background: var(--ax-account-surface);
+	color: var(--ax-account-text-dark);
+	box-shadow: 0 4px 12px rgba(22, 20, 18, 0.08);
+}
+
+.ax-auth-tab .ax-tab-icon {
+	width: 16px;
+	height: 16px;
+	stroke: currentColor;
+	stroke-width: 1.8;
+}
+
+.ax-auth-tab.is-active .ax-tab-icon {
+	stroke: var(--ax-account-gold);
+}
+
+/* Form Panel Transitions */
+.ax-auth-panel {
+	display: none;
+	animation: axFadeIn 0.35s ease forwards;
+}
+
+.ax-auth-panel.is-active {
+	display: block;
+}
+
+@keyframes axFadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Luxury Input Fields */
+.ax-field-group {
+	margin-bottom: 22px;
+}
+
+.ax-field-group label {
+	display: block;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--ax-account-text-dark);
+	margin-bottom: 8px;
+	letter-spacing: 0.2px;
+}
+
+.ax-field-group label .required {
+	color: var(--ax-account-gold);
+	margin-left: 2px;
+}
+
+.ax-account-page-wrap label .required::after {
+	content: none !important;
+}
+
+.ax-input-wrap {
+	position: relative;
+	display: flex;
+	align-items: center;
+	width: 100% !important;
+}
+
+.ax-input-wrap .ax-input-icon {
+	position: absolute;
+	left: 16px;
+	width: 18px;
+	height: 18px;
+	color: var(--ax-account-text-muted);
+	pointer-events: none;
+	transition: color 0.2s ease;
+	z-index: 2;
+}
+
+/* Multi-column Field Row */
+.ax-field-row-2 {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 16px;
+}
+
+@media (max-width: 640px) {
+	.ax-field-row-2 {
+		grid-template-columns: 1fr;
+		gap: 0;
+	}
+}
+
+.ax-input-wrap input[type="text"],
+.ax-input-wrap input[type="email"],
+.ax-input-wrap input[type="tel"],
+.ax-input-wrap input[type="password"] {
+	width: 100% !important;
+	height: 52px !important;
+	padding: 0 48px 0 48px !important;
+	box-sizing: border-box !important;
+	background: #ffffff !important;
+	border: 1px solid var(--ax-account-border) !important;
+	border-radius: var(--ax-account-radius-sm) !important;
+	font-family: "Plus Jakarta Sans", sans-serif !important;
+	font-size: 14.5px !important;
+	color: var(--ax-account-text-dark) !important;
+	transition: all 0.25s ease !important;
+	box-shadow: none !important;
+}
+
+.ax-input-wrap input::-ms-reveal,
+.ax-input-wrap input::-ms-clear {
+	display: none !important;
+}
+
+.ax-input-wrap input::-webkit-credentials-auto-fill-button {
+	visibility: hidden !important;
+	pointer-events: none !important;
+	display: none !important;
+}
+
+.ax-input-wrap input:focus {
+	border-color: var(--ax-account-border-focus) !important;
+	outline: none !important;
+	box-shadow: 0 0 0 3px rgba(201, 147, 63, 0.15) !important;
+}
+
+.ax-input-wrap input:focus ~ .ax-input-icon {
+	color: var(--ax-account-gold);
+}
+
+/* Password Toggle Visibility Button */
+.ax-pwd-toggle {
+	position: absolute;
+	right: 12px;
+	background: transparent;
+	border: none;
+	padding: 6px;
+	color: var(--ax-account-text-muted);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 4px;
+	transition: color 0.2s ease;
+}
+
+.ax-pwd-toggle:hover {
+	color: var(--ax-account-text-dark);
+}
+
+.ax-pwd-toggle svg {
+	width: 18px;
+	height: 18px;
+	stroke: currentColor;
+}
+
+/* Password Helper Hint */
+.ax-field-hint {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 12.5px;
+	color: var(--ax-account-text-muted);
+	margin: -8px 0 20px;
+	line-height: 1.4;
+}
+
+.ax-field-hint svg {
+	flex-shrink: 0;
+	color: var(--ax-account-gold);
+}
+
+/* Terms Agreement Row */
+.ax-terms-row {
+	margin: 16px 0 24px;
+	font-size: 13.5px;
+	color: var(--ax-account-text-body);
+	line-height: 1.5;
+}
+
+.ax-terms-row .ax-checkbox-label {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	cursor: pointer;
+}
+
+.ax-terms-row .ax-checkbox-label input {
+	accent-color: var(--ax-account-gold);
+	width: 17px;
+	height: 17px;
+	margin-top: 2px;
+	flex-shrink: 0;
+	cursor: pointer;
+}
+
+/* Form Helper Row (Remember me & Lost Password) */
+.ax-form-helper-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin: 10px 0 24px;
+	font-size: 13.5px;
+}
+
+.ax-checkbox-label {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	cursor: pointer;
+	color: var(--ax-account-text-body);
+	user-select: none;
+}
+
+.ax-checkbox-label input[type="checkbox"] {
+	width: 17px;
+	height: 17px;
+	accent-color: var(--ax-account-gold);
+	cursor: pointer;
+	border-radius: 4px;
+}
+
+.ax-lost-pwd-link {
+	color: var(--ax-account-text-muted);
+	text-decoration: none;
+	transition: color 0.2s ease;
+	font-weight: 500;
+}
+
+.ax-lost-pwd-link:hover {
+	color: var(--ax-account-gold);
+	text-decoration: underline;
+}
+
+/* Luxury Submit Button */
+.ax-submit-btn {
+	width: 100% !important;
+	height: 52px !important;
+	background: var(--ax-account-text-dark) !important;
+	color: #ffffff !important;
+	font-family: "Plus Jakarta Sans", sans-serif !important;
+	font-size: 14px !important;
+	font-weight: 700 !important;
+	letter-spacing: 1.2px !important;
+	text-transform: uppercase !important;
+	border: none !important;
+	border-radius: var(--ax-account-radius-sm) !important;
+	cursor: pointer !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	gap: 10px !important;
+	transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+	box-shadow: 0 4px 15px rgba(22, 20, 18, 0.15) !important;
+	margin-top: 6px;
+}
+
+.ax-submit-btn:hover {
+	background: var(--ax-account-gold-dark) !important;
+	color: #ffffff !important;
+	transform: translateY(-2px);
+	box-shadow: 0 8px 24px rgba(201, 147, 63, 0.28) !important;
+}
+
+.ax-submit-btn:active {
+	transform: translateY(0);
+}
+
+.ax-submit-btn svg {
+	width: 16px;
+	height: 16px;
+	stroke: currentColor;
+	stroke-width: 2.2;
+	transition: transform 0.2s ease;
+}
+
+.ax-submit-btn:hover svg {
+	transform: translateX(3px);
+}
+
+/* Registration Perks Banner */
+.ax-reg-perk-banner {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	background: var(--ax-account-gold-light);
+	border: 1px dashed var(--ax-account-gold-border);
+	padding: 14px 18px;
+	border-radius: var(--ax-account-radius-sm);
+	margin-bottom: 22px;
+}
+
+.ax-reg-perk-badge {
+	background: var(--ax-account-gold);
+	color: #ffffff;
+	font-size: 11px;
+	font-weight: 700;
+	padding: 4px 8px;
+	border-radius: 4px;
+	letter-spacing: 0.5px;
+	white-space: nowrap;
+}
+
+.ax-reg-perk-text {
+	font-size: 13px;
+	color: #5c431d;
+	line-height: 1.4;
+	margin: 0;
+}
+
+.ax-reg-perk-text strong {
+	color: #3b2a11;
+}
+
+/* Right: Luxury Member Privileges Card */
+.ax-privilege-card {
+	background: linear-gradient(155deg, #1f1c1a 0%, #151312 100%);
+	border-radius: var(--ax-account-radius-lg);
+	border: 1px solid rgba(201, 147, 63, 0.35);
+	box-shadow: var(--ax-account-shadow-lg);
+	padding: 40px 36px;
+	color: #ffffff;
+	position: relative;
+	overflow: hidden;
+}
+
+.ax-privilege-card::before {
+	content: "";
+	position: absolute;
+	top: -50px;
+	right: -50px;
+	width: 200px;
+	height: 200px;
+	background: radial-gradient(circle, rgba(201, 147, 63, 0.18) 0%, transparent 70%);
+	pointer-events: none;
+}
+
+.ax-privilege-eyebrow {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 2.2px;
+	text-transform: uppercase;
+	color: var(--ax-account-gold);
+	margin-bottom: 14px;
+}
+
+.ax-privilege-title {
+	font-family: "Newsreader", "Playfair Display", Georgia, serif;
+	font-size: 26px;
+	font-weight: 500;
+	color: #ffffff;
+	line-height: 1.35;
+	margin: 0 0 12px;
+}
+
+.ax-privilege-desc {
+	font-size: 14px;
+	line-height: 1.6;
+	color: rgba(255, 255, 255, 0.7);
+	margin: 0 0 28px;
+}
+
+.ax-privilege-list {
+	list-style: none;
+	padding: 0;
+	margin: 0 0 30px;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.ax-privilege-item {
+	display: flex;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.ax-privilege-icon-wrap {
+	width: 42px;
+	height: 42px;
+	border-radius: 10px;
+	background: rgba(201, 147, 63, 0.12);
+	border: 1px solid rgba(201, 147, 63, 0.28);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	color: var(--ax-account-gold);
+}
+
+.ax-privilege-icon-wrap svg {
+	width: 20px;
+	height: 20px;
+	stroke: currentColor;
+	stroke-width: 1.8;
+}
+
+.ax-privilege-item-content h4 {
+	font-size: 15px;
+	font-weight: 600;
+	color: #ffffff;
+	margin: 0 0 4px;
+	letter-spacing: 0.2px;
+}
+
+.ax-privilege-item-content p {
+	font-size: 13px;
+	color: rgba(255, 255, 255, 0.65);
+	line-height: 1.45;
+	margin: 0;
+}
+
+.ax-privilege-trust-box {
+	border-top: 1px solid rgba(255, 255, 255, 0.1);
+	padding-top: 22px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.ax-privilege-stars {
+	color: var(--ax-account-gold);
+	font-size: 14px;
+	letter-spacing: 2px;
+}
+
+.ax-privilege-trust-text {
+	font-size: 12.5px;
+	color: rgba(255, 255, 255, 0.65);
+	line-height: 1.4;
+	margin: 0;
+}
+
+/* ==========================================================================
+   Member / Logged-in Experience
+   ========================================================================== */
+
+/* Top Profile Monogram Hero */
+.ax-profile-hero {
+	background: #ffffff;
+	border-radius: var(--ax-account-radius-lg);
+	border: 1px solid var(--ax-account-border);
+	box-shadow: var(--ax-account-shadow-sm);
+	padding: 32px 38px;
+	margin-bottom: 34px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 30px;
+	flex-wrap: wrap;
+	position: relative;
+	overflow: hidden;
+}
+
+.ax-profile-hero::after {
+	content: "";
+	position: absolute;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	width: 180px;
+	background: radial-gradient(circle at 100% 50%, rgba(201, 147, 63, 0.08) 0%, transparent 70%);
+	pointer-events: none;
+}
+
+.ax-profile-main {
+	display: flex;
+	align-items: center;
+	gap: 22px;
+}
+
+/* Monogram Avatar */
+.ax-monogram-avatar {
+	width: 72px;
+	height: 72px;
+	border-radius: 50%;
+	background: linear-gradient(135deg, #24201d 0%, #161412 100%);
+	border: 2px solid var(--ax-account-gold);
+	box-shadow: 0 6px 18px rgba(22, 20, 18, 0.15);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-family: "Newsreader", "Playfair Display", Georgia, serif;
+	font-size: 26px;
+	font-weight: 600;
+	color: #ffffff;
+	letter-spacing: 1px;
+	flex-shrink: 0;
+}
+
+.ax-profile-info {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.ax-profile-badge-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.ax-member-tier-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	background: var(--ax-account-gold-light);
+	color: var(--ax-account-gold-dark);
+	border: 1px solid var(--ax-account-gold-border);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.8px;
+	text-transform: uppercase;
+	padding: 4px 10px;
+	border-radius: 20px;
+}
+
+.ax-profile-name {
+	font-family: "Newsreader", "Playfair Display", Georgia, serif;
+	font-size: 28px;
+	font-weight: 500;
+	color: var(--ax-account-text-dark);
+	line-height: 1.25;
+	margin: 0;
+}
+
+.ax-profile-email {
+	font-size: 13.5px;
+	color: var(--ax-account-text-muted);
+	margin: 0;
+}
+
+/* Quick Stats Ribbon */
+.ax-hero-stats {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+}
+
+.ax-stat-item {
+	background: var(--ax-account-surface-alt);
+	border: 1px solid var(--ax-account-border);
+	border-radius: 12px;
+	padding: 12px 20px;
+	min-width: 115px;
+	text-align: center;
+	transition: all 0.25s ease;
+	text-decoration: none;
+	display: block;
+}
+
+.ax-stat-item:hover {
+	transform: translateY(-2px);
+	border-color: var(--ax-account-gold);
+	box-shadow: 0 4px 12px rgba(22, 20, 18, 0.05);
+}
+
+.ax-stat-value {
+	display: block;
+	font-size: 20px;
+	font-weight: 700;
+	color: var(--ax-account-text-dark);
+	line-height: 1.2;
+}
+
+.ax-stat-label {
+	display: block;
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--ax-account-text-muted);
+	margin-top: 4px;
+}
+
+.woocommerce-account .ax-account-page-wrap .ax-account-grid,
+.ax-account-page-wrap .ax-account-grid {
+	display: grid !important;
+	grid-template-columns: 310px 1fr !important;
+	gap: 32px !important;
+	align-items: start !important;
+	float: none !important;
+	width: 100% !important;
+	clear: both !important;
+}
+
+/* Sidebar Navigation */
+.woocommerce-account .ax-account-page-wrap .ax-account-sidebar,
+.ax-account-page-wrap .ax-account-sidebar {
+	width: 100% !important;
+	max-width: 310px !important;
+	float: none !important;
+	box-sizing: border-box !important;
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+}
+
+.woocommerce-account .ax-account-page-wrap .woocommerce-MyAccount-navigation,
+.ax-account-page-wrap .woocommerce-MyAccount-navigation {
+	float: none !important;
+	width: 100% !important;
+	margin: 0 !important;
+	box-sizing: border-box !important;
+	background: var(--ax-account-surface) !important;
+	border-radius: var(--ax-account-radius);
+	border: 1px solid var(--ax-account-border);
+	box-shadow: var(--ax-account-shadow-sm);
+	padding: 16px 14px !important;
+}
+
+.woocommerce-account .ax-account-page-wrap .woocommerce-MyAccount-content,
+.ax-account-page-wrap .woocommerce-MyAccount-content {
+	float: none !important;
+	width: 100% !important;
+	margin: 0 !important;
+	box-sizing: border-box !important;
+}
+
+.woocommerce-MyAccount-navigation ul {
+	list-style: none !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.woocommerce-MyAccount-navigation li {
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+.woocommerce-MyAccount-navigation li a {
+	display: flex !important;
+	align-items: center;
+	gap: 14px;
+	padding: 12px 16px !important;
+	border-radius: var(--ax-account-radius-sm);
+	font-size: 14px !important;
+	font-weight: 600 !important;
+	color: var(--ax-account-text-body);
+	text-decoration: none !important;
+	transition: all 0.2s ease;
+	position: relative;
+	white-space: nowrap !important;
+}
+
+.woocommerce-MyAccount-navigation li a svg {
+	width: 18px;
+	height: 18px;
+	stroke: var(--ax-account-text-muted);
+	stroke-width: 1.8;
+	flex-shrink: 0;
+	transition: stroke 0.2s ease;
+}
+
+.woocommerce-MyAccount-navigation li:hover a {
+	background: var(--ax-account-surface-alt);
+	color: var(--ax-account-text-dark);
+}
+
+.woocommerce-MyAccount-navigation li:hover a svg {
+	stroke: var(--ax-account-text-dark);
+}
+
+.woocommerce-MyAccount-navigation li.is-active a {
+	background: var(--ax-account-gold-light);
+	color: var(--ax-account-gold-dark);
+	font-weight: 700;
+}
+
+.woocommerce-MyAccount-navigation li.is-active a svg {
+	stroke: var(--ax-account-gold);
+}
+
+.woocommerce-MyAccount-navigation li.is-active a::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 10px;
+	bottom: 10px;
+	width: 3.5px;
+	background: var(--ax-account-gold);
+	border-radius: 0 4px 4px 0;
+}
+
+/* Badge in Nav item */
+.ax-nav-badge {
+	margin-left: auto;
+	background: var(--ax-account-gold);
+	color: #ffffff;
+	font-size: 11px;
+	font-weight: 700;
+	padding: 2px 7px;
+	border-radius: 12px;
+}
+
+/* VIP Personal Concierge Box in Sidebar */
+.ax-concierge-card {
+	background: linear-gradient(145deg, #1f1c1a 0%, #161412 100%);
+	border-radius: var(--ax-account-radius);
+	border: 1px solid rgba(201, 147, 63, 0.35);
+	padding: 24px 20px;
+	color: #ffffff;
+	text-align: center;
+	box-shadow: var(--ax-account-shadow-sm);
+}
+
+.ax-concierge-icon {
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: rgba(201, 147, 63, 0.15);
+	color: var(--ax-account-gold);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 12px;
+}
+
+.ax-concierge-icon svg {
+	width: 22px;
+	height: 22px;
+	stroke: currentColor;
+	stroke-width: 1.8;
+}
+
+.ax-concierge-card h4 {
+	font-family: "Newsreader", "Playfair Display", Georgia, serif;
+	font-size: 18px;
+	font-weight: 500;
+	color: #ffffff;
+	margin: 0 0 6px;
+}
+
+.ax-concierge-card p {
+	font-size: 12.5px;
+	color: rgba(255, 255, 255, 0.65);
+	line-height: 1.45;
+	margin: 0 0 16px;
+}
+
+.ax-concierge-hotline {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	width: 100%;
+	background: rgba(201, 147, 63, 0.15);
+	border: 1px solid var(--ax-account-gold);
+	color: var(--ax-account-gold);
+	padding: 10px 14px;
+	border-radius: var(--ax-account-radius-sm);
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+	text-decoration: none;
+	transition: all 0.2s ease;
+}
+
+.ax-concierge-hotline:hover {
+	background: var(--ax-account-gold);
+	color: #ffffff;
+}
+
+/* ==========================================================================
+   Main Content Area (Right Column)
+   ========================================================================== */
+.woocommerce-MyAccount-content {
+	background: var(--ax-account-surface);
+	border-radius: var(--ax-account-radius-lg);
+	border: 1px solid var(--ax-account-border);
+	box-shadow: var(--ax-account-shadow-sm);
+	padding: 38px 42px;
+	min-height: 520px;
+}
+
+/* Dashboard View */
+.ax-dash-welcome {
+	border-bottom: 1px solid var(--ax-account-border);
+	padding-bottom: 24px;
+	margin-bottom: 30px;
+}
+
+.ax-dash-welcome h2 {
+	font-family: "Newsreader", "Playfair Display", Georgia, serif;
+	font-size: 28px;
+	font-weight: 500;
+	color: var(--ax-account-text-dark);
+	margin: 0 0 8px;
+}
+
+.ax-dash-welcome p {
+	font-size: 14.5px;
+	color: var(--ax-account-text-muted);
+	line-height: 1.6;
+	margin: 0;
+}
+
+/* Quick Action Shortcuts Grid */
+.ax-dash-actions {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 16px;
+	margin-bottom: 36px;
+}
+
+.ax-dash-action-card {
+	background: var(--ax-account-surface-alt);
+	border: 1px solid var(--ax-account-border);
+	border-radius: var(--ax-account-radius);
+	padding: 20px 16px;
+	text-align: center;
+	text-decoration: none;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+	transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ax-dash-action-card:hover {
+	transform: translateY(-3px);
+	border-color: var(--ax-account-gold);
+	background: #ffffff;
+	box-shadow: 0 8px 22px rgba(22, 20, 18, 0.06);
+}
+
+.ax-dash-action-icon {
+	width: 44px;
+	height: 44px;
+	border-radius: 12px;
+	background: #ffffff;
+	border: 1px solid var(--ax-account-border);
+	color: var(--ax-account-text-dark);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.2s ease;
+}
+
+.ax-dash-action-card:hover .ax-dash-action-icon {
+	background: var(--ax-account-gold-light);
+	color: var(--ax-account-gold);
+	border-color: var(--ax-account-gold-border);
+}
+
+.ax-dash-action-icon svg {
+	width: 20px;
+	height: 20px;
+	stroke: currentColor;
+	stroke-width: 1.8;
+}
+
+.ax-dash-action-title {
+	font-size: 13.5px;
+	font-weight: 700;
+	color: var(--ax-account-text-dark);
+	margin: 0;
+}
+
+.ax-dash-action-sub {
+	font-size: 11.5px;
+	color: var(--ax-account-text-muted);
+	margin: 0;
+	line-height: 1.35;
+}
+
+/* Section Titles */
+.ax-section-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 20px;
+}
+
+.ax-section-title {
+	font-family: "Newsreader", "Playfair Display", Georgia, serif;
+	font-size: 22px;
+	font-weight: 500;
+	color: var(--ax-account-text-dark);
+	margin: 0;
+}
+
+.ax-section-link {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--ax-account-gold);
+	text-decoration: none;
+	transition: color 0.2s ease;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.ax-section-link:hover {
+	color: var(--ax-account-gold-dark);
+	text-decoration: underline;
+}
+
+/* Member Voucher Wallet */
+.ax-voucher-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 18px;
+	margin-bottom: 36px;
+}
+
+.ax-voucher-card {
+	background: linear-gradient(135deg, #fdf8f0 0%, #faf3e8 100%);
+	border: 1px dashed var(--ax-account-gold);
+	border-radius: var(--ax-account-radius);
+	padding: 20px 22px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	position: relative;
+	overflow: hidden;
+}
+
+.ax-voucher-card::before {
+	content: "";
+	position: absolute;
+	left: -8px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 16px;
+	height: 16px;
+	background: #ffffff;
+	border-radius: 50%;
+	border-right: 1px dashed var(--ax-account-gold);
+}
+
+.ax-voucher-card::after {
+	content: "";
+	position: absolute;
+	right: -8px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 16px;
+	height: 16px;
+	background: #ffffff;
+	border-radius: 50%;
+	border-left: 1px dashed var(--ax-account-gold);
+}
+
+.ax-voucher-info {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.ax-voucher-value {
+	font-size: 18px;
+	font-weight: 800;
+	color: #634316;
+	letter-spacing: -0.3px;
+	margin: 0;
+}
+
+.ax-voucher-desc {
+	font-size: 12.5px;
+	color: #7d5e2d;
+	margin: 0;
+	line-height: 1.4;
+}
+
+.ax-voucher-code-wrap {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 4px;
+}
+
+.ax-voucher-code {
+	font-family: monospace;
+	font-size: 13px;
+	font-weight: 700;
+	background: rgba(201, 147, 63, 0.15);
+	padding: 3px 8px;
+	border-radius: 4px;
+	color: #4a300d;
+	letter-spacing: 0.5px;
+}
+
+.ax-voucher-copy-btn {
+	background: var(--ax-account-gold);
+	border: none;
+	color: #ffffff;
+	padding: 8px 14px;
+	border-radius: var(--ax-account-radius-sm);
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.4px;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+}
+
+.ax-voucher-copy-btn:hover {
+	background: var(--ax-account-gold-dark);
+	transform: scale(1.03);
+}
+
+.ax-voucher-copy-btn svg {
+	width: 13px;
+	height: 13px;
+	stroke: currentColor;
+}
+
+/* Recent Orders Cards */
+.ax-order-card {
+	background: var(--ax-account-surface-alt);
+	border: 1px solid var(--ax-account-border);
+	border-radius: var(--ax-account-radius);
+	padding: 22px 24px;
+	margin-bottom: 16px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 20px;
+	flex-wrap: wrap;
+	transition: all 0.2s ease;
+}
+
+.ax-order-card:hover {
+	border-color: var(--ax-account-gold-border);
+	box-shadow: 0 4px 14px rgba(22, 20, 18, 0.04);
+}
+
+.ax-order-meta {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.ax-order-title-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.ax-order-id {
+	font-size: 16px;
+	font-weight: 700;
+	color: var(--ax-account-text-dark);
+}
+
+/* Status Badges */
+.ax-status-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 12px;
+	font-weight: 700;
+	padding: 3px 10px;
+	border-radius: 20px;
+	text-transform: capitalize;
+}
+
+.ax-status-processing {
+	background: #fff8e8;
+	color: #a36f1c;
+	border: 1px solid #fae1b3;
+}
+.ax-status-processing::before {
+	content: "";
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #d4952c;
+}
+
+.ax-status-completed {
+	background: #f0faf3;
+	color: #1a6d36;
+	border: 1px solid #c0ebce;
+}
+.ax-status-completed::before {
+	content: "";
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #25a251;
+}
+
+.ax-status-cancelled,
+.ax-status-failed {
+	background: #fff4f4;
+	color: #9c2e2e;
+	border: 1px solid #ffd4d4;
+}
+
+.ax-status-on-hold,
+.ax-status-pending {
+	background: #f7f6f4;
+	color: #69635b;
+	border: 1px solid #e0ded9;
+}
+
+.ax-order-date {
+	font-size: 13px;
+	color: var(--ax-account-text-muted);
+}
+
+.ax-order-pricing {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	text-align: right;
+}
+
+.ax-order-total {
+	font-size: 17px;
+	font-weight: 700;
+	color: var(--ax-account-text-dark);
+}
+
+.ax-order-items-count {
+	font-size: 12.5px;
+	color: var(--ax-account-text-muted);
+}
+
+.ax-order-actions {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.ax-btn-outline {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 9px 18px;
+	border: 1px solid var(--ax-account-border);
+	background: #ffffff;
+	border-radius: var(--ax-account-radius-sm);
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--ax-account-text-dark);
+	text-decoration: none;
+	transition: all 0.2s ease;
+}
+
+.ax-btn-outline:hover {
+	border-color: var(--ax-account-text-dark);
+	background: var(--ax-account-surface-alt);
+}
+
+/* Empty State Card */
+.ax-empty-state {
+	text-align: center;
+	padding: 48px 24px;
+	background: var(--ax-account-surface-alt);
+	border: 1px dashed var(--ax-account-border);
+	border-radius: var(--ax-account-radius);
+	margin-bottom: 24px;
+}
+
+.ax-empty-icon {
+	width: 56px;
+	height: 56px;
+	border-radius: 50%;
+	background: #ffffff;
+	border: 1px solid var(--ax-account-border);
+	color: var(--ax-account-text-muted);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 14px;
+}
+
+.ax-empty-icon svg {
+	width: 26px;
+	height: 26px;
+	stroke: currentColor;
+	stroke-width: 1.6;
+}
+
+.ax-empty-title {
+	font-family: "Newsreader", "Playfair Display", Georgia, serif;
+	font-size: 20px;
+	font-weight: 500;
+	color: var(--ax-account-text-dark);
+	margin: 0 0 6px;
+}
+
+.ax-empty-text {
+	font-size: 13.5px;
+	color: var(--ax-account-text-muted);
+	max-width: 420px;
+	margin: 0 auto 20px;
+	line-height: 1.5;
+}
+
+.ax-empty-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	background: var(--ax-account-text-dark);
+	color: #ffffff;
+	padding: 10px 22px;
+	border-radius: var(--ax-account-radius-sm);
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+	text-decoration: none;
+	transition: all 0.2s ease;
+}
+
+.ax-empty-btn:hover {
+	background: var(--ax-account-gold-dark);
+	color: #ffffff;
+}
+
+/* AR Visualizer Banner in Dashboard */
+.ax-ar-promo-card {
+	background: linear-gradient(135deg, #1b1917 0%, #282421 100%);
+	border-radius: var(--ax-account-radius);
+	border: 1px solid rgba(201, 147, 63, 0.3);
+	padding: 26px 30px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24px;
+	color: #ffffff;
+	margin-top: 28px;
+}
+
+.ax-ar-promo-content h4 {
+	font-family: "Newsreader", "Playfair Display", Georgia, serif;
+	font-size: 20px;
+	font-weight: 500;
+	color: #ffffff;
+	margin: 0 0 6px;
+}
+
+.ax-ar-promo-content p {
+	font-size: 13px;
+	color: rgba(255, 255, 255, 0.7);
+	margin: 0;
+	line-height: 1.5;
+}
+
+.ax-ar-promo-btn {
+	background: var(--ax-account-gold);
+	color: #ffffff;
+	padding: 11px 20px;
+	border-radius: var(--ax-account-radius-sm);
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+	text-decoration: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	white-space: nowrap;
+	transition: all 0.2s ease;
+}
+
+.ax-ar-promo-btn:hover {
+	background: var(--ax-account-gold-dark);
+	color: #ffffff;
+	transform: scale(1.03);
+}
+
+/* ==========================================================================
+   Orders Tab (`orders.php`) Luxury Styling
+   ========================================================================== */
+.ax-orders-header {
+	border-bottom: 1px solid var(--ax-account-border);
+	padding-bottom: 18px;
+	margin-bottom: 24px;
+}
+
+.ax-orders-header h2 {
+	font-family: "Newsreader", "Playfair Display", Georgia, serif;
+	font-size: 26px;
+	font-weight: 500;
+	color: var(--ax-account-text-dark);
+	margin: 0 0 6px;
+}
+
+.ax-orders-header p {
+	font-size: 14px;
+	color: var(--ax-account-text-muted);
+	margin: 0;
+}
+
+.ax-orders-list {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+}
+
+.ax-order-row-card {
+	background: #ffffff;
+	border: 1px solid var(--ax-account-border);
+	border-radius: var(--ax-account-radius);
+	padding: 24px;
+	box-shadow: var(--ax-account-shadow-sm);
+	transition: all 0.2s ease;
+}
+
+.ax-order-row-card:hover {
+	border-color: var(--ax-account-gold-border);
+	box-shadow: var(--ax-account-shadow-md);
+}
+
+.ax-order-row-top {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	border-bottom: 1px solid var(--ax-account-border);
+	padding-bottom: 16px;
+	margin-bottom: 16px;
+	flex-wrap: wrap;
+}
+
+.ax-order-row-bottom {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   Addresses Tab (`my-address.php`) Luxury Cards
+   ========================================================================== */
+.ax-address-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 24px;
+	margin-top: 24px;
+}
+
+.ax-address-card {
+	background: var(--ax-account-surface-alt);
+	border: 1px solid var(--ax-account-border);
+	border-radius: var(--ax-account-radius);
+	padding: 28px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	min-height: 260px;
+	transition: all 0.25s ease;
+}
+
+.ax-address-card:hover {
+	border-color: var(--ax-account-gold);
+	background: #ffffff;
+	box-shadow: 0 8px 24px rgba(22, 20, 18, 0.05);
+}
+
+.ax-address-card-top {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 18px;
+}
+
+.ax-address-title {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	font-family: "Newsreader", "Playfair Display", Georgia, serif;
+	font-size: 20px;
+	font-weight: 500;
+	color: var(--ax-account-text-dark);
+	margin: 0;
+}
+
+.ax-address-title svg {
+	width: 18px;
+	height: 18px;
+	stroke: var(--ax-account-gold);
+}
+
+.ax-address-body {
+	font-style: normal;
+	font-size: 14px;
+	line-height: 1.7;
+	color: var(--ax-account-text-body);
+	margin-bottom: 20px;
+}
+
+.ax-address-body strong {
+	color: var(--ax-account-text-dark);
+	font-weight: 700;
+}
+
+.ax-address-edit-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	font-weight: 700;
+	color: var(--ax-account-text-dark);
+	text-decoration: none;
+	border: 1px solid var(--ax-account-border);
+	padding: 8px 16px;
+	border-radius: var(--ax-account-radius-sm);
+	background: #ffffff;
+	align-self: flex-start;
+	transition: all 0.2s ease;
+}
+
+.ax-address-edit-btn:hover {
+	background: var(--ax-account-text-dark);
+	color: #ffffff;
+	border-color: var(--ax-account-text-dark);
+}
+
+.ax-address-edit-btn svg {
+	width: 14px;
+	height: 14px;
+	stroke: currentColor;
+}
+
+/* ==========================================================================
+   Account Details (`form-edit-account.php`) Luxury Layout
+   ========================================================================== */
+.ax-edit-account-form {
+	max-width: 760px;
+}
+
+.ax-form-section {
+	margin-bottom: 34px;
+}
+
+.ax-form-section-title {
+	font-family: "Newsreader", "Playfair Display", Georgia, serif;
+	font-size: 22px;
+	font-weight: 500;
+	color: var(--ax-account-text-dark);
+	border-bottom: 1px solid var(--ax-account-border);
+	padding-bottom: 12px;
+	margin: 0 0 22px;
+}
+
+.ax-form-row-2col {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 18px;
+}
+
+.ax-security-box {
+	background: var(--ax-account-surface-alt);
+	border: 1px solid var(--ax-account-border);
+	border-radius: var(--ax-account-radius);
+	padding: 26px 28px;
+}
+
+/* ==========================================================================
+   Order Details & Address Forms Enhancement
+   ========================================================================== */
+.woocommerce-address-fields__field-wrapper .form-row {
+	margin-bottom: 20px;
+}
+.woocommerce-address-fields__field-wrapper label {
+	display: block;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--ax-account-text-dark);
+	margin-bottom: 8px;
+}
+.woocommerce-address-fields__field-wrapper input.input-text,
+.woocommerce-address-fields__field-wrapper select {
+	width: 100% !important;
+	height: 48px !important;
+	padding: 0 16px !important;
+	border: 1px solid var(--ax-account-border) !important;
+	border-radius: var(--ax-account-radius-sm) !important;
+	font-size: 14px !important;
+}
+.woocommerce-address-fields button[name="save_address"] {
+	background: var(--ax-account-text-dark) !important;
+	color: #ffffff !important;
+	padding: 12px 28px !important;
+	border-radius: var(--ax-account-radius-sm) !important;
+	font-weight: 700 !important;
+	font-size: 13.5px !important;
+	letter-spacing: 0.5px !important;
+	border: none !important;
+	cursor: pointer !important;
+	transition: all 0.2s ease !important;
+}
+.woocommerce-address-fields button[name="save_address"]:hover {
+	background: var(--ax-account-gold-dark) !important;
+}
+
+/* Back Links */
+.ax-back-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13.5px;
+	font-weight: 600;
+	color: var(--ax-account-gold);
+	text-decoration: none;
+	margin-bottom: 14px;
+	transition: all 0.2s ease;
+}
+.ax-back-link:hover {
+	color: var(--ax-account-gold-dark);
+	transform: translateX(-3px);
+}
+.ax-back-link svg {
+	transition: transform 0.2s ease;
+}
+.ax-back-link:hover svg {
+	transform: translateX(-2px);
+}
+
+/* Order Details Table */
+.woocommerce-order-details__title {
+	font-family: "Newsreader", "Playfair Display", Georgia, serif !important;
+	font-size: 22px !important;
+	font-weight: 500 !important;
+	color: var(--ax-account-text-dark) !important;
+	margin: 28px 0 16px !important;
+}
+.woocommerce-table--order-details {
+	width: 100% !important;
+	border-collapse: collapse !important;
+	margin: 20px 0 !important;
+	border: 1px solid var(--ax-account-border) !important;
+	border-radius: var(--ax-account-radius-sm) !important;
+	overflow: hidden;
+	background: #ffffff;
+}
+.woocommerce-table--order-details th,
+.woocommerce-table--order-details td {
+	padding: 14px 18px !important;
+	border-bottom: 1px solid var(--ax-account-border) !important;
+	font-size: 14px !important;
+}
+.woocommerce-table--order-details thead th {
+	background: var(--ax-account-surface-alt) !important;
+	font-weight: 700 !important;
+	color: var(--ax-account-text-dark) !important;
+	text-transform: uppercase;
+	font-size: 12px !important;
+	letter-spacing: 0.05em;
+}
+.woocommerce-table--order-details tfoot th {
+	background: #fbf9f6;
+	font-weight: 600;
+	color: var(--ax-account-text-body);
+}
+.woocommerce-table--order-details tfoot tr:last-child th,
+.woocommerce-table--order-details tfoot tr:last-child td {
+	font-size: 16px !important;
+	font-weight: 700 !important;
+	color: var(--ax-account-gold) !important;
+	background: #fbf7ee;
+}
+.woocommerce-customer-details {
+	margin-top: 36px;
+	border-top: 1px solid var(--ax-account-border);
+	padding-top: 24px;
+}
+.woocommerce-customer-details h2 {
+	font-family: "Newsreader", "Playfair Display", Georgia, serif !important;
+	font-size: 20px !important;
+	margin: 0 0 16px !important;
+}
+.woocommerce-customer-details .woocommerce-columns--2 {
+	display: grid !important;
+	grid-template-columns: 1fr 1fr !important;
+	gap: 20px !important;
+}
+.woocommerce-customer-details .woocommerce-column {
+	background: var(--ax-account-surface-alt) !important;
+	border: 1px solid var(--ax-account-border) !important;
+	border-radius: var(--ax-account-radius-sm) !important;
+	padding: 22px !important;
+}
+.woocommerce-customer-details .woocommerce-column__title {
+	font-size: 14px !important;
+	font-weight: 700 !important;
+	color: var(--ax-account-text-dark) !important;
+	margin: 0 0 12px !important;
+	text-transform: uppercase !important;
+	letter-spacing: 0.05em !important;
+}
+.woocommerce-customer-details address {
+	font-style: normal !important;
+	line-height: 1.6 !important;
+	color: var(--ax-account-text-body) !important;
+	font-size: 14px !important;
+}
+
+/* ==========================================================================
+   Password Input & Show Password Button Handling
+   ========================================================================== */
+.ax-account-page-wrap .password-input,
+.ax-input-wrap .password-input {
+	display: block !important;
+	width: 100% !important;
+	position: relative !important;
+}
+
+.ax-account-page-wrap .password-input input,
+.ax-input-wrap .password-input input {
+	width: 100% !important;
+	height: 52px !important;
+	padding: 0 48px 0 48px !important;
+	box-sizing: border-box !important;
+	border-radius: var(--ax-account-radius-sm) !important;
+	background: #ffffff !important;
+	border: 1px solid var(--ax-account-border) !important;
+	font-family: "Plus Jakarta Sans", sans-serif !important;
+	font-size: 14.5px !important;
+	color: var(--ax-account-text-dark) !important;
+}
+
+.ax-account-page-wrap .password-input .show-password-input,
+.ax-account-page-wrap .show-password-input {
+	position: absolute !important;
+	right: 14px !important;
+	top: 50% !important;
+	transform: translateY(-50%) !important;
+	background: transparent !important;
+	border: none !important;
+	cursor: pointer !important;
+	width: 24px !important;
+	height: 24px !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	z-index: 4 !important;
+	color: var(--ax-account-text-muted) !important;
+}
+
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+@media (max-width: 980px) {
+	.woocommerce-account .ax-account-page-wrap .ax-account-grid,
+	.ax-account-page-wrap .ax-account-grid {
+		grid-template-columns: 1fr !important;
+		gap: 24px !important;
+	}
+	.woocommerce-account .ax-account-page-wrap .ax-account-sidebar,
+	.ax-account-page-wrap .ax-account-sidebar {
+		max-width: 100% !important;
+		width: 100% !important;
+	}
+	.ax-auth-layout {
+		grid-template-columns: 1fr !important;
+	}
+	.ax-profile-hero {
+		flex-direction: column !important;
+		align-items: flex-start !important;
+	}
+	.ax-hero-stats {
+		width: 100% !important;
+		justify-content: space-between !important;
+	}
+	.ax-dash-actions {
+		grid-template-columns: repeat(2, 1fr) !important;
+	}
+	.ax-voucher-grid {
+		grid-template-columns: 1fr !important;
+	}
+	.ax-address-grid {
+		grid-template-columns: 1fr !important;
+	}
+}
+
+@media (max-width: 640px) {
+	.ax-account-page-wrap {
+		padding: 20px 14px 60px !important;
+	}
+	.ax-auth-card {
+		padding: 26px 20px !important;
+	}
+	.ax-privilege-card {
+		padding: 28px 22px !important;
+	}
+	.ax-auth-title {
+		font-size: 26px !important;
+	}
+	.woocommerce-MyAccount-content {
+		padding: 24px 18px !important;
+	}
+	.ax-profile-hero {
+		padding: 22px 18px !important;
+	}
+	.ax-hero-stats {
+		display: grid !important;
+		grid-template-columns: 1fr 1fr !important;
+		gap: 10px !important;
+		width: 100% !important;
+	}
+	.ax-dash-actions {
+		grid-template-columns: 1fr !important;
+	}
+	.ax-form-row-2col {
+		grid-template-columns: 1fr !important;
+	}
+	.ax-order-card,
+	.ax-order-row-top,
+	.ax-order-row-bottom {
+		flex-direction: column !important;
+		align-items: flex-start !important;
+	}
+	.ax-order-pricing {
+		text-align: left !important;
+	}
+	.ax-ar-promo-card {
+		flex-direction: column !important;
+		align-items: flex-start !important;
+	}
+
+	/* Scrollable horizontal pills for mobile navigation */
+	.woocommerce-MyAccount-navigation {
+		padding: 8px 10px !important;
+		overflow-x: auto !important;
+		-webkit-overflow-scrolling: touch !important;
+	}
+	.woocommerce-MyAccount-navigation ul {
+		flex-direction: row !important;
+		gap: 8px !important;
+		width: max-content !important;
+	}
+	.woocommerce-MyAccount-navigation li a {
+		padding: 9px 14px !important;
+		font-size: 13px !important;
+		border-radius: 20px !important;
+		background: var(--ax-account-surface-alt) !important;
+	}
+	.woocommerce-MyAccount-navigation li.is-active a {
+		background: var(--ax-account-gold) !important;
+		color: #ffffff !important;
+	}
+	.woocommerce-MyAccount-navigation li.is-active a svg {
+		stroke: #ffffff !important;
+	}
+	.woocommerce-MyAccount-navigation li.is-active a::before {
+		display: none !important;
+	}
+	.ax-concierge-card {
+		display: none !important;
+	}
+	.ax-dash-welcome h2 {
+		font-size: 20px !important;
+		line-height: 1.35 !important;
+		word-break: break-word !important;
+		padding-right: 15px !important;
+	}
+	.ax-profile-name {
+		font-size: 22px !important;
+		word-break: break-word !important;
+	}
+	.ax-orders-header h2 {
+		font-size: 22px !important;
+	}
+	.ax-voucher-card {
+		padding: 18px 16px !important;
+		flex-direction: column !important;
+		align-items: flex-start !important;
+	}
+	.ax-voucher-value {
+		font-size: 14.5px !important;
+	}
+	.ax-voucher-copy-btn {
+		width: 100% !important;
+		justify-content: center !important;
+	}
+}

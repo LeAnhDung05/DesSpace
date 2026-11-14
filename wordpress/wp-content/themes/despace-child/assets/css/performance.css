@@ -1,0 +1,680 @@
+/* ============================================================
+   Performance & Animation CSS
+   Skeleton loading, lazy load fade, transitions
+   ============================================================ */
+
+/* --------------------------------------------------
+   1. Skeleton Loading Animation
+   -------------------------------------------------- */
+@keyframes f-skeleton-shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.f-product-card-skeleton,
+.skeleton-image,
+.skeleton-text,
+.skeleton-container .f-product-card-skeleton {
+    background: linear-gradient(
+        90deg,
+        #f4f0eb 0%,
+        #ece7e0 25%,
+        #f4f0eb 50%,
+        #ece7e0 75%,
+        #f4f0eb 100%
+    );
+    background-size: 200% 100%;
+    animation: f-skeleton-shimmer 1.5s ease-in-out infinite;
+    border-radius: 8px;
+}
+
+.skeleton-image {
+    aspect-ratio: 1;
+    width: 100%;
+}
+
+.skeleton-text {
+    height: 16px;
+    width: 80%;
+    margin: 8px 0;
+}
+
+.skeleton-text.short {
+    width: 50%;
+    height: 14px;
+}
+
+/* Fade in when loaded */
+.fv-img-loaded,
+img.fv-loaded {
+    animation: f-img-fadein 0.4s ease-out forwards;
+}
+
+@keyframes f-img-fadein {
+    from {
+        opacity: 0;
+        transform: scale(1.02);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Lazy load image placeholder */
+img[data-src] {
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+}
+
+img[data-src].loaded,
+img[data-src].fv-loaded {
+    opacity: 1;
+}
+
+/* --------------------------------------------------
+   2. Page Load Animations
+   -------------------------------------------------- */
+@keyframes f-fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes f-fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes f-fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes f-scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes f-slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes f-slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Body loaded state */
+body.fv-loaded {
+    animation: f-fadeIn 0.3s ease-out;
+}
+
+/* Header animation on load */
+body.fv-loaded .fv-header,
+body.fv-loaded .ax-chat-toggle {
+    animation: f-fadeInDown 0.5s ease-out;
+}
+
+/* Staggered children animation */
+.fv-stagger > * {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+body.fv-loaded .fv-stagger > *:nth-child(1) { transition-delay: 0ms; }
+body.fv-loaded .fv-stagger > *:nth-child(2) { transition-delay: 60ms; }
+body.fv-loaded .fv-stagger > *:nth-child(3) { transition-delay: 120ms; }
+body.fv-loaded .fv-stagger > *:nth-child(4) { transition-delay: 180ms; }
+body.fv-loaded .fv-stagger > *:nth-child(5) { transition-delay: 240ms; }
+body.fv-loaded .fv-stagger > *:nth-child(6) { transition-delay: 300ms; }
+body.fv-loaded .fv-stagger > *:nth-child(7) { transition-delay: 360ms; }
+body.fv-loaded .fv-stagger > *:nth-child(8) { transition-delay: 420ms; }
+
+body.fv-loaded .fv-stagger > * {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* --------------------------------------------------
+   3. Scroll Reveal Animations
+   -------------------------------------------------- */
+.fv-reveal {
+    opacity: 0;
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.fv-reveal.fv-visible,
+.fv-concierge,
+.fv-featured-hero {
+    opacity: 1 !important;
+    transform: none !important;
+}
+
+.fv-reveal-up {
+    transform: translateY(40px);
+}
+.fv-reveal-up.fv-visible {
+    transform: translateY(0);
+}
+
+.fv-reveal-down {
+    transform: translateY(-30px);
+}
+.fv-reveal-down.fv-visible {
+    transform: translateY(0);
+}
+
+.fv-reveal-left {
+    transform: translateX(-40px);
+}
+.fv-reveal-left.fv-visible {
+    transform: translateX(0);
+}
+
+.fv-reveal-right {
+    transform: translateX(40px);
+}
+.fv-reveal-right.fv-visible {
+    transform: translateX(0);
+}
+
+.fv-reveal-scale {
+    transform: scale(0.9);
+}
+.fv-reveal-scale.fv-visible {
+    transform: scale(1);
+}
+
+/* Stagger reveal for lists */
+.fv-reveal-stagger > * {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.fv-reveal-stagger.fv-visible > *:nth-child(1) { transition-delay: 0ms; }
+.fv-reveal-stagger.fv-visible > *:nth-child(2) { transition-delay: 80ms; }
+.fv-reveal-stagger.fv-visible > *:nth-child(3) { transition-delay: 160ms; }
+.fv-reveal-stagger.fv-visible > *:nth-child(4) { transition-delay: 240ms; }
+.fv-reveal-stagger.fv-visible > *:nth-child(5) { transition-delay: 320ms; }
+.fv-reveal-stagger.fv-visible > *:nth-child(6) { transition-delay: 400ms; }
+.fv-reveal-stagger.fv-visible > *:nth-child(7) { transition-delay: 480ms; }
+.fv-reveal-stagger.fv-visible > *:nth-child(8) { transition-delay: 560ms; }
+
+.fv-reveal-stagger.fv-visible > * {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* --------------------------------------------------
+   4. Hover Animations
+   -------------------------------------------------- */
+
+/* Product Card Hover */
+.f-product-card,
+.woocommerce ul.products li.product,
+.product,
+.ax-product-card {
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.35s ease;
+}
+
+.f-product-card:hover,
+.woocommerce ul.products li.product:hover,
+.product:hover,
+.ax-product-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 40px rgba(43, 29, 22, 0.12);
+}
+
+/* Product Image Zoom on Hover */
+.f-product-card__image img,
+.woocommerce ul.products li.product a img,
+.product a img,
+.ax-product-card img,
+.f-product-image img {
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.f-product-card:hover .f-product-card__image img,
+.woocommerce ul.products li.product:hover a img,
+.product:hover a img,
+.ax-product-card:hover img,
+.f-product-image:hover img {
+    transform: scale(1.06) !important;
+}
+
+/* Action Buttons Slide Up */
+.f-product-card__actions,
+.woocommerce ul.products li.product .f-card-actions,
+.ax-card-actions {
+    transform: translateY(8px);
+    opacity: 0;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+.f-product-card:hover .f-product-card__actions,
+.woocommerce ul.products li.product:hover .f-card-actions,
+.ax-product-card:hover .ax-card-actions {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+/* Button Hover */
+.f-btn,
+.woocommerce a.button,
+.woocommerce button.button,
+.ax-btn,
+.ax-btn-primary,
+.ax-btn-wishlist {
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.f-btn:hover,
+.woocommerce a.button:hover,
+.woocommerce button.button:hover,
+.ax-btn:hover,
+.ax-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(43, 29, 22, 0.15);
+}
+
+.f-btn:active,
+.woocommerce a.button:active,
+.woocommerce button.button:active,
+.ax-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* Link Underline Animation */
+a:not(.f-btn):not(.ax-btn):not(.button):not(.no-underline):not(.skip-link):not(.fv-header a):not(.fv-primary-nav a):not(.fv-subnav-link):not(.ax-chat-link) {
+    position: relative;
+    text-decoration: none;
+}
+
+a:not(.f-btn):not(.ax-btn):not(.button):not(.no-underline):not(.skip-link):not(.fv-header a):not(.fv-primary-nav a):not(.fv-subnav-link):not(.ax-chat-link)::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: currentColor;
+    transition: width 0.3s ease;
+}
+
+a:not(.f-btn):not(.ax-btn):not(.button):not(.no-underline):not(.skip-link):not(.fv-header a):not(.fv-primary-nav a):not(.fv-subnav-link):not(.ax-chat-link):hover::after {
+    width: 100%;
+}
+
+/* --------------------------------------------------
+   5. Micro-interactions
+   -------------------------------------------------- */
+
+/* Add to Cart Success Animation */
+.f-add-to-cart-btn.added,
+.single_add_to_cart_button.added,
+.ax-btn-cart.added {
+    animation: f-btn-success 0.6s ease;
+}
+
+@keyframes f-btn-success {
+    0%, 100% { transform: scale(1); }
+    25% { transform: scale(1.05); }
+    50% { transform: scale(0.95); }
+    75% { transform: scale(1.02); }
+}
+
+/* Wishlist Heart Pop */
+.f-card-wish-btn:hover,
+.ax-wishlist-btn:hover {
+    transform: scale(1.2);
+}
+
+.f-card-wish-btn.is-added,
+.ax-wishlist-btn.is-added {
+    animation: f-heart-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes f-heart-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1); }
+}
+
+/* Quantity Stepper */
+.f-stepper button:hover,
+.ax-qty-minus:hover,
+.ax-qty-plus:hover {
+    background: rgba(197, 168, 128, 0.15);
+}
+
+.f-stepper button:active,
+.ax-qty-minus:active,
+.ax-qty-plus:active {
+    transform: scale(0.9);
+}
+
+/* Color Swatch */
+.ax-color-swatch:hover {
+    transform: scale(1.15);
+}
+
+.ax-color-swatch.active {
+    box-shadow: 0 0 0 2px #f7f4ef, 0 0 0 4px #191816;
+}
+
+/* Gallery Thumbnails */
+.ax-thumb-item:hover {
+    border-color: #c5a880;
+}
+
+.ax-thumb-item.active {
+    border-color: #191816;
+}
+
+/* --------------------------------------------------
+   6. Drawer/Modal Animations
+   -------------------------------------------------- */
+
+/* Mini Cart Drawer Slide */
+.f-cart-drawer,
+.ax-mini-cart,
+.ax-drawer {
+    transform: translateX(100%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.f-cart-drawer.is-open,
+.ax-mini-cart.is-open,
+.ax-drawer.is-open {
+    transform: translateX(0);
+}
+
+.f-cart-drawer__overlay,
+.ax-mini-cart-overlay,
+.ax-drawer-overlay {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.f-cart-drawer__overlay.is-open,
+.ax-mini-cart-overlay.is-open,
+.ax-drawer-overlay.is-open {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Modal Fade In */
+.ax-modal,
+.fancybox-content,
+.modal {
+    animation: f-scaleIn 0.3s ease-out;
+}
+
+/* --------------------------------------------------
+   7. Tab Animations
+   -------------------------------------------------- */
+.ax-tab-btn::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #191816;
+    transform: scaleX(0);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ax-tab-btn.active::after,
+.ax-tab-btn:hover::after {
+    transform: scaleX(1);
+}
+
+/* Tab Content Fade */
+.ax-tab-panel {
+    animation: f-fadeIn 0.3s ease-out;
+}
+
+/* --------------------------------------------------
+   8. Floating Elements
+   -------------------------------------------------- */
+@keyframes f-float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+.f-float {
+    animation: f-float 3s ease-in-out infinite;
+}
+
+.f-float-slow {
+    animation: f-float 4s ease-in-out infinite;
+}
+
+.f-float-fast {
+    animation: f-float 2s ease-in-out infinite;
+}
+
+/* Chatbot mascot floating */
+.ax-chat-toggle {
+    animation: f-float 3.6s ease-in-out infinite;
+}
+
+/* --------------------------------------------------
+   9. Toast Notification Animation
+   -------------------------------------------------- */
+@keyframes f-slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes f-slideOutRight {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+}
+
+.f-toast,
+#furniva-toast,
+.ax-toast {
+    animation: f-slideInRight 0.4s ease-out;
+}
+
+.f-toast.hide,
+#furniva-toast.hide,
+.ax-toast.hide {
+    animation: f-slideOutRight 0.3s ease-out forwards;
+}
+
+/* --------------------------------------------------
+   10. Header Scroll Effect
+   -------------------------------------------------- */
+.fv-header,
+.ax-header {
+    transition: background 0.3s ease,
+                box-shadow 0.3s ease,
+                padding 0.3s ease;
+}
+
+.fv-header.is-scrolled,
+.ax-header.is-scrolled {
+    background: rgba(247, 244, 239, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 2px 20px rgba(43, 29, 22, 0.08);
+}
+
+/* --------------------------------------------------
+   11. Progress Bar Animation
+   -------------------------------------------------- */
+.f-freeship-fill,
+.ax-freeship-progress,
+.woocommerce-progress-bar__fill {
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --------------------------------------------------
+   12. Price Animation
+   -------------------------------------------------- */
+.woocommerce ins .woocommerce-Price-amount {
+    animation: f-price-pop 0.4s ease-out;
+}
+
+@keyframes f-price-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* --------------------------------------------------
+   13. Marquee/Announcement Animation
+   -------------------------------------------------- */
+@keyframes f-marquee {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.fv-announcement__track,
+.ax-announcement-track {
+    animation: f-marquee 30s linear infinite;
+}
+
+.fv-announcement:hover .fv-announcement__track,
+.ax-announcement:hover .ax-announcement-track {
+    animation-play-state: paused;
+}
+
+/* --------------------------------------------------
+   14. Reduced Motion Support
+   -------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .fv-reveal {
+        opacity: 1;
+        transform: none !important;
+    }
+
+    .fv-stagger > *,
+    .fv-reveal-stagger > * {
+        opacity: 1;
+        transform: none !important;
+    }
+
+    .fv-float,
+    .ax-chat-toggle {
+        animation: none;
+    }
+}
+
+/* --------------------------------------------------
+   15. Loading States
+   -------------------------------------------------- */
+.loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: f-spin 0.8s linear infinite;
+}
+
+@keyframes f-spin {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Pulse */
+@keyframes f-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.f-pulse {
+    animation: f-pulse 2s ease-in-out infinite;
+}
+
+/* Mobile: Always visible immediately without blank flashes */
+@media (max-width: 768px) {
+    .fv-reveal,
+    .fv-stagger > * {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+}
+

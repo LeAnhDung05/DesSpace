@@ -1,0 +1,681 @@
+/* ==========================================================================
+   THE AXGNUD EDIT — Bento Grid Section
+   Pixel-perfect implementation matching Design Mockup
+   ========================================================================== */
+
+.fv-bento-section {
+  position: relative;
+  width: min(calc(100% - 2 * var(--fv-gutter, 28px)), var(--fv-wrap, 1360px));
+  margin-inline: auto;
+  margin-top: 56px;
+  margin-bottom: 72px;
+  box-sizing: border-box;
+}
+
+/* --------------------------------------------------------------------------
+   1. Header Section (Desktop 3 columns, warm cream #F3EFEA)
+   -------------------------------------------------------------------------- */
+.fv-bento-header {
+  background-color: #F3EFEA;
+  border-radius: 14px;
+  padding: 36px 40px;
+  margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: 1.25fr 1.35fr 0.65fr;
+  align-items: center;
+  gap: 32px;
+  box-sizing: border-box;
+  box-shadow: 0 4px 20px rgba(30, 27, 24, 0.03);
+}
+
+/* Left Column */
+.fv-bento-header__left {
+  display: flex;
+  flex-direction: column;
+}
+
+.fv-bento-eyebrow-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.fv-bento-eyebrow {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: #8C7A65;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.fv-bento-eyebrow-line {
+  display: inline-block;
+  width: 48px;
+  height: 1px;
+  background-color: #8C7A65;
+}
+
+.fv-bento-title {
+  font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+  font-size: 44px;
+  font-weight: 500;
+  line-height: 1.15;
+  color: #1E1B18;
+  margin: 0 0 14px 0;
+  letter-spacing: -0.01em;
+}
+
+.fv-bento-desc {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 15px;
+  color: #5A534A;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Middle Column: 4 commitments with thin SVG icons */
+.fv-bento-header__middle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fv-bento-commitments {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 16px;
+}
+
+.fv-bento-commit-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 70px;
+}
+
+.fv-bento-commit-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: #7A6855;
+}
+
+.fv-bento-commit-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke: #7A6855;
+  stroke-width: 1.5;
+}
+
+.fv-bento-commit-text {
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #5A534A;
+  line-height: 1.35;
+}
+
+.fv-bento-commit-divider {
+  width: 1px;
+  height: 42px;
+  background-color: #DFD8CE;
+  flex-shrink: 0;
+}
+
+/* Right Column: Signature */
+.fv-bento-header__right {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-right: 8px;
+}
+
+.fv-bento-signature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: 'Caveat', 'Dancing Script', cursive;
+  font-size: 34px;
+  color: #9C8974;
+  line-height: 1.05;
+  transform: rotate(-8deg);
+  user-select: none;
+}
+
+.fv-bento-sig-line {
+  white-space: nowrap;
+}
+
+.fv-bento-sig-underline {
+  margin-top: 2px;
+  width: 115px;
+  height: 12px;
+  stroke: #9C8974;
+  stroke-width: 1.5;
+}
+
+/* --------------------------------------------------------------------------
+   2. Bento Grid Layout (6 cards, border-radius: 14px, gap: 20px)
+   -------------------------------------------------------------------------- */
+.fv-bento-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.fv-bento-row {
+  display: grid;
+  gap: 20px;
+}
+
+/* Upper Block: 12-col grid (Left 7 cols, Right 5 cols) */
+.fv-bento-row--upper {
+  grid-template-columns: 7fr 5fr;
+  min-height: 520px;
+}
+
+/* Lower Block: 3 equal cols (4 cols each in 12-col grid) */
+.fv-bento-row--lower {
+  grid-template-columns: repeat(3, 1fr);
+  min-height: 260px;
+}
+
+/* Stack column for Card 2 & 3 */
+.fv-bento-col-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 520px;
+}
+
+/* --------------------------------------------------------------------------
+   Card Base Styles
+   -------------------------------------------------------------------------- */
+.fv-bento-card {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  box-sizing: border-box;
+  text-decoration: none;
+  isolation: isolate;
+  background-color: #EBE1D4;
+}
+
+/* Background image layer with smooth zoom on hover */
+.fv-bento-card__bg {
+  position: absolute;
+  inset: 0;
+  background-image: var(--bento-bg);
+  background-size: cover;
+  background-position: center;
+  z-index: 1;
+  transform: scale(1);
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+  will-change: transform;
+}
+
+.fv-bento-card:hover .fv-bento-card__bg {
+  transform: scale(1.04);
+}
+
+/* Scrim / Gradient Overlay Layer */
+.fv-bento-card__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Content Container */
+.fv-bento-card__content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* Card 1: Phòng Khách (7 cols, height 520px) */
+.fv-bento-card--living {
+  height: 520px;
+}
+
+.fv-bento-card--living .fv-bento-card__scrim {
+  background: linear-gradient(90deg, rgba(28,20,14,0.78) 0%, rgba(28,20,14,0.35) 50%, rgba(28,20,14,0.05) 100%);
+}
+
+.fv-bento-card--living .fv-bento-card__content {
+  padding: 44px 40px;
+  justify-content: flex-start;
+}
+
+.fv-bento-card--living .fv-bento-card__tag {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: #E6DFD5;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.fv-bento-card--living .fv-bento-card__title {
+  font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+  font-size: 56px;
+  font-weight: 400;
+  color: #FFFFFF;
+  line-height: 1.05;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.01em;
+}
+
+.fv-bento-card--living .fv-bento-card__rule {
+  display: block;
+  width: 32px;
+  height: 1.5px;
+  background-color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 18px;
+}
+
+.fv-bento-card--living .fv-bento-card__subcats {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.6;
+  margin-bottom: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fv-bento-card--living .fv-bento-pill-btn {
+  background-color: #F3EFEA;
+  color: #1E1B18;
+  padding: 11px 24px;
+  font-size: 13.5px;
+}
+
+/* Bottom footer of Card 1 */
+.fv-bento-card__footer {
+  position: absolute;
+  bottom: 28px;
+  left: 40px;
+  right: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 3;
+}
+
+.fv-bento-card__progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fv-bento-card__counter {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.fv-bento-progress-bars {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fv-bento-progress-bars span {
+  display: inline-block;
+  width: 16px;
+  height: 2px;
+  background-color: rgba(255, 255, 255, 0.35);
+  border-radius: 1px;
+  transition: background-color 0.3s ease;
+}
+
+.fv-bento-progress-bars span.active {
+  background-color: #FFFFFF;
+}
+
+.fv-bento-card__nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fv-bento-nav-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: none;
+  color: #1E1B18;
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.fv-bento-nav-btn:hover {
+  background-color: #FFFFFF;
+  transform: scale(1.08);
+}
+
+/* Card 2: Phòng Ăn (5 cols, height 250px) */
+.fv-bento-card--dining {
+  height: 250px;
+}
+
+.fv-bento-card--dining .fv-bento-card__scrim {
+  background: linear-gradient(90deg, rgba(235,225,212,0.92) 0%, rgba(235,225,212,0.55) 48%, transparent 100%);
+}
+
+.fv-bento-card--dining .fv-bento-card__content {
+  padding: 24px 30px;
+  justify-content: center;
+  max-width: 60%;
+}
+
+.fv-bento-card--dining .fv-bento-card__tag {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: #7A6855;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.fv-bento-card--dining .fv-bento-card__title {
+  font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+  font-size: 42px;
+  font-weight: 400;
+  color: #1E1B18;
+  line-height: 1.05;
+  margin: 0 0 8px 0;
+}
+
+.fv-bento-card--dining .fv-bento-card__subcats {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: #5A534A;
+  line-height: 1.45;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Card 3: Phòng Ngủ (5 cols, height 250px) */
+.fv-bento-card--bedroom {
+  height: 250px;
+}
+
+.fv-bento-card--bedroom .fv-bento-card__scrim {
+  background: linear-gradient(90deg, rgba(210,196,180,0.88) 0%, rgba(210,196,180,0.45) 50%, transparent 100%);
+}
+
+.fv-bento-card--bedroom .fv-bento-card__content {
+  padding: 24px 30px;
+  justify-content: center;
+  max-width: 60%;
+}
+
+.fv-bento-card--bedroom .fv-bento-card__tag {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: #7A6855;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.fv-bento-card--bedroom .fv-bento-card__title {
+  font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+  font-size: 42px;
+  font-weight: 400;
+  color: #1E1B18;
+  line-height: 1.05;
+  margin: 0 0 8px 0;
+}
+
+.fv-bento-card--bedroom .fv-bento-card__subcats {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: #5A534A;
+  line-height: 1.45;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Lower Row: Cards 4, 5, 6 (each 4 cols, height 260px) */
+.fv-bento-card--workspace,
+.fv-bento-card--lighting,
+.fv-bento-card--decor {
+  height: 260px;
+}
+
+.fv-bento-card--workspace .fv-bento-card__scrim,
+.fv-bento-card--lighting .fv-bento-card__scrim,
+.fv-bento-card--decor .fv-bento-card__scrim {
+  background: linear-gradient(90deg, rgba(236,227,215,0.94) 0%, rgba(236,227,215,0.68) 52%, rgba(236,227,215,0.05) 100%);
+}
+
+.fv-bento-card--workspace .fv-bento-card__content,
+.fv-bento-card--lighting .fv-bento-card__content,
+.fv-bento-card--decor .fv-bento-card__content {
+  padding: 24px 28px;
+  justify-content: center;
+  max-width: 62%;
+}
+
+.fv-bento-card__title--split {
+  font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+  font-size: 34px;
+  font-weight: 400;
+  color: #1E1B18;
+  line-height: 1.08;
+  margin: 0 0 10px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.fv-bento-card--workspace .fv-bento-card__subcats,
+.fv-bento-card--lighting .fv-bento-card__subcats,
+.fv-bento-card--decor .fv-bento-card__subcats {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: #5A534A;
+  line-height: 1.45;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   3. Pill Button Component & Hover Effects
+   -------------------------------------------------------------------------- */
+.fv-bento-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #F3EFEA;
+  color: #1E1B18;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  width: fit-content;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.3s cubic-bezier(0.2, 0, 0, 1),
+              color 0.3s cubic-bezier(0.2, 0, 0, 1),
+              transform 0.25s ease;
+  user-select: none;
+}
+
+.fv-bento-pill-btn .fv-btn-arrow {
+  display: inline-block;
+  transition: transform 0.25s ease;
+}
+
+/* Card hover triggers button to switch to black #1E1B18 with white text */
+.fv-bento-card:hover .fv-bento-pill-btn,
+.fv-bento-pill-btn:hover {
+  background-color: #1E1B18 !important;
+  color: #FFFFFF !important;
+  transform: translateY(-1px);
+}
+
+.fv-bento-card:hover .fv-bento-pill-btn .fv-btn-arrow,
+.fv-bento-pill-btn:hover .fv-btn-arrow {
+  transform: translateX(3px);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Breakpoints
+   -------------------------------------------------------------------------- */
+@media (max-width: 1200px) {
+  .fv-bento-header {
+    grid-template-columns: 1.4fr 1.6fr;
+    gap: 24px;
+    padding: 30px;
+  }
+  .fv-bento-header__right {
+    grid-column: span 2;
+    justify-content: center;
+    padding-top: 8px;
+  }
+  .fv-bento-title {
+    font-size: 38px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .fv-bento-row--upper {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .fv-bento-card--living {
+    height: 460px;
+  }
+  .fv-bento-col-stack {
+    height: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .fv-bento-card--dining,
+  .fv-bento-card--bedroom {
+    height: 240px;
+  }
+  .fv-bento-row--lower {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .fv-bento-section {
+    margin-top: 40px;
+    margin-bottom: 50px;
+  }
+
+  .fv-bento-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 24px 20px;
+    gap: 24px;
+  }
+
+  .fv-bento-title {
+    font-size: 30px;
+  }
+
+  .fv-bento-commitments {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .fv-bento-commit-divider {
+    display: none;
+  }
+
+  .fv-bento-commit-item {
+    min-width: unset;
+  }
+
+  .fv-bento-header__right {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .fv-bento-col-stack {
+    grid-template-columns: 1fr;
+  }
+
+  .fv-bento-row--lower {
+    grid-template-columns: 1fr;
+  }
+
+  .fv-bento-card--living {
+    height: 420px;
+  }
+
+  .fv-bento-card--living .fv-bento-card__title {
+    font-size: 44px;
+  }
+
+  .fv-bento-card--living .fv-bento-card__content {
+    padding: 28px 24px;
+  }
+
+  .fv-bento-card__footer {
+    left: 24px;
+    right: 24px;
+    bottom: 20px;
+  }
+
+  .fv-bento-card--dining,
+  .fv-bento-card--bedroom,
+  .fv-bento-card--workspace,
+  .fv-bento-card--lighting,
+  .fv-bento-card--decor {
+    height: 220px;
+  }
+
+  .fv-bento-card--dining .fv-bento-card__content,
+  .fv-bento-card--bedroom .fv-bento-card__content,
+  .fv-bento-card--workspace .fv-bento-card__content,
+  .fv-bento-card--lighting .fv-bento-card__content,
+  .fv-bento-card--decor .fv-bento-card__content {
+    max-width: 75%;
+    padding: 20px 22px;
+  }
+}

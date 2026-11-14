@@ -1,0 +1,793 @@
+/**
+ * Furniva Animations System
+ * Premium motion design: scroll reveal, page load, hover effects, micro-interactions
+ */
+
+/* ============================================================
+   1. Keyframe Animations
+   ============================================================ */
+
+/* Page Load Animations */
+@keyframes fv-fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fv-fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fv-fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fv-fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes fv-slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fv-slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Bounce & Pop Animations */
+@keyframes fv-bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes fv-pop {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.15);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes fv-wiggle {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    25% {
+        transform: rotate(-3deg);
+    }
+    75% {
+        transform: rotate(3deg);
+    }
+}
+
+/* Pulse & Glow Effects */
+@keyframes fv-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+@keyframes fv-glow {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(197, 168, 128, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 20px 10px rgba(197, 168, 128, 0.2);
+    }
+}
+
+@keyframes fv-glowSuccess {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(111, 128, 108, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 20px 10px rgba(111, 128, 108, 0.2);
+    }
+}
+
+/* Shimmer Loading */
+@keyframes fv-shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Spin */
+@keyframes fv-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Float */
+@keyframes fv-float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+/* Progress Bar */
+@keyframes fv-progress {
+    from {
+        transform: scaleX(0);
+    }
+    to {
+        transform: scaleX(1);
+    }
+}
+
+/* Draw Line Effect */
+@keyframes fv-drawLine {
+    from {
+        stroke-dashoffset: 1000;
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* ============================================================
+   2. Scroll Reveal Classes
+   ============================================================ */
+
+/* Base reveal - hidden by default */
+.fv-reveal {
+    opacity: 0;
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fv-reveal.fv-visible,
+.fv-concierge,
+.fv-featured-hero {
+    opacity: 1 !important;
+    transform: none !important;
+}
+
+/* Reveal Directions */
+.fv-reveal-up {
+    transform: translateY(50px);
+}
+.fv-reveal-up.fv-visible {
+    transform: translateY(0);
+}
+
+.fv-reveal-down {
+    transform: translateY(-30px);
+}
+.fv-reveal-down.fv-visible {
+    transform: translateY(0);
+}
+
+.fv-reveal-left {
+    transform: translateX(50px);
+}
+.fv-reveal-left.fv-visible {
+    transform: translateX(0);
+}
+
+.fv-reveal-right {
+    transform: translateX(-50px);
+}
+.fv-reveal-right.fv-visible {
+    transform: translateX(0);
+}
+
+.fv-reveal-scale {
+    transform: scale(0.9);
+}
+.fv-reveal-scale.fv-visible {
+    transform: scale(1);
+}
+
+/* Reveal with fade only */
+.fv-reveal-fade {
+    transform: none !important;
+}
+
+/* Staggered children */
+.fv-stagger > * {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fv-stagger.fv-visible > *:nth-child(1) { transition-delay: 0ms; }
+.fv-stagger.fv-visible > *:nth-child(2) { transition-delay: 80ms; }
+.fv-stagger.fv-visible > *:nth-child(3) { transition-delay: 160ms; }
+.fv-stagger.fv-visible > *:nth-child(4) { transition-delay: 240ms; }
+.fv-stagger.fv-visible > *:nth-child(5) { transition-delay: 320ms; }
+.fv-stagger.fv-visible > *:nth-child(6) { transition-delay: 400ms; }
+.fv-stagger.fv-visible > *:nth-child(7) { transition-delay: 480ms; }
+.fv-stagger.fv-visible > *:nth-child(8) { transition-delay: 560ms; }
+.fv-stagger.fv-visible > *:nth-child(9) { transition-delay: 640ms; }
+.fv-stagger.fv-visible > *:nth-child(10) { transition-delay: 720ms; }
+.fv-stagger.fv-visible > *:nth-child(11) { transition-delay: 800ms; }
+.fv-stagger.fv-visible > *:nth-child(12) { transition-delay: 880ms; }
+
+.fv-stagger.fv-visible > * {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ============================================================
+   3. Page Load Animations
+   ============================================================ */
+
+/* Body ready animation */
+body.fv-loaded .fv-header,
+body.fv-loaded .fv-hero,
+body.fv-loaded .fv-announcement {
+    animation: fv-fadeInDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+body.fv-loaded .fv-hero {
+    animation-delay: 0.1s;
+}
+
+/* Main content fade in */
+.fv-main-content {
+    animation: fv-fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+}
+
+/* ============================================================
+   4. Enhanced Hover Animations
+   ============================================================ */
+
+/* Button Hover Effects */
+.f-btn,
+.woocommerce a.button,
+.woocommerce button.button,
+.woocommerce input.button,
+.f-cta,
+button,
+input[type="submit"] {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.f-btn:hover,
+.woocommerce a.button:hover,
+.woocommerce button.button:hover,
+.f-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(43, 29, 22, 0.15);
+}
+
+.f-btn:active,
+.woocommerce a.button:active,
+.woocommerce button.button:active,
+.f-cta:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* Button ripple effect */
+.f-btn::after,
+.woocommerce a.button::after,
+.woocommerce button.button::after,
+.f-cta::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease, opacity 0.6s ease;
+    opacity: 0;
+}
+
+.f-btn:active::after,
+.woocommerce a.button:active::after,
+.woocommerce button.button:active::after {
+    width: 300px;
+    height: 300px;
+    opacity: 0;
+}
+
+/* Primary Button Glow on Hover */
+.f-btn--primary:hover,
+.f-cta--primary:hover {
+    box-shadow: 0 8px 30px rgba(197, 168, 128, 0.4);
+}
+
+/* Product Card Hover */
+.f-product-card,
+.woocommerce ul.products li.product,
+.product {
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.f-product-card:hover,
+.woocommerce ul.products li.product:hover,
+.product:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px rgba(43, 29, 22, 0.12);
+}
+
+/* Product Image Zoom */
+.f-product-card__image,
+.woocommerce ul.products li.product a img,
+.product a img {
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+}
+
+.f-product-card:hover .f-product-card__image img,
+.woocommerce ul.products li.product:hover a img,
+.product:hover a img {
+    transform: scale(1.08);
+}
+
+/* Product Action Buttons - Slide Up */
+.f-product-card__actions,
+.woocommerce ul.products li.product .f-card-actions {
+    transform: translateY(100%);
+    opacity: 0;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.35s ease;
+}
+
+.f-product-card:hover .f-product-card__actions,
+.woocommerce ul.products li.product:hover .f-card-actions {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+/* Card Wishlist Button Heart Animation */
+.f-card-wish-btn,
+.product .f-card-wish-btn {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.f-card-wish-btn:hover {
+    transform: scale(1.2);
+}
+
+.f-card-wish-btn.is-added {
+    animation: fv-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Category Card Hover */
+.f-home-cat-card,
+.f-cat-card {
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.35s ease;
+}
+
+.f-home-cat-card:hover,
+.f-cat-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 16px 32px rgba(43, 29, 22, 0.1);
+}
+
+.f-home-cat-card__image img,
+.f-cat-card__image img {
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.f-home-cat-card:hover .f-home-cat-card__image img,
+.f-cat-card:hover .f-cat-card__image img {
+    transform: scale(1.1);
+}
+
+/* Link Hover - Underline Animation */
+.f-link,
+a:not(.f-btn):not(.f-cta):not(.button):not(.skip-link) {
+    position: relative;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.f-link::after,
+.entry-content a:not(.f-btn):not(.f-cta):not(.button):not(.skip-link)::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: currentColor;
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.f-link:hover::after,
+.entry-content a:not(.f-btn):not(.f-cta):not(.button):not(.skip-link):hover::after {
+    width: 100%;
+}
+
+/* ============================================================
+   5. Micro-Interactions
+   ============================================================ */
+
+/* Add to Cart Button Animation */
+.f-add-to-cart-btn,
+.single_add_to_cart_button,
+.woocommerce .product .single_add_to_cart_button {
+    position: relative;
+    overflow: hidden;
+}
+
+.f-add-to-cart-btn.added,
+.single_add_to_cart_button.added {
+    background: #6f806c !important;
+    animation: fv-glowSuccess 0.8s ease;
+}
+
+.f-add-to-cart-btn.loading {
+    pointer-events: none;
+}
+
+.f-add-to-cart-btn.loading::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: fv-spin 0.8s linear infinite;
+}
+
+/* Quantity Stepper Animation */
+.f-stepper button,
+.woocommerce .quantity .qty {
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.f-stepper button:hover,
+.woocommerce .quantity .qty:hover {
+    background: rgba(197, 168, 128, 0.15);
+}
+
+.f-stepper button:active,
+.woocommerce .quantity .qty:active {
+    transform: scale(0.92);
+}
+
+/* Quick View Button */
+.f-quick-view-btn {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.f-quick-view-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================================
+   6. Toast Notifications Animation
+   ============================================================ */
+
+.furniva-toast,
+#furniva-toast,
+.woocommerce-message,
+.woocommerce-error,
+.woocommerce-info {
+    animation: fv-slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.furniva-toast.hide,
+#furniva-toast.hide {
+    animation: fv-slideOutRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fv-slideOutRight {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+/* ============================================================
+   7. Drawer/Modal Animations
+   ============================================================ */
+
+/* Mini Cart Drawer */
+.f-cart-drawer,
+.f-drawer {
+    transform: translateX(100%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.f-cart-drawer.is-open,
+.f-drawer.is-open {
+    transform: translateX(0);
+}
+
+.f-cart-drawer__overlay,
+.f-drawer__overlay {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.f-cart-drawer__overlay.is-open,
+.f-drawer__overlay.is-open {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Quick View Modal */
+.fancybox-content,
+.woocommerce modal,
+.fancybox-slide {
+    animation: fv-fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Filter Panel Mobile */
+.f-filter-panel,
+.f-filter-drawer {
+    transform: translateX(-100%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.f-filter-panel.is-open,
+.f-filter-drawer.is-open {
+    transform: translateX(0);
+}
+
+/* ============================================================
+   8. Page Transitions
+   ============================================================ */
+
+/* Smooth Scroll */
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 100px;
+}
+
+/* Link Focus Animation */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(197, 168, 128, 0.5);
+    transition: box-shadow 0.2s ease;
+}
+
+/* ============================================================
+   9. Floating Elements
+   ============================================================ */
+
+.fv-float {
+    animation: fv-float 3s ease-in-out infinite;
+}
+
+.fv-float-slow {
+    animation: fv-float 4s ease-in-out infinite;
+}
+
+.fv-float-fast {
+    animation: fv-float 2s ease-in-out infinite;
+}
+
+/* ============================================================
+   10. Progress & Loading Animations
+   ============================================================ */
+
+/* Free Shipping Progress */
+.f-freeship-fill,
+.woocommerce-progress-bar__fill,
+.f-cart-shipping-progress {
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Skeleton Shimmer */
+.f-product-card-skeleton,
+.skeleton,
+.loading {
+    background: linear-gradient(
+        90deg,
+        #f4f0eb 0%,
+        #ece7e0 50%,
+        #f4f0eb 100%
+    );
+    background-size: 200% 100%;
+    animation: fv-shimmer 1.5s infinite;
+}
+
+/* ============================================================
+   11. Header Scroll Animations
+   ============================================================ */
+
+.fv-header {
+    transition: background 0.3s ease,
+                box-shadow 0.3s ease,
+                padding 0.3s ease;
+}
+
+.fv-header.is-scrolled {
+    background: rgba(247, 244, 239, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 2px 20px rgba(43, 29, 22, 0.08);
+}
+
+/* ============================================================
+   12. Price Animation
+   ============================================================ */
+
+.woocommerce-Price-amount,
+.price {
+    transition: color 0.3s ease;
+}
+
+/* Sale Price Highlight */
+.woocommerce del .woocommerce-Price-amount {
+    opacity: 0.6;
+}
+
+.woocommerce ins .woocommerce-Price-amount {
+    color: #bf5b50;
+    animation: fv-pop 0.4s ease;
+}
+
+/* ============================================================
+   13. Tab Animations
+   ============================================================ */
+
+.fv-tabs__tab,
+.woocommerce-tabs .tabs li a,
+.f-home-room-tab {
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+.fv-tabs__tab::after,
+.woocommerce-tabs .tabs li a::after,
+.f-home-room-tab::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: #c5a880;
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fv-tabs__tab:hover::after,
+.fv-tabs__tab.is-active::after,
+.woocommerce-tabs .tabs li a:hover::after,
+.woocommerce-tabs .tabs li.active a::after,
+.f-home-room-tab:hover::after,
+.f-home-room-tab.is-active::after {
+    width: 100%;
+    left: 0;
+}
+
+/* ============================================================
+   14. Announcement Bar Marquee
+   ============================================================ */
+
+.fv-announcement__track {
+    animation: fv-marquee 30s linear infinite;
+}
+
+@keyframes fv-marquee {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.fv-announcement:hover .fv-announcement__track {
+    animation-play-state: paused;
+}
+
+/* Mobile: Always visible immediately without blank flashes */
+@media (max-width: 768px) {
+    .fv-reveal,
+    .fv-stagger > * {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+}
+
+/* ============================================================
+   15. Reduced Motion Support
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .fv-reveal {
+        opacity: 1;
+        transform: none !important;
+    }
+
+    .fv-stagger > * {
+        opacity: 1;
+        transform: none !important;
+    }
+}
