@@ -19,10 +19,11 @@ jQuery(function ($) {
 		e.preventDefault();
 
 		var $item = $(this);
-		var title = $item.data("dialog-title") || "";
-		var content = $item.data("dialog-content") || "";
-		var action = $item.data("dialog-action") || "";
-		var actionUrl = $item.data("dialog-url") || "/shop/";
+		var isVi = typeof furnivaData !== "undefined" && furnivaData.language === "vi";
+		var title = $item.data("dialog-title") || (isVi ? "Thông tin ưu đãi DeSpace" : "DeSpace Special Announcement");
+		var content = $item.data("dialog-content") || $item.text().trim();
+		var action = $item.data("dialog-action") || (isVi ? "Khám phá ngay" : "Explore Now");
+		var actionUrl = $item.data("dialog-url") || ((typeof furnivaData !== "undefined" && furnivaData.shopUrl) ? furnivaData.shopUrl : "/shop/");
 
 		$dialogContent.html(
 			'<h3>' + escapeHtml(title) + '</h3>' +
@@ -32,7 +33,9 @@ jQuery(function ($) {
 			'</a>'
 		);
 
-		$announcementDialog[0].showModal();
+		if ($announcementDialog.length && typeof $announcementDialog[0].showModal === "function") {
+			$announcementDialog[0].showModal();
+		}
 	});
 
 	// Close dialog handlers
@@ -870,29 +873,52 @@ jQuery(function ($) {
 	});
 
 	/* ---------------------------------------------------------------- Sticky Add to Cart (Single Product) */
-	var $stickyBar = $("#furniva-sticky-bar"),
-		$mainBuy = $(".f-variation-form, form.cart");
+	var $stickyBar = $("#furniva-sticky-bar");
+	if ($stickyBar.length) {
+		var getMainBuy = function () {
+			var $visible = $(".ax-buy-actions:visible, .f-variation-form:visible, form.cart:visible").first();
+			if ($visible.length) return $visible;
+			return $(".ax-buy-actions, .f-variation-form, form.cart").first();
+		};
 
-	if ($stickyBar.length && $mainBuy.length) {
-		$(window).on("scroll", function () {
-			var triggerPos = $mainBuy.offset().top + $mainBuy.outerHeight();
-			if ($(window).scrollTop() > triggerPos) {
-				$stickyBar.addClass("is-visible");
-			} else {
-				$stickyBar.removeClass("is-visible");
+		var checkSticky = function () {
+			var $target = getMainBuy();
+			if ($target.length && $target.is(":visible")) {
+				var targetOffset = $target.offset();
+				if (targetOffset && targetOffset.top > 0) {
+					var triggerPos = targetOffset.top + $target.outerHeight() + 30;
+					if ($(window).scrollTop() > triggerPos) {
+						$stickyBar.addClass("is-visible");
+						return;
+					}
+				}
 			}
-		});
+			$stickyBar.removeClass("is-visible");
+		};
 
-		$(document).on("click", ".f-sticky-add-btn", function () {
-			var $btn = $("form.cart .single_add_to_cart_button");
-			if ($btn.length) {
-				$btn.trigger("click");
+		$(window).on("scroll resize", checkSticky);
+		setTimeout(checkSticky, 400);
+
+		$(document).on("click", ".f-sticky-add-btn", function (e) {
+			e.preventDefault();
+			if ($("#axAddToCart").length) {
+				$("#axAddToCart").trigger("click");
+			} else {
+				var $btn = $("form.cart .single_add_to_cart_button, .single_add_to_cart_button");
+				if ($btn.length) {
+					$btn.trigger("click");
+				}
 			}
 		});
 
 		$(document).on("click", ".f-sticky-scroll-btn", function (e) {
 			e.preventDefault();
-			$("html, body").animate({ scrollTop: $mainBuy.offset().top - 120 }, 350);
+			var $target = getMainBuy();
+			if ($target.length && $target.offset()) {
+				$("html, body").animate({ scrollTop: $target.offset().top - 120 }, 350);
+			} else {
+				$("html, body").animate({ scrollTop: 0 }, 350);
+			}
 		});
 	}
 

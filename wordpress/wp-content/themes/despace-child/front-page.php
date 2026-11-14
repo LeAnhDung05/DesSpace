@@ -62,29 +62,71 @@ foreach ( array( 'shoe-racks-storage', 'wardrobes', 'bookshelves' ) as $slug ) {
 }
 
 $room_sets = array(
-	array( 'key' => 'entryway', 'label' => array( 'Entryway & Living', 'Sảnh & Phòng khách' ), 'cover' => 'shoe-racks-storage', 'categories' => array( 'shoe-racks-storage', 'chest-of-drawers-sideboards' ) ),
-	array( 'key' => 'bedroom',  'label' => array( 'Bedroom', 'Phòng ngủ' ), 'cover' => 'wardrobes', 'categories' => array( 'wardrobes', 'chest-of-drawers-sideboards' ) ),
-	array( 'key' => 'study',    'label' => array( 'Study & Kitchen', 'Phòng làm việc & Bếp' ), 'cover' => 'bookshelves', 'categories' => array( 'bookshelves', 'kitchen-cabinets' ) ),
+	array(
+		'key'          => 'entryway',
+		'label'        => array( 'Entryway & Living', 'Sảnh & Phòng khách' ),
+		'cover'        => 'shoe-racks-storage',
+		'custom_image' => get_stylesheet_directory_uri() . '/assets/images/room-entryway.jpg',
+		'skus'         => array( 'AXG-STR-004', 'AXG-STR-010', 'AXG-STR-011', 'AXG-STR-040' ),
+		'positions'    => array( array( 20, 70 ), array( 24, 30 ), array( 43, 78 ), array( 80, 55 ) ),
+		'categories'   => array( 'shoe-racks-storage', 'chest-of-drawers-sideboards' ),
+	),
+	array(
+		'key'          => 'bedroom',
+		'label'        => array( 'Bedroom', 'Phòng ngủ' ),
+		'cover'        => 'wardrobes',
+		'custom_image' => get_stylesheet_directory_uri() . '/assets/images/room-bedroom.jpg',
+		'skus'         => array( 'AXG-STR-024', 'AXG-STR-038', 'AXG-STR-037', 'AXG-STR-020' ),
+		'positions'    => array( array( 9, 45 ), array( 26, 70 ), array( 23, 50 ), array( 55, 68 ) ),
+		'categories'   => array( 'wardrobes', 'chest-of-drawers-sideboards' ),
+	),
+	array(
+		'key'          => 'study',
+		'label'        => array( 'Study & Kitchen', 'Phòng làm việc & Bếp' ),
+		'cover'        => 'bookshelves',
+		'custom_image' => get_stylesheet_directory_uri() . '/assets/images/room-office.jpg',
+		'skus'         => array( 'AXG-STR-029', 'AXG-STR-030', 'AXG-STR-034', 'AXG-STR-028' ),
+		'positions'    => array( array( 78, 60 ), array( 68, 52 ), array( 42, 62 ), array( 29, 84 ) ),
+		'categories'   => array( 'bookshelves', 'kitchen-cabinets' ),
+	),
 );
 foreach ( $room_sets as &$room_set ) {
-	$room_set['image'] = isset( $home_category_by_slug[ $room_set['cover'] ] )
-		? $category_image_url( $home_category_by_slug[ $room_set['cover'] ] )
-		: $hero_url;
+	$room_set['image'] = ! empty( $room_set['custom_image'] )
+		? $room_set['custom_image']
+		: ( isset( $home_category_by_slug[ $room_set['cover'] ] ) ? $category_image_url( $home_category_by_slug[ $room_set['cover'] ] ) : $hero_url );
 	$room_set['products'] = array();
 	$room_set['product_ids'] = array();
-	foreach ( $room_set['categories'] as $category_slug ) {
-		$room_products = wc_get_products( array(
-			'status'   => 'publish',
-			'limit'    => 2,
-			'orderby'  => 'popularity',
-			'order'    => 'DESC',
-			'category' => array( $category_slug ),
-		) );
-		foreach ( $room_products as $room_product ) {
-			if ( isset( $room_set['product_ids'][ $room_product->get_id() ] ) ) continue;
-			$room_set['products'][] = $room_product;
-			$room_set['product_ids'][ $room_product->get_id() ] = true;
-			if ( count( $room_set['products'] ) >= 4 ) break 2;
+
+	// 1. First add curated SKUs matching the room visual elements
+	if ( ! empty( $room_set['skus'] ) ) {
+		foreach ( $room_set['skus'] as $sku ) {
+			$product_id = wc_get_product_id_by_sku( $sku );
+			if ( $product_id ) {
+				$p = wc_get_product( $product_id );
+				if ( $p && 'publish' === $p->get_status() ) {
+					$room_set['products'][] = $p;
+					$room_set['product_ids'][ $p->get_id() ] = true;
+				}
+			}
+		}
+	}
+
+	// 2. Fallback to category query if needed
+	if ( count( $room_set['products'] ) < 4 ) {
+		foreach ( $room_set['categories'] as $category_slug ) {
+			$room_products = wc_get_products( array(
+				'status'   => 'publish',
+				'limit'    => 4,
+				'orderby'  => 'popularity',
+				'order'    => 'DESC',
+				'category' => array( $category_slug ),
+			) );
+			foreach ( $room_products as $room_product ) {
+				if ( isset( $room_set['product_ids'][ $room_product->get_id() ] ) ) continue;
+				$room_set['products'][] = $room_product;
+				$room_set['product_ids'][ $room_product->get_id() ] = true;
+				if ( count( $room_set['products'] ) >= 4 ) break 2;
+			}
 		}
 	}
 	unset( $room_set['product_ids'] );
@@ -255,7 +297,7 @@ $hero_products = array(
 				</div>
 			</div>
 			<?php
-			$look_positions = array( array( 29, 48 ), array( 54, 62 ), array( 77, 48 ), array( 72, 75 ) );
+			$fallback_positions = array( array( 29, 48 ), array( 54, 62 ), array( 77, 48 ), array( 72, 75 ) );
 			foreach ( $room_sets as $room_index => $room_set ) :
 				$room_term = $home_category_by_slug[ $room_set['cover'] ] ?? null;
 				$room_link = $room_term ? get_term_link( $room_term ) : $shop_url;
@@ -264,7 +306,7 @@ $hero_products = array(
 					<div class="fv-look-stage">
 						<img src="<?php echo esc_url( $room_set['image'] ); ?>" alt="<?php echo esc_attr( sprintf( furniva_t( '%s furniture collection', 'Bộ sưu tập nội thất %s' ), furniva_t( $room_set['label'][0], $room_set['label'][1] ) ) ); ?>" loading="lazy" />
 						<?php foreach ( array_slice( $room_set['products'], 0, 4 ) as $product_index => $room_product ) :
-							$position = $look_positions[ $product_index ] ?? array( 50, 50 );
+							$position = $room_set['positions'][ $product_index ] ?? ( $fallback_positions[ $product_index ] ?? array( 50, 50 ) );
 							$popover_id = 'fv-look-popover-' . $room_set['key'] . '-' . $product_index;
 							$product_image = $room_product->get_image_id() ? wp_get_attachment_image_url( $room_product->get_image_id(), 'woocommerce_thumbnail' ) : $room_set['image'];
 						?>

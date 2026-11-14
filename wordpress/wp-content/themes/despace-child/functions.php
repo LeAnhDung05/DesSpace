@@ -957,28 +957,31 @@ function furniva_sticky_single_bar() {
 	if ( ! $product ) {
 		return;
 	}
-	$img_url = wp_get_attachment_image_url( $product->get_image_id(), 'thumbnail' );
+	$img_url = wp_get_attachment_image_url( $product->get_image_id(), 'woocommerce_thumbnail' )
+		?: wp_get_attachment_image_url( $product->get_image_id(), 'full' );
 	?>
-	<div class="f-sticky-bar" id="furniva-sticky-bar">
+	<div class="f-sticky-bar" id="furniva-sticky-bar" aria-label="<?php echo esc_attr( furniva_t( 'Quick add to cart', 'Mua nhanh' ) ); ?>">
 		<div class="f-wrap f-sticky-bar-inner">
 			<div class="f-sticky-bar-left">
 				<?php if ( $img_url ) : ?>
-					<img src="<?php echo esc_url( $img_url ); ?>" alt="<?php echo esc_attr( $product->get_name() ); ?>" class="f-sticky-img" />
+					<div class="f-sticky-img-box">
+						<img src="<?php echo esc_url( $img_url ); ?>" alt="" class="f-sticky-img" width="44" height="44" loading="lazy" />
+					</div>
 				<?php endif; ?>
 				<div class="f-sticky-meta">
-					<strong><?php echo esc_html( $product->get_name() ); ?></strong>
+					<strong title="<?php echo esc_attr( $product->get_name() ); ?>"><?php echo esc_html( $product->get_name() ); ?></strong>
 					<span class="f-sticky-price"><?php echo wp_kses_post( wc_price( $product->get_price() ) ); ?></span>
 				</div>
 			</div>
 			<div class="f-sticky-bar-right">
-				<?php if ( $product->is_type( 'simple' ) && $product->is_in_stock() ) : ?>
+				<?php if ( $product->is_in_stock() ) : ?>
 					<button type="button" class="f-btn f-btn--primary f-sticky-add-btn" data-product_id="<?php echo esc_attr( $product->get_id() ); ?>">
-				<?php echo furniva_svg( 'cart' ); ?> <?php echo esc_html( furniva_t( 'Add to Cart', 'Thêm vào giỏ' ) ); ?>
+						<?php echo furniva_svg( 'cart' ); ?> <span><?php echo esc_html( furniva_t( 'Add to Cart', 'Thêm vào giỏ' ) ); ?></span>
 					</button>
 				<?php else : ?>
-					<a href="#furniva-buy-now" class="f-btn f-btn--primary f-sticky-scroll-btn">
-					<?php echo esc_html( furniva_t( 'Select Options', 'Chọn tùy chọn' ) ); ?> ↑
-					</a>
+					<button type="button" class="f-btn f-btn--disabled" disabled>
+						<?php echo esc_html( furniva_t( 'Out of stock', 'Hết hàng' ) ); ?>
+					</button>
 				<?php endif; ?>
 			</div>
 		</div>

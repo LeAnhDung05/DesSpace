@@ -32,6 +32,52 @@ $logo_id = get_theme_mod( 'custom_logo' );
 <body <?php body_class( 'furniva-site' ); ?>>
 <?php wp_body_open(); ?>
 
+<?php
+$announcements = array(
+	array(
+		'text'    => furniva_t( 'Welcome offer: 10% off with code WELCOME10', 'Ưu đãi chào mừng: giảm 10% với mã WELCOME10' ),
+		'title'   => furniva_t( 'Welcome Offer: 10% Off Your First Order', 'Ưu đãi chào mừng: Giảm 10% đơn hàng đầu tiên' ),
+		'content' => furniva_t( 'Enter promotional code WELCOME10 at checkout to enjoy 10% off your entire first luxury furniture order at DeSpace.', 'Sử dụng mã ưu đãi WELCOME10 khi thanh toán để được giảm ngay 10% cho toàn bộ sản phẩm trong đơn hàng đầu tiên tại DeSpace.' ),
+		'action'  => furniva_t( 'Shop Now', 'Mua sắm ngay' ),
+		'url'     => home_url( '/shop/' ),
+	),
+	array(
+		'text'    => furniva_t( 'Complimentary delivery on orders over $500', 'Miễn phí giao hàng toàn quốc cho đơn từ $500' ),
+		'title'   => furniva_t( 'Complimentary Insured Delivery & Assembly', 'Miễn phí giao hàng & lắp đặt tận nơi' ),
+		'content' => furniva_t( 'DeSpace offers 100% complimentary nationwide delivery and white-glove setup on all orders over $500 (or 12,000,000 VND).', 'DeSpace miễn phí 100% chi phí vận chuyển toàn quốc và hỗ trợ lắp đặt chuyên nghiệp đối với mọi đơn hàng từ $500 (hoặc 12.000.000 VNĐ).' ),
+		'action'  => furniva_t( 'Explore Collection', 'Khám phá bộ sưu tập' ),
+		'url'     => home_url( '/shop/' ),
+	),
+	array(
+		'text'    => furniva_t( 'Thoughtfully selected furniture for modern living', 'Nội thất tinh tuyển cho không gian sống hiện đại' ),
+		'title'   => furniva_t( 'Thoughtfully Curated Design Philosophy', 'Triết lý thiết kế tinh tuyển & bền vững' ),
+		'content' => furniva_t( 'Every DeSpace piece is thoughtfully crafted from sustainably sourced timbers and moisture-resistant surfaces designed to elevate contemporary spaces.', 'Mỗi sản phẩm tại DeSpace đều được tuyển chọn kỹ lưỡng từ chất liệu gỗ tự nhiên cao cấp, bề mặt phủ melamine chống ẩm, đạt chuẩn thẩm mỹ tinh tế trường tồn.' ),
+		'action'  => furniva_t( 'About DeSpace', 'Về DeSpace' ),
+		'url'     => home_url( '/ve-despace/' ),
+	),
+	array(
+		'text'    => furniva_t( '5-Year Official Warranty & 30-Day Hassle-Free Returns', 'Bảo hành chính hãng 5 năm & Đổi trả trong 30 ngày' ),
+		'title'   => furniva_t( '5-Year Warranty & 30-Day Free Returns', 'Bảo hành chính hãng 5 năm & Đổi trả 30 ngày' ),
+		'content' => furniva_t( 'Uncompromised craftsmanship guarantee: 5-year structural warranty with complimentary 30-day exchange for complete peace of mind.', 'Cam kết chất lượng vượt trội: Bảo hành kết cấu 5 năm, 1 đổi 1 trong 30 ngày nếu phát sinh lỗi từ nhà sản xuất.' ),
+		'action'  => furniva_t( 'Contact Support', 'Liên hệ hỗ trợ' ),
+		'url'     => home_url( '/lien-he/' ),
+	),
+	array(
+		'text'    => furniva_t( 'Personal styling & showroom consultation by AXGNUD', 'Tư vấn không gian sống 1-1 cùng chuyên gia AXGNUD' ),
+		'title'   => furniva_t( '1-on-1 Personal Interior Styling Consultation', 'Tư vấn không gian sống 1-1 cùng chuyên gia' ),
+		'content' => furniva_t( 'Book a personalized styling session with our interior architects at our showroom (So 20 ngach 21 ngo 367 Ngo Xuan Quan, Gia Lam, Hanoi) or via virtual consultation.', 'Đặt lịch tư vấn trực tiếp 1-1 cùng đội ngũ kiến trúc sư DeSpace tại Showroom (Số 20 ngách 21 ngõ 367 Ngô Xuân Quảng, Gia Lâm, Hà Nội) hoặc qua tư vấn từ xa.' ),
+		'action'  => furniva_t( 'Book Consultation', 'Đặt lịch tư vấn' ),
+		'url'     => home_url( '/lien-he/' ),
+	),
+	array(
+		'text'    => furniva_t( 'Discover our newest 2026 curated design collection', 'Khám phá bộ sưu tập thiết kế mới nhất 2026 tại showroom' ),
+		'title'   => furniva_t( 'Discover DeSpace 2026 Curated Collection', 'Bộ sưu tập DeSpace 2026 Mới Nhất' ),
+		'content' => furniva_t( 'Explore our latest releases of smart modular shoe cabinets, wardrobes, and minimalist display bookshelves designed for modern homes.', 'Khám phá các thiết kế tủ giày thông minh, tủ quần áo module và kệ sách cao cấp vừa xuất xưởng năm 2026 tại hệ thống DeSpace.' ),
+		'action'  => furniva_t( 'Discover Now', 'Khám phá ngay' ),
+		'url'     => home_url( '/shop/' ),
+	),
+);
+?>
 <!-- Announcement Dialog -->
 <dialog id="furniva-announcement-dialog" class="fv-announcement-dialog">
 	<div class="fv-announcement-dialog__inner">
@@ -45,32 +91,28 @@ $logo_id = get_theme_mod( 'custom_logo' );
 		<div class="fv-announcement__viewport">
 			<div class="fv-announcement__track">
 				<div class="fv-announcement__group">
-					<span class="fv-announcement__item"><?php echo esc_html( furniva_t( 'Welcome offer: 10% off with code WELCOME10', 'Ưu đãi chào mừng: giảm 10% với mã WELCOME10' ) ); ?></span>
-					<span class="fv-announcement__separator" aria-hidden="true">✦</span>
-					<span class="fv-announcement__item"><?php echo esc_html( furniva_t( 'Complimentary delivery on orders over $500', 'Miễn phí giao hàng toàn quốc cho đơn từ $500' ) ); ?></span>
-					<span class="fv-announcement__separator" aria-hidden="true">✦</span>
-					<span class="fv-announcement__item"><?php echo esc_html( furniva_t( 'Thoughtfully selected furniture for modern living', 'Nội thất tinh tuyển cho không gian sống hiện đại' ) ); ?></span>
-					<span class="fv-announcement__separator" aria-hidden="true">✦</span>
-					<span class="fv-announcement__item"><?php echo esc_html( furniva_t( '5-Year Official Warranty & 30-Day Hassle-Free Returns', 'Bảo hành chính hãng 5 năm & Đổi trả trong 30 ngày' ) ); ?></span>
-					<span class="fv-announcement__separator" aria-hidden="true">✦</span>
-					<span class="fv-announcement__item"><?php echo esc_html( furniva_t( 'Personal styling & showroom consultation by AXGNUD', 'Tư vấn không gian sống 1-1 cùng chuyên gia AXGNUD' ) ); ?></span>
-					<span class="fv-announcement__separator" aria-hidden="true">✦</span>
-					<span class="fv-announcement__item"><?php echo esc_html( furniva_t( 'Discover our newest 2026 curated design collection', 'Khám phá bộ sưu tập thiết kế mới nhất 2026 tại showroom' ) ); ?></span>
-					<span class="fv-announcement__separator" aria-hidden="true">✦</span>
+					<?php foreach ( $announcements as $item ) : ?>
+						<span class="fv-announcement__item" role="button" tabindex="0"
+							data-dialog-title="<?php echo esc_attr( $item['title'] ); ?>"
+							data-dialog-content="<?php echo esc_attr( $item['content'] ); ?>"
+							data-dialog-action="<?php echo esc_attr( $item['action'] ); ?>"
+							data-dialog-url="<?php echo esc_url( $item['url'] ); ?>">
+							<?php echo esc_html( $item['text'] ); ?>
+						</span>
+						<span class="fv-announcement__separator" aria-hidden="true">✦</span>
+					<?php endforeach; ?>
 				</div>
 				<div class="fv-announcement__group" aria-hidden="true">
-					<span class="fv-announcement__item"><?php echo esc_html( furniva_t( 'Welcome offer: 10% off with code WELCOME10', 'Ưu đãi chào mừng: giảm 10% với mã WELCOME10' ) ); ?></span>
-					<span class="fv-announcement__separator">✦</span>
-					<span class="fv-announcement__item"><?php echo esc_html( furniva_t( 'Complimentary delivery on orders over $500', 'Miễn phí giao hàng toàn quốc cho đơn từ $500' ) ); ?></span>
-					<span class="fv-announcement__separator">✦</span>
-					<span class="fv-announcement__item"><?php echo esc_html( furniva_t( 'Thoughtfully selected furniture for modern living', 'Nội thất tinh tuyển cho không gian sống hiện đại' ) ); ?></span>
-					<span class="fv-announcement__separator">✦</span>
-					<span class="fv-announcement__item"><?php echo esc_html( furniva_t( '5-Year Official Warranty & 30-Day Hassle-Free Returns', 'Bảo hành chính hãng 5 năm & Đổi trả trong 30 ngày' ) ); ?></span>
-					<span class="fv-announcement__separator">✦</span>
-					<span class="fv-announcement__item"><?php echo esc_html( furniva_t( 'Personal styling & showroom consultation by AXGNUD', 'Tư vấn không gian sống 1-1 cùng chuyên gia AXGNUD' ) ); ?></span>
-					<span class="fv-announcement__separator">✦</span>
-					<span class="fv-announcement__item"><?php echo esc_html( furniva_t( 'Discover our newest 2026 curated design collection', 'Khám phá bộ sưu tập thiết kế mới nhất 2026 tại showroom' ) ); ?></span>
-					<span class="fv-announcement__separator">✦</span>
+					<?php foreach ( $announcements as $item ) : ?>
+						<span class="fv-announcement__item" role="button" tabindex="-1"
+							data-dialog-title="<?php echo esc_attr( $item['title'] ); ?>"
+							data-dialog-content="<?php echo esc_attr( $item['content'] ); ?>"
+							data-dialog-action="<?php echo esc_attr( $item['action'] ); ?>"
+							data-dialog-url="<?php echo esc_url( $item['url'] ); ?>">
+							<?php echo esc_html( $item['text'] ); ?>
+						</span>
+						<span class="fv-announcement__separator">✦</span>
+					<?php endforeach; ?>
 				</div>
 			</div>
 		</div>
