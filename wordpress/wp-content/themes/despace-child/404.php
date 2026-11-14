@@ -1,8 +1,8 @@
 <?php
 /**
- * The template for displaying 404 pages (not found) in Furniva Child.
+ * The template for displaying 404 pages (not found) in DeSpace Child.
  *
- * @package Furniva_Child
+ * @package DeSpace_Child
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

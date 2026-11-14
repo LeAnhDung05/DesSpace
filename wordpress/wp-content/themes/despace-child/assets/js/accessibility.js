@@ -1,5 +1,5 @@
 /**
- * Furniva Accessibility Enhancement
+ * DeSpace Accessibility Enhancement
  * - ARIA labels for icons
  * - Focus states
  * - Keyboard navigation
@@ -370,7 +370,7 @@
     function validateImageAlt() {
         const images = document.querySelectorAll('img:not([alt])');
         if (images.length > 0) {
-            console.warn('Furniva A11y: Found ' + images.length + ' images without alt text');
+            console.warn('DeSpace A11y: Found ' + images.length + ' images without alt text');
             images.forEach(img => {
                 img.setAttribute('alt', img.getAttribute('title') || 'Image');
             });

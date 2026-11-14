@@ -1,8 +1,8 @@
 <?php
 /**
- * AXGNUD Studio — 3D Model & AI Render Pipeline
+ * DeSpace Studio — 3D Model & AI Render Pipeline
  *
- * @package Furniva_Child
+ * @package DeSpace_Child
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -46,7 +46,7 @@ add_action( 'admin_enqueue_scripts', function( $hook ) {
 add_action( 'add_meta_boxes', function() {
 	add_meta_box(
 		'axgnud_3d_ai_metabox',
-		'AXGNUD Studio — Quản Lý Mô Hình 3D & Augmented Reality (AR)',
+		'DeSpace Studio — Quản Lý Mô Hình 3D & Augmented Reality (AR)',
 		'axgnud_render_3d_metabox_html',
 		'product',
 		'normal',
@@ -264,12 +264,12 @@ add_action( 'save_post_product', function( $post_id ) {
 } );
 
 /**
- * 3. Settings menu page in Settings -> AXGNUD 3D AI
+ * 3. Settings menu page in Settings -> DeSpace 3D AI
  */
 add_action( 'admin_menu', function() {
 	add_options_page(
-		'AXGNUD 3D AI Settings',
-		'AXGNUD 3D AI',
+		'DeSpace 3D AI Settings',
+		'DeSpace 3D AI',
 		'manage_options',
 		'axgnud-3d-ai-settings',
 		'axgnud_3d_ai_settings_page'
@@ -285,7 +285,7 @@ function axgnud_3d_ai_settings_page() {
 	$fal_key = get_option( 'axgnud_fal_api_key', '' );
 	?>
 	<div class="wrap">
-		<h1>AXGNUD Studio — 3D & AI Render Settings</h1>
+		<h1>DeSpace Studio — 3D & AI Render Settings</h1>
 		<p>Cấu hình API Key cho hệ thống AI Image-to-3D (Fal.ai Trellis / Tripo3D).</p>
 		<form method="post" action="">
 			<?php wp_nonce_field( 'axgnud_save_settings', 'axgnud_save_settings_nonce' ); ?>

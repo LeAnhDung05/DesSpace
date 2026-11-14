@@ -1,6 +1,6 @@
 <?php
 /**
- * Login & Registration Form — AXGNUD Luxury Edition
+ * Login & Registration Form — DeSpace Luxury Edition
  *
  * @see     https://woocommerce.com/document/template-structure/
  * @package WooCommerce\Templates
@@ -21,7 +21,7 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 	<header class="ax-auth-header">
 		<div class="ax-auth-eyebrow">
 			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-			<span><?php echo esc_html( furniva_t( 'AXGNUD PRIVILEGE CLUB', 'CÂU LẠC BỘ ĐẶC QUYỀN AXGNUD' ) ); ?></span>
+			<span><?php echo esc_html( furniva_t( 'DeSpace PRIVILEGE CLUB', 'CÂU LẠC BỘ ĐẶC QUYỀN DeSpace' ) ); ?></span>
 		</div>
 		<h1 class="ax-auth-title"><?php echo esc_html( furniva_t( 'Welcome to Your Private Sanctuary', 'Không Gian Quản Trị & Đặc Quyền Hội Viên' ) ); ?></h1>
 		<p class="ax-auth-subtitle"><?php echo esc_html( furniva_t( 'Sign in to access your bespoke orders, 5-year warranty vault, and exclusive member privileges.', 'Đăng nhập để theo dõi đơn hàng thiết kế, sổ địa chỉ nhận hàng và kích hoạt gói bảo hành toàn diện 5 năm.' ) ); ?></p>
@@ -194,7 +194,7 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 						<div class="ax-terms-row">
 							<label class="ax-checkbox-label">
 								<input name="terms_agree" type="checkbox" id="reg_terms_agree" value="1" checked required />
-								<span><?php echo furniva_t( 'I agree to the AXGNUD Privilege Club Terms of Service and Privacy Policy.', 'Tôi đồng ý với Điều khoản dịch vụ và Chính sách quyền riêng tư của AXGNUD Privilege Club.' ); ?></span>
+								<span><?php echo furniva_t( 'I agree to the DeSpace Privilege Club Terms of Service and Privacy Policy.', 'Tôi đồng ý với Điều khoản dịch vụ và Chính sách quyền riêng tư của DeSpace Privilege Club.' ); ?></span>
 							</label>
 						</div>
 
@@ -202,7 +202,7 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 
 						<?php wp_nonce_field( 'woocommerce-register', 'woocommerce-register-nonce' ); ?>
 						<button type="submit" class="ax-submit-btn" name="register" value="<?php esc_attr_e( 'Register', 'woocommerce' ); ?>">
-							<span><?php echo esc_html( furniva_t( 'Join AXGNUD Privilege', 'GIA NHẬP HỘI VIÊN AXGNUD' ) ); ?></span>
+							<span><?php echo esc_html( furniva_t( 'Join DeSpace Privilege', 'GIA NHẬP HỘI VIÊN DeSpace' ) ); ?></span>
 							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
 						</button>
 
@@ -219,7 +219,7 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 				<span><?php echo esc_html( furniva_t( 'EXCLUSIVE BENEFITS', 'ĐẶC QUYỀN HỘI VIÊN' ) ); ?></span>
 			</div>
 			<h3 class="ax-privilege-title"><?php echo esc_html( furniva_t( 'Elevate Your Living Experience', 'Đặc Quyền Dành Riêng Cho Quý Gia Chủ Tinh Hoa' ) ); ?></h3>
-			<p class="ax-privilege-desc"><?php echo esc_html( furniva_t( 'Becoming an AXGNUD member unlocks curated interior architectural benefits tailored to your dream residence.', 'Mở khóa đặc quyền tư vấn không gian nội thất chuẩn kiến trúc sư, bảo hành tận tâm và ưu đãi độc bản.' ) ); ?></p>
+			<p class="ax-privilege-desc"><?php echo esc_html( furniva_t( 'Becoming an DeSpace member unlocks curated interior architectural benefits tailored to your dream residence.', 'Mở khóa đặc quyền tư vấn không gian nội thất chuẩn kiến trúc sư, bảo hành tận tâm và ưu đãi độc bản.' ) ); ?></p>
 
 			<ul class="ax-privilege-list">
 				<li class="ax-privilege-item">
@@ -265,7 +265,7 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 
 			<div class="ax-privilege-trust-box">
 				<span class="ax-privilege-stars">★★★★★</span>
-				<p class="ax-privilege-trust-text"><?php echo esc_html( furniva_t( 'Trusted by 12,000+ luxury homeowners across Vietnam. 99.4% satisfaction score.', 'Hơn 12.000+ gia chủ tinh hoa đã tin chọn AXGNUD cho không gian sống.' ) ); ?></p>
+				<p class="ax-privilege-trust-text"><?php echo esc_html( furniva_t( 'Trusted by 12,000+ luxury homeowners across Vietnam. 99.4% satisfaction score.', 'Hơn 12.000+ gia chủ tinh hoa đã tin chọn DeSpace cho không gian sống.' ) ); ?></p>
 			</div>
 		</aside>
 	</div>

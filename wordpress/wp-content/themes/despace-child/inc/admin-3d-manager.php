@@ -1,11 +1,11 @@
 <?php
 /**
- * AXGNUD Luxury — Centralized 3D & AR Catalog Management Dashboard
+ * DeSpace Luxury — Centralized 3D & AR Catalog Management Dashboard
  *
  * Provides a unified admin interface for managing 3D models (GLB, glTF, USDZ),
  * AR configurations, physical dimensions, and status across the entire product catalog.
  *
- * @package Furniva_Child
+ * @package DeSpace_Child
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -334,7 +334,7 @@ function axgnud_render_3d_manager_page() {
 			<div>
 				<h1 style="font-size:24px; font-weight:700; color:#1C1917; margin:0; display:flex; align-items:center; gap:10px;">
 					<span class="dashicons dashicons-visibility" style="font-size:28px; width:28px; height:28px; color:#9A6745;"></span>
-					AXGNUD Studio — Quản Lý Mô Hình 3D &amp; Real AR
+					DeSpace Studio — Quản Lý Mô Hình 3D &amp; Real AR
 				</h1>
 				<p style="margin:4px 0 0; color:#78716C; font-size:13.5px;">
 					Hệ thống quản lý tài sản 3D (GLB/glTF), Apple AR Quick Look (.USDZ) và kích thước thực tế cho toàn bộ danh mục sản phẩm.
@@ -358,7 +358,7 @@ function axgnud_render_3d_manager_page() {
 			<div style="background:#fff; border:1px solid #E7E5E4; border-radius:8px; padding:18px 20px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
 				<span style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:#78716C; font-weight:600;">Tổng Sản Phẩm</span>
 				<div style="font-size:28px; font-weight:700; color:#1C1917; margin-top:4px;"><?php echo $total_count; ?></div>
-				<span style="font-size:12px; color:#A8A29E;">Toàn bộ kho AXGNUD Luxury</span>
+				<span style="font-size:12px; color:#A8A29E;">Toàn bộ kho DeSpace Luxury</span>
 			</div>
 			<div style="background:#fff; border:1px solid #E7E5E4; border-radius:8px; padding:18px 20px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
 				<span style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:#059669; font-weight:600;">3D Sẵn Sàng (Published)</span>

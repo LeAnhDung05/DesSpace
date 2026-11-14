@@ -5,7 +5,7 @@
  * - Auto-provisioning & 404 safety fallback for standalone AR page
  * - Support for 3D model-viewer and Scandinavian room visualizer
  *
- * @package Furniva_Child
+ * @package DeSpace_Child
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

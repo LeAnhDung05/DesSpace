@@ -2,7 +2,7 @@
 /**
  * DeSpace Luxury — 3D Product Viewer & Real Augmented Reality (AR) Modal
  *
- * @package Furniva_Child
+ * @package DeSpace_Child
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

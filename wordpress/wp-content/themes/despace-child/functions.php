@@ -1,6 +1,6 @@
 <?php
 /**
- * DeSpace Child theme functions (Re-platformed from BTTTS_5 / Furniva).
+ * DeSpace Child theme functions (Re-platformed from BTTTS_5 / DeSpace).
  *
  * @package DeSpace_Child
  */
@@ -924,7 +924,7 @@ function furniva_product_schema_jsonld() {
 		'sku'         => $product->get_sku() ?: 'FUR-' . $product->get_id(),
 		'brand'       => array(
 			'@type' => 'Brand',
-		'name'  => $product->get_attribute( 'Brand' ) ?: 'AXGNUD',
+		'name'  => $product->get_attribute( 'Brand' ) ?: 'DeSpace',
 		),
 		'offers'      => array(
 			'@type'         => 'Offer',
@@ -961,7 +961,7 @@ function furniva_sticky_single_bar() {
 		?: wp_get_attachment_image_url( $product->get_image_id(), 'full' );
 	?>
 	<div class="f-sticky-bar" id="furniva-sticky-bar" aria-label="<?php echo esc_attr( furniva_t( 'Quick add to cart', 'Mua nhanh' ) ); ?>">
-		<div class="f-wrap f-sticky-bar-inner">
+		<div class="f-sticky-bar-inner">
 			<div class="f-sticky-bar-left">
 				<?php if ( $img_url ) : ?>
 					<div class="f-sticky-img-box">
@@ -1264,7 +1264,7 @@ add_action( 'wp_ajax_nopriv_despace_get_wishlist_count', 'furniva_ajax_get_wishl
 
 // ---------------------------------------------------------------- My Account Customizations
 function axgnud_luxury_account_menu_items( $items ) {
-	// Remove downloads (AXGNUD sells luxury physical furniture)
+	// Remove downloads (DeSpace sells luxury physical furniture)
 	unset( $items['downloads'] );
 
 	$custom_items = array();

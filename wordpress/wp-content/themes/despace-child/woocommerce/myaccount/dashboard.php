@@ -1,6 +1,6 @@
 <?php
 /**
- * My Account Dashboard — AXGNUD Luxury Edition
+ * My Account Dashboard — DeSpace Luxury Edition
  *
  * @see     https://woocommerce.com/document/template-structure/
  * @package WooCommerce\Templates
@@ -173,7 +173,7 @@ if ( function_exists( 'wc_get_orders' ) ) {
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
 				</div>
 				<h4 class="ax-empty-title"><?php echo esc_html( furniva_t( 'No Orders Found Yet', 'Quý Khách Chưa Có Đơn Hàng Nào' ) ); ?></h4>
-				<p class="ax-empty-text"><?php echo esc_html( furniva_t( 'When you place an order for our architectural furniture pieces, their live production and delivery status will appear here.', 'Khi quý khách đặt mua các sản phẩm nội thất tủ kệ AXGNUD, lộ trình gia công và vận chuyển sẽ được hiển thị chi tiết tại đây.' ) ); ?></p>
+				<p class="ax-empty-text"><?php echo esc_html( furniva_t( 'When you place an order for our architectural furniture pieces, their live production and delivery status will appear here.', 'Khi quý khách đặt mua các sản phẩm nội thất tủ kệ DeSpace, lộ trình gia công và vận chuyển sẽ được hiển thị chi tiết tại đây.' ) ); ?></p>
 				<a href="<?php echo esc_url( wc_get_page_permalink( 'shop' ) ); ?>" class="ax-empty-btn">
 					<span><?php echo esc_html( furniva_t( 'Explore Catalogue', 'Khám Phá Bộ Sưu Tập' ) ); ?></span>
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -185,7 +185,7 @@ if ( function_exists( 'wc_get_orders' ) ) {
 	<!-- AR Room Visualizer Banner -->
 	<section class="ax-ar-promo-card">
 		<div class="ax-ar-promo-content">
-			<h4>✦ <?php echo esc_html( furniva_t( 'Experience AXGNUD AR Room Visualizer', 'Thử Đặt Nội Thất Với Công Nghệ AR 3D' ) ); ?></h4>
+			<h4>✦ <?php echo esc_html( furniva_t( 'Experience DeSpace AR Room Visualizer', 'Thử Đặt Nội Thất Với Công Nghệ AR 3D' ) ); ?></h4>
 			<p><?php echo esc_html( furniva_t( 'Preview full-scale 3D models of our storage units, wardrobes, and bookshelves directly inside your room through your phone camera.', 'Ướm thử chính xác kích thước 1:1 của các mẫu tủ kệ vào từng góc phòng trước khi đặt mua thông qua thực tế ảo tăng cường AR.' ) ); ?></p>
 		</div>
 		<a href="<?php echo esc_url( wc_get_page_permalink( 'shop' ) ); ?>" class="ax-ar-promo-btn">

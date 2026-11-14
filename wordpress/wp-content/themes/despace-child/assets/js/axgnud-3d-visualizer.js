@@ -1,5 +1,5 @@
 /**
- * AXGNUD Studio — 3D Model-Viewer & Smart Cutout Engine for Room Visualizer
+ * DeSpace Studio — 3D Model-Viewer & Smart Cutout Engine for Room Visualizer
  * Provides procedural PBR 3D furniture mesh generator & HTML5 transparent cutout engine.
  */
 
@@ -43,7 +43,7 @@ async function loadThree() {
     _gltfExporterClass = exporterMod.GLTFExporter;
     return { THREE: _threeModule, GLTFExporter: _gltfExporterClass };
   } catch (err) {
-    console.warn('[AXGNUD 3D] Failed to load Three.js via CDN:', err);
+    console.warn('[DeSpace 3D] Failed to load Three.js via CDN:', err);
     return null;
   }
 }
@@ -144,7 +144,7 @@ async function createTransparentCutout(imgUrl) {
         _cutoutCache[imgUrl] = resultUrl;
         resolve(resultUrl);
       } catch (err) {
-        console.warn('[AXGNUD Cutout] Fallback to original image:', err);
+        console.warn('[DeSpace Cutout] Fallback to original image:', err);
         resolve(imgUrl);
       }
     };
@@ -195,7 +195,7 @@ async function generateProceduralFurnitureGLB(productType, hexColor) {
   var type = (productType || '').toLowerCase();
 
   if (type.includes('cabinet') || type.includes('rack') || type.includes('storage') || type.includes('tu') || type.includes('shelf') || type.includes('metro')) {
-    // Tủ giày 3 cánh / Tủ đồ lưu trữ AXGNUD Metro PBR (1.14m W x 0.33m D x 0.76m H)
+    // Tủ giày 3 cánh / Tủ đồ lưu trữ DeSpace Metro PBR (1.14m W x 0.33m D x 0.76m H)
     var cabBody = new THREE.Mesh(new THREE.BoxGeometry(1.14, 0.68, 0.33), woodMat);
     cabBody.position.set(0, 0.42, 0);
     group.add(cabBody);
@@ -329,7 +329,7 @@ async function generateProceduralFurnitureGLB(productType, hexColor) {
         resolve(blobUrl);
       },
       function(error) {
-        console.warn('[AXGNUD 3D] GLTFExporter error:', error);
+        console.warn('[DeSpace 3D] GLTFExporter error:', error);
         resolve(null);
       },
       { binary: true }
@@ -339,7 +339,7 @@ async function generateProceduralFurnitureGLB(productType, hexColor) {
 
 // Gắn vào window để ax-room-visualizer.js dễ dàng truy xuất
 if (typeof window !== 'undefined') {
-  window.AXGNUD_3D = {
+  window.DeSpace_3D = {
     createTransparentCutout: createTransparentCutout,
     generateProceduralFurnitureGLB: generateProceduralFurnitureGLB,
     loadThree: loadThree

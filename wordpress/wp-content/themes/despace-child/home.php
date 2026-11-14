@@ -1,6 +1,6 @@
 <?php
 /**
- * Furniva blog index (posts page) — featured post + grid + sidebar.
+ * DeSpace blog index (posts page) — featured post + grid + sidebar.
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 

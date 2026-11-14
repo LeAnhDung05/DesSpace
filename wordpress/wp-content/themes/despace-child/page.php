@@ -1,6 +1,6 @@
 <?php
 /**
- * Furniva static page template.
+ * DeSpace static page template.
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 

@@ -1,7 +1,7 @@
 <?php
 /**
- * Furniva - Wishlist Page
- * Premium design matching AXGNUD aesthetic
+ * DeSpace - Wishlist Page
+ * Premium design matching DeSpace aesthetic
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -63,7 +63,7 @@ $shop_url = wc_get_page_permalink( 'shop' );
     <div class="ax-container">
         <?php if ( ! is_user_logged_in() ) : ?>
             <div class="ax-wishlist-guest-notice" style="background:#ffffff; border:1px solid #e9e4dc; border-radius:14px; padding:28px 24px; margin:30px 0; text-align:center; box-shadow:0 4px 18px rgba(0,0,0,0.04);">
-                <span style="display:inline-block; font-size:11px; font-weight:700; color:#c9933f; letter-spacing:0.8px; margin-bottom:8px;">✦ <?php echo esc_html( furniva_t( 'AXGNUD PRIVILEGE CLUB', 'ĐẶC QUYỀN HỘI VIÊN' ) ); ?></span>
+                <span style="display:inline-block; font-size:11px; font-weight:700; color:#c9933f; letter-spacing:0.8px; margin-bottom:8px;">✦ <?php echo esc_html( furniva_t( 'DeSpace PRIVILEGE CLUB', 'ĐẶC QUYỀN HỘI VIÊN' ) ); ?></span>
                 <h3 style="font-family:'Newsreader',serif; font-size:23px; color:#191715; margin:0 0 10px;"><?php echo esc_html( furniva_t( 'Sign in to sync your wishlist across all devices', 'Đăng nhập để lưu và đồng bộ danh sách yêu thích trên mọi thiết bị' ) ); ?></h3>
                 <p style="font-size:14px; color:#6a645d; margin:0 0 18px; max-width:620px; margin-left:auto; margin-right:auto;"><?php echo esc_html( furniva_t( 'Save your bespoke architectural furniture pieces and receive real-time updates when prices change or stock runs low.', 'Lưu giữ những tác phẩm nội thất yêu thích, nhận thông báo ưu đãi độc quyền và bảo lưu danh mục thiết kế riêng của bạn.' ) ); ?></p>
                 <div style="display:inline-flex; gap:12px; flex-wrap:wrap; justify-content:center;">

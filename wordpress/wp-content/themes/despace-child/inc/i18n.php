@@ -1,6 +1,6 @@
 <?php
 /**
- * Small language helper for strings rendered by Furniva's custom theme.
+ * Small language helper for strings rendered by DeSpace's custom theme.
  * TranslatePress still handles the saved post and product translation pairs.
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -33,7 +33,7 @@ function furniva_current_language() {
 
 function furniva_t( $english, $vietnamese ) {
 	$text = in_array( furniva_current_language(), array( 'en', 'en_US', 'en_GB' ), true ) ? $english : $vietnamese;
-	return str_ireplace( 'furniva', 'AXGNUD', $text );
+	return str_ireplace( array( 'furniva', 'axgnud' ), 'DeSpace', $text );
 }
 
 /** Keep translated titles available when templates render WordPress objects directly. */
@@ -109,7 +109,7 @@ add_filter( 'the_title', 'furniva_translate_object_title', 99, 2 );
 
 function furniva_translate_document_title_parts( $parts ) {
 	if ( is_front_page() ) {
-		$parts['title']   = 'AXGNUD';
+		$parts['title']   = 'DeSpace';
 		$parts['tagline'] = furniva_t( 'Modern furniture for modern living', 'Nội thất hiện đại cho nhịp sống hiện đại' );
 		return $parts;
 	}

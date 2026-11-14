@@ -24,7 +24,7 @@ Text Domain:  despace-child
 	--despace-border: #E7E0D7;
 	--despace-error: #BF5B50;    /* Error / sale */
 
-	/* Backward-compatible Furniva token aliases */
+	/* Backward-compatible DeSpace token aliases */
 	--furniva-bg: var(--despace-bg);
 	--furniva-surface: var(--despace-surface);
 	--furniva-text: var(--despace-text);
@@ -3560,7 +3560,7 @@ body.drawer-open { overflow: hidden; }
 	opacity: 0;
 	visibility: hidden;
 	pointer-events: none;
-	background: rgba(252, 250, 247, 0.94);
+	background: rgba(252, 250, 247, 0.96);
 	backdrop-filter: blur(28px) saturate(180%);
 	-webkit-backdrop-filter: blur(28px) saturate(180%);
 	border: 1px solid var(--f-line);
@@ -3571,7 +3571,9 @@ body.drawer-open { overflow: hidden; }
 	transition: transform 0.4s var(--f-ease), opacity 0.3s ease, visibility 0.3s ease;
 	max-width: 620px;
 	width: calc(100vw - 32px);
-	max-height: 64px;
+	height: 60px;
+	max-height: 60px;
+	overflow: hidden;
 	box-sizing: border-box;
 }
 
@@ -3588,6 +3590,7 @@ body.drawer-open { overflow: hidden; }
 	justify-content: space-between;
 	gap: 16px;
 	height: 100%;
+	width: 100%;
 }
 
 .f-sticky-bar-left {
@@ -3596,11 +3599,16 @@ body.drawer-open { overflow: hidden; }
 	gap: 14px;
 	min-width: 0;
 	flex: 1;
+	overflow: hidden;
 }
 
 .f-sticky-img-box {
 	width: 44px;
 	height: 44px;
+	min-width: 44px;
+	min-height: 44px;
+	max-width: 44px;
+	max-height: 44px;
 	border-radius: 50%;
 	overflow: hidden;
 	flex-shrink: 0;
@@ -3613,6 +3621,10 @@ body.drawer-open { overflow: hidden; }
 .f-sticky-img {
 	width: 44px;
 	height: 44px;
+	min-width: 44px;
+	min-height: 44px;
+	max-width: 44px;
+	max-height: 44px;
 	border-radius: 50%;
 	object-fit: cover;
 	flex-shrink: 0;
@@ -3626,8 +3638,11 @@ body.drawer-open { overflow: hidden; }
 .f-sticky-meta {
 	display: flex;
 	flex-direction: column;
+	justify-content: center;
 	gap: 2px;
 	min-width: 0;
+	flex: 1;
+	overflow: hidden;
 }
 
 .f-sticky-meta strong {
@@ -3637,6 +3652,8 @@ body.drawer-open { overflow: hidden; }
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	display: block;
+	max-width: 320px;
 }
 
 .f-sticky-price {
@@ -4387,7 +4404,7 @@ body.drawer-open { overflow: hidden; }
 }
 
 /* ============================================================
-   16. Reference-led Furniva catalogue refinement
+   16. Reference-led DeSpace catalogue refinement
    ============================================================ */
 :root {
 	--f-wrap: 1420px;
@@ -6458,7 +6475,7 @@ html[lang^="en"] .f-contact-form::before { content: "SEND US A NOTE"; }
 
 /* ================================================================
    Mobile Native App Bottom Navigation Bar & Mobile Search Drawer
-   Inspired by Apple HIG & Furniva.in benchmark UX
+   Inspired by Apple HIG & DeSpace.in benchmark UX
 ================================================================ */
 .f-bottom-nav {
 	display: none;
@@ -7874,7 +7891,7 @@ button.single_add_to_cart_button:active {
 	to { opacity: 1; transform: translateY(0) scaleX(1); }
 }
 
-/* Owner and payment details in the AXGNUD footer. */
+/* Owner and payment details in the DeSpace footer. */
 .fv-footer__grid { grid-template-columns: 1.35fr repeat(5, minmax(0, 1fr)); }
 .fv-footer__owner-name { margin: 1px 0 2px; color: #fff; font-size: 14px; letter-spacing: .12em; }
 .fv-footer__owner p { max-width: 190px; color: rgba(247, 243, 236, .65); line-height: 1.6; }
@@ -8129,7 +8146,7 @@ button.single_add_to_cart_button:active {
 .fv-announcement:hover .fv-announcement__track { animation-play-state: running; }
 
 /* ==========================================================================
-   AXGNUD 2026 ENHANCEMENTS: Language Pill, Expandable Search, Mega Menu, Owner Info, Payment Badges & AI Dock
+   DeSpace 2026 ENHANCEMENTS: Language Pill, Expandable Search, Mega Menu, Owner Info, Payment Badges & AI Dock
    ========================================================================== */
 
 /* 1. Direct Language Switcher Segmented Luxury Pill */
@@ -8731,7 +8748,7 @@ button.single_add_to_cart_button:active {
 }
 
 /* ==========================================================================
-   AXGNUD BRAND IDENTITY & RICH MICRO-ANIMATIONS
+   DeSpace BRAND IDENTITY & RICH MICRO-ANIMATIONS
    ========================================================================== */
 
 /* 1. Header & Footer Brand Identity Logo */
@@ -8800,7 +8817,7 @@ button.single_add_to_cart_button:active {
 	filter: brightness(1.35) drop-shadow(0 4px 18px rgba(197, 160, 89, 0.65));
 }
 
-/* 2. Brand Trust Bar (The 4 Core Commitments from AXGNUD Brand Guide) */
+/* 2. Brand Trust Bar (The 4 Core Commitments from DeSpace Brand Guide) */
 .fv-trust-bar {
 	background: #fdfbf7;
 	border-top: 1px solid rgba(197, 160, 89, 0.22);
@@ -8958,7 +8975,7 @@ body.admin-bar {
 }
 
 /* ==========================================================================
-   AXGNUD - GLOBAL UI/UX & COMPONENT FIXES (furniva-child)
+   DeSpace - GLOBAL UI/UX & COMPONENT FIXES (furniva-child)
    ========================================================================== */
 
 /* 1. Tắt gạch chân thừa trên toàn bộ liên kết */
@@ -9453,7 +9470,7 @@ body.single-post,
 }
 
 /* ============================================================
-   AXGNUD Studio — Room Visualizer 3D Mesh & Smart Cutout
+   DeSpace Studio — Room Visualizer 3D Mesh & Smart Cutout
    ============================================================ */
 /* Xóa khung nền vuông xung quanh sản phẩm trong Room Visualizer */
 .room-visualizer-stage img,
@@ -9846,7 +9863,7 @@ body.single-post,
 }
 
 /* ==========================================================================
-   AXGNUD Luxury Auth Gate Modal (Require Login for Store Features)
+   DeSpace Luxury Auth Gate Modal (Require Login for Store Features)
    ========================================================================== */
 .ax-auth-gate-modal {
 	position: fixed;

@@ -1,6 +1,6 @@
 <?php
 /**
- * Furniva - AR Room Visualizer
+ * DeSpace - AR Room Visualizer
  * Place furniture in your room using AR technology
  */
 

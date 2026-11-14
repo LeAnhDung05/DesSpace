@@ -1,5 +1,5 @@
 /**
- * Furniva Performance Optimization
+ * DeSpace Performance Optimization
  * - Lazy loading images
  * - WebP detection and fallback
  * - Image preload for LCP

@@ -1,6 +1,6 @@
 <?php
 /**
- * Furniva single post.
+ * DeSpace single post.
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 

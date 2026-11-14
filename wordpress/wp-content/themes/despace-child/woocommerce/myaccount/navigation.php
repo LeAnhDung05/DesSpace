@@ -1,6 +1,6 @@
 <?php
 /**
- * My Account Navigation — AXGNUD Luxury Edition
+ * My Account Navigation — DeSpace Luxury Edition
  *
  * @see     https://woocommerce.com/document/template-structure/
  * @package WooCommerce\Templates
@@ -71,7 +71,7 @@ do_action( 'woocommerce_before_account_navigation' );
 		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
 	</div>
 	<h4><?php echo esc_html( furniva_t( 'Dedicated Concierge', 'Chuyên Viên Tư Vấn VIP' ) ); ?></h4>
-	<p><?php echo esc_html( furniva_t( 'Need personal styling or warranty support? Our architectural team is ready.', 'Cần hỗ trợ phối cảnh 3D không gian hoặc bảo hành? Đội ngũ AXGNUD luôn sẵn sàng.' ) ); ?></p>
+	<p><?php echo esc_html( furniva_t( 'Need personal styling or warranty support? Our architectural team is ready.', 'Cần hỗ trợ phối cảnh 3D không gian hoặc bảo hành? Đội ngũ DeSpace luôn sẵn sàng.' ) ); ?></p>
 	<a href="tel:19006868" class="ax-concierge-hotline">
 		<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
 		<span>HOTLINE 1900 6868</span>

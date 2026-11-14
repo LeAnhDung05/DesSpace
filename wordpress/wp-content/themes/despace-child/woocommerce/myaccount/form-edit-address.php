@@ -1,6 +1,6 @@
 <?php
 /**
- * Edit address form — AXGNUD Luxury Edition
+ * Edit address form — DeSpace Luxury Edition
  *
  * @see https://woocommerce.com/document/template-structure/
  * @package WooCommerce\Templates

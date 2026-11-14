@@ -1,6 +1,6 @@
 <?php
 /**
- * View Order — AXGNUD Luxury Edition
+ * View Order — DeSpace Luxury Edition
  *
  * @see     https://woocommerce.com/document/template-structure/
  * @package WooCommerce\Templates
@@ -35,7 +35,7 @@ $date        = $order->get_date_created() ? wc_format_datetime( $order->get_date
 	<div class="ax-reg-perk-banner" style="margin-bottom: 28px; background: #fdfaf3; border: 1px solid var(--ax-account-gold-border); border-radius: var(--ax-account-radius-sm); padding: 14px 18px; display: flex; align-items: center; gap: 14px;">
 		<span class="ax-reg-perk-badge" style="background: var(--ax-account-gold); color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.05em;">✦ <?php echo esc_html( furniva_t( '5-YEAR WARRANTY ACTIVATED', 'KÍCH HOẠT BẢO HÀNH 5 NĂM' ) ); ?></span>
 		<p style="margin: 0; font-size: 13.5px; color: var(--ax-account-text-body);">
-			<?php echo esc_html( furniva_t( 'All bespoke wooden structures and soft-close hardware in this order are certified under AXGNUD Global Warranty Vault.', 'Toàn bộ kết cấu gỗ cao cấp và phụ kiện giảm chấn thuộc đơn hàng này được bảo vệ tự động bởi hệ thống bảo hành chính hãng AXGNUD.' ) ); ?>
+			<?php echo esc_html( furniva_t( 'All bespoke wooden structures and soft-close hardware in this order are certified under DeSpace Global Warranty Vault.', 'Toàn bộ kết cấu gỗ cao cấp và phụ kiện giảm chấn thuộc đơn hàng này được bảo vệ tự động bởi hệ thống bảo hành chính hãng DeSpace.' ) ); ?>
 		</p>
 	</div>
 

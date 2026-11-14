@@ -1,5 +1,5 @@
 /**
- * THE AXGNUD EDIT — Bento Grid Interactions
+ * THE DeSpace EDIT — Bento Grid Interactions
  */
 document.addEventListener('DOMContentLoaded', function () {
   var bentoSection = document.getElementById('the-axgnud-edit');

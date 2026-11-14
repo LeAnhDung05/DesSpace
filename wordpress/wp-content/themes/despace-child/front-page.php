@@ -1,6 +1,6 @@
 <?php
 /**
- * Furniva homepage — editorial storefront using the current WordPress catalogue.
+ * DeSpace homepage — editorial storefront using the current WordPress catalogue.
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -67,8 +67,8 @@ $room_sets = array(
 		'label'        => array( 'Entryway & Living', 'Sảnh & Phòng khách' ),
 		'cover'        => 'shoe-racks-storage',
 		'custom_image' => get_stylesheet_directory_uri() . '/assets/images/room-entryway.jpg',
-		'skus'         => array( 'AXG-STR-004', 'AXG-STR-010', 'AXG-STR-011', 'AXG-STR-040' ),
-		'positions'    => array( array( 20, 70 ), array( 24, 30 ), array( 43, 78 ), array( 80, 55 ) ),
+		'skus'         => array( 'AXG-STR-017', 'AXG-STR-016', 'AXG-STR-010', 'AXG-STR-040' ),
+		'positions'    => array( array( 28, 64 ), array( 28, 30 ), array( 82, 52 ), array( 55, 70 ) ),
 		'categories'   => array( 'shoe-racks-storage', 'chest-of-drawers-sideboards' ),
 	),
 	array(
@@ -77,7 +77,7 @@ $room_sets = array(
 		'cover'        => 'wardrobes',
 		'custom_image' => get_stylesheet_directory_uri() . '/assets/images/room-bedroom.jpg',
 		'skus'         => array( 'AXG-STR-024', 'AXG-STR-038', 'AXG-STR-037', 'AXG-STR-020' ),
-		'positions'    => array( array( 9, 45 ), array( 26, 70 ), array( 23, 50 ), array( 55, 68 ) ),
+		'positions'    => array( array( 20, 46 ), array( 52, 66 ), array( 82, 68 ), array( 10, 42 ) ),
 		'categories'   => array( 'wardrobes', 'chest-of-drawers-sideboards' ),
 	),
 	array(
@@ -85,8 +85,8 @@ $room_sets = array(
 		'label'        => array( 'Study & Kitchen', 'Phòng làm việc & Bếp' ),
 		'cover'        => 'bookshelves',
 		'custom_image' => get_stylesheet_directory_uri() . '/assets/images/room-office.jpg',
-		'skus'         => array( 'AXG-STR-029', 'AXG-STR-030', 'AXG-STR-034', 'AXG-STR-028' ),
-		'positions'    => array( array( 78, 60 ), array( 68, 52 ), array( 42, 62 ), array( 29, 84 ) ),
+		'skus'         => array( 'AXG-STR-030', 'AXG-STR-029', 'AXG-STR-034', 'AXG-STR-028' ),
+		'positions'    => array( array( 30, 48 ), array( 72, 52 ), array( 50, 66 ), array( 84, 72 ) ),
 		'categories'   => array( 'bookshelves', 'kitchen-cabinets' ),
 	),
 );
@@ -177,7 +177,7 @@ $hero_products = array(
 		<section class="fv-featured-hero fv-reveal fv-reveal-fade" aria-label="<?php echo esc_attr( furniva_t( 'Featured collection', 'Bộ sưu tập nổi bật' ) ); ?>">
 			<div class="fv-featured-hero__grid fv-wrap">
 				<div class="fv-featured-hero__stage">
-					<a href="<?php echo esc_url( $shop_url ); ?>" aria-label="<?php echo esc_attr( furniva_t( 'Explore the AXGNUD collection', 'Khám phá bộ sưu tập AXGNUD' ) ); ?>">
+					<a href="<?php echo esc_url( $shop_url ); ?>" aria-label="<?php echo esc_attr( furniva_t( 'Explore the DeSpace collection', 'Khám phá bộ sưu tập DeSpace' ) ); ?>">
 						<img src="<?php echo esc_url( $hero_url ); ?>" alt="<?php echo esc_attr( furniva_t( 'Warm Scandinavian living room with natural wood furniture', 'Không gian phòng khách Bắc Âu ấm áp với nội thất gỗ tự nhiên' ) ); ?>" loading="eager" fetchpriority="high" />
 						<span class="fv-home-hero-copy">
 							<span class="fv-eyebrow"><?php echo esc_html( furniva_t( 'Designed for the everyday', 'Thiết kế cho nhịp sống mỗi ngày' ) ); ?></span>
@@ -202,7 +202,7 @@ $hero_products = array(
 		</section>
 
 		<section class="fv-promise fv-wrap fv-reveal fv-reveal-up" aria-labelledby="fv-promise-title">
-			<div class="fv-promise__heading"><h2 id="fv-promise-title"><?php echo esc_html( furniva_t( 'The AXGNUD Promise', 'Cam kết từ AXGNUD' ) ); ?></h2><span><?php echo esc_html( furniva_t( 'Thoughtful by nature', 'Chu đáo từ những điều nhỏ' ) ); ?></span></div>
+			<div class="fv-promise__heading"><h2 id="fv-promise-title"><?php echo esc_html( furniva_t( 'The DeSpace Promise', 'Cam kết từ DeSpace' ) ); ?></h2><span><?php echo esc_html( furniva_t( 'Thoughtful by nature', 'Chu đáo từ những điều nhỏ' ) ); ?></span></div>
 			<div class="fv-promise__grid">
 				<article class="fv-promise__item"><span class="fv-promise__icon" aria-hidden="true">✧</span><h3><?php echo esc_html( furniva_t( 'Complimentary delivery', 'Giao hàng miễn phí' ) ); ?></h3><p><?php echo esc_html( furniva_t( 'On orders over $500', 'Cho đơn hàng trên $500' ) ); ?></p></article>
 				<article class="fv-promise__item"><span class="fv-promise__icon" aria-hidden="true">◇</span><h3><?php echo esc_html( furniva_t( '5-year craft warranty', 'Bảo hành chế tác 5 năm' ) ); ?></h3><p><?php echo esc_html( furniva_t( 'Made to be lived with', 'An tâm đồng hành dài lâu' ) ); ?></p></article>
@@ -214,7 +214,7 @@ $hero_products = array(
 		<section class="fv-diwali-banner fv-wrap fv-reveal fv-reveal-fade" id="furniva-welcome-offer" aria-label="<?php echo esc_attr( furniva_t( 'Welcome offer', 'Ưu đãi chào mừng' ) ); ?>">
 			<span class="fv-diwali-banner__lamp" aria-hidden="true">✧</span>
 			<div class="fv-diwali-banner__copy">
-				<p><?php echo esc_html( furniva_t( 'An AXGNUD welcome', 'ƯU ĐÃI CHÀO MỪNG AXGNUD' ) ); ?></p>
+				<p><?php echo esc_html( furniva_t( 'An DeSpace welcome', 'ƯU ĐÃI CHÀO MỪNG DeSpace' ) ); ?></p>
 				<h2><?php echo esc_html( furniva_t( 'A more thoughtful home starts here.', 'Bắt đầu một không gian sống thật có gu.' ) ); ?></h2>
 				<span><?php echo esc_html( furniva_t( 'Take 10% off with code WELCOME10.', 'Giảm 10% với mã WELCOME10.' ) ); ?></span>
 			</div>
@@ -338,13 +338,13 @@ $hero_products = array(
 			<?php echo do_shortcode( '[recent_products limit="4" columns="4" class="f-products"]' ); ?>
 		</section>
 
-		<!-- THE AXGNUD EDIT Bento Grid Section -->
+		<!-- THE DeSpace EDIT Bento Grid Section -->
 		<section class="fv-bento-section fv-wrap fv-reveal fv-reveal-up" id="the-axgnud-edit" aria-labelledby="fv-bento-title">
 			<div class="fv-bento-header">
 				<!-- Left Column: Eyebrow + Title + Subtitle -->
 				<div class="fv-bento-header__left">
 					<div class="fv-bento-eyebrow-wrap">
-						<span class="fv-bento-eyebrow"><?php echo esc_html( furniva_t( 'THE AXGNUD EDIT', 'THE AXGNUD EDIT' ) ); ?></span>
+						<span class="fv-bento-eyebrow"><?php echo esc_html( furniva_t( 'THE DeSpace EDIT', 'THE DeSpace EDIT' ) ); ?></span>
 						<span class="fv-bento-eyebrow-line" aria-hidden="true"></span>
 					</div>
 					<h2 id="fv-bento-title" class="fv-bento-title"><?php echo wp_kses_post( furniva_t( "Những lựa chọn tạo nên<br>một ngôi nhà có gu.", "Những lựa chọn tạo nên<br>một ngôi nhà có gu." ) ); ?></h2>
@@ -569,17 +569,17 @@ $hero_products = array(
 
 		<section class="fv-trust-section fv-wrap fv-reveal fv-reveal-up" aria-labelledby="fv-trust-title">
 			<div class="fv-packing-photo">
-				<img src="<?php echo esc_url( $hero_url ); ?>" alt="<?php echo esc_attr( furniva_t( 'Warm and natural AXGNUD living room', 'Không gian phòng khách AXGNUD ấm áp, gần gũi thiên nhiên' ) ); ?>" loading="lazy" />
+				<img src="<?php echo esc_url( $hero_url ); ?>" alt="<?php echo esc_attr( furniva_t( 'Warm and natural DeSpace living room', 'Không gian phòng khách DeSpace ấm áp, gần gũi thiên nhiên' ) ); ?>" loading="lazy" />
 				<span class="fv-packing-photo__caption"><span aria-hidden="true">✧</span><?php echo esc_html( furniva_t( 'Thoughtful details for everyday living', 'Chăm chút cho nhịp sống mỗi ngày' ) ); ?></span>
 			</div>
-			<div class="fv-trust-copy"><span class="fv-eyebrow"><?php echo esc_html( furniva_t( 'Here to help', 'AXGNUD đồng hành cùng bạn' ) ); ?></span><h2 id="fv-trust-title"><?php echo esc_html( furniva_t( 'A little more clarity, before you choose.', 'Thêm thông tin rõ ràng trước khi bạn chọn.' ) ); ?></h2><p><?php echo esc_html( furniva_t( 'Find product details, order information and a direct way to reach our team.', 'Xem thông tin sản phẩm, đơn hàng và cách liên hệ trực tiếp với đội ngũ AXGNUD.' ) ); ?></p></div>
+			<div class="fv-trust-copy"><span class="fv-eyebrow"><?php echo esc_html( furniva_t( 'Here to help', 'DeSpace đồng hành cùng bạn' ) ); ?></span><h2 id="fv-trust-title"><?php echo esc_html( furniva_t( 'A little more clarity, before you choose.', 'Thêm thông tin rõ ràng trước khi bạn chọn.' ) ); ?></h2><p><?php echo esc_html( furniva_t( 'Find product details, order information and a direct way to reach our team.', 'Xem thông tin sản phẩm, đơn hàng và cách liên hệ trực tiếp với đội ngũ DeSpace.' ) ); ?></p></div>
 			<div class="fv-faq" aria-labelledby="fv-faq-title">
 				<h3 id="fv-faq-title"><?php echo esc_html( furniva_t( 'Frequently asked', 'Câu hỏi thường gặp' ) ); ?></h3>
 				<?php
 				$home_faq = array(
-					array( 'How do I choose the right piece?', 'Làm sao để chọn sản phẩm phù hợp?', 'Open a product page to review its photos, description and available details. If you need help deciding, our team can help.', 'Mở trang sản phẩm để xem ảnh, mô tả và các thông tin hiện có. Nếu cần tư vấn trước khi chọn, đội ngũ AXGNUD sẵn sàng hỗ trợ.', 'Browse the collection', 'Khám phá bộ sưu tập', $shop_url ),
-					array( 'Where can I find delivery information?', 'Xem thông tin giao hàng ở đâu?', 'Delivery options and details are shown during checkout. You can also contact us with your location and the product you are considering.', 'Các lựa chọn và thông tin giao hàng sẽ hiển thị trong quá trình thanh toán. Bạn cũng có thể liên hệ và cho chúng tôi biết khu vực cùng sản phẩm đang quan tâm.', 'Contact our team', 'Liên hệ đội ngũ AXGNUD', $contact_url ),
-					array( 'How can I ask about an order?', 'Tôi có thể hỏi về đơn hàng bằng cách nào?', 'Send us your order number through the contact page and our team will help you find the right information.', 'Gửi mã đơn hàng qua trang liên hệ, đội ngũ AXGNUD sẽ hỗ trợ bạn tra cứu thông tin phù hợp.', 'Get in touch', 'Gửi lời nhắn', $contact_url ),
+					array( 'How do I choose the right piece?', 'Làm sao để chọn sản phẩm phù hợp?', 'Open a product page to review its photos, description and available details. If you need help deciding, our team can help.', 'Mở trang sản phẩm để xem ảnh, mô tả và các thông tin hiện có. Nếu cần tư vấn trước khi chọn, đội ngũ DeSpace sẵn sàng hỗ trợ.', 'Browse the collection', 'Khám phá bộ sưu tập', $shop_url ),
+					array( 'Where can I find delivery information?', 'Xem thông tin giao hàng ở đâu?', 'Delivery options and details are shown during checkout. You can also contact us with your location and the product you are considering.', 'Các lựa chọn và thông tin giao hàng sẽ hiển thị trong quá trình thanh toán. Bạn cũng có thể liên hệ và cho chúng tôi biết khu vực cùng sản phẩm đang quan tâm.', 'Contact our team', 'Liên hệ đội ngũ DeSpace', $contact_url ),
+					array( 'How can I ask about an order?', 'Tôi có thể hỏi về đơn hàng bằng cách nào?', 'Send us your order number through the contact page and our team will help you find the right information.', 'Gửi mã đơn hàng qua trang liên hệ, đội ngũ DeSpace sẽ hỗ trợ bạn tra cứu thông tin phù hợp.', 'Get in touch', 'Gửi lời nhắn', $contact_url ),
 					array( 'Can I check payment and return terms first?', 'Tôi có thể xem điều khoản thanh toán và đổi trả trước không?', 'Please review the current information on the relevant store pages or contact us before placing your order.', 'Vui lòng xem thông tin hiện hành trên các trang chính sách của cửa hàng hoặc liên hệ với chúng tôi trước khi đặt hàng.', 'Read store information', 'Xem thông tin cửa hàng', home_url( '/shipping-returns/' ) ),
 				);
 				foreach ( $home_faq as $faq_index => $faq ) :
@@ -605,7 +605,7 @@ $hero_products = array(
 		if ( $latest_posts->have_posts() ) :
 		?>
 			<section class="fv-section fv-wrap fv-home-journal fv-reveal fv-reveal-up" aria-labelledby="fv-journal-title">
-				<div class="fv-section-heading"><div><span class="fv-eyebrow"><?php echo esc_html( furniva_t( 'Ideas & inspiration', 'Ý tưởng và cảm hứng' ) ); ?></span><h2 id="fv-journal-title"><?php echo esc_html( furniva_t( 'A thoughtful life at home.', 'Cảm hứng cho cuộc sống tại nhà.' ) ); ?></h2><p><?php echo esc_html( furniva_t( 'Stories, practical guides and inspiration from our journal.', 'Câu chuyện, hướng dẫn hữu ích và ý tưởng từ tạp chí AXGNUD.' ) ); ?></p></div><a class="fv-text-link" href="<?php echo esc_url( get_permalink( get_option( 'page_for_posts' ) ) ?: home_url( '/blog/' ) ); ?>"><?php echo esc_html( furniva_t( 'Read the journal', 'Đọc tạp chí' ) ); ?> <span aria-hidden="true">→</span></a></div>
+				<div class="fv-section-heading"><div><span class="fv-eyebrow"><?php echo esc_html( furniva_t( 'Ideas & inspiration', 'Ý tưởng và cảm hứng' ) ); ?></span><h2 id="fv-journal-title"><?php echo esc_html( furniva_t( 'A thoughtful life at home.', 'Cảm hứng cho cuộc sống tại nhà.' ) ); ?></h2><p><?php echo esc_html( furniva_t( 'Stories, practical guides and inspiration from our journal.', 'Câu chuyện, hướng dẫn hữu ích và ý tưởng từ tạp chí DeSpace.' ) ); ?></p></div><a class="fv-text-link" href="<?php echo esc_url( get_permalink( get_option( 'page_for_posts' ) ) ?: home_url( '/blog/' ) ); ?>"><?php echo esc_html( furniva_t( 'Read the journal', 'Đọc tạp chí' ) ); ?> <span aria-hidden="true">→</span></a></div>
 				<div class="fv-home-journal-grid fv-stagger">
 					<?php while ( $latest_posts->have_posts() ) : $latest_posts->the_post(); ?>
 						<article class="fv-home-article">
@@ -650,7 +650,7 @@ $hero_products = array(
 
 		<?php if ( $real_home_products ) : ?>
 			<section class="fv-section fv-wrap" aria-labelledby="fv-edit-title">
-				<div class="fv-section-heading"><div><span class="fv-eyebrow"><?php echo esc_html( furniva_t( 'The AXGNUD edit', 'Tuyển chọn từ AXGNUD' ) ); ?></span><h2 id="fv-edit-title"><?php echo esc_html( furniva_t( 'Details that make a room.', 'Những chi tiết làm nên không gian.' ) ); ?></h2></div><a class="fv-text-link" href="<?php echo esc_url( $shop_url ); ?>"><?php echo esc_html( furniva_t( 'Explore all pieces', 'Khám phá mọi sản phẩm' ) ); ?> <span aria-hidden="true">→</span></a></div>
+				<div class="fv-section-heading"><div><span class="fv-eyebrow"><?php echo esc_html( furniva_t( 'The DeSpace edit', 'Tuyển chọn từ DeSpace' ) ); ?></span><h2 id="fv-edit-title"><?php echo esc_html( furniva_t( 'Details that make a room.', 'Những chi tiết làm nên không gian.' ) ); ?></h2></div><a class="fv-text-link" href="<?php echo esc_url( $shop_url ); ?>"><?php echo esc_html( furniva_t( 'Explore all pieces', 'Khám phá mọi sản phẩm' ) ); ?> <span aria-hidden="true">→</span></a></div>
 				<div class="fv-social-rail">
 					<?php foreach ( array_slice( $real_home_products, 0, 5 ) as $edit_product ) : ?>
 						<a class="fv-social-card" href="<?php echo esc_url( get_permalink( $edit_product->get_id() ) ); ?>">

@@ -1,6 +1,6 @@
 <?php
 /**
- * My Account page — AXGNUD Luxury Edition
+ * My Account page — DeSpace Luxury Edition
  *
  * @see     https://woocommerce.com/document/template-structure/
  * @package WooCommerce\Templates
@@ -63,7 +63,7 @@ if ( function_exists( 'yith_wcwl_count_all_products' ) ) {
 			</div>
 			<div class="ax-profile-info">
 				<div class="ax-profile-badge-row">
-					<span class="ax-member-tier-pill">✦ <?php echo esc_html( furniva_t( 'AXGNUD Elite Member', 'Hội Viên Tinh Hoa AXGNUD' ) ); ?></span>
+					<span class="ax-member-tier-pill">✦ <?php echo esc_html( furniva_t( 'DeSpace Elite Member', 'Hội Viên Tinh Hoa DeSpace' ) ); ?></span>
 				</div>
 				<h1 class="ax-profile-name"><?php echo esc_html( furniva_t( 'Hello, ', 'Xin chào, ' ) . $display_name ); ?></h1>
 				<p class="ax-profile-email"><?php echo esc_html( $current_user->user_email ); ?></p>

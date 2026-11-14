@@ -1,13 +1,13 @@
 <?php
 /**
- * AXGNUD Luxury Edition — Customer Authentication & Access Gate Handler
+ * DeSpace Luxury Edition — Customer Authentication & Access Gate Handler
  *
  * 1. Handles comprehensive registration fields (First/Last name, Phone, City, Password confirmation, Terms),
  *    validation, and automatic profile meta synchronization.
  * 2. Enforces customer authentication requirement: customers must be logged in to use store features
  *    (Add to Cart, Buy Now, Wishlist, Checkout, AR Visualizer, and Reviews).
  *
- * @package FurnivaChild
+ * @package DeSpaceChild
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -82,7 +82,7 @@ function axgnud_validate_registration_fields( $username, $email, $validation_err
 	if ( empty( $_POST['terms_agree'] ) ) {
 		$validation_errors->add(
 			'terms_agree_error',
-			esc_html( furniva_t( 'Please agree to the AXGNUD Privilege Club Terms and Privacy Policy to complete registration.', 'Quý khách vui lòng đồng ý với Điều khoản dịch vụ & Chính sách quyền riêng tư để hoàn tất đăng ký.' ) )
+			esc_html( furniva_t( 'Please agree to the DeSpace Privilege Club Terms and Privacy Policy to complete registration.', 'Quý khách vui lòng đồng ý với Điều khoản dịch vụ & Chính sách quyền riêng tư để hoàn tất đăng ký.' ) )
 		);
 	}
 
@@ -149,8 +149,8 @@ function axgnud_require_login_for_checkout() {
 	if ( function_exists( 'is_checkout' ) && is_checkout() && ! is_user_logged_in() && ! is_order_received_page() ) {
 		wc_add_notice(
 			furniva_t(
-				'Please sign in or create an AXGNUD Privilege account to complete your purchase and activate 5-year warranty.',
-				'Quý khách vui lòng đăng nhập hoặc đăng ký tài khoản thành viên AXGNUD Privilege để hoàn tất thanh toán và kích hoạt bảo hành 5 năm.'
+				'Please sign in or create an DeSpace Privilege account to complete your purchase and activate 5-year warranty.',
+				'Quý khách vui lòng đăng nhập hoặc đăng ký tài khoản thành viên DeSpace Privilege để hoàn tất thanh toán và kích hoạt bảo hành 5 năm.'
 			),
 			'notice'
 		);
@@ -237,13 +237,13 @@ function axgnud_render_auth_modal() {
 			
 			<div class="ax-auth-gate-eyebrow">
 				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-				<span><?php echo esc_html( furniva_t( 'AXGNUD PRIVILEGE CLUB', 'CÂU LẠC BỘ ĐẶC QUYỀN AXGNUD' ) ); ?></span>
+				<span><?php echo esc_html( furniva_t( 'DeSpace PRIVILEGE CLUB', 'CÂU LẠC BỘ ĐẶC QUYỀN DeSpace' ) ); ?></span>
 			</div>
 			
 			<h3 class="ax-auth-gate-title" id="axAuthGateTitle"><?php echo esc_html( furniva_t( 'Sign In to Unlock Full Features', 'Vui Lòng Đăng Nhập Để Tiếp Tục' ) ); ?></h3>
 			
 			<p class="ax-auth-gate-desc" id="axAuthGateDesc">
-				<?php echo esc_html( furniva_t( 'To add items to your cart, save favorites, or proceed to checkout, please sign in or register an AXGNUD account.', 'Để thêm sản phẩm vào giỏ hàng, lưu danh sách yêu thích và tiến hành thanh toán, quý khách vui lòng đăng nhập hoặc gia nhập hội viên AXGNUD.' ) ); ?>
+				<?php echo esc_html( furniva_t( 'To add items to your cart, save favorites, or proceed to checkout, please sign in or register an DeSpace account.', 'Để thêm sản phẩm vào giỏ hàng, lưu danh sách yêu thích và tiến hành thanh toán, quý khách vui lòng đăng nhập hoặc gia nhập hội viên DeSpace.' ) ); ?>
 			</p>
 
 			<div class="ax-auth-gate-perk">

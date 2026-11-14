@@ -1,7 +1,7 @@
 <?php
 /**
- * Furniva - Single Product Page (Editorial Design)
- * Premium layout matching the AXGNUD design reference
+ * DeSpace - Single Product Page (Editorial Design)
+ * Premium layout matching the DeSpace design reference
  *
  * @global WC_Product $product
  */

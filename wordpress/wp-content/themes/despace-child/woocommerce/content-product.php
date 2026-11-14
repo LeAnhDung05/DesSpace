@@ -1,6 +1,6 @@
 <?php
 /**
- * Furniva custom product card — used on shop, archives, shortcodes and related products.
+ * DeSpace custom product card — used on shop, archives, shortcodes and related products.
  *
  * @global WC_Product $product
  */

@@ -1,5 +1,5 @@
 /**
- * Furniva Animations JavaScript
+ * DeSpace Animations JavaScript
  * Handles scroll reveal, page transitions, and enhanced interactions
  */
 

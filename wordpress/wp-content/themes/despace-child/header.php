@@ -1,6 +1,6 @@
 <?php
 /**
- * Furniva storefront header adapted from the local visual reference.
+ * DeSpace storefront header adapted from the local visual reference.
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -25,11 +25,11 @@ $logo_id = get_theme_mod( 'custom_logo' );
 <head>
 <meta charset="<?php bloginfo( 'charset' ); ?>" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="icon" type="image/png" href="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/axgnud-app-icon-dark.png' ); ?>" />
-<link rel="apple-touch-icon" href="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/axgnud-app-icon-dark.png' ); ?>" />
+<link rel="icon" type="image/png" href="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/despace-favicon.png' ); ?>" />
+<link rel="apple-touch-icon" href="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/despace-app-icon.png' ); ?>" />
 <?php wp_head(); ?>
 </head>
-<body <?php body_class( 'furniva-site' ); ?>>
+<body <?php body_class( 'furniva-site despace-site' ); ?>>
 <?php wp_body_open(); ?>
 
 <?php
@@ -63,7 +63,7 @@ $announcements = array(
 		'url'     => home_url( '/lien-he/' ),
 	),
 	array(
-		'text'    => furniva_t( 'Personal styling & showroom consultation by AXGNUD', 'Tư vấn không gian sống 1-1 cùng chuyên gia AXGNUD' ),
+		'text'    => furniva_t( 'Personal styling & showroom consultation by DeSpace', 'Tư vấn không gian sống 1-1 cùng chuyên gia DeSpace' ),
 		'title'   => furniva_t( '1-on-1 Personal Interior Styling Consultation', 'Tư vấn không gian sống 1-1 cùng chuyên gia' ),
 		'content' => furniva_t( 'Book a personalized styling session with our interior architects at our showroom (So 20 ngach 21 ngo 367 Ngo Xuan Quan, Gia Lam, Hanoi) or via virtual consultation.', 'Đặt lịch tư vấn trực tiếp 1-1 cùng đội ngũ kiến trúc sư DeSpace tại Showroom (Số 20 ngách 21 ngõ 367 Ngô Xuân Quảng, Gia Lâm, Hà Nội) hoặc qua tư vấn từ xa.' ),
 		'action'  => furniva_t( 'Book Consultation', 'Đặt lịch tư vấn' ),
@@ -78,39 +78,23 @@ $announcements = array(
 	),
 );
 ?>
-<!-- Announcement Dialog -->
-<dialog id="furniva-announcement-dialog" class="fv-announcement-dialog">
-	<div class="fv-announcement-dialog__inner">
-		<button class="fv-announcement-dialog__close" aria-label="<?php echo esc_attr( furniva_t( 'Close', 'Đóng' ) ); ?>">✕</button>
-		<div class="fv-announcement-dialog__content"></div>
-	</div>
-</dialog>
-
 <header class="fv-header" id="top">
 	<div class="fv-announcement" role="region" aria-label="<?php echo esc_attr( furniva_t( 'Store announcements', 'Thông báo từ cửa hàng' ) ); ?>">
 		<div class="fv-announcement__viewport">
 			<div class="fv-announcement__track">
 				<div class="fv-announcement__group">
 					<?php foreach ( $announcements as $item ) : ?>
-						<span class="fv-announcement__item" role="button" tabindex="0"
-							data-dialog-title="<?php echo esc_attr( $item['title'] ); ?>"
-							data-dialog-content="<?php echo esc_attr( $item['content'] ); ?>"
-							data-dialog-action="<?php echo esc_attr( $item['action'] ); ?>"
-							data-dialog-url="<?php echo esc_url( $item['url'] ); ?>">
+						<a class="fv-announcement__item" href="<?php echo esc_url( $item['url'] ); ?>" title="<?php echo esc_attr( $item['title'] ); ?>">
 							<?php echo esc_html( $item['text'] ); ?>
-						</span>
+						</a>
 						<span class="fv-announcement__separator" aria-hidden="true">✦</span>
 					<?php endforeach; ?>
 				</div>
 				<div class="fv-announcement__group" aria-hidden="true">
 					<?php foreach ( $announcements as $item ) : ?>
-						<span class="fv-announcement__item" role="button" tabindex="-1"
-							data-dialog-title="<?php echo esc_attr( $item['title'] ); ?>"
-							data-dialog-content="<?php echo esc_attr( $item['content'] ); ?>"
-							data-dialog-action="<?php echo esc_attr( $item['action'] ); ?>"
-							data-dialog-url="<?php echo esc_url( $item['url'] ); ?>">
+						<a class="fv-announcement__item" href="<?php echo esc_url( $item['url'] ); ?>" tabindex="-1">
 							<?php echo esc_html( $item['text'] ); ?>
-						</span>
+						</a>
 						<span class="fv-announcement__separator">✦</span>
 					<?php endforeach; ?>
 				</div>
@@ -122,11 +106,11 @@ $announcements = array(
 			<button class="fv-icon-button fv-menu-button" id="furniva-burger" type="button" aria-label="<?php echo esc_attr( furniva_t( 'Open menu', 'Mở menu' ) ); ?>" aria-controls="furniva-mobile-nav" aria-expanded="false">
 				<?php echo furniva_svg( 'burger' ); ?>
 			</button>
-			<a class="fv-header__logo" href="<?php echo esc_url( home_url( '/' ) ); ?>" aria-label="AXGNUD — <?php echo esc_attr( furniva_t( 'Home', 'Trang chủ' ) ); ?>">
+			<a class="fv-header__logo" href="<?php echo esc_url( home_url( '/' ) ); ?>" aria-label="DeSpace — <?php echo esc_attr( furniva_t( 'Home', 'Trang chủ' ) ); ?>">
 				<?php if ( $logo_id ) : ?>
-					<?php echo wp_get_attachment_image( $logo_id, 'full', false, array( 'alt' => 'AXGNUD' ) ); ?>
+					<?php echo wp_get_attachment_image( $logo_id, 'full', false, array( 'alt' => 'DeSpace' ) ); ?>
 				<?php else : ?>
-					<img class="fv-brand-logo-img" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/axgnud-logo-header.png' ); ?>" alt="AXGNUD - Luxury Living, Lasting Value" width="160" height="110" />
+					<img class="fv-brand-logo-img" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/despace-logo-header.png' ); ?>" alt="DeSpace - Luxury Living, Lasting Value" width="168" height="56" />
 				<?php endif; ?>
 			</a>
 		</div>

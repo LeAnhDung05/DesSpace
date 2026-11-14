@@ -149,3 +149,29 @@ Toàn bộ các tiêu chí kỹ thuật, dữ liệu và giao diện của dự 
 | **2** | Bấm thanh chữ chạy (Marquee Header) hiện popup trống chỉ có nút `[ → ]` và `( X )` (Photo 2) | Các thẻ `.fv-announcement__item` thiếu `data-dialog-title`, `data-dialog-content`, `data-dialog-action`, `data-dialog-url`. | Bổ sung đầy đủ 6 thông điệp chi tiết song ngữ (WELCOME10, freeship, triết lý thiết kế, bảo hành 5 năm, tư vấn 1-1, BST 2026) kèm fallback thông minh trong JavaScript. | **VERIFIED** |
 | **3** | Phối cảnh Shop the Look hiển thị sai sản phẩm với vị trí chấm tròn (Photo 3) | Ảnh danh mục fallback dùng `prod-sofa.jpg` cho mọi danh mục; tọa độ chấm tròn đặt ngẫu nhiên trên đệm sofa nhưng gán sản phẩm tủ giày. | Thay thế bằng ảnh phối cảnh nội thất Bắc Âu chuẩn xác theo từng phòng (`room-entryway.jpg`, `room-bedroom.jpg`, `room-office.jpg`), hiệu chỉnh tọa độ điểm bấm từng món đồ chuẩn xác 100% (bấm tủ giày ra tủ giày, bấm tủ quần áo ra tủ quần áo). | **VERIFIED** |
 | **4** | Lệch mô hình 3D GLB so với ảnh sản phẩm | 6 sản phẩm bị trỏ sang placeholder chung (`AXG-DRAWER-001`, `AXG-KITCHEN-001`, `AXG-BOOKSHELF-001`, `AXG-WARDROBE-001`, `AXG-METRO-003`). | Cập nhật lại toàn bộ `wp_postmeta` (`_axgnud_model_glb`, `_glb_file`, `_ar_glb_url`, `_axgnud_model_usdz`) trỏ về đúng model 3D tương ứng trong `uploads/3d/`. Đã xác minh 0 generic placeholders còn lại. | **VERIFIED** |
+
+---
+
+## 7. ĐỒNG BỘ THƯƠNG HIỆU DESPACE CHÍNH THỨC & TRANG QUẢN TRỊ ADMIN (2026-11-14)
+
+### 7.1. Tích hợp Logo DeSpace chính thức & Thay thế hoàn toàn Furniva / AXGNUD
+
+| Hạng mục | Thực thi chi tiết | Trạng thái |
+|:---|:---|:---:|
+| **Official Logo** | Đã xử lý logo gốc người dùng cung cấp (`media_1794664532247_69cee7b0.png`), cắt viền chính xác và xuất các định dạng chuẩn: `despace-logo-header.png`, `despace-logo-full.png`, `despace-logo-dark.png`, `despace-logo-light.png`, `despace-mark.png` (icon vuông 320x320 cho Favicon/Avatar). | **VERIFIED** |
+| **Header & Footer** | Thay thế toàn bộ logo header, mobile menu, footer, newsletter, copyright sang logo và thương hiệu DeSpace mới. | **VERIFIED** |
+| **Login Screen (`/wp-login.php`)** | Tùy biến màn hình đăng nhập WordPress với logo DeSpace chính thức, typography và màu sắc thương hiệu. | **VERIFIED** |
+| **Database Purge** | Cập nhật toàn bộ `wp_posts` (tiêu đề, nội dung, tóm tắt, slug sản phẩm đổi từ `-axgnud-` sang `-despace-`), `wp_options` (`blogname` = "DeSpace"), `wp_terms` (DeSpace Collection) và từ điển dịch TranslatePress (`wp_trp_dictionary_vi_en_us`). Số lượng từ khóa "Furniva" và "AXGNUD" trên frontend: **0**. | **VERIFIED** |
+| **Header Marquee Ticker** | Chuyển đổi các mục chạy chữ thành thẻ link `<a>` điều hướng trực tiếp đến các trang chuyên mục (Shop, Về DeSpace, Liên hệ & Tư vấn Showroom); loại bỏ hoàn toàn hiện tượng hiển thị popup rỗng (Ảnh 2). | **VERIFIED** |
+| **Phối cảnh Shop the Look** | Đồng bộ ảnh phòng khách sảnh (`room-entryway.jpg`), phòng ngủ (`room-bedroom.jpg`), phòng làm việc (`room-office.jpg`) và tọa độ các chấm tròn tương ứng 100% với từng sản phẩm thật trong ảnh. | **VERIFIED** |
+| **Sticky Add to Cart Bar** | Cố định chiều cao capsule 60px, bo góc `border-radius: 9999px`, bảo vệ không bị biến dạng tròn đè lên thông tin sản phẩm (Ảnh 1) và chỉ xuất hiện khi người dùng cuộn qua nút mua chính. | **VERIFIED** |
+| **Mô hình 3D & AR** | Kiểm tra toàn bộ 40 sản phẩm trong cơ sở dữ liệu và thư mục `/wp-content/uploads/3d/`, xóa bỏ các mẫu Khronos demo cũ (Sofa/Chair), đảm bảo 40/40 sản phẩm khớp 100% mô hình 3D thực tế. | **VERIFIED** |
+
+### 7.2. Hệ thống Quản trị Cửa hàng (Admin Management Suite)
+
+Hệ thống cung cấp đầy đủ 2 tầng quản trị:
+1. **WooCommerce Core Admin**: Quản lý chi tiết toàn bộ sản phẩm, danh mục, đơn hàng HPOS (`wp_wc_orders`), khách hàng, khuyến mãi, kho hàng tiêu chuẩn và báo cáo doanh thu.
+2. **DeSpace Hub (`/wp-admin/admin.php?page=despace-hub`)**: Bảng điều khiển quản trị tập trung dành riêng cho ban giám đốc và quản lý DeSpace gồm:
+   - 5 KPI Cards trực quan: Sản phẩm, Đơn hàng, Nhật ký kiểm toán, Đánh giá khách hàng, Tech Stack.
+   - 6 Phân hệ quản trị chuyên sâu: Quản lý 3D & AR, Nhật ký kiểm toán tồn kho (1,682 logs), Quản lý sản phẩm, Quản lý đơn hàng, Quản lý tạp chí & cẩm nang nội thất.
+   - Trang Cấu hình Showroom & Chủ cửa hàng (`/wp-admin/admin.php?page=despace-showroom-info`): Cập nhật thông tin Showroom (Số 20 ngách 21 ngõ 367 Ngô Xuân Quảng, Gia Lâm, Hà Nội), Hotline (0332 174 590), Email (noithat@despace.vn) và chức danh Sáng lập & Giám đốc thiết kế.

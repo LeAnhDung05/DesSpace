@@ -1,13 +1,13 @@
 <?php
 /**
- * Furniva template helpers: mega menu, quick view integration, filter sidebar.
+ * DeSpace template helpers: mega menu, quick view integration, filter sidebar.
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /* ---------------------------------------------------------------- Mega menu walker
  * Any depth-0 item carrying the class `furniva-mega` gets a category mega panel.
  */
-class Furniva_Mega_Walker extends Walker_Nav_Menu {
+class DeSpace_Mega_Walker extends Walker_Nav_Menu {
 
 	public function start_lvl( &$output, $depth = 0, $args = null ) {
 		// Mega panel is injected in start_el; nothing to open here.

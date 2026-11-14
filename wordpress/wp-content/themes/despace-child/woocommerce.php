@@ -1,6 +1,6 @@
 <?php
 /**
- * Furniva WooCommerce wrapper — custom shop layout with filter sidebar.
+ * DeSpace WooCommerce wrapper — custom shop layout with filter sidebar.
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -68,7 +68,7 @@ if ( is_singular( 'product' ) ) {
 				<!-- Right: 60% Lifestyle Image -->
 				<div class="f-shop-hero-right">
 					<div class="f-shop-hero-media">
-						<img src="<?php echo esc_url( $hero_image_url ); ?>" alt="<?php echo esc_attr( $title ?: 'AXGNUD Living' ); ?>" class="f-shop-hero-img" loading="eager" />
+						<img src="<?php echo esc_url( $hero_image_url ); ?>" alt="<?php echo esc_attr( $title ?: 'DeSpace Living' ); ?>" class="f-shop-hero-img" loading="eager" />
 						
 						<!-- Floating Trust Card matching user mockup -->
 						<div class="f-hero-trust-card">
@@ -289,7 +289,7 @@ if ( is_singular( 'product' ) ) {
 	$crumb = $title ?: furniva_t( 'Store', 'Cửa hàng' );
 	if ( is_cart() )     { $title = furniva_t( 'Shopping Cart', 'Giỏ hàng' ); $crumb = furniva_t( 'Cart', 'Giỏ hàng' ); }
 	if ( is_checkout() ) { $title = furniva_t( 'Checkout', 'Thanh toán' ); $crumb = furniva_t( 'Checkout', 'Thanh toán' ); }
-	furniva_page_head( $title ?: 'AXGNUD', $crumb );
+	furniva_page_head( $title ?: 'DeSpace', $crumb );
 	?>
 	<div class="f-wrap">
 		<?php woocommerce_content(); ?>

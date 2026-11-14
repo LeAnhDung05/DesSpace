@@ -1,6 +1,6 @@
 <?php
 /**
- * AXGNUD Bilingual Product Display & Search System
+ * DeSpace Bilingual Product Display & Search System
  * Automatically switches Product Name, Short Description, Description
  * based on current language (VI default / EN at /en/ or ?lang=en).
  * Expands search to include Vietnamese names, keywords, and attributes.

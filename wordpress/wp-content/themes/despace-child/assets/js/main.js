@@ -1,4 +1,4 @@
-/* Furniva child theme JS: qty steppers, Buy Now, AJAX shop filter, misc UI. */
+/* DeSpace child theme JS: qty steppers, Buy Now, AJAX shop filter, misc UI. */
 jQuery(function ($) {
 	"use strict";
 
@@ -8,47 +8,6 @@ jQuery(function ($) {
 		$t.text(msg).addClass("show");
 		setTimeout(function () { $t.removeClass("show"); }, 2600);
 	}
-
-	/* ---------------------------------------------------------------- Announcement Dialog */
-	var $announcementDialog = $("#furniva-announcement-dialog");
-	var $dialogContent = $(".fv-announcement-dialog__content");
-
-	// Click on announcement items to open dialog
-	$(document).on("click keydown", ".fv-announcement__item", function (e) {
-		if (e.type === "keydown" && e.key !== "Enter" && e.key !== " ") return;
-		e.preventDefault();
-
-		var $item = $(this);
-		var isVi = typeof furnivaData !== "undefined" && furnivaData.language === "vi";
-		var title = $item.data("dialog-title") || (isVi ? "Thông tin ưu đãi DeSpace" : "DeSpace Special Announcement");
-		var content = $item.data("dialog-content") || $item.text().trim();
-		var action = $item.data("dialog-action") || (isVi ? "Khám phá ngay" : "Explore Now");
-		var actionUrl = $item.data("dialog-url") || ((typeof furnivaData !== "undefined" && furnivaData.shopUrl) ? furnivaData.shopUrl : "/shop/");
-
-		$dialogContent.html(
-			'<h3>' + escapeHtml(title) + '</h3>' +
-			'<p>' + escapeHtml(content) + '</p>' +
-			'<a href="' + actionUrl + '" class="fv-announcement-dialog__action">' +
-			escapeHtml(action) + ' →' +
-			'</a>'
-		);
-
-		if ($announcementDialog.length && typeof $announcementDialog[0].showModal === "function") {
-			$announcementDialog[0].showModal();
-		}
-	});
-
-	// Close dialog handlers
-	$(document).on("click", ".fv-announcement-dialog__close, .fv-announcement-dialog", function (e) {
-		if (e.target === this) {
-			$announcementDialog[0].close();
-		}
-	});
-
-	// Close on Escape
-	$announcementDialog.on("close", function () {
-		$announcementDialog.find(".fv-announcement-dialog__close").focus();
-	});
 
 	/* --------------------------------------------------------- homepage room edit */
 	$(document).on("click", ".f-home-room-tab", function () {
@@ -160,7 +119,7 @@ jQuery(function ($) {
 	});
 
 	/* ---------------------------------------------------------- storefront search */
-	function openFurnivaSearch(e) {
+	function openDeSpaceSearch(e) {
 		if (e && e.preventDefault) e.preventDefault();
 		var $headerBar = $(".fv-header__bar");
 		var $searchBar = $("#fv-header-search-bar");
@@ -186,7 +145,7 @@ jQuery(function ($) {
 		}
 	}
 
-	function closeFurnivaSearch() {
+	function closeDeSpaceSearch() {
 		var $headerBar = $(".fv-header__bar");
 		var $searchBar = $("#fv-header-search-bar");
 		$headerBar.removeClass("is-search-active");
@@ -197,13 +156,13 @@ jQuery(function ($) {
 		if (dialog && dialog.open) dialog.close();
 	}
 
-	$(document).on("click", "#furniva-bnav-search, [data-furniva-search-open]", openFurnivaSearch);
-	$(document).on("click", "[data-furniva-search-close]", closeFurnivaSearch);
+	$(document).on("click", "#furniva-bnav-search, [data-furniva-search-open]", openDeSpaceSearch);
+	$(document).on("click", "[data-furniva-search-close]", closeDeSpaceSearch);
 
 	// Close on Escape key
 	$(document).on("keydown", function (e) {
 		if (e.key === "Escape" && $(".fv-header__bar").hasClass("is-search-active")) {
-			closeFurnivaSearch();
+			closeDeSpaceSearch();
 		}
 	});
 
@@ -211,7 +170,7 @@ jQuery(function ($) {
 	$(document).on("click", function (e) {
 		if ($(".fv-header__bar").hasClass("is-search-active")) {
 			if (!$(e.target).closest(".fv-header__bar, #furniva-bnav-search, [data-furniva-search-open]").length) {
-				closeFurnivaSearch();
+				closeDeSpaceSearch();
 			}
 		}
 	});
@@ -220,7 +179,7 @@ jQuery(function ($) {
 		$(".fv-header").removeClass("is-search-open");
 	});
 	$("#furniva-search-dialog").on("click", function (e) {
-		if (e.target === this) closeFurnivaSearch();
+		if (e.target === this) closeDeSpaceSearch();
 	});
 
 	$("#dgwt-wcas-search-input-1, .dgwt-wcas-search-input").attr({
@@ -882,6 +841,10 @@ jQuery(function ($) {
 		};
 
 		var checkSticky = function () {
+			if ($(window).scrollTop() < 450) {
+				$stickyBar.removeClass("is-visible");
+				return;
+			}
 			var $target = getMainBuy();
 			if ($target.length && $target.is(":visible")) {
 				var targetOffset = $target.offset();
@@ -1006,7 +969,7 @@ jQuery(function ($) {
 		if (!this.contains(e.relatedTarget)) setRoomRecommendations($(this), false);
 	});
 
-	/* ---------------------------------------------------------------- AXGNUD Luxury Wishlist & Cart Interactivity */
+	/* ---------------------------------------------------------------- DeSpace Luxury Wishlist & Cart Interactivity */
 	function showAxToast(msg) {
 		var $t = $("#axToast, #axCartToast");
 		if (!$t.length) {

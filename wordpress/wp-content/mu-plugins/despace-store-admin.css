@@ -1,4 +1,4 @@
-/* Keep the admin navigation consistent with Furniva's warm, restrained palette. */
+/* Keep the admin navigation consistent with DeSpace's warm, restrained palette. */
 #adminmenuback,
 #adminmenuwrap,
 #adminmenu {
@@ -71,34 +71,34 @@ body.index-php #wpbody-content .notice {
 	margin: 12px 20px 12px 0;
 }
 
-.furniva-admin-dashboard {
-	--furniva-ink: #282721;
-	--furniva-muted: #77746c;
-	--furniva-line: #e9e5dc;
-	--furniva-paper: #fffefa;
-	--furniva-accent: #a67645;
+.despace-admin-dashboard {
+	--despace-ink: #282721;
+	--despace-muted: #77746c;
+	--despace-line: #e9e5dc;
+	--despace-paper: #fffefa;
+	--despace-accent: #a67645;
 	width: calc(100% - 20px);
 	max-width: 1580px;
 	margin: 0 20px 32px 0;
-	color: var(--furniva-ink);
+	color: var(--despace-ink);
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-.furniva-admin-dashboard * {
+.despace-admin-dashboard * {
 	box-sizing: border-box;
 }
 
-.furniva-admin-dashboard a {
+.despace-admin-dashboard a {
 	color: inherit;
 	text-decoration: none;
 }
 
-.furniva-admin-dashboard a:focus-visible {
+.despace-admin-dashboard a:focus-visible {
 	outline: 2px solid #8f6338;
 	outline-offset: 3px;
 }
 
-.furniva-admin-hero {
+.despace-admin-hero {
 	display: flex;
 	align-items: flex-end;
 	justify-content: space-between;
@@ -112,11 +112,11 @@ body.index-php #wpbody-content .notice {
 	color: #fbf9f4;
 }
 
-.furniva-admin-hero__copy {
+.despace-admin-hero__copy {
 	max-width: 760px;
 }
 
-.furniva-admin-eyebrow {
+.despace-admin-eyebrow {
 	margin: 0 0 12px;
 	color: #d4b58d;
 	font-size: 10px;
@@ -124,12 +124,12 @@ body.index-php #wpbody-content .notice {
 	letter-spacing: .17em;
 }
 
-.furniva-admin-eyebrow span {
+.despace-admin-eyebrow span {
 	padding: 0 4px;
 	color: #a18a6c;
 }
 
-.furniva-admin-hero h1 {
+.despace-admin-hero h1 {
 	margin: 0;
 	color: #fbf9f4;
 	font-family: Georgia, "Times New Roman", serif;
@@ -139,33 +139,33 @@ body.index-php #wpbody-content .notice {
 	line-height: 1.16;
 }
 
-.furniva-admin-hero h1 em {
+.despace-admin-hero h1 em {
 	color: #d6c3a9;
 	font-weight: 400;
 }
 
-.furniva-admin-hero__description {
+.despace-admin-hero__description {
 	margin: 12px 0 0;
 	color: #d0cec7;
 	font-size: 13px;
 	line-height: 1.6;
 }
 
-.furniva-admin-date {
+.despace-admin-date {
 	margin: 14px 0 0;
 	color: #aaa89f;
 	font-size: 11px;
 	letter-spacing: .04em;
 }
 
-.furniva-admin-hero__actions {
+.despace-admin-hero__actions {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 10px;
 	flex: 0 0 auto;
 }
 
-.furniva-admin-button {
+.despace-admin-button {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -178,82 +178,82 @@ body.index-php #wpbody-content .notice {
 	transition: background-color .15s ease, border-color .15s ease, color .15s ease;
 }
 
-.furniva-admin-button--light {
+.despace-admin-button--light {
 	background: #f3e8d8;
 	color: #352b20 !important;
 }
 
-.furniva-admin-button--light:hover {
+.despace-admin-button--light:hover {
 	background: #fff7eb;
 }
 
-.furniva-admin-button--outline {
+.despace-admin-button--outline {
 	border-color: #68665d;
 	background: transparent;
 	color: #f8f5ee !important;
 }
 
-.furniva-admin-button--outline:hover {
+.despace-admin-button--outline:hover {
 	border-color: #c4a77f;
 	background: #35352e;
 }
 
-.furniva-admin-button--dark {
+.despace-admin-button--dark {
 	background: #2d2d27;
 	color: #fffefa !important;
 }
 
-.furniva-admin-button--dark:hover {
+.despace-admin-button--dark:hover {
 	background: #4a463d;
 }
 
-.furniva-admin-stats {
+.despace-admin-stats {
 	display: grid;
 	grid-template-columns: repeat(5, minmax(0, 1fr));
 	gap: 12px;
 	margin: 14px 0;
 }
 
-.furniva-admin-stat {
+.despace-admin-stat {
 	display: flex;
 	min-height: 142px;
 	flex-direction: column;
 	align-items: flex-start;
 	padding: 19px 20px 17px;
-	border: 1px solid var(--furniva-line);
+	border: 1px solid var(--despace-line);
 	border-radius: 6px;
-	background: var(--furniva-paper);
+	background: var(--despace-paper);
 	transition: border-color .15s ease, transform .15s ease;
 }
 
-.furniva-admin-stat:hover {
+.despace-admin-stat:hover {
 	transform: translateY(-2px);
 	border-color: #d2c4ae;
 }
 
-.furniva-admin-stat--priority {
+.despace-admin-stat--priority {
 	border-top: 2px solid #b08352;
 }
 
-.furniva-admin-stat--pending {
+.despace-admin-stat--pending {
 	border-top: 2px solid #c29b6c;
 }
 
-.furniva-admin-stat--hold {
+.despace-admin-stat--hold {
 	border-top: 2px solid #9c786c;
 }
 
-.furniva-admin-stat--stock {
+.despace-admin-stat--stock {
 	border-top: 2px solid #8d9b84;
 }
 
-.furniva-admin-stat__label {
+.despace-admin-stat__label {
 	color: #67645d;
 	font-size: 12px;
 	font-weight: 600;
 }
 
-.furniva-admin-stat__value {
+.despace-admin-stat__value {
 	margin-top: 7px;
 	color: #24231e;
 	font-family: Georgia, "Times New Roman", serif;
@@ -262,30 +262,30 @@ body.index-php #wpbody-content .notice {
 	line-height: 1.1;
 }
 
-.furniva-admin-stat__note {
+.despace-admin-stat__note {
 	margin-top: 8px;
 	color: #89867e;
 	font-size: 11px;
 	line-height: 1.4;
 }
 
-.furniva-admin-main-grid,
-.furniva-admin-lower-grid {
+.despace-admin-main-grid,
+.despace-admin-lower-grid {
 	display: grid;
 	grid-template-columns: minmax(0, 1.8fr) minmax(300px, .9fr);
 	gap: 14px;
 	margin-top: 14px;
 }
 
-.furniva-admin-panel {
+.despace-admin-panel {
 	min-width: 0;
 	padding: 23px 24px;
-	border: 1px solid var(--furniva-line);
+	border: 1px solid var(--despace-line);
 	border-radius: 6px;
-	background: var(--furniva-paper);
+	background: var(--despace-paper);
 }
 
-.furniva-admin-panel__heading {
+.despace-admin-panel__heading {
 	display: flex;
 	align-items: flex-end;
 	justify-content: space-between;
@@ -293,13 +293,13 @@ body.index-php #wpbody-content .notice {
 	margin-bottom: 16px;
 }
 
-.furniva-admin-eyebrow--muted {
+.despace-admin-eyebrow--muted {
 	margin-bottom: 7px;
 	color: #9a7957;
 	font-size: 9px;
 }
 
-.furniva-admin-panel h3 {
+.despace-admin-panel h3 {
 	margin: 0;
 	color: #302e28;
 	font-family: Georgia, "Times New Roman", serif;
@@ -308,28 +308,28 @@ body.index-php #wpbody-content .notice {
 	letter-spacing: -.02em;
 }
 
-.furniva-admin-text-link {
+.despace-admin-text-link {
 	flex: 0 0 auto;
 	color: #815a35 !important;
 	font-size: 11px;
 	font-weight: 600;
 }
 
-.furniva-admin-text-link span {
+.despace-admin-text-link span {
 	padding-left: 4px;
 }
 
-.furniva-admin-table-wrap {
+.despace-admin-table-wrap {
 	overflow-x: auto;
 }
 
-.furniva-admin-table {
+.despace-admin-table {
 	width: 100%;
 	border-collapse: collapse;
 	text-align: left;
 }
 
-.furniva-admin-table th {
+.despace-admin-table th {
 	padding: 10px 12px;
 	border-top: 1px solid #eeeae2;
 	border-bottom: 1px solid #e9e5dc;
@@ -341,7 +341,7 @@ body.index-php #wpbody-content .notice {
 	white-space: nowrap;
 }
 
-.furniva-admin-table td {
+.despace-admin-table td {
 	padding: 13px 12px;
 	border-bottom: 1px solid #efede7;
 	color: #4d4a43;
@@ -349,23 +349,23 @@ body.index-php #wpbody-content .notice {
 	white-space: nowrap;
 }
 
-.furniva-admin-table tbody tr:last-child td {
+.despace-admin-table tbody tr:last-child td {
 	border-bottom: 0;
 }
 
-.furniva-admin-order-number {
+.despace-admin-order-number {
 	color: #6e4d2f !important;
 	font-weight: 700;
 }
 
-.furniva-admin-table-subtext {
+.despace-admin-table-subtext {
 	display: block;
 	margin-top: 4px;
 	color: #99958d;
 	font-size: 10px;
 }
 
-.furniva-admin-status {
+.despace-admin-status {
 	display: inline-flex;
 	align-items: center;
 	min-height: 23px;
@@ -377,22 +377,22 @@ body.index-php #wpbody-content .notice {
 	font-weight: 600;
 }
 
-.furniva-admin-status--processing {
+.despace-admin-status--processing {
 	background: #edf2e9;
 	color: #53664c;
 }
 
-.furniva-admin-status--pending {
+.despace-admin-status--pending {
 	background: #f8eedf;
 	color: #8a6033;
 }
 
-.furniva-admin-status--on-hold {
+.despace-admin-status--on-hold {
 	background: #f4e9e5;
 	color: #895a49;
 }
 
-.furniva-admin-empty-state {
+.despace-admin-empty-state {
 	display: flex;
 	align-items: center;
 	gap: 14px;
@@ -402,7 +402,7 @@ body.index-php #wpbody-content .notice {
 	background: #fbfaf7;
 }
 
-.furniva-admin-empty-state__mark {
+.despace-admin-empty-state__mark {
 	display: grid;
 	width: 34px;
 	height: 34px;
@@ -413,44 +413,44 @@ body.index-php #wpbody-content .notice {
 	font-weight: 700;
 }
 
-.furniva-admin-empty-state strong {
+.despace-admin-empty-state strong {
 	font-size: 12px;
 }
 
-.furniva-admin-empty-state p {
+.despace-admin-empty-state p {
 	margin: 4px 0 0;
-	color: var(--furniva-muted);
+	color: var(--despace-muted);
 	font-size: 11px;
 }
 
-.furniva-admin-stock-panel {
+.despace-admin-stock-panel {
 	margin-top: 14px;
 }
 
-.furniva-admin-stock-table th:first-child,
-.furniva-admin-stock-table td:first-child {
+.despace-admin-stock-table th:first-child,
+.despace-admin-stock-table td:first-child {
 	min-width: 240px;
 }
 
-.furniva-admin-stock-table td {
+.despace-admin-stock-table td {
 	white-space: normal;
 }
 
-.furniva-admin-stock-quantity {
+.despace-admin-stock-quantity {
 	color: #76512f;
 	font-weight: 700;
 }
 
-.furniva-admin-stock-empty {
+.despace-admin-stock-empty {
 	min-height: 88px;
 }
 
-.furniva-admin-link-list {
+.despace-admin-link-list {
 	display: flex;
 	flex-direction: column;
 }
 
-.furniva-admin-link-list a {
+.despace-admin-link-list a {
 	display: grid;
 	grid-template-columns: 30px minmax(0, 1fr) 14px;
 	align-items: center;
@@ -459,11 +459,11 @@ body.index-php #wpbody-content .notice {
 	border-top: 1px solid #efede7;
 }
 
-.furniva-admin-link-list a:first-child {
+.despace-admin-link-list a:first-child {
 	border-top: 0;
 }
 
-.furniva-admin-link-icon {
+.despace-admin-link-icon {
 	display: grid;
 	width: 28px;
 	height: 28px;
@@ -474,38 +474,38 @@ body.index-php #wpbody-content .notice {
 	font-size: 15px;
 }
 
-.furniva-admin-link-list strong,
-.furniva-admin-link-list small {
+.despace-admin-link-list strong,
+.despace-admin-link-list small {
 	display: block;
 }
 
-.furniva-admin-link-list strong {
+.despace-admin-link-list strong {
 	color: #38362f;
 	font-size: 11px;
 	font-weight: 600;
 }
 
-.furniva-admin-link-list small {
+.despace-admin-link-list small {
 	margin-top: 3px;
 	color: #89867f;
 	font-size: 10px;
 }
 
-.furniva-admin-link-arrow {
+.despace-admin-link-arrow {
 	color: #9d8a72;
 	font-size: 15px;
 }
 
-.furniva-admin-link-list a:hover strong,
-.furniva-admin-link-list a:hover .furniva-admin-link-arrow {
+.despace-admin-link-list a:hover strong,
+.despace-admin-link-list a:hover .despace-admin-link-arrow {
 	color: #825d38;
 }
 
-.furniva-admin-lower-grid {
+.despace-admin-lower-grid {
 	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
-.furniva-admin-content-summary {
+.despace-admin-content-summary {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -513,7 +513,7 @@ body.index-php #wpbody-content .notice {
 	padding-top: 6px;
 }
 
-.furniva-admin-content-summary p {
+.despace-admin-content-summary p {
 	max-width: 460px;
 	margin: 0;
 	color: #77736b;
@@ -521,15 +521,15 @@ body.index-php #wpbody-content .notice {
 	line-height: 1.7;
 }
 
-.furniva-admin-content-summary strong {
+.despace-admin-content-summary strong {
 	color: #35332d;
 }
 
-.furniva-admin-content-summary .furniva-admin-button {
+.despace-admin-content-summary .despace-admin-button {
 	flex: 0 0 auto;
 }
 
-.furniva-admin-steps {
+.despace-admin-steps {
 	display: grid;
 	gap: 10px;
 	margin: 4px 0 15px;
@@ -537,37 +537,37 @@ body.index-php #wpbody-content .notice {
 	list-style: none;
 }
 
-.furniva-admin-steps li {
+.despace-admin-steps li {
 	display: grid;
 	grid-template-columns: 28px minmax(0, 1fr);
 	align-items: start;
 	gap: 10px;
 }
 
-.furniva-admin-steps li > span {
+.despace-admin-steps li > span {
 	padding-top: 1px;
 	color: #a17d56;
 	font-family: Georgia, "Times New Roman", serif;
 	font-size: 13px;
 }
 
-.furniva-admin-steps p {
+.despace-admin-steps p {
 	margin: 0;
 	color: #77736b;
 	font-size: 11px;
 	line-height: 1.55;
 }
 
-.furniva-admin-steps strong {
+.despace-admin-steps strong {
 	color: #34322d;
 }
 
-.furniva-admin-guide__link {
+.despace-admin-guide__link {
 	display: inline-block;
 	padding-top: 2px;
 }
 
-.furniva-admin-footer {
+.despace-admin-footer {
 	display: flex;
 	justify-content: space-between;
 	gap: 16px;
@@ -577,18 +577,18 @@ body.index-php #wpbody-content .notice {
 	letter-spacing: .04em;
 }
 
-.furniva-admin-footer span:first-child {
+.despace-admin-footer span:first-child {
 	color: #9a7957;
 	font-weight: 700;
 	letter-spacing: .15em;
 }
 
-.furniva-admin-footer a {
+.despace-admin-footer a {
 	color: #815a35 !important;
 	font-weight: 600;
 }
 
-.furniva-admin-footer i {
+.despace-admin-footer i {
 	padding: 0 5px;
 	font-style: normal;
 }
@@ -630,8 +630,8 @@ body.post-type-product .wp-list-table td {
 }
 
 /* Make the order list easier to scan while keeping WooCommerce's own controls. */
-body.post-type-shop_order .wp-list-table .column-furniva_customer,
-body.woocommerce_page_wc-orders .wp-list-table .column-furniva_customer {
+body.post-type-shop_order .wp-list-table .column-despace_customer,
+body.woocommerce_page_wc-orders .wp-list-table .column-despace_customer {
 	min-width: 220px;
 }
 
@@ -660,21 +660,21 @@ body.woocommerce_page_wc-orders .wp-list-table td {
 	vertical-align: middle;
 }
 
-.furniva-order-customer {
+.despace-order-customer {
 	line-height: 1.45;
 }
 
-.furniva-order-customer__name,
-.furniva-order-customer__detail {
+.despace-order-customer__name,
+.despace-order-customer__detail {
 	display: block;
 }
 
-.furniva-order-customer__name {
+.despace-order-customer__name {
 	color: #34322d;
 	font-size: 12px;
 }
 
-.furniva-order-customer__detail {
+.despace-order-customer__detail {
 	margin-top: 3px;
 	color: #77736b !important;
 	font-size: 11px;
@@ -721,20 +721,20 @@ body.woocommerce_page_wc-orders .wp-list-table mark.order-status.status-on-hold 
 }
 
 @media (max-width: 1200px) {
-	.furniva-admin-hero {
+	.despace-admin-hero {
 		padding: 30px;
 	}
 
-	.furniva-admin-stats {
+	.despace-admin-stats {
 		grid-template-columns: repeat(3, minmax(0, 1fr));
 	}
 
-	.furniva-admin-main-grid {
+	.despace-admin-main-grid {
 		grid-template-columns: minmax(0, 1.5fr) minmax(280px, .9fr);
 	}
 
-	.furniva-admin-table th,
-	.furniva-admin-table td {
+	.despace-admin-table th,
+	.despace-admin-table td {
 		padding-right: 9px;
 		padding-left: 9px;
 	}
@@ -745,27 +745,27 @@ body.woocommerce_page_wc-orders .wp-list-table mark.order-status.status-on-hold 
 		padding-left: 12px;
 	}
 
-	.furniva-admin-dashboard {
+	.despace-admin-dashboard {
 	width: calc(100% - 12px);
 		margin-right: 12px;
 	}
 
-	.furniva-admin-hero {
+	.despace-admin-hero {
 		align-items: flex-start;
 		flex-direction: column;
 	}
 
-	.furniva-admin-hero__copy,
-	.furniva-admin-hero__actions {
+	.despace-admin-hero__copy,
+	.despace-admin-hero__actions {
 		width: 100%;
 	}
 
-	.furniva-admin-main-grid,
-	.furniva-admin-lower-grid {
+	.despace-admin-main-grid,
+	.despace-admin-lower-grid {
 		grid-template-columns: minmax(0, 1fr);
 	}
 
-	.furniva-admin-orders {
+	.despace-admin-orders {
 		order: 1;
 	}
 }
@@ -780,12 +780,12 @@ body.woocommerce_page_wc-orders .wp-list-table mark.order-status.status-on-hold 
 		font-size: 22px;
 	}
 
-	.furniva-admin-dashboard {
+	.despace-admin-dashboard {
 		width: calc(100% - 8px);
 		margin-right: 8px;
 	}
 
-	.furniva-admin-hero {
+	.despace-admin-hero {
 		align-items: flex-start;
 		flex-direction: column;
 		gap: 22px;
@@ -793,50 +793,50 @@ body.woocommerce_page_wc-orders .wp-list-table mark.order-status.status-on-hold 
 		padding: 25px 22px;
 	}
 
-	.furniva-admin-hero h1 {
+	.despace-admin-hero h1 {
 		font-size: 29px;
 	}
 
-	.furniva-admin-hero__actions {
+	.despace-admin-hero__actions {
 		width: 100%;
 	}
 
-	.furniva-admin-button {
+	.despace-admin-button {
 		min-height: 38px;
 	}
 
-	.furniva-admin-stats {
+	.despace-admin-stats {
 		gap: 8px;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
-	.furniva-admin-stat {
+	.despace-admin-stat {
 		min-height: 126px;
 		padding: 15px;
 	}
 
-	.furniva-admin-stat__value {
+	.despace-admin-stat__value {
 		font-size: 28px;
 	}
 
-	.furniva-admin-panel {
+	.despace-admin-panel {
 		padding: 19px 16px;
 	}
 
-	.furniva-admin-panel__heading {
+	.despace-admin-panel__heading {
 		align-items: flex-start;
 	}
 
-	.furniva-admin-panel h3 {
+	.despace-admin-panel h3 {
 		font-size: 19px;
 	}
 
-	.furniva-admin-content-summary {
+	.despace-admin-content-summary {
 		align-items: flex-start;
 		flex-direction: column;
 	}
 
-	.furniva-admin-footer {
+	.despace-admin-footer {
 		flex-direction: column;
 		gap: 7px;
 	}

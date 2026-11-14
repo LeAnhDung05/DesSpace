@@ -1,6 +1,6 @@
 <?php
 /**
- * Furniva storefront footer, adapted to local WordPress and WooCommerce pages.
+ * DeSpace storefront footer, adapted to local WordPress and WooCommerce pages.
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -40,8 +40,8 @@ foreach ( $chat_products as $chat_product ) {
 ?>
 <?php if ( ! is_front_page() ) : ?></main><?php else : ?></main><?php endif; ?>
 
-<!-- AXGNUD Core Brand Commitments / Trust Bar (From Official Brand Identity) -->
-<section class="fv-trust-bar" aria-label="<?php echo esc_attr( furniva_t( 'AXGNUD Commitments', 'Cam kết thương hiệu AXGNUD' ) ); ?>">
+<!-- DeSpace Core Brand Commitments / Trust Bar (From Official Brand Identity) -->
+<section class="fv-trust-bar" aria-label="<?php echo esc_attr( furniva_t( 'DeSpace Commitments', 'Cam kết thương hiệu DeSpace' ) ); ?>">
 	<div class="fv-wrap fv-trust-bar__inner">
 		<div class="fv-trust-item">
 			<span class="fv-trust-icon" aria-hidden="true">
@@ -85,12 +85,12 @@ foreach ( $chat_products as $chat_product ) {
 <footer class="fv-footer">
 	<div class="fv-wrap fv-footer__grid">
 		<div class="fv-footer__brand">
-			<a class="fv-footer__brand-link" href="<?php echo esc_url( home_url( '/' ) ); ?>" aria-label="AXGNUD — <?php echo esc_attr( furniva_t( 'Home', 'Trang chủ' ) ); ?>">
+			<a class="fv-footer__brand-link" href="<?php echo esc_url( home_url( '/' ) ); ?>" aria-label="DeSpace — <?php echo esc_attr( furniva_t( 'Home', 'Trang chủ' ) ); ?>">
 				<?php $logo_id = get_theme_mod( 'custom_logo' ); ?>
 				<?php if ( $logo_id ) : ?>
-					<?php echo wp_get_attachment_image( $logo_id, 'full', false, array( 'alt' => 'AXGNUD' ) ); ?>
+					<?php echo wp_get_attachment_image( $logo_id, 'full', false, array( 'alt' => 'DeSpace' ) ); ?>
 				<?php else : ?>
-					<img class="fv-brand-logo-img fv-brand-logo-img--footer" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/axgnud-logo-header.png' ); ?>" alt="AXGNUD - Luxury Living, Lasting Value" width="160" height="110" />
+					<img class="fv-brand-logo-img fv-brand-logo-img--footer" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/despace-logo-header.png' ); ?>" alt="DeSpace - Luxury Living, Lasting Value" width="168" height="56" />
 				<?php endif; ?>
 			</a>
 			<p><?php echo esc_html( furniva_t( 'Thoughtful furniture for the moments that make a home.', 'Nội thất được chọn lọc cho những khoảnh khắc làm nên tổ ấm.' ) ); ?></p>
@@ -150,7 +150,7 @@ foreach ( $chat_products as $chat_product ) {
 				</li>
 			</ul>
 			<div class="fv-footer__owner-channels">
-				<a class="fv-owner-badge-link fv-owner-badge-link--zalo" href="https://zalo.me/0332174590" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr( furniva_t( 'Contact AXGNUD on Zalo', 'Liên hệ AXGNUD qua Zalo' ) ); ?>">
+				<a class="fv-owner-badge-link fv-owner-badge-link--zalo" href="https://zalo.me/0332174590" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr( furniva_t( 'Contact DeSpace on Zalo', 'Liên hệ DeSpace qua Zalo' ) ); ?>">
 					<svg class="fv-social-svg" viewBox="0 0 48 48" width="18" height="18" fill="none" aria-hidden="true">
 						<rect width="48" height="48" rx="12" fill="#0068FF"/>
 						<path d="M11 26.5C11 20.15 16.37 15 23 15C29.63 15 35 20.15 35 26.5C35 32.85 29.63 38 23 38C20.85 38 18.83 37.46 17.07 36.51L11.5 38L13.13 33.15C11.79 31.25 11 28.98 11 26.5Z" fill="white"/>
@@ -158,7 +158,7 @@ foreach ( $chat_products as $chat_product ) {
 					</svg>
 					<span>Zalo</span>
 				</a>
-				<a class="fv-owner-badge-link fv-owner-badge-link--facebook" href="https://www.facebook.com/Anhdungx05/" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr( furniva_t( 'Contact AXGNUD on Facebook', 'Liên hệ AXGNUD qua Facebook' ) ); ?>">
+				<a class="fv-owner-badge-link fv-owner-badge-link--facebook" href="https://www.facebook.com/Anhdungx05/" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr( furniva_t( 'Contact DeSpace on Facebook', 'Liên hệ DeSpace qua Facebook' ) ); ?>">
 					<svg class="fv-social-svg" viewBox="0 0 48 48" width="18" height="18" fill="none" aria-hidden="true">
 						<circle cx="24" cy="24" r="24" fill="#1877F2"/>
 						<path d="M29.5 25.1l.8-5.3h-5.1v-3.4c0-1.5.7-2.9 3.1-2.9h2.4V9c-.4-.1-1.9-.3-3.7-.3-3.8 0-6.3 2.3-6.3 6.5v3.6h-4.7v5.3h4.7v12.8c.9.1 1.9.2 2.9.2s2-.1 2.9-.2V25.1h4.1z" fill="white"/>
@@ -169,7 +169,7 @@ foreach ( $chat_products as $chat_product ) {
 		</div>
 
 		<div class="fv-footer__column fv-footer__newsletter">
-			<h2><?php echo esc_html( furniva_t( 'A note from AXGNUD', 'Bản tin AXGNUD' ) ); ?></h2>
+			<h2><?php echo esc_html( furniva_t( 'A note from DeSpace', 'Bản tin DeSpace' ) ); ?></h2>
 			<p><?php echo esc_html( furniva_t( 'Occasional notes on new pieces, thoughtful spaces and studio news.', 'Cập nhật vừa đủ về sản phẩm mới, không gian sống và tin tức từ studio.' ) ); ?></p>
 			<form id="furniva-newsletter">
 				<input type="email" placeholder="<?php echo esc_attr( furniva_t( 'Your email address', 'Địa chỉ email của bạn' ) ); ?>" required />
@@ -181,7 +181,7 @@ foreach ( $chat_products as $chat_product ) {
 	</div>
 
 	<div class="fv-wrap fv-footer__legal">
-		<span>© <?php echo esc_html( gmdate( 'Y' ) ); ?> AXGNUD — <?php echo esc_html( furniva_t( 'All rights reserved.', 'Bảo lưu mọi quyền.' ) ); ?></span>
+		<span>© <?php echo esc_html( gmdate( 'Y' ) ); ?> DeSpace — <?php echo esc_html( furniva_t( 'All rights reserved.', 'Bảo lưu mọi quyền.' ) ); ?></span>
 		<div class="f-payments" aria-label="<?php echo esc_attr( furniva_t( 'Available payment methods', 'Phương thức thanh toán' ) ); ?>">
 			<!-- Official VISA Badge -->
 			<span class="f-payment f-payment--visa" role="img" aria-label="VISA" title="VISA Card">
@@ -282,16 +282,16 @@ foreach ( $chat_products as $chat_product ) {
 	</div>
 	<section class="ax-chat-panel" id="ax-chat-panel" aria-labelledby="ax-chat-title" aria-hidden="true" hidden>
 		<header class="ax-chat-panel__head">
-			<img class="ax-chat-panel__avatar" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/axgnud-app-icon-dark.png' ); ?>" alt="AXGNUD AI Assistant" width="40" height="40" />
+			<img class="ax-chat-panel__avatar" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/despace-mark.png' ); ?>" alt="DeSpace AI Assistant" width="40" height="40" />
 			<div>
-				<h2 id="ax-chat-title"><?php echo esc_html( furniva_t( 'AXGNUD AI Assistant', 'Trợ lý AI AXGNUD' ) ); ?></h2>
+				<h2 id="ax-chat-title"><?php echo esc_html( furniva_t( 'DeSpace AI Assistant', 'Trợ lý AI DeSpace' ) ); ?></h2>
 				<p><?php echo esc_html( furniva_t( 'Instant catalog styling & shopping guide', 'Tư vấn sản phẩm & phối không gian sống' ) ); ?></p>
 			</div>
 			<button class="ax-chat-close" type="button" aria-label="<?php echo esc_attr( furniva_t( 'Close chat', 'Đóng trò chuyện' ) ); ?>">×</button>
 		</header>
 		<div class="ax-chat-messages" id="ax-chat-messages" role="log" aria-live="polite">
 			<div class="ax-chat-message ax-chat-message--assistant">
-				<?php echo esc_html( furniva_t( 'Hello! I am AXGNUD AI Assistant ✦. Tell me what room or furniture piece you are looking for, and I will recommend our best pieces.', 'Xin chào! Tôi là Trợ lý AI AXGNUD ✦. Bạn đang tìm nội thất cho phòng khách, phòng ngủ hay phòng ăn? Tôi có thể gợi ý những mẫu thiết kế cao cấp phù hợp nhất cho không gian của bạn!' ) ); ?>
+				<?php echo esc_html( furniva_t( 'Hello! I am DeSpace AI Assistant ✦. Tell me what room or furniture piece you are looking for, and I will recommend our best pieces.', 'Xin chào! Tôi là Trợ lý AI DeSpace ✦. Bạn đang tìm nội thất cho phòng khách, phòng ngủ hay phòng ăn? Tôi có thể gợi ý những mẫu thiết kế cao cấp phù hợp nhất cho không gian của bạn!' ) ); ?>
 			</div>
 		</div>
 		<div class="ax-chat-prompts">
@@ -311,11 +311,11 @@ foreach ( $chat_products as $chat_product ) {
 				</svg>
 			</button>
 		</form>
-		<p class="ax-chat-note"><?php echo esc_html( furniva_t( 'AI Assistant: live recommendations from AXGNUD collection.', 'Trợ lý AI: gợi ý sản phẩm trực tiếp từ bộ sưu tập AXGNUD.' ) ); ?></p>
+		<p class="ax-chat-note"><?php echo esc_html( furniva_t( 'AI Assistant: live recommendations from DeSpace collection.', 'Trợ lý AI: gợi ý sản phẩm trực tiếp từ bộ sưu tập DeSpace.' ) ); ?></p>
 	</section>
 	<button class="ax-chat-toggle" type="button" id="ax-chat-toggle" aria-expanded="false" aria-controls="ax-chat-panel" aria-label="<?php echo esc_attr( furniva_t( 'Open shopping assistant', 'Mở trợ lý mua sắm' ) ); ?>" title="<?php echo esc_attr( furniva_t( 'Chat with shopping assistant', 'Trò chuyện với trợ lý mua sắm' ) ); ?>">
 		<div class="ax-chat-mascot-wrapper">
-			<img class="ax-chat-mascot-img" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/axgnud-app-icon-dark.png' ); ?>" alt="AXGNUD AI Assistant" width="48" height="48" />
+			<img class="ax-chat-mascot-img" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/despace-mark.png' ); ?>" alt="DeSpace AI Assistant" width="48" height="48" />
 		</div>
 		<svg class="ax-chat-toggle__close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
 			<path d="m6 6 12 12M18 6 6 18"/>

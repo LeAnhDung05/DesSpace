@@ -1,7 +1,7 @@
 <?php
 /**
- * Furniva - Cart Page
- * Premium design matching AXGNUD aesthetic
+ * DeSpace - Cart Page
+ * Premium design matching DeSpace aesthetic
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;

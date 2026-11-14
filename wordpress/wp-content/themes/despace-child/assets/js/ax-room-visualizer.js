@@ -1,5 +1,5 @@
 /**
- * AXGNUD Luxury — 3D Product Viewer & Real Augmented Reality (AR) Engine
+ * DeSpace Luxury — 3D Product Viewer & Real Augmented Reality (AR) Engine
  * - Google <model-viewer> 360° PBR 3D Viewer with real 1:1 scale
  * - Apple AR Quick Look for iOS (USDZ)
  * - Google Scene Viewer / ARCore for Android (GLB)
@@ -90,7 +90,7 @@
 
   function extractProductData($elem) {
     var id = $elem.data('product-id') || $('input[name="product_id"]').val() || 0;
-    var name = $elem.data('product-name') || $('.product_title').first().text().trim() || 'AXGNUD Luxury Product';
+    var name = $elem.data('product-name') || $('.product_title').first().text().trim() || 'DeSpace Luxury Product';
     
     // Clean, consistent price formatting
     var price = $elem.data('product-price') || '';
@@ -233,7 +233,7 @@
   }
 
   function onModelError(err) {
-    console.warn('[AXGNUD 3D] Failed to load model:', err);
+    console.warn('[DeSpace 3D] Failed to load model:', err);
     state.modelLoaded = false;
     $('#ax3DLoadingOverlay').hide();
     $('#ax3DErrorOverlay').fadeIn(150);
@@ -453,7 +453,7 @@
           mv.activateAR();
           return;
         } catch (err) {
-          console.warn('[AXGNUD AR] ModelViewer activateAR failed, falling back to Intent:', err);
+          console.warn('[DeSpace AR] ModelViewer activateAR failed, falling back to Intent:', err);
         }
       }
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * My Addresses — AXGNUD Luxury Edition
+ * My Addresses — DeSpace Luxury Edition
  *
  * @see     https://woocommerce.com/document/template-structure/
  * @package WooCommerce\Templates

@@ -1,6 +1,6 @@
 <?php
 /**
- * Orders — AXGNUD Luxury Edition
+ * Orders — DeSpace Luxury Edition
  *
  * Shows orders on the account page.
  *
@@ -97,7 +97,7 @@ do_action( 'woocommerce_before_account_orders', $has_orders ); ?>
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
 			</div>
 			<h4 class="ax-empty-title"><?php echo esc_html( furniva_t( 'No Orders Placed Yet', 'Quý Khách Chưa Có Đơn Hàng Nào' ) ); ?></h4>
-			<p class="ax-empty-text"><?php echo esc_html( furniva_t( 'Browse our signature storage, wardrobes, and bookshelves to begin furnishing your space.', 'Khám phá ngay các bộ sưu tập nội thất tủ kệ kiến trúc AXGNUD để bắt đầu hoàn thiện không gian sống.' ) ); ?></p>
+			<p class="ax-empty-text"><?php echo esc_html( furniva_t( 'Browse our signature storage, wardrobes, and bookshelves to begin furnishing your space.', 'Khám phá ngay các bộ sưu tập nội thất tủ kệ kiến trúc DeSpace để bắt đầu hoàn thiện không gian sống.' ) ); ?></p>
 			<a href="<?php echo esc_url( wc_get_page_permalink( 'shop' ) ); ?>" class="ax-empty-btn">
 				<span><?php echo esc_html( furniva_t( 'Explore Catalogue', 'Khám Phá Cửa Hàng' ) ); ?></span>
 				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
