@@ -181,8 +181,8 @@ function furniva_assets() {
 		}
 	}
 
-	// AXGNUD Architectural Room Visualizer CSS & JS
-	if ( is_singular( 'product' ) || is_page_template( 'page-ar-visualizer.php' ) ) {
+	// DeSpace Architectural 3D & AR Studio CSS & JS (Enqueued on single products, catalog & homepage)
+	if ( is_singular( 'product' ) || is_shop() || is_product_taxonomy() || is_front_page() || is_page( 'cua-hang' ) || is_page( 'shop' ) || is_page_template( 'templates/page-ar-visualizer.php' ) || is_page_template( 'page-ar-visualizer.php' ) ) {
 		// Enqueue Google <model-viewer>
 		wp_enqueue_script(
 			'google-model-viewer',

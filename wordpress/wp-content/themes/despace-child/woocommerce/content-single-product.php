@@ -561,6 +561,4 @@ jQuery(function($) {
 });
 </script>
 
-<?php get_template_part( 'template-parts/modal-room-visualizer' ); ?>
-
 <?php do_action( 'woocommerce_after_single_product' ); ?>

@@ -43,6 +43,27 @@ $colors       = wc_get_product_terms( $id, 'pa_color' );
 
 			<div class="f-card-actions">
 				<?php
+				// 3D Preview button
+				$card_3d = function_exists( 'ax_get_product_3d_info' ) ? ax_get_product_3d_info( $id ) : array();
+				if ( ! empty( $card_3d['glb_url'] ) ) :
+				?>
+					<button type="button" class="f-card-3d-btn ax-open-3d-btn"
+						data-product-id="<?php echo esc_attr( $id ); ?>"
+						data-product-name="<?php echo esc_attr( $product->get_name() ); ?>"
+						data-product-price="<?php echo esc_attr( wp_strip_all_tags( wc_price( $product->get_price() ) ) ); ?>"
+						data-product-image="<?php echo esc_url( wp_get_attachment_image_url( $product->get_image_id(), 'large' ) ); ?>"
+						data-has-3d="yes"
+						data-ar-enabled="<?php echo ! empty( $card_3d['ar_enabled'] ) ? 'yes' : 'no'; ?>"
+						data-glb-url="<?php echo esc_url( $card_3d['glb_url'] ); ?>"
+						data-usdz-url="<?php echo esc_url( $card_3d['usdz_url'] ?? '' ); ?>"
+						data-initial-tab="3d"
+						aria-label="<?php echo esc_attr( furniva_t( 'View 3D Model', 'Xem mô hình 3D' ) ); ?>"
+						title="<?php echo esc_attr( furniva_t( 'View 3D Model', 'Xem mô hình 3D' ) ); ?>">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+						<span>3D</span>
+					</button>
+				<?php endif; ?>
+				<?php
 				// Wishlist (YITH or native fallback).
 				if ( shortcode_exists( 'yith_wcwl_add_to_wishlist' ) ) {
 					echo do_shortcode( '[yith_wcwl_add_to_wishlist product_id="' . $id . '"]' );

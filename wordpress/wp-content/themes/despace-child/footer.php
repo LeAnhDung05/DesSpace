@@ -323,6 +323,11 @@ foreach ( $chat_products as $chat_product ) {
 	</button>
 </div>
 
+<?php
+// Global 3D Product & Real AR Interactive Studio Modal
+get_template_part( 'template-parts/modal-room-visualizer' );
+?>
+
 <?php wp_footer(); ?>
 </body>
 </html>

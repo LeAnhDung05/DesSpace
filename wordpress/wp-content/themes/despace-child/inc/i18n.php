@@ -41,20 +41,54 @@ function furniva_english_titles() {
 	return array(
 		5 => 'Shop', 6 => 'Cart', 7 => 'Checkout', 8 => 'My account', 208 => 'Home', 209 => 'Blog',
 		210 => 'About us', 211 => 'Contact', 212 => 'Shipping & Returns', 213 => 'FAQs', 247 => 'Wishlist',
+		10 => 'Home', 11 => 'About DeSpace', 12 => 'Contact DeSpace',
 		230 => 'How to Choose the Right Lounge Chair for Your Living Room',
 		232 => '5 Ways to Style a Walnut Coffee Table',
 		234 => 'Lighting Layers: How to Light a Living Room Properly',
 		236 => 'Bed Frame Sizes Explained: Queen vs King',
 		238 => 'Small Space, Big Style: Decorating Around a Statement Vase',
 		240 => 'Caring for Oak: A 5-Minute Monthly Routine',
-		148 => 'Arne Dining Chair', 149 => 'Oslo Coffee Table', 150 => 'Haven 2-Seat Sofa',
-		151 => 'Lumi Floor Lamp', 152 => 'Terra Ceramic Vase', 153 => 'Nimbus Bed Frame – Queen',
-		154 => 'Fold Oak Side Table', 155 => 'Rattan Accent Chair', 156 => 'Halo Pendant Light',
-		157 => 'Linen Throw Pillow Set (2 pcs)', 158 => 'Willow Writing Desk', 159 => 'Nordic Bedside Table',
-		160 => 'Amber Table Lamp', 161 => 'Geometric Wall Art', 162 => 'Modern Lounge Chair',
-		172 => 'Fabric Sectional Sofa', 179 => 'Aurora Bed Frame', 184 => 'Ergo Study Desk',
-		189 => 'Dome Table Lamp', 193 => 'Arc Dining Chair', 197 => 'Sphere Pendant Light',
-		204 => 'Velvet Accent Armchair',
+		// DeSpace 40 Core Luxury Products
+		467 => 'DeSpace Regal 6-Drawer Dresser - Sonoma Oak',
+		455 => 'DeSpace Sera 5-Drawer High Chest - Mocha Walnut',
+		446 => 'DeSpace Iris 4-Drawer Bedroom Chest - Ice White',
+		437 => 'DeSpace Iris 4-Drawer Bedroom Chest - Mocha Walnut',
+		423 => 'DeSpace Avenbury 4-Drawer Sliding Barn Door Sideboard - Rustic Oak',
+		412 => 'DeSpace Thyme 6-Tier Kitchen Pantry Tall Cabinet - Columbia Walnut',
+		401 => 'DeSpace Spice 2-Door 6-Shelf Kitchen Cabinet - Sonoma Oak',
+		393 => 'DeSpace Spice 2-Door 6-Shelf Kitchen Cabinet - Wenge Brown',
+		382 => 'DeSpace Axis 4-Door Kitchen & Dry Food Pantry - Wenge Brown',
+		371 => 'DeSpace Axis 4-Door Kitchen & Dry Food Pantry - Columbia Walnut',
+		362 => 'DeSpace Shelvo Dust-Proof Glass Door Bookcase - Modern Oak',
+		350 => 'DeSpace Nova 5-Tier Tall Bookshelf - Sonoma Oak',
+		340 => 'DeSpace Nova 3-Tier Compact Bookshelf - Sonoma Oak',
+		329 => 'DeSpace Nova 4-Tier Bookshelf with Security Lock - Sonoma Oak',
+		320 => 'DeSpace Grace A-Frame Ladder Corner Bookshelf - Lome Cherry',
+		308 => 'DeSpace Aura Display Cabinet & Open Bookshelf - Lome Cherry',
+		301 => 'DeSpace Nexa 2-Door Wardrobe with Hanging Rail - Giant Wood Oak',
+		289 => 'DeSpace Vault 2-Door Wardrobe with Hidden Security Drawer - Giant Wood',
+		282 => 'DeSpace Nexa 2-Door Wardrobe with Hanging Rail - Lyon Walnut',
+		271 => 'DeSpace Wardura 3-Door Wardrobe - Lome Cherry',
+		260 => 'DeSpace Tower 4-Door Wardrobe - Columbia Walnut',
+		249 => 'DeSpace Tower 4-Door Wardrobe - Wenge Brown',
+		238 => 'DeSpace Skyline 3-Door Multi-Function Wardrobe & Shoe Cabinet - Wenge Brown',
+		226 => 'DeSpace Zest Chic 2-Door Shoe Cabinet with Drawer - Wenge Brown',
+		214 => 'DeSpace Zest Style 2-Door Shoe Cabinet with Full-Length Mirror - Wenge Brown',
+		202 => 'DeSpace Minimal 2-Door Compact Shoe Cabinet - Wenge Brown',
+		193 => 'DeSpace Minimal 3-Door Minimalist Shoe Cabinet - Wenge Brown',
+		182 => 'DeSpace Minimal 3-Door Minimalist Shoe Cabinet - Sonoma Oak & White',
+		173 => 'DeSpace Ever Fresh 3-Door Shoe Cabinet - Two-Tone Amber & Brown',
+		161 => 'DeSpace Ever Fresh 2-Door Shoe Cabinet - Two-Tone Amber & Brown',
+		149 => 'DeSpace Skyline 1.83m Tall Shoe Cabinet - Columbia Walnut',
+		136 => 'DeSpace Skyline 6-Feet 4-Louvered Door Full-Height Shoe Cabinet - Wenge Brown',
+		126 => 'DeSpace Fusion 6-Tier High Shoe Cabinet - Wenge Brown',
+		115 => 'DeSpace Fusion 6-Tier High Shoe Cabinet - Sonoma Oak & White',
+		104 => 'DeSpace Rune Deep Multi-Purpose Shoe Cabinet',
+		91  => 'DeSpace Willowbrook Farmhouse Shoe Cabinet - Rustic Oak & White',
+		81  => 'DeSpace Slate 2-Door Shoe Cabinet with Drawer - Milky Wenge',
+		68  => 'DeSpace Slate 3-Door Shoe Cabinet with Drawer - Modern Slate Grey',
+		57  => 'DeSpace Metro 2-Door Shoe Cabinet - Columbia Walnut',
+		46  => 'DeSpace Metro 3-Door Shoe Cabinet - Linear Wood Grain'
 	);
 }
 
@@ -524,4 +558,53 @@ function furniva_language_switcher_html() {
 	<?php
 	return ob_get_clean();
 }
+
+/**
+ * Currency Switcher for English Experience (USD)
+ * When language is set to English, seamlessly convert VND to USD (Rate: 1 USD = 25,000 VND).
+ */
+function despace_is_english_mode() {
+	if ( function_exists( 'furniva_current_language' ) ) {
+		$lang = furniva_current_language();
+		if ( in_array( $lang, array( 'en', 'en_US', 'en_GB' ), true ) ) {
+			return true;
+		}
+	}
+	$uri = $_SERVER['REQUEST_URI'] ?? '';
+	return ( 0 === strpos( $uri, '/en/' ) || '/en' === $uri );
+}
+
+add_filter( 'woocommerce_currency', function( $currency ) {
+	if ( despace_is_english_mode() ) {
+		return 'USD';
+	}
+	return $currency;
+}, 99 );
+
+add_filter( 'woocommerce_currency_symbol', function( $symbol, $currency ) {
+	if ( 'USD' === $currency || despace_is_english_mode() ) {
+		return '$';
+	}
+	return $symbol;
+}, 99, 2 );
+
+add_filter( 'wc_price_args', function( $args ) {
+	if ( despace_is_english_mode() ) {
+		$args['currency']           = 'USD';
+		$args['decimal_separator']  = '.';
+		$args['thousand_separator'] = ',';
+		$args['decimals']           = 2;
+		$args['price_format']       = '%1$s%2$s';
+	}
+	return $args;
+}, 99 );
+
+add_filter( 'raw_woocommerce_price', function( $price ) {
+	if ( despace_is_english_mode() && is_numeric( $price ) && $price > 1000 ) {
+		// Convert VND to USD with clean rounding (Rate: 25,000 VND / USD)
+		return round( (float) $price / 25000, 2 );
+	}
+	return $price;
+}, 99 );
+
 
