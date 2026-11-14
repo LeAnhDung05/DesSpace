@@ -34,6 +34,16 @@ function furniva_setup() {
 }
 add_action( 'after_setup_theme', 'furniva_setup' );
 
+// ---------------------------------------------------------------- rewrite rules
+add_action( 'init', function() {
+	add_rewrite_rule( '^shop/?$', 'index.php?post_type=product', 'top' );
+	add_rewrite_rule( '^shop/page/([0-9]{1,})/?$', 'index.php?post_type=product&paged=$matches[1]', 'top' );
+	add_rewrite_rule( '^cua-hang/?$', 'index.php?post_type=product', 'top' );
+	add_rewrite_rule( '^cua-hang/page/([0-9]{1,})/?$', 'index.php?post_type=product&paged=$matches[1]', 'top' );
+	add_rewrite_rule( '^about/?$', 'index.php?pagename=ve-despace', 'top' );
+	add_rewrite_rule( '^contact/?$', 'index.php?pagename=lien-he', 'top' );
+} );
+
 // ---------------------------------------------------------------- assets
 function furniva_assets() {
 	wp_enqueue_style( 'astra', get_template_directory_uri() . '/style.css', array(), null );
@@ -223,7 +233,7 @@ function furniva_assets() {
 		wp_dequeue_style( 'photoswipe-default-skin' );
 	}
 
-	wp_enqueue_script( 'furniva', get_stylesheet_directory_uri() . '/js/main.js', array( 'jquery', 'wc-add-to-cart' ), FURNIVA_VER, true );
+	wp_enqueue_script( 'furniva', get_stylesheet_directory_uri() . '/assets/js/main.js', array( 'jquery', 'wc-add-to-cart' ), FURNIVA_VER, true );
 
 	// Animations JS (runs after DOM ready)
 	$animations_js = get_stylesheet_directory() . '/assets/js/animations.js';
@@ -261,7 +271,7 @@ function furniva_assets() {
 		);
 	}
 
-	wp_enqueue_script( 'axgnud-shopping-assistant', get_stylesheet_directory_uri() . '/js/store-assistant.js', array(), FURNIVA_VER, true );
+	wp_enqueue_script( 'axgnud-shopping-assistant', get_stylesheet_directory_uri() . '/assets/js/store-assistant.js', array(), FURNIVA_VER, true );
 	$base_cat = '';
 	if ( is_product_taxonomy() ) {
 		$queried = get_queried_object();

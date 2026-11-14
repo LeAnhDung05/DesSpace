@@ -35,35 +35,47 @@ spl_autoload_register( function ( string $class ): void {
 
 	$relative_class = substr( $class, strlen( $prefix ) );
 
-	// Support standard PSR-4 path mapping as well as hyphenated module folders.
-	$path_mappings = array(
-		'Product3D'      => 'Product-3D',
-		'CheckoutOrders' => 'Checkout-Orders',
-		'RestApi'        => 'REST-API',
-		'REST'           => 'REST-API',
-		'Rest'           => 'REST-API',
-	);
-
-	$segments = explode( '\\', $relative_class );
-	foreach ( $segments as &$segment ) {
-		if ( isset( $path_mappings[ $segment ] ) ) {
-			$segment = $path_mappings[ $segment ];
-		}
-	}
-	unset( $segment );
-
-	// 1. Check mapped path inside includes/.
-	$file = DESPACE_CORE_INCLUDES . implode( '/', $segments ) . '.php';
-	if ( file_exists( $file ) ) {
-		require_once $file;
-		return;
-	}
-
-	// 2. Direct unmapped path fallback.
+	// 1. Direct PSR-4 path mapping: DeSpace\Sub\Class -> includes/Sub/Class.php
 	$direct_file = DESPACE_CORE_INCLUDES . str_replace( '\\', '/', $relative_class ) . '.php';
 	if ( file_exists( $direct_file ) ) {
 		require_once $direct_file;
 		return;
+	}
+
+	// 2. Compatibility alias mappings:
+	// - DeSpace\Plugin / DeSpace\Core\Plugin -> includes/Core/Plugin.php
+	if ( 'Plugin' === $relative_class || 'Core\\Plugin' === $relative_class ) {
+		require_once DESPACE_CORE_INCLUDES . 'Core/Plugin.php';
+		if ( ! class_exists( 'DeSpace\\Core\\Plugin', false ) && class_exists( 'DeSpace\\Plugin' ) ) {
+			class_alias( 'DeSpace\\Plugin', 'DeSpace\\Core\\Plugin' );
+		} elseif ( ! class_exists( 'DeSpace\\Plugin', false ) && class_exists( 'DeSpace\\Core\\Plugin' ) ) {
+			class_alias( 'DeSpace\\Core\\Plugin', 'DeSpace\\Plugin' );
+		}
+		return;
+	}
+
+	// - DeSpace\CheckoutOrders\... -> includes/Integrations/WooCommerce/...
+	if ( 0 === strpos( $relative_class, 'CheckoutOrders\\' ) ) {
+		$co_rel = substr( $relative_class, strlen( 'CheckoutOrders\\' ) );
+		$co_file = DESPACE_CORE_INCLUDES . 'Integrations/WooCommerce/' . str_replace( '\\', '/', $co_rel ) . '.php';
+		if ( file_exists( $co_file ) ) {
+			require_once $co_file;
+			return;
+		}
+	}
+	if ( 'CheckoutOrdersModule' === $relative_class ) {
+		require_once DESPACE_CORE_INCLUDES . 'Integrations/WooCommerce/CheckoutOrdersModule.php';
+		return;
+	}
+
+	// - DeSpace\RestApi\... -> includes/Rest/...
+	if ( 0 === strpos( $relative_class, 'RestApi\\' ) ) {
+		$rest_rel = substr( $relative_class, strlen( 'RestApi\\' ) );
+		$rest_file = DESPACE_CORE_INCLUDES . 'Rest/' . str_replace( '\\', '/', $rest_rel ) . '.php';
+		if ( file_exists( $rest_file ) ) {
+			require_once $rest_file;
+			return;
+		}
 	}
 } );
 
