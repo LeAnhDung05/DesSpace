@@ -1,0 +1,32 @@
+# Local credentials and environment
+.env
+.env.*
+!.env.example
+
+# WordPress runtime and user content
+/wordpress/wp-admin/
+/wordpress/wp-includes/
+/wordpress/wp-config.php
+/wordpress/wp-content/uploads/
+/wordpress/wp-content/cache/
+/wordpress/wp-content/upgrade/
+/wordpress/wp-content/debug.log
+/wordpress/wp-content/plugins/*
+!/wordpress/wp-content/plugins/despace-core/
+/wordpress/wp-content/themes/*
+!/wordpress/wp-content/themes/despace-child/
+
+# Legacy source extraction and database/media backups
+/BTTTS_5/
+*.sql
+*.sql.gz
+*.dump
+*.log
+
+# Local tooling
+.DS_Store
+.idea/
+.vscode/
+coverage/
+vendor/
+node_modules/
