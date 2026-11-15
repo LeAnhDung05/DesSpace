@@ -13,6 +13,7 @@ wordpress/wp-content/cache/
 wordpress/wp-content/upgrade/
 wordpress/wp-content/backups/
 wordpress/wp-content/uploads/
+wordpress/wp-content/languages/
 wordpress/wp-content/debug.log
 
 # WordPress plugins and themes isolation
