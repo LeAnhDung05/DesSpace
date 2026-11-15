@@ -523,9 +523,44 @@ jQuery(function ($) {
 
 	/* ---------------------------------------------------------------- variation swatches */
 	var FURNIVA_HEX = {
-		black: "#2e2e2e", white: "#f4f2ee", brown: "#8b5a3c", gray: "#a8a8a6",
-		navy: "#34455e", beige: "#d8c6a5", natural: "#cda878", walnut: "#6e4a32",
-		amber: "#d9a441", green: "#54745a", mustard: "#d1a019", pink: "#d7909c"
+		// Dark Wenge
+		"nau-wenge": "#362b24", "wenge": "#362b24", "nâu wenge": "#362b24",
+		"nau-wenge-phoi-trang": "linear-gradient(135deg, #362b24 50%, #ffffff 50%)",
+		"nau-milky-wenge": "#4a3b32", "milky-wenge": "#4a3b32", "nâu milky wenge": "#4a3b32",
+		// Sonoma Oak
+		"go-soi-sonoma": "#d2b591", "sonoma-oak": "#d2b591", "gỗ sồi sonoma": "#d2b591",
+		"go-soi-sonoma-phoi-trang": "linear-gradient(135deg, #d2b591 50%, #ffffff 50%)",
+		"sonoma-oak-white": "linear-gradient(135deg, #d2b591 50%, #ffffff 50%)",
+		// Columbia Walnut
+		"go-oc-cho-columbia": "#6f4e37", "columbia-walnut": "#6f4e37", "gỗ óc chó columbia": "#6f4e37",
+		// Lome Cherry
+		"go-anh-dao-lome-cherry": "#8d4a3b", "lome-cherry": "#8d4a3b", "gỗ anh đào lome cherry": "#8d4a3b",
+		// Mocha Walnut
+		"go-oc-cho-mocha": "#4d3324", "mocha-walnut": "#4d3324", "gỗ óc chó mocha": "#4d3324",
+		// Lyon Walnut
+		"go-oc-cho-lyon": "#5c4033", "lyon-walnut": "#5c4033", "gỗ óc chó lyon": "#5c4033",
+		// Dark Walnut
+		"nau-oc-cho-dam": "#3e2719", "dark-walnut": "#3e2719", "nâu óc chó đậm": "#3e2719",
+		// Modern Oak
+		"go-soi-hien-dai": "#c2a382", "go-soi-modern-oak": "#c2a382", "modern-oak": "#c2a382",
+		// Giant Wood
+		"van-go-soi-giant-wood": "#a67c52", "nau-tu-nhien-giant-wood": "#966f43", "giant-wood": "#a67c52",
+		"go-soi-mat-ong-giant-wood": "#c99342", "honey-oak": "#c99342",
+		// Rustic Oak
+		"go-soi-rustic": "#b59a78", "rustic-oak": "#b59a78", "gỗ sồi rustic": "#b59a78",
+		"go-soi-rustic-phoi-trang-mo": "linear-gradient(135deg, #b59a78 50%, #f4f4f4 50%)",
+		"rustic-oak-white": "linear-gradient(135deg, #b59a78 50%, #f4f4f4 50%)",
+		// Linear Wood
+		"van-go-linear": "#bda17e", "linear": "#bda17e", "vân gỗ linear": "#bda17e",
+		// Ice White
+		"trang-tuyet-ice-white": "#ffffff", "ice-white": "#ffffff", "white": "#ffffff",
+		// Yellow & Brown Two-tone
+		"vang-pastel-phoi-nau-van-go": "linear-gradient(135deg, #f0d283 50%, #6f4e37 50%)",
+		"yellow-brown": "linear-gradient(135deg, #f0d283 50%, #6f4e37 50%)",
+		// Slate Gray
+		"xam-da-slate": "#68717a", "slate": "#68717a", "gray": "#8a8d8f",
+		// Standard
+		black: "#2e2e2e", brown: "#7a4e31", walnut: "#583b28", beige: "#e4d5be", amber: "#d9822b", charcoal: "#343a40"
 	};
 
 	function enhanceSwatches() {

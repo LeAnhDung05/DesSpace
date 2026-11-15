@@ -173,9 +173,11 @@ function furniva_filter_sidebar() {
 				<div class="f-filter-body">
 					<div class="f-filter-scroll-list" tabindex="0" role="region" aria-label="<?php echo esc_attr( furniva_t( 'Color finishes list', 'Danh sách màu sắc và vân gỗ' ) ); ?>">
 						<?php foreach ( $colors as $t ) :
-							$color_key = ! empty( $t->slug ) ? $t->slug : $t->name;
-							$hex = furniva_color_hex( $color_key );
-							$is_light = in_array( strtolower( $hex ), array( '#ffffff', '#fff', '#f8f6f0', '#f5f5f5' ) );
+							$hex = furniva_color_hex( $t->slug );
+							if ( '#a37b58' === $hex && ! empty( $t->name ) ) {
+								$hex = furniva_color_hex( $t->name );
+							}
+							$is_light = in_array( strtolower( $hex ), array( '#ffffff', '#fff', '#f8f6f0', '#f5f5f5' ), true ) || stripos( $hex, '#ffffff' ) !== false || stripos( $hex, '#fff' ) !== false;
 						?>
 							<label class="f-filter-check f-filter-check--color" title="<?php echo esc_attr( furniva_term_label( $t->name, 'pa_color' ) ); ?>">
 								<input type="checkbox" name="color" value="<?php echo esc_attr( $t->slug ?: $t->name ); ?>" data-name="<?php echo esc_attr( furniva_term_label( $t->name, 'pa_color' ) ); ?>" />
@@ -255,30 +257,161 @@ function furniva_filter_sidebar() {
 }
 
 function furniva_color_hex( $name_or_slug ) {
-	$map = array(
-		'wenge'                   => '#362b24', 'nâu wenge'                 => '#362b24',
-		'sonoma-oak'              => '#d2b591', 'sonoma oak'                => '#d2b591', 'gỗ sồi sonoma'         => '#d2b591',
-		'columbia-walnut'         => '#6f4e37', 'columbia walnut'           => '#6f4e37', 'gỗ óc chó columbia'     => '#6f4e37',
-		'lome-cherry'             => '#8d4a3b', 'lome cherry'               => '#8d4a3b', 'gỗ anh đào lome cherry' => '#8d4a3b',
-		'mocha-walnut'            => '#4d3324', 'mocha walnut'              => '#4d3324', 'gỗ óc chó mocha'        => '#4d3324',
-		'giant-wood'              => '#a67c52', 'giant wood'                => '#a67c52', 'gỗ giant wood'         => '#a67c52',
-		'sonoma-oak-white'        => '#e6d8c3', 'sonoma oak & white'        => '#e6d8c3', 'gỗ sồi sonoma & trắng' => '#e6d8c3',
-		'yellow-brown'            => '#d4a359', 'yellow & brown'            => '#d4a359', 'vàng & nâu'             => '#d4a359', 'vàng & nâu two-tone' => '#d4a359',
-		'linear'                  => '#bda17e', 'vân gỗ linear'             => '#bda17e',
-		'gray'                    => '#8a8d8f', 'xám'                       => '#8a8d8f', 'xám hiện đại'           => '#8a8d8f',
-		'milky-wenge'             => '#4a3b32', 'milky wenge'               => '#4a3b32', 'nâu milky wenge'        => '#4a3b32',
-		'rustic-oak-white'        => '#d7c4a7', 'rustic oak & white'        => '#d7c4a7', 'gỗ sồi rustic & trắng'  => '#d7c4a7',
-		'rustic-oak'              => '#b59a78', 'rustic oak'                => '#b59a78', 'gỗ sồi rustic'         => '#b59a78',
-		'lyon-walnut'             => '#5c4033', 'lyon walnut'               => '#5c4033', 'gỗ óc chó lyon'         => '#5c4033',
-		'modern-oak'              => '#c2a382', 'modern oak'                => '#c2a382', 'gỗ sồi modern oak'     => '#c2a382',
-		'ice-white'               => '#ffffff', 'ice white'                 => '#ffffff', 'trắng ice white'        => '#ffffff',
-		'black'                   => '#222220', 'đen'                       => '#222220',
-		'white'                   => '#f8f6f0', 'trắng'                     => '#f8f6f0',
-		'brown'                   => '#7a4e31', 'nâu'                       => '#7a4e31',
-		'walnut'                  => '#583b28', 'óc chó'                    => '#583b28',
-	);
-	$key = mb_strtolower( trim( (string) $name_or_slug ) );
-	return $map[ $key ] ?? '#a37b58';
+	static $map = null;
+	if ( null === $map ) {
+		$map = array(
+			// 1. Nâu Wenge (Wenge Brown)
+			'nau-wenge'                      => '#362b24',
+			'wenge'                          => '#362b24',
+			'nâu wenge'                      => '#362b24',
+
+			// 2. Nâu Wenge phối trắng (Wenge & White - Two-tone)
+			'nau-wenge-phoi-trang'           => 'linear-gradient(135deg, #362b24 50%, #ffffff 50%)',
+			'wenge-white'                    => 'linear-gradient(135deg, #362b24 50%, #ffffff 50%)',
+			'nâu wenge phối trắng'           => 'linear-gradient(135deg, #362b24 50%, #ffffff 50%)',
+
+			// 3. Nâu Milky Wenge (Milky Wenge)
+			'nau-milky-wenge'                => '#4a3b32',
+			'milky-wenge'                    => '#4a3b32',
+			'nâu milky wenge'                => '#4a3b32',
+
+			// 4. Gỗ sồi Sonoma (Sonoma Oak)
+			'go-soi-sonoma'                  => '#d2b591',
+			'sonoma-oak'                     => '#d2b591',
+			'gỗ sồi sonoma'                  => '#d2b591',
+			'sonoma oak'                     => '#d2b591',
+
+			// 5. Gỗ sồi Sonoma phối Trắng (Sonoma Oak & White - Two-tone)
+			'go-soi-sonoma-phoi-trang'       => 'linear-gradient(135deg, #d2b591 50%, #ffffff 50%)',
+			'go-soi-sonoma-trang'            => 'linear-gradient(135deg, #d2b591 50%, #ffffff 50%)',
+			'sonoma-oak-white'               => 'linear-gradient(135deg, #d2b591 50%, #ffffff 50%)',
+			'gỗ sồi sonoma phối trắng'       => 'linear-gradient(135deg, #d2b591 50%, #ffffff 50%)',
+			'gỗ sồi sonoma & trắng'          => 'linear-gradient(135deg, #d2b591 50%, #ffffff 50%)',
+
+			// 6. Gỗ óc chó Columbia (Columbia Walnut)
+			'go-oc-cho-columbia'             => '#6f4e37',
+			'columbia-walnut'                => '#6f4e37',
+			'gỗ óc chó columbia'             => '#6f4e37',
+			'columbia walnut'                => '#6f4e37',
+
+			// 7. Gỗ anh đào Lome Cherry (Lome Cherry)
+			'go-anh-dao-lome-cherry'         => '#8d4a3b',
+			'lome-cherry'                    => '#8d4a3b',
+			'gỗ anh đào lome cherry'         => '#8d4a3b',
+			'lome cherry'                    => '#8d4a3b',
+
+			// 8. Gỗ óc chó Mocha (Mocha Walnut)
+			'go-oc-cho-mocha'                => '#4d3324',
+			'mocha-walnut'                   => '#4d3324',
+			'gỗ óc chó mocha'                => '#4d3324',
+			'mocha walnut'                   => '#4d3324',
+
+			// 9. Gỗ óc chó Lyon (Lyon Walnut)
+			'go-oc-cho-lyon'                 => '#5c4033',
+			'lyon-walnut'                    => '#5c4033',
+			'gỗ óc chó lyon'                 => '#5c4033',
+			'lyon walnut'                    => '#5c4033',
+
+			// 10. Nâu óc chó đậm (Deep Rich Walnut)
+			'nau-oc-cho-dam'                 => '#3e2719',
+			'dark-walnut'                    => '#3e2719',
+			'nâu óc chó đậm'                 => '#3e2719',
+
+			// 11. Gỗ sồi hiện đại / Gỗ sồi Modern Oak
+			'go-soi-hien-dai'                => '#c2a382',
+			'go-soi-modern-oak'              => '#c2a382',
+			'modern-oak'                     => '#c2a382',
+			'gỗ sồi hiện đại'                => '#c2a382',
+			'gỗ sồi modern oak'              => '#c2a382',
+			'modern oak'                     => '#c2a382',
+
+			// 12. Gỗ sồi Rustic (Rustic Oak)
+			'go-soi-rustic'                  => '#b59a78',
+			'rustic-oak'                     => '#b59a78',
+			'gỗ sồi rustic'                  => '#b59a78',
+			'rustic oak'                     => '#b59a78',
+
+			// 13. Gỗ sồi Rustic phối Trắng mờ (Rustic Oak & Matte White - Two-tone)
+			'go-soi-rustic-phoi-trang-mo'    => 'linear-gradient(135deg, #b59a78 50%, #f4f4f4 50%)',
+			'go-soi-rustic-trang'            => 'linear-gradient(135deg, #b59a78 50%, #f4f4f4 50%)',
+			'rustic-oak-white'               => 'linear-gradient(135deg, #b59a78 50%, #f4f4f4 50%)',
+			'gỗ sồi rustic phối trắng mờ'    => 'linear-gradient(135deg, #b59a78 50%, #f4f4f4 50%)',
+			'gỗ sồi rustic & trắng'          => 'linear-gradient(135deg, #b59a78 50%, #f4f4f4 50%)',
+
+			// 14. Gỗ Giant Wood / Vân gỗ sồi Giant Wood / Nâu tự nhiên Giant Wood
+			'van-go-soi-giant-wood'          => '#a67c52',
+			'nau-tu-nhien-giant-wood'        => '#966f43',
+			'go-giant-wood'                  => '#a67c52',
+			'giant-wood'                     => '#a67c52',
+			'vân gỗ sồi giant wood'          => '#a67c52',
+			'nâu tự nhiên giant wood'        => '#966f43',
+			'gỗ giant wood'                  => '#a67c52',
+
+			// 15. Gỗ sồi mật ong Giant Wood
+			'go-soi-mat-ong-giant-wood'      => '#c99342',
+			'gỗ sồi mật ong giant wood'      => '#c99342',
+			'gỗ sồi mật ong'                 => '#c99342',
+			'honey-oak'                      => '#c99342',
+
+			// 16. Vân gỗ Linear
+			'van-go-linear'                  => '#bda17e',
+			'linear'                         => '#bda17e',
+			'vân gỗ linear'                  => '#bda17e',
+
+			// 17. Trắng tuyết Ice White / Ice White
+			'trang-tuyet-ice-white'          => '#ffffff',
+			'trang-ice-white'                => '#ffffff',
+			'ice-white'                      => '#ffffff',
+			'trắng tuyết ice white'          => '#ffffff',
+			'trắng ice white'                => '#ffffff',
+			'ice white'                      => '#ffffff',
+
+			// 18. Vàng Pastel phối Nâu vân gỗ / Yellow & Brown Two-Tone
+			'vang-pastel-phoi-nau-van-go'    => 'linear-gradient(135deg, #f0d283 50%, #6f4e37 50%)',
+			'vang-nau-two-tone'              => 'linear-gradient(135deg, #f0d283 50%, #6f4e37 50%)',
+			'yellow-brown'                   => 'linear-gradient(135deg, #f0d283 50%, #6f4e37 50%)',
+			'vàng pastel phối nâu vân gỗ'    => 'linear-gradient(135deg, #f0d283 50%, #6f4e37 50%)',
+			'vàng & nâu two-tone'            => 'linear-gradient(135deg, #f0d283 50%, #6f4e37 50%)',
+
+			// 19. Xám đá Slate / Slate Gray
+			'xam-da-slate'                   => '#68717a',
+			'slate'                          => '#68717a',
+			'xám đá slate'                   => '#68717a',
+			'gray'                           => '#8a8d8f',
+			'xám'                            => '#8a8d8f',
+
+			// 20. Standard basic colors
+			'black'                          => '#222220',
+			'đen'                            => '#222220',
+			'white'                          => '#ffffff',
+			'trắng'                          => '#ffffff',
+			'brown'                          => '#7a4e31',
+			'nâu'                            => '#7a4e31',
+			'walnut'                         => '#583b28',
+			'óc chó'                         => '#583b28',
+			'beige'                          => '#e4d5be',
+			'be'                             => '#e4d5be',
+			'amber'                          => '#d9822b',
+			'hổ phách'                       => '#d9822b',
+			'charcoal'                       => '#343a40',
+			'than chì'                       => '#343a40',
+		);
+	}
+
+	$clean = mb_strtolower( trim( html_entity_decode( (string) $name_or_slug ) ) );
+	if ( isset( $map[ $clean ] ) ) {
+		return $map[ $clean ];
+	}
+
+	// Try without hyphens or spaces
+	$flat = str_replace( array( '-', ' ' ), '', $clean );
+	foreach ( $map as $k => $val ) {
+		if ( str_replace( array( '-', ' ' ), '', $k ) === $flat ) {
+			return $val;
+		}
+	}
+
+	return '#a37b58';
 }
 
 /* Price range from all published products (cached). */
