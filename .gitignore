@@ -28,6 +28,11 @@ wordpress/wp-content/themes/*
 *.sqlite
 *.db
 *.dump
+*.zip
+*.tar.gz
+!database/despace_seed_data.sql
+!database/despace_seed_data.sql.gz
+!wordpress/wp-content/themes/despace-child/inc/data/despace_seed_data.sql.gz
 /BTTTS_5/
 
 # Whitelist project seed data

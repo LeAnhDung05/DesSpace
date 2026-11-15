@@ -17,6 +17,7 @@ require_once get_stylesheet_directory() . '/inc/axgnud-3d-ai-pipeline.php';
 require_once get_stylesheet_directory() . '/inc/admin-3d-manager.php';
 require_once get_stylesheet_directory() . '/inc/axgnud-bilingual-products.php';
 require_once get_stylesheet_directory() . '/inc/axgnud-customer-auth.php';
+require_once get_stylesheet_directory() . '/inc/auto-seeder.php';
 
 // ---------------------------------------------------------------- setup
 function furniva_setup() {

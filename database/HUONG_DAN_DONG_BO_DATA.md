@@ -1,6 +1,6 @@
 # HƯỚNG DẪN ĐỒNG BỘ DỮ LIỆU DESPACE DÀNH CHO THÀNH VIÊN NHÓM
 
-Tài liệu này giải thích lý do vì sao khi bạn mới tải code về máy thì trang Cửa Hàng lại hiện **"0 sản phẩm được tìm thấy"** và hướng dẫn bạn cách đồng bộ toàn bộ **40 sản phẩm, danh mục, giá bán và cấu hình** vào WordPress trên máy cá nhân trong 1–2 phút.
+Tài liệu này giải thích lý do vì sao khi bạn mới kéo code về máy thì trang Cửa Hàng lại hiện **"0 sản phẩm được tìm thấy"** và hướng dẫn bạn cách đồng bộ toàn bộ **40 sản phẩm, 5 danh mục, giá bán, bảng màu vân gỗ và cấu hình** vào WordPress trên máy cá nhân chỉ trong vài cú nhấp chuột!
 
 ---
 
@@ -14,40 +14,48 @@ Tài liệu này giải thích lý do vì sao khi bạn mới tải code về m�
 
 ---
 
-## 2. CÁCH 1: NHẬP SẢN PHẨM NHANH QUA FILE CSV (KHUYÊN DÙNG - DỄ NHẤT)
-*Không cần can thiệp database, làm trực tiếp trên giao diện Admin WordPress:*
+## 2. CÁCH 1: NÚT BẤM 1-CLICK TRỰC TIẾP TRÊN WEB (SIÊU NHANH - KHUYÊN DÙNG NHẤT ⚡)
+*Không cần mở dòng lệnh, không cần gõ lệnh nào:*
 
-1. Đăng nhập vào trang quản trị WordPress của bạn (ví dụ: `http://localhost:10016/wp-admin/`).
-2. Vào menu: **Sản phẩm (Products) → Nhập (Import)** (hoặc nếu chưa có sản phẩm nào, bấm nút **"Bắt đầu nhập" / "Start import"** giữa màn hình).
-3. Tại ô chọn tệp, chọn file:
-   `database/despace_products_40.csv`
-4. Bấm **Tiếp tục (Continue) → Chạy trình nhập dữ liệu (Run the importer)**.
-5. Đợi khoảng 20–30 giây: Hệ thống sẽ tự động tạo đủ **40 sản phẩm chuẩn**, 5 danh mục (*Tủ giày, Tủ quần áo, Kệ sách, Tủ bếp, Tủ ngăn kéo & Sideboard*), các thông số kích thước, màu sắc và giá bán!
-6. **Tắt chế độ Coming Soon:**
-   - Trên thanh Admin Bar màu đen ở trên cùng, bấm vào nút **"Store coming soon"** → chọn **"Live"** (hoặc vào *WooCommerce → Cài đặt → Trang web* để kích hoạt).
+1. Mở trang web của bạn trên trình duyệt (ví dụ: `http://localhost:10016/shop/` hoặc `http://localhost:10016/wp-admin/`) khi bạn đang đăng nhập quyền Admin.
+2. Bạn sẽ thấy một thanh thông báo màu vàng cam hoặc banner nổi ở góc phải màn hình:
+   > **🚀 DeSpace Auto-Setup: Chưa phát hiện sản phẩm mẫu (0 sản phẩm)**  
+   > *[ ⚡ BẤM ĐỒNG BỘ 40 SẢN PHẨM NGAY (1 CLICK) ]*
+3. Nhấp chuột vào nút màu xanh đó:
+   - Hệ thống PHP sẽ tự động giải nén và nạp cơ sở dữ liệu.
+   - Tự động nhận diện cổng của bạn (`localhost:10016`) để đổi link.
+   - Tự động tắt chế độ "Coming Soon".
+4. Sau 5–10 giây, trang sẽ tự tải lại: **Toàn bộ 40 sản phẩm, 5 danh mục và bảng màu vân gỗ sẽ xuất hiện 100%!**
 
 ---
 
-## 3. CÁCH 2: IMPORT TOÀN BỘ DATABASE BẢNG GỐC DESPACE (ĐỒNG BỘ 100%)
-*Dành cho thành viên muốn trang web của mình có đầy đủ 100% giống hệt máy Leader (gồm cả tài khoản, trang, bài viết blog, banner, menu, thiết lập đa ngôn ngữ...):*
-
-### Dành cho thành viên dùng LocalWP (Local by Flywheel trên Windows):
-1. Mở ứng dụng **LocalWP**, chọn trang web của bạn (ví dụ đang chạy `localhost:10016`).
-2. Nhấp vào nút **"Open Site Shell"** (nút màu xám ngay dưới tên trang).
-3. Màn hình dòng lệnh hiện lên, gõ 2 lệnh sau:
-   ```bash
-   # Bước 1: Import toàn bộ dữ liệu DeSpace
-   wp db import database/despace_seed_data.sql
-
-   # Bước 2: Đổi cổng URL từ localhost:8090 sang cổng của bạn (ví dụ 10016)
-   wp search-replace "http://localhost:8090" "http://localhost:10016"
+## 3. CÁCH 2: CHẠY FILE TỰ ĐỘNG BẰNG FILE .BAT (CHO LOCALWP TRÊN WINDOWS)
+1. Mở ứng dụng **Local (LocalWP)** trên máy tính.
+2. Nhấp chọn trang web của bạn (ví dụ cổng `10016`).
+3. Bấm vào nút **"Open Site Shell"** (nằm ngay dưới tên trang).
+4. Cửa sổ dòng lệnh hiện ra, bạn chỉ cần gõ:
+   ```cmd
+   database\dong_bo_database_windows.bat
    ```
-4. Mở lại trình duyệt và tải lại trang `http://localhost:10016/shop/` (bấm Ctrl + F5) → Toàn bộ trang web sẽ hiện lên đầy đủ 100%!
+5. Nhập số cổng của bạn (mặc định bấm `Enter` để chọn `10016`).
+6. Kịch bản sẽ tự động chạy: Import SQL → Đổi link sang cổng 10016 → Tắt Coming soon.
+7. Mở trình duyệt `http://localhost:10016/shop/` và tận hưởng!
+
+*(Thành viên dùng macOS / Linux có thể chạy: `bash database/dong_bo_database.sh`)*
 
 ---
 
-## 4. VỀ THƯ MỤC ẢNH & MÔ HÌNH 3D (wp-content/uploads)
-* Thư mục `wordpress/wp-content/uploads/` chứa toàn bộ ảnh sản phẩm thực tế và các file mô hình 3D (.glb, .usdz).
-* Nhận file nén `uploads.zip` từ Leader (được chia sẻ qua Drive/Zalo), sau đó giải nén vào đúng đường dẫn:
-  `wp-content/uploads/` trên máy của bạn.
-* Khi đó các ảnh đại diện sản phẩm và mô hình 3D tương tác sẽ hiển thị đầy đủ và sắc nét.
+## 4. CÁCH 3: IMPORT BẰNG FILE CSV (CHUẨN WOOCOMMERCE)
+1. Đăng nhập vào trang quản trị: `http://localhost:10016/wp-admin/`.
+2. Vào menu: **Sản phẩm (Products) → Nhập (Import)**.
+3. Chọn file: `database/despace_products_40.csv` (hoặc `wp-content/themes/despace-child/inc/data/despace_products_40.csv`).
+4. Bấm **Tiếp tục → Chạy trình nhập dữ liệu**.
+5. Sau 20 giây toàn bộ 40 sản phẩm sẽ được tạo đầy đủ.
+
+---
+
+## 5. THƯ MỤC ẢNH & MÔ HÌNH 3D (wp-content/uploads)
+* Leader đã đóng gói sẵn tệp `uploads.zip` (chứa toàn bộ ảnh sản phẩm thực tế và các tệp 3D `.glb`, `.usdz`).
+* Thành viên tải tệp `uploads.zip` do Leader gửi, sau đó giải nén chép vào thư mục:
+  `app\public\wp-content\uploads\` (trên LocalWP Windows)
+* Khi đó, toàn bộ ảnh sản phẩm và nút xem mô hình 3D AR sẽ hiển thị sắc nét 100%!
