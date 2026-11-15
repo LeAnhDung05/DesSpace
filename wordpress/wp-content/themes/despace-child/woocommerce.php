@@ -137,6 +137,26 @@ if ( is_singular( 'product' ) ) {
 						$cat_link = get_term_link( $cat );
 						$is_active = ( $current_cat_id === $cat->term_id );
 						$cat_thumb_id = absint( get_term_meta( $cat->term_id, 'thumbnail_id', true ) );
+						if ( ! $cat_thumb_id ) {
+							$first_p = get_posts( array(
+								'post_type'      => 'product',
+								'posts_per_page' => 1,
+								'tax_query'      => array(
+									array(
+										'taxonomy' => 'product_cat',
+										'field'    => 'term_id',
+										'terms'    => $cat->term_id,
+									),
+								),
+								'fields'         => 'ids',
+							) );
+							if ( ! empty( $first_p[0] ) ) {
+								$cat_thumb_id = absint( get_post_thumbnail_id( $first_p[0] ) );
+								if ( $cat_thumb_id ) {
+									update_term_meta( $cat->term_id, 'thumbnail_id', $cat_thumb_id );
+								}
+							}
+						}
 					?>
 					<li class="f-shop-cat-item <?php echo $is_active ? 'is-active' : ''; ?>">
 						<a href="<?php echo esc_url( $cat_link ); ?>" class="f-shop-cat-link" <?php echo $is_active ? 'aria-current="page"' : ''; ?>>

@@ -607,4 +607,24 @@ add_filter( 'raw_woocommerce_price', function( $price ) {
 	return $price;
 }, 99 );
 
+/**
+ * Permanently disable TranslatePress floating language switcher widget.
+ * Keep only the clean header VI / EN switcher.
+ */
+add_filter( 'trp_floater_ls_html_v2', '__return_empty_string', 999 );
+add_filter( 'trp_floater_ls_html', '__return_empty_string', 999 );
+add_filter( 'option_trp_language_switcher_settings', function( $settings ) {
+	if ( is_array( $settings ) && isset( $settings['floater'] ) ) {
+		$settings['floater']['enabled'] = false;
+	}
+	return $settings;
+}, 999 );
+add_filter( 'option_trp_settings', function( $settings ) {
+	if ( is_array( $settings ) ) {
+		$settings['trp-ls-floater'] = 'no';
+	}
+	return $settings;
+}, 999 );
+
+
 

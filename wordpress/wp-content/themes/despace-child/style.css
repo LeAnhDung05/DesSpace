@@ -10342,6 +10342,17 @@ body.ax-auth-modal-open {
 	.ds-process-grid { grid-template-columns: 1fr; }
 }
 
+/* TranslatePress: Permanently hide floating language switcher */
+.trp-language-switcher.trp-floating-switcher,
+.trp-floating-switcher,
+#trp-floater-ls {
+	display: none !important;
+	visibility: hidden !important;
+	opacity: 0 !important;
+	pointer-events: none !important;
+}
+
+
 
 
 
