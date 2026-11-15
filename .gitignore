@@ -1,32 +1,40 @@
-# Local credentials and environment
+# Secrets and environment config
 .env
 .env.*
 !.env.example
+wp-config.php
+wordpress/wp-config.php
+auth.json
 
-# WordPress runtime and user content
-/wordpress/wp-admin/
-/wordpress/wp-includes/
-/wordpress/wp-config.php
-/wordpress/wp-content/uploads/
-/wordpress/wp-content/cache/
-/wordpress/wp-content/upgrade/
-/wordpress/wp-content/debug.log
-/wordpress/wp-content/plugins/*
-!/wordpress/wp-content/plugins/despace-core/
-/wordpress/wp-content/themes/*
-!/wordpress/wp-content/themes/despace-child/
+# WordPress core and runtime
+wordpress/wp-admin/
+wordpress/wp-includes/
+wordpress/wp-content/cache/
+wordpress/wp-content/upgrade/
+wordpress/wp-content/backups/
+wordpress/wp-content/uploads/
+wordpress/wp-content/debug.log
 
-# Legacy source extraction and database/media backups
-/BTTTS_5/
+# WordPress plugins and themes isolation
+wordpress/wp-content/plugins/*
+!wordpress/wp-content/plugins/despace-core/
+wordpress/wp-content/themes/*
+!wordpress/wp-content/themes/despace-child/
+
+# Local databases and backups
 *.sql
 *.sql.gz
+*.sqlite
+*.db
 *.dump
-*.log
+/BTTTS_5/
 
-# Local tooling
-.DS_Store
-.idea/
-.vscode/
-coverage/
+# Dependencies and IDE / OS files
 vendor/
 node_modules/
+coverage/
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/

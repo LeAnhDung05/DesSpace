@@ -2,9 +2,27 @@
 
 Hệ thống thương mại điện tử chuyên biệt cho nội thất cao cấp với trải nghiệm trực quan hóa không gian thực tế tăng cường 3D/AR. Dự án được chuyển đổi công nghệ (re-platforming) toàn diện từ mã nguồn **BTTTS_5** (Furniva / AXGNUD) sang kiến trúc chuẩn hóa **WordPress + WooCommerce + PHP 8.3 + MySQL 8.4**.
 
+**Mã dự án:** DESPACE-2026  
+**Thời gian thực hiện:** 19/10/2026 – 29/11/2026  
+**Nhóm thực hiện:** 5 thành viên (M1 – M5)
+
 ---
 
-## 1. MỤC TIÊU VÀ NGUYÊN TẮC CHUYỂN ĐỔI
+## 1. PHÂN CÔNG 5 MODULE & THÀNH VIÊN NHÓM
+
+| Module | Thành viên | GitHub username | Trách nhiệm chính |
+|---|---|---|---|
+| **M1** | Thành viên 01 | [@hoangHT-w](https://github.com/hoangHT-w) | **Phòng trưng bày 3D/AR:** Quản lý metadata GLB, `<model-viewer>`, WebXR & Apple AR Quick Look fallback. |
+| **M2** | Thành viên 02 | [@Anvu-IFBB](https://github.com/Anvu-IFBB) | **Giao diện Premium & Danh mục:** Child Theme `despace-child`, trang chủ 8 Acts, bộ lọc đa tiêu chí AJAX, trang nội dung & SEO. |
+| **M3** | Thành viên 03 | [@LeAnhDung05](https://github.com/LeAnhDung05) | **Giỏ hàng & Đơn hàng:** Giỏ hàng AJAX drawer, mã giảm giá, thanh toán COD/BACS QR, tra cứu đơn an toàn (IDOR Guard), giao vận VN 2 cấp. |
+| **M4** | Thành viên 04 | [@Mod3r3d](https://github.com/Mod3r3d) | **Truy vết tồn kho:** Nhật ký biến động kho chống trùng `wp_despace_inventory_logs`, observer bắt sự kiện kho WooCommerce, xuất CSV an toàn. |
+| **M5** | Thành viên 05 | [@HaDiLuc](https://github.com/HaDiLuc) | **Dashboard & Tích hợp:** Quản trị DeSpace Admin Hub, REST API Contract, phân quyền RBAC `despace_staff`, điều phối release & kiểm thử UAT. |
+
+Toàn bộ 37 Issues (`#1` đến `#37`) trên GitHub đã được phân công và hoàn thiện 100% nghiệm thu.
+
+---
+
+## 2. MỤC TIÊU VÀ NGUYÊN TẮC CHUYỂN ĐỔI
 
 - **Bảo toàn 100% dữ liệu & sản phẩm:** Giữ nguyên 40 sản phẩm nội thất chính thức (SKU `AXG-STR-001` đến `AXG-STR-040`), 64 tệp nhị phân 3D (GLB + USDZ), 353 tệp media hình ảnh và 1,682 bản ghi kiểm toán kho.
 - **Bảo tồn toàn vẹn thiết kế & UX:** Giữ trọn ngôn ngữ thiết kế tối giản Apple × Muji, typography Plus Jakarta Sans & Newsreader serif, kịch bản trang chủ 8 Acts, và Canvas tương tác AR Room Visualizer.
@@ -16,18 +34,29 @@ Hệ thống thương mại điện tử chuyên biệt cho nội thất cao c�
 
 ---
 
-## 2. KIẾN TRÚC MÃ NGUỒN (DIRECTORY STRUCTURE)
+## 3. KIẾN TRÚC MÃ NGUỒN (DIRECTORY STRUCTURE)
 
 ```text
 replatform_bttts5_despace/
-├── backup/
-│   └── bttts5_live_backup_20261114.sql            # Bản sao lưu CSDL nguồn gốc
+├── .github/
+│   └── pull_request_template.md                   # Mẫu Pull Request chuẩn hóa
 ├── docs/
-│   ├── 01-source-audit.md                         # Báo cáo kiểm toán toàn bộ BTTTS_5
-│   ├── 02-feature-inventory.md                    # Kiểm kê chi tiết 29 tính năng và module
-│   ├── 03-ui-migration.md                         # Báo cáo chuyển đổi giao diện và CSS Tokens
-│   ├── 04-database-migration.md                   # Báo cáo đối soát CSDL, SKU và tệp 3D
-│   └── 05-testing-report.md                       # Báo cáo kiểm thử tự động và nghiệm thu
+│   ├── TEAM_TASKS.md                              # Phân công trách nhiệm 5 thành viên
+│   ├── PROJECT_BOARD_SETUP.md                     # Hướng dẫn thiết lập GitHub Projects
+│   ├── DEFINITION_OF_DONE.md                      # Tiêu chí hoàn thành (DoD)
+│   ├── GIT_WORKFLOW.md                            # Quy trình làm việc nhánh và PR
+│   ├── ARCHITECTURE.md                            # Kiến trúc hệ thống và ranh giới dữ liệu
+│   ├── API_CONTRACT.md                            # Hợp đồng kết nối REST API dùng chung
+│   ├── SECURITY_AUDIT.md                          # Báo cáo bảo mật và ma trận quyền RBAC
+│   ├── DEPLOYMENT_ROLLBACK.md                     # Hướng dẫn triển khai, HTTPS, sao lưu & rollback
+│   ├── QA_UAT_REPORT.md                           # Báo cáo kiểm thử đa thiết bị và UAT
+│   ├── 01-source-audit.md                         # Báo cáo kiểm toán BTTTS_5 gốc
+│   ├── 02-feature-inventory.md                    # Kiểm kê chi tiết 29 module chức năng
+│   ├── 03-ui-migration.md                         # Báo cáo chuyển đổi giao diện & tokens
+│   ├── 04-database-migration.md                   # Báo cáo đối soát database, SKU & 3D
+│   ├── 05-testing-report.md                       # Báo cáo kiểm thử tự động 325 test cases
+│   └── 06-architecture-alignment.md               # Báo cáo chuẩn hóa cấu trúc mục 4.1
+├── tests/                                         # Bộ kiểm thử tự động toàn diện (325 test cases)
 ├── wordpress/
 │   └── wp-content/
 │       ├── mu-plugins/
@@ -47,26 +76,30 @@ replatform_bttts5_despace/
 │           └── despace-core/                      # Core Plugin nghiệp vụ riêng DeSpace
 │               ├── despace-core.php               # Điểm khởi chạy & PSR-4 autoloader
 │               └── includes/
-│                   ├── Product-3D/                # Quản lý mô hình 3D, <model-viewer> v4.4.0
+│                   ├── Core/                      # Plugin bootstrap & HPOS declaration
+│                   ├── Product3D/                 # Quản lý mô hình 3D, <model-viewer> v4.4.0
+│                   ├── Catalog/                   # Lọc danh mục đa tiêu chí AJAX Fetch
 │                   ├── Inventory/                 # Hệ thống kiểm toán và khấu trừ kho tự động
-│                   ├── Checkout-Orders/           # Xử lý giỏ hàng, địa chỉ 63 tỉnh VN, BACS/COD
-│                   ├── REST-API/                  # Endpoints REST: 3D models, lọc sản phẩm
-│                   └── Security/                  # Quản lý vai trò RBAC (despace_staff)
+│                   ├── Reports/                   # Báo cáo kinh doanh và Top sản phẩm
+│                   ├── Rest/                      # Endpoints REST API có xác thực quyền
+│                   ├── Admin/                     # DeSpace Admin Hub Dashboard
+│                   ├── Security/                  # Quản lý vai trò RBAC (despace_staff)
+│                   └── Integrations/              # Tích hợp WooCommerce (Cart, Checkout, Orders, v.v.)
 └── README.md
 ```
 
 ---
 
-## 3. KHỞI CHẠY VÀ VẬN HÀNH THỬ NGHIỆM (LOCAL DOCKER)
+## 4. KHỞI CHẠY VÀ VẬN HÀNH THỬ NGHIỆM (LOCAL DOCKER)
 
 Hệ thống đã được đóng gói và cấu hình chạy trên Docker:
 
-### 3.1. Các dịch vụ đang chạy
+### 4.1. Các dịch vụ đang chạy
 - **Frontend / CMS:** `http://localhost:8090/` (Container `despace-wordpress-1`, PHP 8.3 Apache).
 - **Cơ sở dữ liệu:** MySQL 8.4 Community Edition (`despace-db-1`, port 3306 nội bộ).
 - **Mailbox thử nghiệm:** `http://localhost:8026/` (Mailpit).
 
-### 3.2. Tài khoản kiểm thử
+### 4.2. Tài khoản kiểm thử
 | Vai trò | Tên đăng nhập | Mật khẩu | Quyền hạn chính |
 |---|---|---|---|
 | **Administrator** | `admin` | *(Cấu hình trong .env)* | Toàn quyền quản trị hệ thống, plugins, cài đặt |
@@ -75,7 +108,7 @@ Hệ thống đã được đóng gói và cấu hình chạy trên Docker:
 
 ---
 
-## 4. BỘ ĐỊNH TUYẾN CHÍNH (ENDPOINTS MATRIX)
+## 5. BỘ ĐỊNH TUYẾN CHÍNH (ENDPOINTS MATRIX)
 
 | Tuyến đường | Mô tả chức năng | Mã trạng thái |
 |---|---|:---:|
@@ -87,15 +120,27 @@ Hệ thống đã được đóng gói và cấu hình chạy trên Docker:
 | `http://localhost:8090/checkout/` | Thanh toán (Hỗ trợ COD & Vietcombank BACS) | **200 OK** |
 | `http://localhost:8090/wishlist/` | Danh sách sản phẩm yêu thích | **200 OK** |
 | `http://localhost:8090/blog/` | Tạp chí cẩm nang nội thất DeSpace Journal | **200 OK** |
+| `http://localhost:8090/wp-admin/admin.php?page=despace-hub` | DeSpace Admin Hub Dashboard | **200 OK** |
 | `http://localhost:8090/wp-json/despace/v1/3d-models/46` | REST API lấy siêu dữ liệu & URL mô hình 3D | **200 OK** |
 | `http://localhost:8090/wp-json/despace/v1/products/filter?min_price=1000000` | REST API lọc sản phẩm theo khoảng giá | **200 OK** |
 
 ---
 
-## 5. TÀI LIỆU CHUYỂN ĐỔI KỸ THUẬT (MIGRATION DOCUMENTATION)
+## 6. KẾT QUẢ KIỂM THỬ TỰ ĐỘNG (AUTOMATED TEST MATRIX)
 
-1. [docs/01-source-audit.md](docs/01-source-audit.md) — Báo cáo kiểm toán hiện trạng BTTTS_5.
-2. [docs/02-feature-inventory.md](docs/02-feature-inventory.md) — Danh mục kiểm kê 29 chức năng và phương án chuyển đổi.
-3. [docs/03-ui-migration.md](docs/03-ui-migration.md) — Báo cáo bảo tồn giao diện, responsive và hệ thống tokens.
-4. [docs/04-database-migration.md](docs/04-database-migration.md) — Báo cáo đối soát cơ sở dữ liệu, SKU và tài nguyên 3D.
-5. [docs/05-testing-report.md](docs/05-testing-report.md) — Báo cáo kết quả kiểm thử tự động và biên bản nghiệm thu.
+Dự án sở hữu bộ test suite tự động với **325 / 325 test cases (100% PASS)**:
+1. `tests/test-rbac-matrix.php`: 30/30 PASS (RBAC, capabilities, HPOS declaration).
+2. `tests/test-inventory-matrix.php`: 28/28 PASS (T01–T28 stock lifecycle).
+3. `tests/test-inventory-integration-live.php`: 9/9 PASS (Live MySQL integration).
+4. `tests/test-m4-order-context-live.php`: 32/32 PASS (Cases A–U edge cases).
+5. `tests/test-m3-cart-unit.php`: 18/18 PASS.
+6. `tests/test-m3-checkout-unit.php`: 28/28 PASS.
+7. `tests/test-m3-payment-unit.php`: 33/33 PASS.
+8. `tests/test-m3-shipping-unit.php`: 18/18 PASS.
+9. `tests/test-m3-account-unit.php`: 27/27 PASS.
+10. `tests/test-m3-order-tracking-unit.php`: 28/28 PASS.
+11. `tests/test-m3-coupon-unit.php`: 17/17 PASS.
+12. `tests/test-m3-email-unit.php`: 16/16 PASS.
+13. `tests/test-m3-vietnam-regions-unit.php`: 12/12 PASS.
+14. `tests/test-m3-wc113-smoke.php`: 11/11 PASS.
+15. `docs/QA_UAT_REPORT.md` (TC-01 đến TC-12): 12/12 PASS.
