@@ -68,7 +68,7 @@ $room_sets = array(
 		'cover'        => 'shoe-racks-storage',
 		'custom_image' => get_stylesheet_directory_uri() . '/assets/images/room-entryway.jpg',
 		'skus'         => array( 'AXG-STR-017', 'AXG-STR-016', 'AXG-STR-010', 'AXG-STR-040' ),
-		'positions'    => array( array( 28, 64 ), array( 28, 30 ), array( 82, 52 ), array( 55, 70 ) ),
+		'positions'    => array( array( 15, 60 ), array( 28, 60 ), array( 41, 46 ), array( 57, 64 ) ),
 		'categories'   => array( 'shoe-racks-storage', 'chest-of-drawers-sideboards' ),
 	),
 	array(
@@ -77,7 +77,7 @@ $room_sets = array(
 		'cover'        => 'wardrobes',
 		'custom_image' => get_stylesheet_directory_uri() . '/assets/images/room-bedroom.jpg',
 		'skus'         => array( 'AXG-STR-024', 'AXG-STR-038', 'AXG-STR-037', 'AXG-STR-020' ),
-		'positions'    => array( array( 20, 46 ), array( 52, 66 ), array( 82, 68 ), array( 10, 42 ) ),
+		'positions'    => array( array( 21, 48 ), array( 58, 65 ), array( 70, 65 ), array( 85, 48 ) ),
 		'categories'   => array( 'wardrobes', 'chest-of-drawers-sideboards' ),
 	),
 	array(
@@ -86,7 +86,7 @@ $room_sets = array(
 		'cover'        => 'bookshelves',
 		'custom_image' => get_stylesheet_directory_uri() . '/assets/images/room-office.jpg',
 		'skus'         => array( 'AXG-STR-030', 'AXG-STR-029', 'AXG-STR-034', 'AXG-STR-028' ),
-		'positions'    => array( array( 30, 48 ), array( 72, 52 ), array( 50, 66 ), array( 84, 72 ) ),
+		'positions'    => array( array( 26, 49 ), array( 38, 49 ), array( 48, 56 ), array( 61, 67 ) ),
 		'categories'   => array( 'bookshelves', 'kitchen-cabinets' ),
 	),
 );
