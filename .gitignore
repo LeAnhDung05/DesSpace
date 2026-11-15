@@ -30,6 +30,11 @@ wordpress/wp-content/themes/*
 *.dump
 /BTTTS_5/
 
+# Whitelist project seed data
+!database/
+!database/*
+
+
 # Dependencies and IDE / OS files
 vendor/
 node_modules/
