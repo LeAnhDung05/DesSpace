@@ -473,13 +473,13 @@ class InventoryStockObserver {
 			$last_stock = null;
 			if ( null !== $variation_id ) {
 				$last_stock = $wpdb->get_var( $wpdb->prepare(
-					"SELECT stock_after FROM {$log_table} WHERE product_id = %d AND variation_id = %d ORDER BY log_id DESC LIMIT 1",
+					"SELECT stock_after FROM {$log_table} WHERE product_id = %d AND variation_id = %d ORDER BY id DESC LIMIT 1",
 					$product_id,
 					$variation_id
 				) );
 			} else {
 				$last_stock = $wpdb->get_var( $wpdb->prepare(
-					"SELECT stock_after FROM {$log_table} WHERE product_id = %d AND variation_id IS NULL ORDER BY log_id DESC LIMIT 1",
+					"SELECT stock_after FROM {$log_table} WHERE product_id = %d AND variation_id IS NULL ORDER BY id DESC LIMIT 1",
 					$product_id
 				) );
 			}
