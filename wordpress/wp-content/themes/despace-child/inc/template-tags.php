@@ -82,32 +82,40 @@ add_action( 'furniva_card_quick_view', function ( $id ) {
 }, 10, 1 );
 
 /* ---------------------------------------------------------------- Homepage section head */
-function furniva_section_head( $kicker, $title, $link_url = '', $link_text = '' ) {
+function despace_section_head( $kicker, $title, $link_url = '', $link_text = '' ) {
 	echo '<div class="f-section-head"><div><span class="f-kicker">' . esc_html( $kicker ) . '</span><h2>' . esc_html( $title ) . '</h2></div>';
 	if ( $link_url ) {
 		echo '<a class="f-link" href="' . esc_url( $link_url ) . '">' . esc_html( $link_text ?: 'View all' ) . '</a>';
 	}
 	echo '</div>';
 }
+function furniva_section_head( $kicker, $title, $link_url = '', $link_text = '' ) {
+	return despace_section_head( $kicker, $title, $link_url, $link_text );
+}
 
 /* ---------------------------------------------------------------- Page hero (blog/about/contact) */
-function furniva_page_head( $title, $crumb_extra = '' ) {
+function despace_page_head( $title, $crumb_extra = '' ) {
 	?>
 	<div class="f-page-head">
 		<div class="f-wrap">
 			<h1 class="f-page-title"><?php echo esc_html( $title ); ?></h1>
 			<div class="f-breadcrumbs">
-				<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php echo esc_html( furniva_t( 'Home', 'Trang chủ' ) ); ?></a><span class="sep">/</span><?php echo wp_kses_post( $crumb_extra ?: $title ); ?>
+				<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php echo esc_html( despace_t( 'Home', 'Trang chủ' ) ); ?></a><span class="sep">/</span><?php echo wp_kses_post( $crumb_extra ?: $title ); ?>
 			</div>
 		</div>
 	</div>
 	<?php
 }
+function furniva_page_head( $title, $crumb_extra = '' ) {
+	return despace_page_head( $title, $crumb_extra );
+}
 
 /* ---------------------------------------------------------------- Shop filter sidebar */
-function furniva_filter_sidebar() {
-	if ( ! furniva_wc_active() ) {
-		return;
+function despace_filter_sidebar() {
+	if ( ! function_exists( 'despace_wc_active' ) || ! despace_wc_active() ) {
+		if ( function_exists( 'furniva_wc_active' ) && ! furniva_wc_active() ) {
+			return;
+		}
 	}
 
 	$cat_terms = get_terms( array( 'taxonomy' => 'product_cat', 'hide_empty' => true, 'parent' => 0, 'exclude' => array( wc_get_page_id( 'shop' ) ) ) );
@@ -115,7 +123,7 @@ function furniva_filter_sidebar() {
 	$colors    = get_terms( array( 'taxonomy' => 'pa_color', 'hide_empty' => true ) );
 	$sizes     = get_terms( array( 'taxonomy' => 'pa_size', 'hide_empty' => true ) );
 
-	$price_range = furniva_get_price_range_data();
+	$price_range = despace_get_price_range_data();
 	?>
 	<aside class="f-filters" id="furniva-filters">
 		<div class="f-filters-header">
@@ -256,7 +264,7 @@ function furniva_filter_sidebar() {
 	<?php
 }
 
-function furniva_color_hex( $name_or_slug ) {
+function despace_color_hex( $name_or_slug ) {
 	static $map = null;
 	if ( null === $map ) {
 		$map = array(
@@ -414,9 +422,13 @@ function furniva_color_hex( $name_or_slug ) {
 	return '#a37b58';
 }
 
+function furniva_color_hex( $name_or_slug ) {
+	return despace_color_hex( $name_or_slug );
+}
+
 /* Price range from all published products (cached). */
-function furniva_get_price_range_data() {
-	$cache = get_transient( 'furniva_price_range' );
+function despace_get_price_range_data() {
+	$cache = get_transient( 'despace_price_range' ) ?: get_transient( 'furniva_price_range' );
 	if ( $cache ) {
 		return $cache;
 	}
@@ -424,18 +436,24 @@ function furniva_get_price_range_data() {
 	$min = (float) $wpdb->get_var( "SELECT MIN(meta_value+0) FROM {$wpdb->postmeta} pm JOIN {$wpdb->posts} p ON p.ID=pm.post_id WHERE meta_key='_price' AND p.post_type='product' AND p.post_status='publish'" );
 	$max = (float) $wpdb->get_var( "SELECT MAX(meta_value+0) FROM {$wpdb->postmeta} pm JOIN {$wpdb->posts} p ON p.ID=pm.post_id WHERE meta_key='_price' AND p.post_type='product' AND p.post_status='publish'" );
 	$data = array( 'min' => floor( $min ), 'max' => ceil( $max ) );
-	set_transient( 'furniva_price_range', $data, HOUR_IN_SECONDS );
+	set_transient( 'despace_price_range', $data, HOUR_IN_SECONDS );
 	return $data;
 }
-if ( ! function_exists( 'wc_get_price_range_data' ) ) {
-	function wc_get_price_range_data() { return furniva_get_price_range_data(); }
+function furniva_get_price_range_data() {
+	return despace_get_price_range_data();
 }
-add_action( 'save_post_product', function () { delete_transient( 'furniva_price_range' ); } );
+if ( ! function_exists( 'wc_get_price_range_data' ) ) {
+	function wc_get_price_range_data() { return despace_get_price_range_data(); }
+}
+add_action( 'save_post_product', function () {
+	delete_transient( 'despace_price_range' );
+	delete_transient( 'furniva_price_range' );
+} );
 
 /**
  * Render category hover mega menu with hot recommended products.
  */
-function furniva_category_mega_dropdown( $cat_slug ) {
+function despace_category_mega_dropdown( $cat_slug ) {
 	if ( ! function_exists( 'wc_get_products' ) ) {
 		return '';
 	}
@@ -501,5 +519,9 @@ function furniva_category_mega_dropdown( $cat_slug ) {
 	</div>
 	<?php
 	return ob_get_clean();
+}
+
+function furniva_category_mega_dropdown( $cat_slug ) {
+	return despace_category_mega_dropdown( $cat_slug );
 }
 

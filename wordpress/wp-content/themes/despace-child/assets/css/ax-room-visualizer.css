@@ -282,6 +282,7 @@
 
 /* Xóa khung nền vuông xung quanh sản phẩm trong Room Visualizer */
 .room-visualizer-stage img,
+.despace-visualizer-item,
 .axgnud-visualizer-item,
 .visualizer-furniture-item,
 .room-stage-product,
@@ -313,6 +314,7 @@
   justify-content: center;
 }
 
+.despace-3d-stage-viewer,
 .axgnud-3d-stage-viewer {
   width: 320px;
   height: 320px;
@@ -323,11 +325,13 @@
   transition: transform 0.15s ease-out;
 }
 
+.despace-3d-stage-viewer:active,
 .axgnud-3d-stage-viewer:active {
   cursor: grabbing;
 }
 
 /* Cụm nút chuyển chế độ 360° Rotate / Move on Floor / Cutout ở góc trên sân khấu */
+.despace-stage-mode-bar,
 .axgnud-stage-mode-bar {
   position: absolute;
   top: 14px;
@@ -343,6 +347,7 @@
   border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
+.despace-stage-mode-btn,
 .axgnud-stage-mode-btn {
   appearance: none;
   border: none;
@@ -359,17 +364,20 @@
   gap: 6px;
 }
 
+.despace-stage-mode-btn:hover,
 .axgnud-stage-mode-btn:hover {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.12);
 }
 
+.despace-stage-mode-btn.is-active,
 .axgnud-stage-mode-btn.is-active {
   background: #ffffff;
   color: #1c1917;
   font-weight: 600;
 }
 
+.despace-stage-mode-btn svg,
 .axgnud-stage-mode-btn svg {
   flex-shrink: 0;
 }

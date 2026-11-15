@@ -33,9 +33,9 @@ foreach ( $gallery_ids as $gid ) {
 }
 
 // Get attributes & custom meta for finish/color & badge
-$finish_desc_meta = get_post_meta( $id, '_axgnud_finish_desc', true );
-$color_hex_meta   = get_post_meta( $id, '_axgnud_color_hex', true );
-$custom_badge     = get_post_meta( $id, '_axgnud_badge', true );
+$finish_desc_meta = get_post_meta( $id, '_despace_finish_desc', true ) ?: get_post_meta( $id, '_axgnud_finish_desc', true );
+$color_hex_meta   = get_post_meta( $id, '_despace_color_hex', true ) ?: get_post_meta( $id, '_axgnud_color_hex', true );
+$custom_badge     = get_post_meta( $id, '_despace_badge', true ) ?: get_post_meta( $id, '_axgnud_badge', true );
 
 $attributes = $product->get_attributes();
 $swatches_data = array();

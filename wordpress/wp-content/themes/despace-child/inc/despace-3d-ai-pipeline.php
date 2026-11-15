@@ -385,7 +385,7 @@ add_action( 'wp_ajax_axgnud_generate_3d_model', function() {
 /**
  * 5. Helper lấy dữ liệu 3D đầy đủ của sản phẩm
  */
-function axgnud_get_product_3d_data( $product_id ) {
+function despace_get_product_3d_data( $product_id ) {
 	global $wpdb;
 	$product = wc_get_product( $product_id );
 	if ( ! $product ) {
@@ -395,10 +395,12 @@ function axgnud_get_product_3d_data( $product_id ) {
 	$glb_url  = '';
 	$usdz_url = '';
 
-	// 1. First priority: Check centralized wp_axgnud_product_3d_models catalog table
-	$table_3d = $wpdb->prefix . 'axgnud_product_3d_models';
-	if ( $wpdb->get_var( "SHOW TABLES LIKE '$table_3d'" ) === $table_3d ) {
-		$db_model = $wpdb->get_row( $wpdb->prepare( "SELECT glb_url, usdz_url, ar_enabled, model_status FROM $table_3d WHERE product_id = %d LIMIT 1", $product_id ) );
+	// 1. First priority: Check centralized wp_despace_product_3d_models (and fallback to wp_axgnud_product_3d_models)
+	$table_despace = $wpdb->prefix . 'despace_product_3d_models';
+	$table_axgnud  = $wpdb->prefix . 'axgnud_product_3d_models';
+	$target_table  = ( $wpdb->get_var( "SHOW TABLES LIKE '$table_despace'" ) === $table_despace ) ? $table_despace : $table_axgnud;
+	if ( $wpdb->get_var( "SHOW TABLES LIKE '$target_table'" ) === $target_table ) {
+		$db_model = $wpdb->get_row( $wpdb->prepare( "SELECT glb_url, usdz_url, ar_enabled, model_status FROM $target_table WHERE product_id = %d LIMIT 1", $product_id ) );
 		if ( $db_model && $db_model->model_status === 'published' && ! empty( $db_model->glb_url ) ) {
 			$glb_url  = $db_model->glb_url;
 			$usdz_url = $db_model->usdz_url;
@@ -407,7 +409,8 @@ function axgnud_get_product_3d_data( $product_id ) {
 
 	// 2. Fallback: Check postmeta keys
 	if ( empty( $glb_url ) ) {
-		$glb_url = get_post_meta( $product_id, '_axgnud_model_glb', true )
+		$glb_url = get_post_meta( $product_id, '_despace_model_glb', true )
+			?: get_post_meta( $product_id, '_axgnud_model_glb', true )
 			?: get_post_meta( $product_id, '_ax_model_glb_url', true )
 			?: get_post_meta( $product_id, '_glb_file', true )
 			?: get_post_meta( $product_id, '_ar_glb_url', true )
@@ -419,7 +422,8 @@ function axgnud_get_product_3d_data( $product_id ) {
 	}
 
 	if ( empty( $usdz_url ) ) {
-		$usdz_url = get_post_meta( $product_id, '_axgnud_model_usdz', true )
+		$usdz_url = get_post_meta( $product_id, '_despace_model_usdz', true )
+			?: get_post_meta( $product_id, '_axgnud_model_usdz', true )
 			?: get_post_meta( $product_id, '_ax_model_usdz_url', true )
 			?: get_post_meta( $product_id, '_usdz_file', true )
 			?: get_post_meta( $product_id, '_ar_usdz_url', true )
@@ -518,4 +522,8 @@ function axgnud_get_product_3d_data( $product_id ) {
 		'name'          => $product->get_name(),
 		'price_html'    => $product->get_price_html(),
 	);
+}
+
+function axgnud_get_product_3d_data( $product_id ) {
+	return despace_get_product_3d_data( $product_id );
 }

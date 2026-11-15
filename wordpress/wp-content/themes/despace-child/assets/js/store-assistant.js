@@ -7,7 +7,7 @@
 	var form = document.getElementById("ax-chat-form");
 	var input = document.getElementById("ax-chat-input");
 	var messages = document.getElementById("ax-chat-messages");
-	var catalogueNode = document.getElementById("axgnud-chat-catalogue");
+	var catalogueNode = document.getElementById("despace-chat-catalogue") || document.getElementById("axgnud-chat-catalogue");
 	var english = /^en/i.test(document.documentElement.lang || "");
 	var products = [];
 

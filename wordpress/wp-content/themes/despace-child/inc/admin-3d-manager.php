@@ -21,7 +21,7 @@ function axgnud_register_3d_admin_menu() {
 		'3D & AR Management',
 		'3D & AR Studio',
 		'manage_woocommerce',
-		'axgnud-3d-manager',
+		'despace-3d-manager',
 		'axgnud_render_3d_manager_page',
 		'dashicons-visibility',
 		57
@@ -33,7 +33,7 @@ function axgnud_register_3d_admin_menu() {
  */
 add_action( 'admin_enqueue_scripts', 'axgnud_enqueue_3d_admin_assets' );
 function axgnud_enqueue_3d_admin_assets( $hook ) {
-	if ( 'toplevel_page_axgnud-3d-manager' !== $hook ) {
+	if ( 'toplevel_page_despace-3d-manager' !== $hook ) {
 		return;
 	}
 
@@ -58,7 +58,7 @@ function axgnud_enqueue_3d_admin_assets( $hook ) {
  */
 add_action( 'admin_init', 'axgnud_handle_3d_csv_export' );
 function axgnud_handle_3d_csv_export() {
-	if ( ! isset( $_GET['page'] ) || 'axgnud-3d-manager' !== $_GET['page'] || ! isset( $_GET['action'] ) || 'export_csv' !== $_GET['action'] ) {
+	if ( ! isset( $_GET['page'] ) || 'despace-3d-manager' !== $_GET['page'] || ! isset( $_GET['action'] ) || 'export_csv' !== $_GET['action'] ) {
 		return;
 	}
 
@@ -69,11 +69,11 @@ function axgnud_handle_3d_csv_export() {
 	check_admin_referer( 'axgnud_export_csv_nonce' );
 
 	global $wpdb;
-	$table = $wpdb->prefix . 'axgnud_product_3d_models';
+	$t_despace = $wpdb->prefix . 'despace_product_3d_models'; $t_axgnud = $wpdb->prefix . 'axgnud_product_3d_models'; $table = ( $wpdb->get_var( "SHOW TABLES LIKE '$t_despace'" ) === $t_despace ) ? $t_despace : $t_axgnud;
 	$rows  = $wpdb->get_results( "SELECT * FROM $table ORDER BY product_id ASC" );
 
 	header( 'Content-Type: text/csv; charset=utf-8' );
-	header( 'Content-Disposition: attachment; filename=axgnud_3d_catalog_mapping_' . date( 'Ymd_His' ) . '.csv' );
+	header( 'Content-Disposition: attachment; filename=despace_3d_catalog_mapping_' . date( 'Ymd_His' ) . '.csv' );
 
 	$output = fopen( 'php://output', 'w' );
 	fputcsv( $output, array( 'product_id', 'sku', 'product_name', 'category', 'length', 'width', 'height', 'unit', 'glb_url', 'usdz_url', 'model_status', 'ar_enabled', 'version' ) );
@@ -108,16 +108,17 @@ function axgnud_handle_3d_csv_export() {
 /**
  * 4. AJAX Handlers: Save 3D Data
  */
+add_action( 'wp_ajax_despace_save_product_3d', 'axgnud_ajax_save_product_3d' );
 add_action( 'wp_ajax_axgnud_save_product_3d', 'axgnud_ajax_save_product_3d' );
 function axgnud_ajax_save_product_3d() {
-	check_ajax_referer( 'axgnud_3d_manager_nonce', 'nonce' );
+	if ( ! check_ajax_referer( 'despace_3d_manager_nonce', 'nonce', false ) && ! check_ajax_referer( 'axgnud_3d_manager_nonce', 'nonce', false ) ) { wp_send_json_error( array( 'message' => 'Invalid security token' ) ); }
 
 	if ( ! current_user_can( 'manage_woocommerce' ) ) {
 		wp_send_json_error( array( 'message' => 'Quyền hạn không hợp lệ.' ) );
 	}
 
 	global $wpdb;
-	$table = $wpdb->prefix . 'axgnud_product_3d_models';
+	$t_despace = $wpdb->prefix . 'despace_product_3d_models'; $t_axgnud = $wpdb->prefix . 'axgnud_product_3d_models'; $table = ( $wpdb->get_var( "SHOW TABLES LIKE '$t_despace'" ) === $t_despace ) ? $t_despace : $t_axgnud;
 
 	$product_id   = intval( $_POST['product_id'] ?? 0 );
 	$glb_url      = sanitize_text_field( wp_unslash( $_POST['glb_url'] ?? '' ) );
@@ -145,10 +146,14 @@ function axgnud_ajax_save_product_3d() {
 	}
 
 	// Update Post Meta (WooCommerce Cache)
+	update_post_meta( $product_id, '_despace_model_glb', $glb_url );
 	update_post_meta( $product_id, '_axgnud_model_glb', $glb_url );
+	update_post_meta( $product_id, '_despace_model_usdz', $usdz_url );
 	update_post_meta( $product_id, '_axgnud_model_usdz', $usdz_url );
 	update_post_meta( $product_id, '_ar_enabled', $ar_enabled ? 'yes' : 'no' );
+	update_post_meta( $product_id, '_despace_3d_status', $model_status );
 	update_post_meta( $product_id, '_axgnud_3d_status', $model_status );
+	update_post_meta( $product_id, '_despace_3d_version', $version );
 	update_post_meta( $product_id, '_axgnud_3d_version', $version );
 	if ( $width > 0 ) update_post_meta( $product_id, '_length', $width );
 	if ( $depth > 0 ) update_post_meta( $product_id, '_width', $depth );
@@ -204,16 +209,17 @@ function axgnud_ajax_save_product_3d() {
 /**
  * 5. AJAX Handlers: Sync Catalog (Auto-discover new products)
  */
+add_action( 'wp_ajax_despace_sync_catalog_3d', 'axgnud_ajax_sync_catalog_3d' );
 add_action( 'wp_ajax_axgnud_sync_catalog_3d', 'axgnud_ajax_sync_catalog_3d' );
 function axgnud_ajax_sync_catalog_3d() {
-	check_ajax_referer( 'axgnud_3d_manager_nonce', 'nonce' );
+	if ( ! check_ajax_referer( 'despace_3d_manager_nonce', 'nonce', false ) && ! check_ajax_referer( 'axgnud_3d_manager_nonce', 'nonce', false ) ) { wp_send_json_error( array( 'message' => 'Invalid security token' ) ); }
 
 	if ( ! current_user_can( 'manage_woocommerce' ) ) {
 		wp_send_json_error( array( 'message' => 'Quyền hạn không hợp lệ.' ) );
 	}
 
 	global $wpdb;
-	$table = $wpdb->prefix . 'axgnud_product_3d_models';
+	$t_despace = $wpdb->prefix . 'despace_product_3d_models'; $t_axgnud = $wpdb->prefix . 'axgnud_product_3d_models'; $table = ( $wpdb->get_var( "SHOW TABLES LIKE '$t_despace'" ) === $t_despace ) ? $t_despace : $t_axgnud;
 
 	$products = wc_get_products( array( 'limit' => -1, 'status' => 'publish' ) );
 	$inserted = 0;
@@ -267,7 +273,9 @@ function axgnud_ajax_sync_catalog_3d() {
 /**
  * 6. Public REST/AJAX endpoint for Dynamic Single Product 3D fetch
  */
+add_action( 'wp_ajax_despace_get_product_3d_dynamic', 'axgnud_ajax_get_product_3d_dynamic' );
 add_action( 'wp_ajax_axgnud_get_product_3d_dynamic', 'axgnud_ajax_get_product_3d_dynamic' );
+add_action( 'wp_ajax_nopriv_despace_get_product_3d_dynamic', 'axgnud_ajax_get_product_3d_dynamic' );
 add_action( 'wp_ajax_nopriv_axgnud_get_product_3d_dynamic', 'axgnud_ajax_get_product_3d_dynamic' );
 function axgnud_ajax_get_product_3d_dynamic() {
 	$product_id = intval( $_GET['product_id'] ?? 0 );
@@ -284,7 +292,7 @@ function axgnud_ajax_get_product_3d_dynamic() {
  */
 function axgnud_render_3d_manager_page() {
 	global $wpdb;
-	$table = $wpdb->prefix . 'axgnud_product_3d_models';
+	$t_despace = $wpdb->prefix . 'despace_product_3d_models'; $t_axgnud = $wpdb->prefix . 'axgnud_product_3d_models'; $table = ( $wpdb->get_var( "SHOW TABLES LIKE '$t_despace'" ) === $t_despace ) ? $t_despace : $t_axgnud;
 
 	// Filters
 	$search_kw  = sanitize_text_field( $_GET['s_kw'] ?? '' );
@@ -753,3 +761,14 @@ function axgnud_render_3d_manager_page() {
 	<?php
 }
 
+
+add_action( 'admin_init', function() {
+	if ( isset( $_GET['page'] ) && 'axgnud-3d-manager' === $_GET['page'] ) {
+		$target = admin_url( 'admin.php?page=despace-3d-manager' );
+		if ( ! empty( $_GET['action'] ) ) {
+			$target = add_query_arg( 'action', sanitize_text_field( $_GET['action'] ), $target );
+		}
+		wp_safe_redirect( $target );
+		exit;
+	}
+} );

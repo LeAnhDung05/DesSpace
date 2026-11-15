@@ -17,18 +17,20 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function ax_get_product_3d_info( $product_id ) {
 	global $wpdb;
-	$table = $wpdb->prefix . 'axgnud_product_3d_models';
+	$table_despace = $wpdb->prefix . 'despace_product_3d_models';
+	$table_axgnud  = $wpdb->prefix . 'axgnud_product_3d_models';
+	$table         = ( $wpdb->get_var( "SHOW TABLES LIKE '$table_despace'" ) === $table_despace ) ? $table_despace : $table_axgnud;
 
 	$row = null;
 	if ( $wpdb->get_var( "SHOW TABLES LIKE '$table'" ) === $table ) {
 		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table WHERE product_id = %d LIMIT 1", $product_id ) );
 	}
 
-	$glb = $row ? $row->glb_url : get_post_meta( $product_id, '_axgnud_model_glb', true );
-	$usdz = $row ? $row->usdz_url : get_post_meta( $product_id, '_axgnud_model_usdz', true );
+	$glb = $row ? $row->glb_url : ( get_post_meta( $product_id, '_despace_model_glb', true ) ?: get_post_meta( $product_id, '_axgnud_model_glb', true ) );
+	$usdz = $row ? $row->usdz_url : ( get_post_meta( $product_id, '_despace_model_usdz', true ) ?: get_post_meta( $product_id, '_axgnud_model_usdz', true ) );
 	$ar_meta = get_post_meta( $product_id, '_ar_enabled', true );
 	$ar_enabled_flag = $row ? (int) $row->ar_enabled : ( 'yes' === $ar_meta || '1' === $ar_meta );
-	$model_status = $row ? $row->model_status : ( get_post_meta( $product_id, '_axgnud_3d_status', true ) ?: 'published' );
+	$model_status = $row ? $row->model_status : ( get_post_meta( $product_id, '_despace_3d_status', true ) ?: ( get_post_meta( $product_id, '_axgnud_3d_status', true ) ?: 'published' ) );
 
 	if ( ! $glb ) {
 		$glb = get_post_meta( $product_id, '_glb_file', true )

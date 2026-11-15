@@ -28,7 +28,7 @@ $colors       = wc_get_product_terms( $id, 'pa_color' );
 	<div class="f-card">
 		<div class="f-card-media">
 			<?php
-			$custom_badge = get_post_meta( $id, '_axgnud_badge', true );
+			$custom_badge = get_post_meta( $id, '_despace_badge', true ) ?: get_post_meta( $id, '_axgnud_badge', true );
 			?>
 			<div class="f-card-badges">
 				<?php if ( ! empty( $custom_badge ) ) :

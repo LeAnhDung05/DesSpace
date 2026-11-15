@@ -261,6 +261,7 @@ foreach ( $chat_products as $chat_product ) {
 	</button>
 </nav>
 
+<script type="application/json" id="despace-chat-catalogue"><?php echo wp_json_encode( $chat_catalogue, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT ); ?></script>
 <script type="application/json" id="axgnud-chat-catalogue"><?php echo wp_json_encode( $chat_catalogue, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT ); ?></script>
 
 <!-- Bottom-Right Floating AI Assistant & Contact Dock -->

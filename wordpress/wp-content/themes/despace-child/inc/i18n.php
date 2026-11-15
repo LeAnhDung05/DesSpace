@@ -5,7 +5,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-function furniva_current_language() {
+function despace_current_language() {
 	$settings = get_option( 'trp_settings', array() );
 	$allowed  = isset( $settings['translation-languages'] ) && is_array( $settings['translation-languages'] )
 		? $settings['translation-languages']
@@ -31,9 +31,17 @@ function furniva_current_language() {
 	return $settings['default-language'] ?? 'vi';
 }
 
+function furniva_current_language() {
+	return despace_current_language();
+}
+
+function despace_t( $english, $vietnamese ) {
+	$text = in_array( despace_current_language(), array( 'en', 'en_US', 'en_GB' ), true ) ? $english : $vietnamese;
+	return str_ireplace( array( 'furniva', 'funival', 'axgnud' ), 'DeSpace', $text );
+}
+
 function furniva_t( $english, $vietnamese ) {
-	$text = in_array( furniva_current_language(), array( 'en', 'en_US', 'en_GB' ), true ) ? $english : $vietnamese;
-	return str_ireplace( array( 'furniva', 'axgnud' ), 'DeSpace', $text );
+	return despace_t( $english, $vietnamese );
 }
 
 /** Keep translated titles available when templates render WordPress objects directly. */
@@ -320,7 +328,7 @@ function furniva_translate_attribute_label( $label, $name ) {
 }
 add_filter( 'woocommerce_attribute_label', 'furniva_translate_attribute_label', 99, 2 );
 
-function furniva_term_label( $name, $taxonomy = '' ) {
+function despace_term_label( $name, $taxonomy = '' ) {
 	$name = html_entity_decode( (string) $name, ENT_QUOTES, get_bloginfo( 'charset' ) );
 	$translations = array(
 		'product_cat' => array(
@@ -395,6 +403,10 @@ function furniva_term_label( $name, $taxonomy = '' ) {
 		}
 	}
 	return $name;
+}
+
+function furniva_term_label( $name, $taxonomy = '' ) {
+	return despace_term_label( $name, $taxonomy );
 }
 
 function furniva_translate_plugin_label( $translation, $text, $domain ) {
@@ -509,8 +521,8 @@ function furniva_post_excerpt( $post_id, $words = 26 ) {
  * Uses TranslatePress URL converter when present, with clean fallback.
  * Guarantees 100% clickable navigation between Vietnamese and English.
  */
-function furniva_language_switcher_html() {
-	$current_lang = furniva_current_language();
+function despace_language_switcher_html() {
+	$current_lang = despace_current_language();
 	$is_vi        = in_array( $current_lang, array( 'vi', 'vi_VN' ), true );
 
 	$host = $_SERVER['HTTP_HOST'] ?? 'localhost:8088';
@@ -546,7 +558,7 @@ function furniva_language_switcher_html() {
 
 	ob_start();
 	?>
-	<div class="fv-lang-switcher" role="navigation" aria-label="<?php echo esc_attr( furniva_t( 'Language selector', 'Chọn ngôn ngữ' ) ); ?>">
+	<div class="fv-lang-switcher" role="navigation" aria-label="<?php echo esc_attr( despace_t( 'Language selector', 'Chọn ngôn ngữ' ) ); ?>">
 		<a href="<?php echo esc_url( $vi_url ); ?>" class="fv-lang-btn <?php echo $is_vi ? 'is-active' : ''; ?>" aria-current="<?php echo $is_vi ? 'true' : 'false'; ?>" title="Tiếng Việt">
 			<span class="fv-lang-code">VI</span>
 		</a>
@@ -557,6 +569,10 @@ function furniva_language_switcher_html() {
 	</div>
 	<?php
 	return ob_get_clean();
+}
+
+function furniva_language_switcher_html() {
+	return despace_language_switcher_html();
 }
 
 /**

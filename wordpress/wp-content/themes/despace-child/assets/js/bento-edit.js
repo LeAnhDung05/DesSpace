@@ -2,7 +2,7 @@
  * THE DeSpace EDIT — Bento Grid Interactions
  */
 document.addEventListener('DOMContentLoaded', function () {
-  var bentoSection = document.getElementById('the-axgnud-edit');
+  var bentoSection = document.getElementById('the-despace-edit') || document.getElementById('the-axgnud-edit');
   if (!bentoSection) return;
 
   var livingCard = bentoSection.querySelector('.fv-bento-card--living');

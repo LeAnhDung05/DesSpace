@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @param WP_Error $validation_errors Validation errors object.
  * @return WP_Error
  */
-function axgnud_validate_registration_fields( $username, $email, $validation_errors ) {
+function despace_validate_registration_fields( $username, $email, $validation_errors ) {
 	// 1. First Name (Tên)
 	if ( isset( $_POST['billing_first_name'] ) && '' === trim( sanitize_text_field( wp_unslash( $_POST['billing_first_name'] ) ) ) ) {
 		$validation_errors->add(
@@ -88,14 +88,14 @@ function axgnud_validate_registration_fields( $username, $email, $validation_err
 
 	return $validation_errors;
 }
-add_action( 'woocommerce_register_post', 'axgnud_validate_registration_fields', 10, 3 );
+add_action( 'woocommerce_register_post', 'despace_validate_registration_fields', 10, 3 );
 
 /**
  * Save custom registration fields to customer profile meta.
  *
  * @param int $customer_id Customer user ID.
  */
-function axgnud_save_registration_fields( $customer_id ) {
+function despace_save_registration_fields( $customer_id ) {
 	$first_name = ! empty( $_POST['billing_first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['billing_first_name'] ) ) : '';
 	$last_name  = ! empty( $_POST['billing_last_name'] )  ? sanitize_text_field( wp_unslash( $_POST['billing_last_name'] ) )  : '';
 	$phone      = ! empty( $_POST['billing_phone'] )      ? sanitize_text_field( wp_unslash( $_POST['billing_phone'] ) )      : '';
@@ -132,10 +132,12 @@ function axgnud_save_registration_fields( $customer_id ) {
 	}
 
 	// Set initial membership level & audit info
+	update_user_meta( $customer_id, 'despace_membership_tier', 'Silver Privilege' );
 	update_user_meta( $customer_id, 'axgnud_membership_tier', 'Silver Privilege' );
+	update_user_meta( $customer_id, 'despace_registered_via', 'web_luxury_register' );
 	update_user_meta( $customer_id, 'axgnud_registered_via', 'web_luxury_register' );
 }
-add_action( 'woocommerce_created_customer', 'axgnud_save_registration_fields', 10, 1 );
+add_action( 'woocommerce_created_customer', 'despace_save_registration_fields', 10, 1 );
 
 /* ==========================================================================
    2. ACCESS GATE: REQUIRE LOGIN TO USE STORE FEATURES
@@ -145,7 +147,7 @@ add_action( 'woocommerce_created_customer', 'axgnud_save_registration_fields', 1
  * Gate 1: Require login to access Checkout.
  * Redirects guests from /checkout/ to /my-account/?action=login&redirect_to=checkout.
  */
-function axgnud_require_login_for_checkout() {
+function despace_require_login_for_checkout() {
 	if ( function_exists( 'is_checkout' ) && is_checkout() && ! is_user_logged_in() && ! is_order_received_page() ) {
 		wc_add_notice(
 			furniva_t(
@@ -165,7 +167,7 @@ function axgnud_require_login_for_checkout() {
 		exit;
 	}
 }
-add_action( 'template_redirect', 'axgnud_require_login_for_checkout' );
+add_action( 'template_redirect', 'despace_require_login_for_checkout' );
 
 /**
  * Gate 2: Server-side validation requiring login before adding items to Cart.
@@ -175,7 +177,7 @@ add_action( 'template_redirect', 'axgnud_require_login_for_checkout' );
  * @param int  $quantity   Quantity.
  * @return bool
  */
-function axgnud_require_login_for_add_to_cart( $passed, $product_id, $quantity ) {
+function despace_require_login_for_add_to_cart( $passed, $product_id, $quantity ) {
 	if ( ! is_user_logged_in() ) {
 		$login_url    = add_query_arg( 'action', 'login', wc_get_page_permalink( 'myaccount' ) );
 		$register_url = add_query_arg( 'action', 'register', wc_get_page_permalink( 'myaccount' ) );
@@ -193,7 +195,7 @@ function axgnud_require_login_for_add_to_cart( $passed, $product_id, $quantity )
 	}
 	return $passed;
 }
-add_filter( 'woocommerce_add_to_cart_validation', 'axgnud_require_login_for_add_to_cart', 10, 3 );
+add_filter( 'woocommerce_add_to_cart_validation', 'despace_require_login_for_add_to_cart', 10, 3 );
 
 /**
  * Gate 3: Handle post-login and post-registration redirect to preserve user journey.
@@ -202,7 +204,7 @@ add_filter( 'woocommerce_add_to_cart_validation', 'axgnud_require_login_for_add_
  * @param WP_User $user     Logged in or registered user.
  * @return string
  */
-function axgnud_preserve_auth_redirect( $redirect, $user ) {
+function despace_preserve_auth_redirect( $redirect, $user ) {
 	if ( ! empty( $_REQUEST['redirect_to'] ) ) {
 		$target = esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) );
 		// Validate that target is an internal URL
@@ -215,13 +217,13 @@ function axgnud_preserve_auth_redirect( $redirect, $user ) {
 	}
 	return $redirect;
 }
-add_filter( 'woocommerce_login_redirect', 'axgnud_preserve_auth_redirect', 10, 2 );
-add_filter( 'woocommerce_registration_redirect', 'axgnud_preserve_auth_redirect', 10, 2 );
+add_filter( 'woocommerce_login_redirect', 'despace_preserve_auth_redirect', 10, 2 );
+add_filter( 'woocommerce_registration_redirect', 'despace_preserve_auth_redirect', 10, 2 );
 
 /**
  * Gate 4: Render Luxury Auth Gate Modal in footer for unauthenticated visitors.
  */
-function axgnud_render_auth_modal() {
+function despace_render_auth_modal() {
 	if ( is_user_logged_in() ) {
 		return;
 	}
@@ -264,4 +266,12 @@ function axgnud_render_auth_modal() {
 	</div>
 	<?php
 }
-add_action( 'wp_footer', 'axgnud_render_auth_modal', 99 );
+add_action( 'wp_footer', 'despace_render_auth_modal', 99 );
+
+// Backward compatibility aliases
+function axgnud_validate_registration_fields( $username, $email, $validation_errors ) { return despace_validate_registration_fields( $username, $email, $validation_errors ); }
+function axgnud_save_registration_fields( $customer_id ) { return despace_save_registration_fields( $customer_id ); }
+function axgnud_require_login_for_checkout() { return despace_require_login_for_checkout(); }
+function axgnud_require_login_for_add_to_cart( $passed, $product_id, $quantity ) { return despace_require_login_for_add_to_cart( $passed, $product_id, $quantity ); }
+function axgnud_preserve_auth_redirect( $redirect, $user ) { return despace_preserve_auth_redirect( $redirect, $user ); }
+function axgnud_render_auth_modal() { return despace_render_auth_modal(); }

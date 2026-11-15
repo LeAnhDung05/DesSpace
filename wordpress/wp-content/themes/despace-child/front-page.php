@@ -146,7 +146,7 @@ $hero_products = array(
 );
 ?>
 
-<div class="furniva fv-home">
+<div class="despace furniva fv-home">
 	<main class="fv-home-main" id="main-content">
 		<section class="fv-concierge fv-reveal fv-reveal-up" aria-labelledby="fv-concierge-title">
 			<div class="fv-wrap fv-concierge__inner">
@@ -211,7 +211,7 @@ $hero_products = array(
 			</div>
 		</section>
 
-		<section class="fv-diwali-banner fv-wrap fv-reveal fv-reveal-fade" id="furniva-welcome-offer" aria-label="<?php echo esc_attr( furniva_t( 'Welcome offer', 'Ưu đãi chào mừng' ) ); ?>">
+		<section class="fv-diwali-banner fv-wrap fv-reveal fv-reveal-fade" id="despace-welcome-offer" data-legacy-id="furniva-welcome-offer" aria-label="<?php echo esc_attr( furniva_t( 'Welcome offer', 'Ưu đãi chào mừng' ) ); ?>">
 			<span class="fv-diwali-banner__lamp" aria-hidden="true">✧</span>
 			<div class="fv-diwali-banner__copy">
 				<p><?php echo esc_html( furniva_t( 'An DeSpace welcome', 'ƯU ĐÃI CHÀO MỪNG DeSpace' ) ); ?></p>
@@ -339,7 +339,7 @@ $hero_products = array(
 		</section>
 
 		<!-- THE DeSpace EDIT Bento Grid Section -->
-		<section class="fv-bento-section fv-wrap fv-reveal fv-reveal-up" id="the-axgnud-edit" aria-labelledby="fv-bento-title">
+		<section class="fv-bento-section fv-wrap fv-reveal fv-reveal-up" id="the-despace-edit" aria-labelledby="fv-bento-title">
 			<div class="fv-bento-header">
 				<!-- Left Column: Eyebrow + Title + Subtitle -->
 				<div class="fv-bento-header__left">

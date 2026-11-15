@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 /**
  * 1. Kiểm tra ngôn ngữ hiện tại của giao diện (Mặc định '/' là 'vi', '/en/' hoặc ?lang=en là 'en')
  */
-function axgnud_is_vietnamese_locale() {
+function despace_is_vietnamese_locale() {
     if ( is_admin() && ! wp_doing_ajax() ) {
         return false;
     }
@@ -28,43 +28,43 @@ function axgnud_is_vietnamese_locale() {
  * 2. Tự động hiển thị Tên sản phẩm, Mô tả ngắn & Mô tả chi tiết theo đúng ngôn ngữ VI / EN đang chọn
  */
 add_filter( 'the_title', function( $title, $post_id = 0 ) {
-    if ( ! $post_id || get_post_type( $post_id ) !== 'product' || ! axgnud_is_vietnamese_locale() ) {
+    if ( ! $post_id || get_post_type( $post_id ) !== 'product' || ! despace_is_vietnamese_locale() ) {
         return $title;
     }
-    $vi_name = get_post_meta( $post_id, '_axgnud_name_vi', true );
+    $vi_name = ( get_post_meta( $post_id, '_despace_name_vi', true ) ?: get_post_meta( $post_id, '_axgnud_name_vi', true ) );
     return ! empty( $vi_name ) ? $vi_name : $title;
 }, 20, 2 );
 
 add_filter( 'woocommerce_product_get_name', function( $name, $product ) {
-    if ( ! axgnud_is_vietnamese_locale() ) {
+    if ( ! despace_is_vietnamese_locale() ) {
         return $name;
     }
-    $vi_name = get_post_meta( $product->get_id(), '_axgnud_name_vi', true );
+    $vi_name = ( get_post_meta( $product->get_id(), '_despace_name_vi', true ) ?: get_post_meta( $product->get_id(), '_axgnud_name_vi', true ) );
     return ! empty( $vi_name ) ? $vi_name : $name;
 }, 20, 2 );
 
 add_filter( 'woocommerce_short_description', function( $desc ) {
     global $post;
-    if ( ! $post || $post->post_type !== 'product' || ! axgnud_is_vietnamese_locale() ) {
+    if ( ! $post || $post->post_type !== 'product' || ! despace_is_vietnamese_locale() ) {
         return $desc;
     }
-    $vi_short = get_post_meta( $post->ID, '_axgnud_short_desc_vi', true );
+    $vi_short = ( get_post_meta( $post->ID, '_despace_short_desc_vi', true ) ?: get_post_meta( $post->ID, '_axgnud_short_desc_vi', true ) );
     return ! empty( $vi_short ) ? wpautop( wp_kses_post( $vi_short ) ) : $desc;
 }, 20 );
 
 add_filter( 'the_content', function( $content ) {
     global $post;
-    if ( ! $post || $post->post_type !== 'product' || ! axgnud_is_vietnamese_locale() ) {
+    if ( ! $post || $post->post_type !== 'product' || ! despace_is_vietnamese_locale() ) {
         return $content;
     }
-    $vi_desc = get_post_meta( $post->ID, '_axgnud_desc_vi', true );
+    $vi_desc = ( get_post_meta( $post->ID, '_despace_desc_vi', true ) ?: get_post_meta( $post->ID, '_axgnud_desc_vi', true ) );
     return ! empty( $vi_desc ) ? wp_kses_post( $vi_desc ) : $content;
 }, 20 );
 
 /**
  * 3. Mở rộng Tìm kiếm sản phẩm: Gõ tiếng Việt (?s=ghế, ?s=bàn, ?s=đèn, ?s=giường) hay tiếng Anh đều ra đúng sản phẩm
  */
-function axgnud_is_product_search( $query ) {
+function despace_is_product_search( $query ) {
     if ( is_admin() || ! $query->is_search() ) {
         return false;
     }
@@ -89,7 +89,7 @@ add_action( 'pre_get_posts', function( $query ) {
     if ( is_admin() || ! $query->is_search() ) {
         return;
     }
-    if ( ! axgnud_is_product_search( $query ) ) {
+    if ( ! despace_is_product_search( $query ) ) {
         return;
     }
 
@@ -137,9 +137,9 @@ add_action( 'pre_get_posts', function( $query ) {
 
 add_filter( 'posts_join', function( $join, $query ) {
     global $wpdb;
-    if ( axgnud_is_product_search( $query ) ) {
+    if ( despace_is_product_search( $query ) ) {
         if ( strpos( $join, 'axg_search_meta' ) === false ) {
-            $join .= " LEFT JOIN {$wpdb->postmeta} AS axg_search_meta ON ({$wpdb->posts}.ID = axg_search_meta.post_id AND axg_search_meta.meta_key IN ('_axgnud_name_vi', '_axgnud_short_desc_vi', '_axgnud_search_keywords')) ";
+            $join .= " LEFT JOIN {$wpdb->postmeta} AS axg_search_meta ON ({$wpdb->posts}.ID = axg_search_meta.post_id AND axg_search_meta.meta_key IN ('_despace_name_vi', '_axgnud_name_vi', '_despace_short_desc_vi', '_axgnud_short_desc_vi', '_despace_search_keywords', '_axgnud_search_keywords')) ";
         }
     }
     return $join;
@@ -147,7 +147,7 @@ add_filter( 'posts_join', function( $join, $query ) {
 
 add_filter( 'posts_where', function( $where, $query ) {
     global $wpdb;
-    if ( axgnud_is_product_search( $query ) ) {
+    if ( despace_is_product_search( $query ) ) {
         $s = trim( (string) $query->get( 's' ) );
         if ( ! empty( $s ) ) {
             $like = '%' . $wpdb->esc_like( $s ) . '%';
@@ -162,8 +162,12 @@ add_filter( 'posts_where', function( $where, $query ) {
 }, 10, 2 );
 
 add_filter( 'posts_distinct', function( $distinct, $query ) {
-    if ( axgnud_is_product_search( $query ) ) {
+    if ( despace_is_product_search( $query ) ) {
         return 'DISTINCT';
     }
     return $distinct;
 }, 10, 2 );
+
+// Backward compatibility aliases
+function axgnud_is_vietnamese_locale() { return despace_is_vietnamese_locale(); }
+function axgnud_is_product_search( $query ) { return despace_is_product_search( $query ); }

@@ -60,7 +60,7 @@ replatform_bttts5_despace/
 ├── wordpress/
 │   └── wp-content/
 │       ├── mu-plugins/
-│       │   ├── furniva-store-admin.php            # Tối ưu hóa bảng điều khiển quản trị
+│       │   ├── despace-store-admin.php            # Tối ưu hóa bảng điều khiển quản trị
 │       │   ├── dynamic-tunnel.php                 # Hỗ trợ tự động nhận diện host tunnel/proxy
 │       │   └── despace-smtp.php                   # Định tuyến gửi email an toàn qua Mailpit
 │       ├── themes/
@@ -114,7 +114,7 @@ Hệ thống đã được đóng gói và cấu hình chạy trên Docker:
 |---|---|:---:|
 | `http://localhost:8090/` | Trang chủ 8 Acts Storytelling | **200 OK** |
 | `http://localhost:8090/shop/` | Danh mục & Bộ lọc sản phẩm | **200 OK** |
-| `http://localhost:8090/product/tu-giay-3-canh-axgnud-metro-van-go-linear/` | Chi tiết sản phẩm tích hợp mô hình 3D tương tác | **200 OK** |
+| `http://localhost:8090/product/tu-giay-3-canh-despace-metro-van-go-linear/` | Chi tiết sản phẩm tích hợp mô hình 3D tương tác | **200 OK** |
 | `http://localhost:8090/ar-room-visualizer/` | Không gian trải nghiệm AR Room WebGL | **200 OK** |
 | `http://localhost:8090/cart/` | Giỏ hàng & Mini-cart Drawer | **200 OK** |
 | `http://localhost:8090/checkout/` | Thanh toán (Hỗ trợ COD & Vietcombank BACS) | **200 OK** |
