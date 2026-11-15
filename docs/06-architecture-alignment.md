@@ -46,37 +46,31 @@ BTTTS_5/
 │           └── despace-core/
 │               ├── despace-core.php
 │               ├── includes/
-│               │   ├── Core/
-│               │   │   └── Plugin.php
+│               │   ├── Plugin.php
 │               │   ├── Products/
-│               │   │   └── CustomFields.php
-│               │   ├── Product3D/
+│               │   ├── Product-3D/
 │               │   │   └── Product3DModule.php
 │               │   ├── Catalog/
-│               │   │   └── CatalogFilters.php
+│               │   │   └── CatalogModule.php
+│               │   ├── Checkout-Orders/
+│               │   │   ├── CheckoutOrdersModule.php
+│               │   │   ├── Account/
+│               │   │   ├── Cart/
+│               │   │   ├── Checkout/
+│               │   │   ├── Email/
+│               │   │   ├── Orders/
+│               │   │   ├── Payment/
+│               │   │   └── Shipping/
 │               │   ├── Inventory/
-│               │   │   ├── InventoryEvent.php
 │               │   │   └── InventoryModule.php
 │               │   ├── Reports/
 │               │   │   └── ReportsModule.php
-│               │   ├── Rest/
+│               │   ├── REST-API/
 │               │   │   └── RestApiModule.php
 │               │   ├── Admin/
-│               │   │   └── AdminDashboard.php
 │               │   ├── Security/
-│               │   │   └── SecurityModule.php
-│               │   ├── Database/
-│               │   │   └── SchemaManager.php
-│               │   └── Integrations/
-│               │       └── WooCommerce/
-│               │           ├── CheckoutOrdersModule.php
-│               │           ├── Account/
-│               │           ├── Cart/
-│               │           ├── Checkout/
-│               │           ├── Email/
-│               │           ├── Orders/
-│               │           ├── Payment/
-│               │           └── Shipping/
+│               │   │   └── RoleManager.php
+│               │   └── Database/
 │               ├── assets/
 │               │   ├── css/
 │               │   └── js/

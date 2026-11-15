@@ -172,6 +172,11 @@ class Plugin {
 		if ( class_exists( 'DeSpace\\Reports\\ReportsModule' ) && method_exists( 'DeSpace\\Reports\\ReportsModule', 'init' ) ) {
 			\DeSpace\Reports\ReportsModule::init();
 		}
+
+		// REST API Module.
+		if ( class_exists( 'DeSpace\\Rest\\RestApiModule' ) && method_exists( 'DeSpace\\Rest\\RestApiModule', 'init' ) ) {
+			\DeSpace\Rest\RestApiModule::init();
+		}
 	}
 }
 
