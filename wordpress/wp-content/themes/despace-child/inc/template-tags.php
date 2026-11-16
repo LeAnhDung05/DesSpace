@@ -264,6 +264,10 @@ function despace_filter_sidebar() {
 	<?php
 }
 
+function furniva_filter_sidebar() {
+	return despace_filter_sidebar();
+}
+
 function despace_color_hex( $name_or_slug ) {
 	static $map = null;
 	if ( null === $map ) {

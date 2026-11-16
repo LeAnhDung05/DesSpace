@@ -183,7 +183,13 @@ if ( is_singular( 'product' ) ) {
 
 	<div class="f-wrap">
 		<div class="f-shop-layout">
-			<?php furniva_filter_sidebar(); ?>
+			<?php
+			if ( function_exists( 'despace_filter_sidebar' ) ) {
+				despace_filter_sidebar();
+			} elseif ( function_exists( 'furniva_filter_sidebar' ) ) {
+				furniva_filter_sidebar();
+			}
+			?>
 
 			<div class="f-shop-main">
 				<div class="f-shop-head">
