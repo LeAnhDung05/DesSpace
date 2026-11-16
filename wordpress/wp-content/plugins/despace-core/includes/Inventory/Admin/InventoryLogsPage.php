@@ -32,7 +32,7 @@ class InventoryLogsPage {
 			$capability = 'manage_woocommerce';
 		}
 
-		add_submenu_page(
+		$hook = add_submenu_page(
 			'woocommerce',
 			__( 'DeSpace — Inventory Logs', 'despace-core' ),
 			__( 'Inventory Logs', 'despace-core' ),
@@ -53,8 +53,22 @@ class InventoryLogsPage {
 			);
 		}
 
+		// Ensure columns are properly registered for this screen.
+		if ( $hook ) {
+			add_filter( "manage_{$hook}_columns", array( __CLASS__, 'get_table_columns' ) );
+		}
+		add_filter( 'manage_woocommerce_page_despace-inventory-logs_columns', array( __CLASS__, 'get_table_columns' ) );
+
 		// Handle CSV export action early before headers are sent.
 		add_action( 'admin_init', array( __CLASS__, 'handle_export' ) );
+	}
+
+	/**
+	 * Provide columns callback for screen options.
+	 */
+	public static function get_table_columns(): array {
+		$table = new InventoryLogsTable();
+		return $table->get_columns();
 	}
 
 	/**
@@ -132,7 +146,7 @@ class InventoryLogsPage {
 		$current_event_type = isset( $_GET['event_type'] ) ? sanitize_key( wp_unslash( $_GET['event_type'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current_date_from  = isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current_date_to    = isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$current_product_id = isset( $_GET['product_id'] ) ? absint( $_GET['product_id'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$current_product_id = ( isset( $_GET['product_id'] ) && '' !== trim( (string) $_GET['product_id'] ) && absint( $_GET['product_id'] ) > 0 ) ? absint( $_GET['product_id'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		$export_url = wp_nonce_url(
 			add_query_arg(
@@ -161,6 +175,7 @@ class InventoryLogsPage {
 				border: none;
 				box-shadow: none;
 				border-collapse: collapse;
+				width: 100%;
 			}
 			.despace-audit-wrap .wp-list-table th {
 				background: #FAF8F5;

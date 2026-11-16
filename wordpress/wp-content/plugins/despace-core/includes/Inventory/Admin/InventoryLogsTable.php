@@ -57,9 +57,19 @@ class InventoryLogsTable extends \WP_List_Table {
 		return array();
 	}
 
+	protected function get_primary_column_name(): string {
+		return 'created_at';
+	}
+
 	public function prepare_items(): void {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'despace_inventory_logs';
+
+		// Crucial for WP_List_Table in Admin: always explicitly populate $_column_headers.
+		$columns               = $this->get_columns();
+		$hidden                = array();
+		$sortable              = $this->get_sortable_columns();
+		$this->_column_headers = array( $columns, $hidden, $sortable, 'created_at' );
 
 		$per_page     = 20;
 		$current_page = $this->get_pagenum();
@@ -73,7 +83,7 @@ class InventoryLogsTable extends \WP_List_Table {
 			$where_values[]  = sanitize_key( wp_unslash( $_GET['event_type'] ) );
 		}
 
-		if ( ! empty( $_GET['product_id'] ) ) {
+		if ( ! empty( $_GET['product_id'] ) && absint( $_GET['product_id'] ) > 0 ) {
 			$where_clauses[] = 'product_id = %d';
 			$where_values[]  = absint( $_GET['product_id'] );
 		}
