@@ -41,9 +41,8 @@ if ( ! empty( $_SERVER['HTTP_HOST'] ) ) {
 		if ( ! is_string( $location ) || empty( $location ) ) {
 			return $location;
 		}
-		$location = str_replace( 'https://localhost:8088', $current_site_url, $location );
-		$location = str_replace( 'http://localhost:8088', $current_site_url, $location );
-		$location = str_replace( '//localhost:8088', '//' . $http_host, $location );
+		$location = preg_replace( '#https?://localhost(?::\d+)?#i', $current_site_url, $location );
+		$location = preg_replace( '#//localhost(?::\d+)?#i', '//' . $http_host, $location );
 		return $location;
 	}, 999 );
 
@@ -57,8 +56,8 @@ if ( ! empty( $_SERVER['HTTP_HOST'] ) ) {
 		} ) );
 	}, 999, 2 );
 
-	// Output buffering only when accessing from a tunnel domain (not localhost:8088)
-	if ( strpos( $http_host, 'localhost' ) === false ) {
+	// Output buffering only when accessing from a tunnel domain (not localhost)
+	if ( strpos( $http_host, 'localhost' ) === false && strpos( $http_host, '127.0.0.1' ) === false ) {
 		$json_current = str_replace( '/', '\/', $current_site_url );
 		add_action( 'template_redirect', function() use ( $current_site_url, $http_host, $json_current ) {
 			ob_start( function( $buffer ) use ( $current_site_url, $http_host, $json_current ) {
@@ -70,18 +69,14 @@ if ( ! empty( $_SERVER['HTTP_HOST'] ) ) {
 				$buffer = preg_replace( '/<link\s+[^>]*rel=["\']dns-prefetch["\'][^>]*href=["\'][^"\']*localhost[^"\']*["\'][^>]*>\s*/i', '', $buffer );
 				$buffer = preg_replace( '/<link\s+[^>]*href=["\'][^"\']*localhost[^"\']*["\'][^>]*rel=["\']dns-prefetch["\'][^>]*>\s*/i', '', $buffer );
 
-				$buffer = str_replace( 'https://localhost:8088', $current_site_url, $buffer );
-				$buffer = str_replace( 'http://localhost:8088', $current_site_url, $buffer );
-				$buffer = str_replace( '//localhost:8088', '//' . $http_host, $buffer );
-				$buffer = str_replace( 'https://localhost', $current_site_url, $buffer );
-				$buffer = str_replace( 'http://localhost', $current_site_url, $buffer );
-				$buffer = str_replace( '//localhost', '//' . $http_host, $buffer );
-				$buffer = str_replace( 'https:\/\/localhost:8088', $json_current, $buffer );
-				$buffer = str_replace( 'http:\/\/localhost:8088', $json_current, $buffer );
-				$buffer = str_replace( '\/\/localhost:8088', '\/\/' . $http_host, $buffer );
-				$buffer = str_replace( 'https:\/\/localhost', $json_current, $buffer );
-				$buffer = str_replace( 'http:\/\/localhost', $json_current, $buffer );
-				$buffer = str_replace( '\/\/localhost', '\/\/' . $http_host, $buffer );
+				// Replace URLs in HTML
+				$buffer = preg_replace( '#https?://localhost(?::\d+)?#i', $current_site_url, $buffer );
+				$buffer = preg_replace( '#(?<!:)//localhost(?::\d+)?#i', '//' . $http_host, $buffer );
+
+				// Replace JSON escaped URLs
+				$buffer = preg_replace( '#https?:\\\\/\\\\/localhost(?:\\\\:\d+)?#i', $json_current, $buffer );
+				$buffer = preg_replace( '#\\\\/\\\\/localhost(?:\\\\:\d+)?#i', '\/\/' . $http_host, $buffer );
+
 				return $buffer;
 			} );
 		}, 1 );
