@@ -1,22 +1,19 @@
 <?php
 /**
- * WordPress Admin List Table for Inventory Logs.
+ * Admin Inventory Logs Table — Minimalist Luxury DeSpace Styling.
  *
  * @package DeSpace\Inventory\Admin
  */
 
 namespace DeSpace\Inventory\Admin;
 
-use DeSpace\Inventory\Database\InventoryLogInstaller;
-
 defined( 'ABSPATH' ) || exit;
 
 if ( ! class_exists( 'WP_List_Table' ) ) {
-	$list_table_path = ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
-	if ( file_exists( $list_table_path ) ) {
-		require_once $list_table_path;
+	$wp_list_table_file = ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
+	if ( file_exists( $wp_list_table_file ) ) {
+		require_once $wp_list_table_file;
 	} else {
-		// Fallback stub for CLI or non-admin testing.
 		class WP_List_Table_Stub {
 			protected $_column_headers = array();
 			protected $items = array();
@@ -44,57 +41,53 @@ class InventoryLogsTable extends \WP_List_Table {
 
 	public function get_columns(): array {
 		return array(
-			'created_at'      => __( 'Time (UTC)', 'despace-core' ),
-			'product'         => __( 'Product', 'despace-core' ),
-			'variation'       => __( 'Variation / SKU', 'despace-core' ),
-			'order_ref'       => __( 'Order / Refund', 'despace-core' ),
-			'event_source'    => __( 'Source', 'despace-core' ),
-			'event_type'      => __( 'Event Type', 'despace-core' ),
-			'quantity_delta'  => __( 'Change (Delta)', 'despace-core' ),
-			'stock_after'     => __( 'Stock After', 'despace-core' ),
-			'actor'           => __( 'Actor', 'despace-core' ),
+			'created_at'      => __( 'Thời Gian', 'despace-core' ),
+			'product'         => __( 'Sản Phẩm', 'despace-core' ),
+			'variation'       => __( 'Biến Thể / SKU', 'despace-core' ),
+			'order_ref'       => __( 'Đơn Hàng / Hoàn Tiền', 'despace-core' ),
+			'event_source'    => __( 'Nguồn', 'despace-core' ),
+			'event_type'      => __( 'Loại Sự Kiện', 'despace-core' ),
+			'quantity_delta'  => __( 'Biến Động (Delta)', 'despace-core' ),
+			'stock_after'     => __( 'Tồn Sau', 'despace-core' ),
+			'actor'           => __( 'Người Thực Hiện', 'despace-core' ),
 		);
+	}
+
+	protected function get_sortable_columns(): array {
+		return array();
 	}
 
 	public function prepare_items(): void {
 		global $wpdb;
+		$table_name = $wpdb->prefix . 'despace_inventory_logs';
 
-		$table_name = InventoryLogInstaller::get_table_name();
-		$per_page   = 20;
+		$per_page     = 20;
 		$current_page = $this->get_pagenum();
-
-		$columns  = $this->get_columns();
-		$hidden   = array();
-		$sortable = array();
-		$this->_column_headers = array( $columns, $hidden, $sortable );
 
 		$where_clauses = array( '1=1' );
 		$where_values  = array();
 
-		// Sanitize and apply filters.
-		$event_type = isset( $_GET['event_type'] ) ? sanitize_key( wp_unslash( $_GET['event_type'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( ! empty( $event_type ) ) {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		if ( ! empty( $_GET['event_type'] ) ) {
 			$where_clauses[] = 'event_type = %s';
-			$where_values[]  = $event_type;
+			$where_values[]  = sanitize_key( wp_unslash( $_GET['event_type'] ) );
 		}
 
-		$product_id = isset( $_GET['product_id'] ) ? absint( $_GET['product_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( $product_id > 0 ) {
+		if ( ! empty( $_GET['product_id'] ) ) {
 			$where_clauses[] = 'product_id = %d';
-			$where_values[]  = $product_id;
+			$where_values[]  = absint( $_GET['product_id'] );
 		}
 
-		$date_from = isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( ! empty( $date_from ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date_from ) ) {
+		if ( ! empty( $_GET['date_from'] ) ) {
 			$where_clauses[] = 'created_at >= %s';
-			$where_values[]  = $date_from . ' 00:00:00';
+			$where_values[]  = sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) . ' 00:00:00';
 		}
 
-		$date_to = isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( ! empty( $date_to ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date_to ) ) {
+		if ( ! empty( $_GET['date_to'] ) ) {
 			$where_clauses[] = 'created_at <= %s';
-			$where_values[]  = $date_to . ' 23:59:59';
+			$where_values[]  = sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) . ' 23:59:59';
 		}
+		// phpcs:enable
 
 		$where_sql = implode( ' AND ', $where_clauses );
 
@@ -119,7 +112,7 @@ class InventoryLogsTable extends \WP_List_Table {
 	public function column_default( $item, $column_name ): string {
 		switch ( $column_name ) {
 			case 'created_at':
-				return '<span style="font-weight:600; color:#374151; font-size:13px;">' . esc_html( $item['created_at'] ) . '</span>';
+				return '<span style="color:#57534E; font-size:12.5px; font-variant-numeric:tabular-nums;">' . esc_html( $item['created_at'] ) . '</span>';
 
 			case 'product':
 				$product_id = (int) $item['product_id'];
@@ -127,7 +120,7 @@ class InventoryLogsTable extends \WP_List_Table {
 				$name       = $product ? $product->get_name() : __( 'Product #', 'despace-core' ) . $product_id;
 				$edit_link  = get_edit_post_link( $product_id );
 				return $edit_link
-					? '<a href="' . esc_url( $edit_link ) . '" style="color:#C25E3A; font-weight:700; text-decoration:none; font-size:13.5px;">' . esc_html( $name ) . '</a>'
+					? '<a href="' . esc_url( $edit_link ) . '" style="color:#1C1917; font-weight:600; text-decoration:none; font-size:13.5px;" onmouseover="this.style.color=\'#C25E3A\'" onmouseout="this.style.color=\'#1C1917\'">' . esc_html( $name ) . '</a>'
 					: '<strong style="color:#1C1917;">' . esc_html( $name ) . '</strong>';
 
 			case 'variation':
@@ -135,9 +128,9 @@ class InventoryLogsTable extends \WP_List_Table {
 					$var_id  = (int) $item['variation_id'];
 					$variant = function_exists( 'wc_get_product' ) ? wc_get_product( $var_id ) : null;
 					$sku     = $variant ? $variant->get_sku() : '';
-					return '<code style="background:#F3F4F6; padding:2px 6px; border-radius:4px; font-size:12px; color:#4B5563;">#' . esc_html( $var_id . ( $sku ? ' (' . $sku . ')' : '' ) ) . '</code>';
+					return '<span style="color:#78716C; font-size:12px; font-family:monospace;">#' . esc_html( $var_id . ( $sku ? ' (' . $sku . ')' : '' ) ) . '</span>';
 				}
-				return '<span style="color:#9CA3AF;">—</span>';
+				return '<span style="color:#D6CFC7;">—</span>';
 
 			case 'order_ref':
 				$refs = array();
@@ -147,46 +140,58 @@ class InventoryLogsTable extends \WP_List_Table {
 						? ( function_exists( 'admin_url' ) ? admin_url( 'post.php?post=' . $order_id . '&action=edit' ) : '' )
 						: '';
 					$refs[] = $order_link
-						? '<a href="' . esc_url( $order_link ) . '" style="color:#2563EB; font-weight:600; text-decoration:none;">Đơn #' . esc_html( $order_id ) . '</a>'
+						? '<a href="' . esc_url( $order_link ) . '" style="color:#1C1917; font-weight:600; text-decoration:none;" onmouseover="this.style.color=\'#C25E3A\'" onmouseout="this.style.color=\'#1C1917\'">Đơn #' . esc_html( $order_id ) . '</a>'
 						: 'Đơn #' . esc_html( $order_id );
 				}
 				if ( ! empty( $item['refund_id'] ) ) {
-					$refs[] = '<span style="color:#DC2626; font-weight:600;">Hoàn #' . esc_html( $item['refund_id'] ) . '</span>';
+					$refs[] = '<span style="color:#B91C1C; font-weight:600;">Hoàn #' . esc_html( $item['refund_id'] ) . '</span>';
 				}
-				return ! empty( $refs ) ? implode( ' / ', $refs ) : '<span style="color:#9CA3AF;">—</span>';
+				return ! empty( $refs ) ? implode( ' <span style="color:#D6CFC7;">/</span> ', $refs ) : '<span style="color:#D6CFC7;">—</span>';
 
 			case 'event_source':
-				return '<span style="background:#F3F4F6; color:#475569; padding:4px 9px; border-radius:99px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; border:1px solid #E2E8F0;">' . esc_html( $item['event_source'] ) . '</span>';
+				return '<span style="color:#78716C; font-size:11.5px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase;">' . esc_html( $item['event_source'] ) . '</span>';
 
 			case 'event_type':
 				$type = $item['event_type'];
 				if ( 'order_reduction' === $type ) {
-					return '<span style="background:#FEE2E2; color:#991B1B; padding:4px 10px; border-radius:99px; font-size:11.5px; font-weight:700; border:1px solid #FECACA; display:inline-flex; align-items:center; gap:4px;">📉 Giảm Tồn Đơn</span>';
+					// Hugeicons / FontAwesome trending-down stroke icon
+					return '<span style="color:#B91C1C; font-weight:600; font-size:13px; display:inline-flex; align-items:center; gap:6px;">'
+						. '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>'
+						. 'Giảm Tồn Đơn</span>';
 				} elseif ( 'stock_restoration' === $type ) {
-					return '<span style="background:#D1FAE5; color:#065F46; padding:4px 10px; border-radius:99px; font-size:11.5px; font-weight:700; border:1px solid #A7F3D0; display:inline-flex; align-items:center; gap:4px;">📈 Khôi Phục Kho</span>';
+					// Hugeicons / FontAwesome trending-up stroke icon
+					return '<span style="color:#15803D; font-weight:600; font-size:13px; display:inline-flex; align-items:center; gap:6px;">'
+						. '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>'
+						. 'Khôi Phục Kho</span>';
 				} elseif ( 'refund_restock' === $type ) {
-					return '<span style="background:#DBEAFE; color:#1E40AF; padding:4px 10px; border-radius:99px; font-size:11.5px; font-weight:700; border:1px solid #BFDBFE; display:inline-flex; align-items:center; gap:4px;">🔄 Hoàn Trả Kho</span>';
+					// Hugeicons / FontAwesome refresh/undo stroke icon
+					return '<span style="color:#2563EB; font-weight:600; font-size:13px; display:inline-flex; align-items:center; gap:6px;">'
+						. '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>'
+						. 'Hoàn Trả Kho</span>';
 				} elseif ( 'manual_adjustment' === $type ) {
-					return '<span style="background:#FEF3C7; color:#92400E; padding:4px 10px; border-radius:99px; font-size:11.5px; font-weight:700; border:1px solid #FDE68A; display:inline-flex; align-items:center; gap:4px;">⚙️ Chỉnh Tay</span>';
+					// Hugeicons / FontAwesome sliders/settings stroke icon
+					return '<span style="color:#D97706; font-weight:600; font-size:13px; display:inline-flex; align-items:center; gap:6px;">'
+						. '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>'
+						. 'Chỉnh Tay</span>';
 				}
-				return '<code style="background:#F3F4F6; padding:3px 7px; border-radius:4px; font-size:11.5px;">' . esc_html( $type ) . '</code>';
+				return '<span style="color:#57534E; font-size:13px;">' . esc_html( $type ) . '</span>';
 
 			case 'quantity_delta':
 				$delta = (float) $item['quantity_delta'];
 				if ( $delta > 0 ) {
-					return '<span style="display:inline-block; background:#ECFDF5; color:#047857; padding:3px 10px; border-radius:8px; font-weight:800; font-size:13.5px; border:1px solid #A7F3D0;">+' . esc_html( $delta ) . '</span>';
+					return '<span style="color:#15803D; font-weight:700; font-size:13.5px; font-variant-numeric:tabular-nums;">+' . esc_html( $delta ) . '</span>';
 				}
-				return '<span style="display:inline-block; background:#FEF2F2; color:#B91C1C; padding:3px 10px; border-radius:8px; font-weight:800; font-size:13.5px; border:1px solid #FECACA;">' . esc_html( $delta ) . '</span>';
+				return '<span style="color:#B91C1C; font-weight:700; font-size:13.5px; font-variant-numeric:tabular-nums;">' . esc_html( $delta ) . '</span>';
 
 			case 'stock_after':
-				return null !== $item['stock_after'] ? '<strong style="font-size:14px; color:#1C1917;">' . esc_html( (float) $item['stock_after'] ) . '</strong>' : '<span style="color:#9CA3AF;">—</span>';
+				return null !== $item['stock_after'] ? '<span style="font-size:13px; font-weight:600; color:#1C1917; font-variant-numeric:tabular-nums;">' . esc_html( (float) $item['stock_after'] ) . '</span>' : '<span style="color:#D6CFC7;">—</span>';
 
 			case 'actor':
 				if ( ! empty( $item['actor_user_id'] ) ) {
 					$user = get_userdata( (int) $item['actor_user_id'] );
-					return '<span style="color:#374151; font-weight:600; font-size:13px;">' . ( $user ? esc_html( $user->display_name ) : '#' . esc_html( $item['actor_user_id'] ) ) . '</span>';
+					return '<span style="color:#57534E; font-size:12.5px;">' . ( $user ? esc_html( $user->display_name ) : '#' . esc_html( $item['actor_user_id'] ) ) . '</span>';
 				}
-				return '<span style="color:#9CA3AF; font-size:12.5px; font-style:italic;">' . esc_html__( 'System / Khách', 'despace-core' ) . '</span>';
+				return '<span style="color:#A8A29E; font-size:12px; font-style:italic;">' . esc_html__( 'System / Khách', 'despace-core' ) . '</span>';
 
 			default:
 				return '';
@@ -194,7 +199,6 @@ class InventoryLogsTable extends \WP_List_Table {
 	}
 
 	public function no_items(): void {
-		echo '<div style="padding:24px; text-align:center; color:#78716C; font-size:14px;">' . esc_html__( 'Chưa có bản ghi biến động tồn kho nào.', 'despace-core' ) . '</div>';
+		echo '<div style="padding:32px 16px; text-align:center; color:#78716C; font-size:14px;">' . esc_html__( 'Chưa có bản ghi biến động tồn kho nào.', 'despace-core' ) . '</div>';
 	}
 }
-
