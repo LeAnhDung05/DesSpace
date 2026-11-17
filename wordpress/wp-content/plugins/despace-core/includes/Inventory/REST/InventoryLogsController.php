@@ -159,7 +159,7 @@ class InventoryLogsController {
 		}
 
 		// Query page items.
-		$items_sql = "SELECT * FROM {$table_name} WHERE {$where_sql} ORDER BY created_at DESC, log_id DESC LIMIT %d OFFSET %d";
+		$items_sql = "SELECT * FROM {$table_name} WHERE {$where_sql} ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d";
 		$items_values = array_merge( $where_values, array( $per_page, $offset ) );
 		$rows = $wpdb->get_results( $wpdb->prepare( $items_sql, $items_values ), ARRAY_A );
 

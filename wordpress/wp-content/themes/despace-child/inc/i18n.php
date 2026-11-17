@@ -35,6 +35,14 @@ function furniva_current_language() {
 	return despace_current_language();
 }
 
+function despace_is_vi() {
+	return ! in_array( despace_current_language(), array( 'en', 'en_US', 'en_GB' ), true );
+}
+
+function furniva_is_vi() {
+	return despace_is_vi();
+}
+
 function despace_t( $english, $vietnamese ) {
 	$text = in_array( despace_current_language(), array( 'en', 'en_US', 'en_GB' ), true ) ? $english : $vietnamese;
 	return str_ireplace( array( 'furniva', 'funival', 'axgnud' ), 'DeSpace', $text );
@@ -525,9 +533,8 @@ function despace_language_switcher_html() {
 	$current_lang = despace_current_language();
 	$is_vi        = in_array( $current_lang, array( 'vi', 'vi_VN' ), true );
 
-	$host = $_SERVER['HTTP_HOST'] ?? 'localhost:8088';
-	$uri  = $_SERVER['REQUEST_URI'] ?? '/';
-	$current_url = esc_url_raw( ( is_ssl() ? 'https://' : 'http://' ) . $host . $uri );
+	$uri         = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/';
+	$current_url = esc_url_raw( home_url( $uri ) );
 
 	$vi_url = home_url( '/' );
 	$en_url = home_url( '/en/' );

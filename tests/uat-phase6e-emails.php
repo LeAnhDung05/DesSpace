@@ -5,6 +5,7 @@
  * Runs against live WordPress, WooCommerce, and Mailpit SMTP.
  */
 
+ini_set( 'memory_limit', '512M' );
 require_once __DIR__ . '/../wordpress/wp-load.php';
 
 use DeSpace\CheckoutOrders\Checkout\OrderMetaSaver;
@@ -135,6 +136,11 @@ if ( isset( $emails['WC_Email_New_Order'] ) ) {
 
 // E. Customer New Account
 if ( isset( $emails['WC_Email_Customer_New_Account'] ) ) {
+	$existing_u = get_user_by( 'email', 'newuser@despace.test' );
+	if ( $existing_u ) {
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+		wp_delete_user( $existing_u->ID );
+	}
 	$user_id = wp_create_user( 'email_test_' . time(), 'Password@123', 'newuser@despace.test' );
 	$emails['WC_Email_Customer_New_Account']->trigger( $user_id, 'Password@123', true );
 	echo "  -> Triggered WC_Email_Customer_New_Account\n";

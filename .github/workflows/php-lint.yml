@@ -14,4 +14,10 @@ jobs:
           php-version: '8.3'
       - name: Lint DeSpace PHP files
         run: |
-          find wordpress/wp-content/plugins/despace-core wordpress/wp-content/themes/despace-child -name '*.php' -print0 | xargs -0 -n1 php -l
+          find wordpress/wp-content/plugins/despace-core wordpress/wp-content/themes/despace-child wordpress/wp-content/mu-plugins tests -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Run Standalone Unit Test Suites
+        run: |
+          php tests/test-rbac-matrix.php
+          php tests/test-inventory-matrix.php
+          php tests/test-desktop-3d-sync.php
+          for f in tests/test-*-unit.php; do php "$f"; done

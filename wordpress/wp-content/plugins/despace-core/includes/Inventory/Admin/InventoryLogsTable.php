@@ -104,7 +104,7 @@ class InventoryLogsTable extends \WP_List_Table {
 			: (int) $wpdb->get_var( $count_sql );
 
 		$offset = ( $current_page - 1 ) * $per_page;
-		$items_sql = "SELECT * FROM {$table_name} WHERE {$where_sql} ORDER BY created_at DESC, log_id DESC LIMIT %d OFFSET %d";
+		$items_sql = "SELECT * FROM {$table_name} WHERE {$where_sql} ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d";
 		$items_values = array_merge( $where_values, array( $per_page, $offset ) );
 
 		$this->items = $wpdb->get_results( $wpdb->prepare( $items_sql, $items_values ), ARRAY_A );
@@ -141,9 +141,13 @@ class InventoryLogsTable extends \WP_List_Table {
 				$refs = array();
 				if ( ! empty( $item['order_id'] ) ) {
 					$order_id   = (int) $item['order_id'];
-					$order_link = function_exists( 'wc_get_order' ) && wc_get_order( $order_id )
-						? ( function_exists( 'admin_url' ) ? admin_url( 'post.php?post=' . $order_id . '&action=edit' ) : '' )
-						: '';
+					$order_obj  = function_exists( 'wc_get_order' ) ? wc_get_order( $order_id ) : null;
+					$order_link = '';
+					if ( $order_obj ) {
+						$order_link = method_exists( $order_obj, 'get_edit_order_url' )
+							? $order_obj->get_edit_order_url()
+							: ( function_exists( 'admin_url' ) ? admin_url( 'post.php?post=' . $order_id . '&action=edit' ) : '' );
+					}
 					$refs[] = $order_link
 						? '<a href="' . esc_url( $order_link ) . '">Order #' . esc_html( $order_id ) . '</a>'
 						: 'Order #' . esc_html( $order_id );

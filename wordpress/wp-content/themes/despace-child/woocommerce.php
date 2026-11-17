@@ -152,9 +152,6 @@ if ( is_singular( 'product' ) ) {
 							) );
 							if ( ! empty( $first_p[0] ) ) {
 								$cat_thumb_id = absint( get_post_thumbnail_id( $first_p[0] ) );
-								if ( $cat_thumb_id ) {
-									update_term_meta( $cat->term_id, 'thumbnail_id', $cat_thumb_id );
-								}
 							}
 						}
 					?>
@@ -162,7 +159,7 @@ if ( is_singular( 'product' ) ) {
 						<a href="<?php echo esc_url( $cat_link ); ?>" class="f-shop-cat-link" <?php echo $is_active ? 'aria-current="page"' : ''; ?>>
 							<span class="f-cat-image" aria-hidden="true">
 								<?php if ( $cat_thumb_id ) : ?>
-									<?php echo wp_get_attachment_image( $cat_thumb_id, 'thumbnail', false, array( 'class' => 'f-cat-thumb-image', 'alt' => '', 'loading' => 'lazy', 'decoding' => 'async' ) ); ?>
+									<?php echo wp_get_attachment_image( $cat_thumb_id, 'woocommerce_thumbnail', false, array( 'class' => 'f-cat-thumb-image', 'alt' => '', 'loading' => 'lazy', 'decoding' => 'async' ) ); ?>
 								<?php else : ?>
 									<span class="f-cat-image-fallback"><?php echo esc_html( mb_substr( furniva_term_label( $cat->name, 'product_cat' ), 0, 1 ) ); ?></span>
 								<?php endif; ?>

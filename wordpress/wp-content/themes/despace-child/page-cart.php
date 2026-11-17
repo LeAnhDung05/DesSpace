@@ -15,7 +15,7 @@ $subtotal = $cart->get_subtotal();
 $total = $cart->get_total('raw');
 $shipping_total = $cart->get_shipping_total();
 $needs_shipping = $cart->needs_shipping();
-$shipping_threshold = 500; // Free shipping threshold
+$shipping_threshold = 5000000; // Free shipping threshold (5,000,000 VND)
 
 // Calculate progress
 $remaining_for_free_shipping = $needs_shipping ? max(0, $shipping_threshold - $subtotal) : 0;
@@ -50,7 +50,7 @@ $progress_percent = $needs_shipping ? min(100, ($subtotal / $shipping_threshold)
                             <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
                             <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
                         </svg>
-                        <?php printf( esc_html( 'Add %s more for FREE shipping!', 'Thêm %s nữa để được MIỄN PHÍ giao hàng!' ), wp_kses_post( wc_price( $remaining_for_free_shipping ) ) ); ?>
+                        <?php printf( wp_kses_post( furniva_t( 'Add %s more for FREE shipping!', 'Thêm %s nữa để được MIỄN PHÍ giao hàng!' ) ), wp_kses_post( wc_price( $remaining_for_free_shipping ) ) ); ?>
                     </p>
                 <?php else : ?>
                     <p class="ax-progress-text success">
@@ -255,8 +255,8 @@ $progress_percent = $needs_shipping ? min(100, ($subtotal / $shipping_threshold)
                         <div class="ax-coupon-input-wrap">
                             <input type="text" name="coupon_code" class="ax-coupon-input"
                                    placeholder="<?php echo esc_attr( furniva_t( 'Enter coupon code', 'Nhập mã giảm giá' ) ); ?>" />
-                            <button type="submit" class="ax-btn ax-btn-coupon" name="apply_coupon" value="<?php esc_attr_e( 'Apply', 'Áp dụng' ); ?>">
-                                <?php esc_html_e( 'Apply', 'Áp dụng' ); ?>
+                            <button type="submit" class="ax-btn ax-btn-coupon" name="apply_coupon" value="<?php echo esc_attr( furniva_t( 'Apply', 'Áp dụng' ) ); ?>">
+                                <?php echo esc_html( furniva_t( 'Apply', 'Áp dụng' ) ); ?>
                             </button>
                         </div>
                         <?php do_action( 'woocommerce_cart_coupon' ); ?>
@@ -410,22 +410,25 @@ jQuery(function($) {
     // Update cart button
     $('#axUpdateCart').on('click', function() {
         var $form = $('form.woocommerce-cart-form');
-        block($form);
-
-        $.ajax({
-            type: 'POST',
-            url: $form.attr('action'),
-            data: $form.serialize(),
-            success: function() {
-                $(document.body).trigger('wc_fragment_refresh');
-                setTimeout(function() {
+        if ($form.length && $form.attr('action')) {
+            $.ajax({
+                type: 'POST',
+                url: $form.attr('action'),
+                data: $form.serialize(),
+                success: function() {
+                    $(document.body).trigger('wc_fragment_refresh');
+                    setTimeout(function() {
+                        location.reload();
+                    }, 300);
+                },
+                error: function() {
                     location.reload();
-                }, 300);
-            },
-            error: function() {
-                location.reload();
-            }
-        });
+                }
+            });
+        } else {
+            $(document.body).trigger('wc_fragment_refresh');
+            location.reload();
+        }
     });
 
     function block($element) {

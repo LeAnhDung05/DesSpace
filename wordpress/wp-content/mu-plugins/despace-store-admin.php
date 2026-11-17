@@ -441,12 +441,21 @@ function despace_store_admin_assets( $hook_suffix ) {
 		return;
 	}
 
-	wp_enqueue_style(
-		'despace-store-admin',
-		plugin_dir_url( __FILE__ ) . 'despace-store-admin.css',
-		array(),
-		(string) filemtime( __DIR__ . '/despace-store-admin.css' )
-	);
+	$css_path = __DIR__ . '/despace-store-admin.css';
+	$css_url  = plugin_dir_url( __FILE__ ) . 'despace-store-admin.css';
+	if ( ! file_exists( $css_path ) && defined( 'WPMU_PLUGIN_DIR' ) && file_exists( WPMU_PLUGIN_DIR . '/despace-store-admin.css' ) ) {
+		$css_path = WPMU_PLUGIN_DIR . '/despace-store-admin.css';
+		$css_url  = content_url( 'mu-plugins/despace-store-admin.css' );
+	}
+
+	if ( file_exists( $css_path ) ) {
+		wp_enqueue_style(
+			'despace-store-admin',
+			$css_url,
+			array(),
+			(string) filemtime( $css_path )
+		);
+	}
 }
 add_action( 'admin_enqueue_scripts', 'despace_store_admin_assets' );
 
@@ -894,11 +903,71 @@ function despace_register_admin_hub_menu() {
 }
 add_action( 'admin_menu', 'despace_register_admin_hub_menu', 8 );
 
+/**
+ * Safely extract only allowed media/3D files from a ZipArchive into target directory (prevents Zip Slip & RCE).
+ *
+ * @param ZipArchive $zip        Opened ZipArchive instance.
+ * @param string     $target_dir Destination directory path.
+ * @return int Number of extracted files.
+ */
+function despace_safe_extract_zip_archive( ZipArchive $zip, string $target_dir ): int {
+	$allowed_exts = array( 'jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'glb', 'gltf', 'usdz', 'json', 'csv', 'txt', 'css' );
+	$extracted    = 0;
+	$target_base  = rtrim( wp_normalize_path( $target_dir ), '/' );
+
+	for ( $i = 0; $i < $zip->numFiles; $i++ ) {
+		$entry_name = $zip->getNameIndex( $i );
+		if ( false === $entry_name ) {
+			continue;
+		}
+
+		$normalized = ltrim( wp_normalize_path( $entry_name ), '/' );
+		// Block Zip Slip traversal, hidden system files, and __MACOSX metadata.
+		if (
+			'' === $normalized ||
+			str_contains( $normalized, '../' ) ||
+			str_starts_with( $normalized, '..' ) ||
+			str_starts_with( $normalized, '__MACOSX/' ) ||
+			str_contains( $normalized, '/.' ) ||
+			str_starts_with( $normalized, '.' )
+		) {
+			continue;
+		}
+
+		// Directory entry.
+		if ( str_ends_with( $normalized, '/' ) ) {
+			wp_mkdir_p( $target_base . '/' . rtrim( $normalized, '/' ) );
+			continue;
+		}
+
+		$ext = strtolower( pathinfo( $normalized, PATHINFO_EXTENSION ) );
+		if ( ! in_array( $ext, $allowed_exts, true ) ) {
+			continue;
+		}
+
+		$dest_path = $target_base . '/' . $normalized;
+		$dest_dir  = dirname( $dest_path );
+		if ( ! is_dir( $dest_dir ) ) {
+			wp_mkdir_p( $dest_dir );
+		}
+
+		$stream = $zip->getStream( $entry_name );
+		if ( $stream ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+			file_put_contents( $dest_path, stream_get_contents( $stream ) );
+			fclose( $stream );
+			$extracted++;
+		}
+	}
+
+	return $extracted;
+}
+
 // Handle 1-Click Unzip Uploads in DeSpace Hub
 add_action( 'admin_post_despace_hub_unzip_uploads', 'despace_handle_hub_unzip_uploads' );
 function despace_handle_hub_unzip_uploads() {
 	check_admin_referer( 'despace_hub_unzip_nonce' );
-	if ( ! despace_store_admin_can_manage() ) {
+	if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'manage_woocommerce' ) ) {
 		wp_die( 'Bạn không có quyền thực hiện thao tác này.' );
 	}
 
@@ -914,7 +983,7 @@ function despace_handle_hub_unzip_uploads() {
 		}
 		$zip = new ZipArchive();
 		if ( $zip->open( $_FILES['upload_zip_file']['tmp_name'] ) === true ) {
-			$zip->extractTo( $target_dir );
+			despace_safe_extract_zip_archive( $zip, $target_dir );
 			$zip->close();
 			wp_safe_redirect( admin_url( 'admin.php?page=despace-hub&tab=assets&unzipped=1' ) );
 			exit;
@@ -950,7 +1019,7 @@ function despace_handle_hub_unzip_uploads() {
 
 	$zip = new ZipArchive();
 	if ( $zip->open( $found_zip ) === true ) {
-		$zip->extractTo( $target_dir );
+		despace_safe_extract_zip_archive( $zip, $target_dir );
 		$zip->close();
 		wp_safe_redirect( admin_url( 'admin.php?page=despace-hub&tab=assets&unzipped=1' ) );
 		exit;
@@ -994,8 +1063,9 @@ function despace_handle_hub_repair_urls() {
 			$old, $current_home, '%' . $wpdb->esc_like( $old ) . '%'
 		) );
 
+		// Only update non-serialized postmeta rows in SQL; serialized rows are safely updated in PHP below.
 		$r3 = $wpdb->query( $wpdb->prepare(
-			"UPDATE {$wpdb->postmeta} SET meta_value = REPLACE(meta_value, %s, %s) WHERE meta_value LIKE %s",
+			"UPDATE {$wpdb->postmeta} SET meta_value = REPLACE(meta_value, %s, %s) WHERE meta_value LIKE %s AND meta_value NOT REGEXP '^(a|O|s):[0-9]+:'",
 			$old, $current_home, '%' . $wpdb->esc_like( $old ) . '%'
 		) );
 
@@ -1373,13 +1443,64 @@ function despace_render_hub_overview_page() {
 					<div>
 						<h2 style="font-size:22px; font-weight:700; color:#1C1917; margin:0 0 6px;">Ma Trận Mô Hình 3D PBR & WebXR Augmented Reality (AR)</h2>
 						<p style="font-size:14px; color:#6B635B; margin:0;">
-							Tổng hợp toàn bộ mô hình không gian ba chiều được nhúng trực tiếp vào 40 sản phẩm nội thất DeSpace.
+							Tổng hợp mô hình không gian ba chiều được nhúng trực tiếp vào sản phẩm nội thất DeSpace và liên kết với Ứng Dụng Desktop 3D Builder.
 						</p>
 					</div>
-					<span style="background:#ECFDF5; color:#059669; font-weight:700; padding:6px 16px; border-radius:99px; font-size:13px;">
-						✓ <?php echo intval( $models_count ); ?>/32 Mô hình GLB Sẵn Sàng
-					</span>
+					<div style="display:flex; align-items:center; gap:10px;">
+						<span id="despace-hub-desktop-agent-pill" style="display:inline-flex; align-items:center; gap:6px; background:#F3F4F6; border:1px solid #D1D5DB; color:#374151; font-size:12px; font-weight:700; padding:6px 14px; border-radius:99px;">
+							<span style="width:8px; height:8px; border-radius:50%; background:#9CA3AF; display:inline-block;" class="status-dot"></span>
+							<span class="status-label">Đang kiểm tra Desktop App...</span>
+						</span>
+						<span style="background:#ECFDF5; color:#059669; font-weight:700; padding:6px 16px; border-radius:99px; font-size:13px;">
+							✓ <?php echo intval( $models_count ); ?>/40 Mô hình GLB Sẵn Sàng
+						</span>
+					</div>
 				</div>
+
+				<!-- Desktop 3D Studio Connection Banner -->
+				<div style="background:linear-gradient(135deg, #FAF7F2 0%, #F5EBE1 100%); border:1.5px solid #E2D3C4; border-radius:14px; padding:20px 24px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+					<div>
+						<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+							<span style="font-size:18px;">🖥️</span>
+							<h3 style="margin:0; font-size:16px; font-weight:700; color:#1C1917;">Ứng Dụng Desktop Xây Dựng 3D Tự Động (DeSpace 3D Studio Desktop)</h3>
+						</div>
+						<p style="margin:0; font-size:13.5px; color:#69645D; line-height:1.5; max-width:780px;">
+							Khi thêm sản phẩm mới với <strong>3–5 ảnh nhiều góc</strong> (Mặt trước, Góc 45°, Mặt bên, Mặt sau, Mặt trên), bạn có thể gửi yêu cầu trực tiếp sang <strong>Phần mềm Desktop</strong>. Phần mềm sẽ tự động dựng mô hình 3D chi tiết chuẩn nhất và tải ngược lên website! Hỗ trợ cả <strong>file Excel hàng loạt</strong>.
+						</p>
+					</div>
+					<div style="display:flex; gap:10px; align-items:center;">
+						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=product' ) ); ?>" class="button button-primary" style="background:#C25E3A; border-color:#C25E3A; font-weight:700; border-radius:8px; padding:8px 16px; height:auto;">
+							+ Thêm Sản Phẩm Mới (3-5 Ảnh)
+						</a>
+					</div>
+				</div>
+
+				<script>
+				(function(){
+					fetch('http://127.0.0.1:58300/api/health')
+						.then(r => r.json())
+						.then(d => {
+							var pill = document.getElementById('despace-hub-desktop-agent-pill');
+							if (pill && d && d.status === 'online') {
+								pill.style.background = '#ECFDF5';
+								pill.style.borderColor = '#10B981';
+								pill.style.color = '#065F46';
+								pill.querySelector('.status-dot').style.background = '#10B981';
+								pill.querySelector('.status-label').textContent = '🟢 Desktop 3D Studio Đang Chạy (Port 58300)';
+							}
+						})
+						.catch(() => {
+							var pill = document.getElementById('despace-hub-desktop-agent-pill');
+							if (pill) {
+								pill.style.background = '#FEF3C7';
+								pill.style.borderColor = '#F59E0B';
+								pill.style.color = '#92400E';
+								pill.querySelector('.status-dot').style.background = '#F59E0B';
+								pill.querySelector('.status-label').textContent = '🟡 REST API Sync Queue (Desktop App Chưa Mở)';
+							}
+						});
+				})();
+				</script>
 
 				<table class="wp-list-table widefat fixed striped" style="border-radius:10px; overflow:hidden; border:1px solid #E7E3DC;">
 					<thead>
@@ -1406,7 +1527,7 @@ function despace_render_hub_overview_page() {
 							foreach ( $products_3d as $p ) :
 								$sku = get_post_meta( $p->ID, '_sku', true );
 								$thumb_id = get_post_thumbnail_id( $p->ID );
-								$thumb_url = $thumb_id ? wp_get_attachment_image_url( $thumb_id, 'thumbnail' ) : content_url( '/themes/despace-child/assets/images/despace-app-icon.png' );
+								$thumb_url = $thumb_id ? wp_get_attachment_image_url( $thumb_id, 'woocommerce_thumbnail' ) : content_url( '/themes/despace-child/assets/images/despace-app-icon.png' );
 								$glb_rel = "/wp-content/uploads/3d/{$sku}/model.glb";
 								$glb_exists = file_exists( ABSPATH . ltrim( $glb_rel, '/' ) );
 								?>
@@ -1547,7 +1668,7 @@ function despace_render_hub_overview_page() {
 							Lưu trữ minh bạch mọi hành vi biến động số lượng sản phẩm (bán ra, nhập kho, chỉnh sửa quản trị).
 						</p>
 					</div>
-					<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=product&page=despace-inventory-logs' ) ); ?>" class="button button-primary" style="background:#2563EB; border-color:#1D4ED8; font-weight:600; border-radius:8px;">
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-inventory-logs' ) ); ?>" class="button button-primary" style="background:#2563EB; border-color:#1D4ED8; font-weight:600; border-radius:8px;">
 						Xem Toàn Bộ <?php echo number_format_i18n( $log_count ); ?> Bản Ghi →
 					</a>
 				</div>
@@ -1566,8 +1687,8 @@ function despace_render_hub_overview_page() {
 					<tbody>
 						<?php
 						$recent_logs = array();
-						if ( $wpdb->get_var( "SHOW TABLES LIKE '$log_table'" ) ) {
-							$recent_logs = $wpdb->get_results( "SELECT * FROM $log_table ORDER BY id DESC LIMIT 10" );
+						if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $log_table ) ) ) {
+							$recent_logs = $wpdb->get_results( "SELECT * FROM {$log_table} ORDER BY id DESC LIMIT 10" );
 						}
 
 						if ( $recent_logs ) :
@@ -1581,8 +1702,8 @@ function despace_render_hub_overview_page() {
 									<td style="text-align:center; font-weight:700; color:<?php echo ( $delta < 0 ) ? '#DC2626' : '#059669'; ?>;">
 										<?php echo ( $delta > 0 ) ? "+$delta" : "$delta"; ?>
 									</td>
-									<td style="text-align:center; font-weight:700;"><?php echo esc_html( $log->quantity_after ?? 0 ); ?></td>
-									<td style="font-size:13px; color:#4B5563;"><?php echo esc_html( $log->action_type ?? 'Điều chỉnh hệ thống' ); ?></td>
+									<td style="text-align:center; font-weight:700;"><?php echo esc_html( $log->stock_after ?? $log->quantity_after ?? 0 ); ?></td>
+									<td style="font-size:13px; color:#4B5563;"><?php echo esc_html( $log->event_type ?? $log->action_type ?? 'Điều chỉnh hệ thống' ); ?></td>
 								</tr>
 								<?php
 							endforeach;

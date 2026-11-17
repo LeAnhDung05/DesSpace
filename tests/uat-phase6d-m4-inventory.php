@@ -5,6 +5,7 @@
  * Runs against live MariaDB and HPOS.
  */
 
+ini_set( 'memory_limit', '512M' );
 require_once __DIR__ . '/../wordpress/wp-load.php';
 
 use DeSpace\CheckoutOrders\Cart\CartHandler;

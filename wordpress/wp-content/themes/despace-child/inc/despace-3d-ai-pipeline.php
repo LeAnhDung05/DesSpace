@@ -258,8 +258,8 @@ add_action( 'save_post_product', function( $post_id ) {
 		update_post_meta( $post_id, '_height', wc_clean( $_POST['axgnud_dim_height'] ) );
 	}
 
-	if ( isset( $_POST['axgnud_fal_api_key'] ) ) {
-		update_option( 'axgnud_fal_api_key', sanitize_text_field( $_POST['axgnud_fal_api_key'] ) );
+	if ( isset( $_POST['axgnud_fal_api_key'] ) && current_user_can( 'manage_options' ) ) {
+		update_option( 'axgnud_fal_api_key', sanitize_text_field( wp_unslash( $_POST['axgnud_fal_api_key'] ) ) );
 	}
 } );
 
@@ -277,8 +277,11 @@ add_action( 'admin_menu', function() {
 } );
 
 function axgnud_3d_ai_settings_page() {
-	if ( isset( $_POST['axgnud_save_settings_nonce'] ) && wp_verify_nonce( $_POST['axgnud_save_settings_nonce'], 'axgnud_save_settings' ) ) {
-		$fal_key = sanitize_text_field( $_POST['axgnud_fal_api_key'] ?? '' );
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Bạn không có quyền truy cập trang cài đặt này.' );
+	}
+	if ( isset( $_POST['axgnud_save_settings_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['axgnud_save_settings_nonce'] ) ), 'axgnud_save_settings' ) ) {
+		$fal_key = sanitize_text_field( wp_unslash( $_POST['axgnud_fal_api_key'] ?? '' ) );
 		update_option( 'axgnud_fal_api_key', $fal_key );
 		echo '<div class="notice notice-success is-dismissible"><p>Cài đặt đã được lưu thành công.</p></div>';
 	}
@@ -293,7 +296,7 @@ function axgnud_3d_ai_settings_page() {
 				<tr>
 					<th><label for="axgnud_fal_api_key">Fal.ai API Key (Trellis)</label></th>
 					<td>
-						<input type="password" name="axgnud_fal_api_key" id="axgnud_fal_api_key" value="<?php echo esc_attr( $fal_key ); ?>" class="regular-text" />
+						<input type="password" name="axgnud_fal_api_key" id="axgnud_fal_api_key" value="" placeholder="<?php echo ! empty( $fal_key ) ? '•••••••••••••••• (Đã lưu)' : 'Nhập API Key...'; ?>" class="regular-text" autocomplete="off" />
 						<p class="description">Lấy API key tại <a href="https://fal.ai" target="_blank" rel="noopener">fal.ai</a>. Khi để trống, hệ thống sẽ sử dụng Procedural 3D Mesh + HTML5 Smart Cutout tự động.</p>
 					</td>
 				</tr>
@@ -309,11 +312,16 @@ function axgnud_3d_ai_settings_page() {
  */
 add_action( 'wp_ajax_axgnud_generate_3d_model', function() {
 	check_ajax_referer( 'axgnud_ai_3d_ajax', 'nonce' );
+	if ( ! current_user_can( 'edit_products' ) && ! current_user_can( 'manage_woocommerce' ) && ! current_user_can( 'manage_despace_3d' ) ) {
+		wp_send_json_error( array( 'message' => 'Bạn không có quyền thực hiện thao tác này.' ), 403 );
+	}
 	$product_id = intval( $_POST['product_id'] ?? 0 );
-	$api_key    = sanitize_text_field( $_POST['api_key'] ?? get_option( 'axgnud_fal_api_key', '' ) );
+	$api_key    = sanitize_text_field( wp_unslash( $_POST['api_key'] ?? '' ) );
 
-	if ( ! empty( $api_key ) ) {
+	if ( ! empty( $api_key ) && current_user_can( 'manage_options' ) ) {
 		update_option( 'axgnud_fal_api_key', $api_key );
+	} elseif ( empty( $api_key ) ) {
+		$api_key = get_option( 'axgnud_fal_api_key', '' );
 	}
 
 	$image_url = get_the_post_thumbnail_url( $product_id, 'full' );

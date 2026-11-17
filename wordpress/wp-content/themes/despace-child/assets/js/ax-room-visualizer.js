@@ -521,6 +521,16 @@
         },
         dataType: 'json',
         success: function(response) {
+          if (response && response.error) {
+            $btn.removeClass('loading');
+            $('#axModalCartBtnText').text(originalText);
+            if (typeof furnivaData !== 'undefined' && !furnivaData.isLoggedIn && furnivaData.loginUrl) {
+              window.location.href = furnivaData.loginUrl;
+            } else if (response.product_url) {
+              window.location.href = response.product_url;
+            }
+            return;
+          }
           $btn.removeClass('loading').addClass('added');
           $('#axModalCartBtnText').text('✓ Đã thêm vào giỏ!');
           if (response && response.fragments) {

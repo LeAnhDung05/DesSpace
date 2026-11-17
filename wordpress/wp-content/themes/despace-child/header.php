@@ -152,11 +152,11 @@ $announcements = array(
 				</form>
 				<div class="fv-search-bar__quick-tags">
 					<span class="fv-quick-tag-label"><?php echo esc_html( furniva_t( 'Hot:', 'Gợi ý:' ) ); ?></span>
-					<a href="<?php echo esc_url( home_url( '/?s=sofa&post_type=product' ) ); ?>">Sofa</a>
-					<a href="<?php echo esc_url( home_url( '/?s=' . rawurlencode( furniva_t( 'chair', 'ghế' ) ) . '&post_type=product' ) ); ?>"><?php echo esc_html( furniva_t( 'Chairs', 'Ghế' ) ); ?></a>
-					<a href="<?php echo esc_url( home_url( '/?s=' . rawurlencode( furniva_t( 'table', 'bàn' ) ) . '&post_type=product' ) ); ?>"><?php echo esc_html( furniva_t( 'Tables', 'Bàn trà' ) ); ?></a>
-					<a href="<?php echo esc_url( home_url( '/?s=' . rawurlencode( furniva_t( 'lamp', 'đèn' ) ) . '&post_type=product' ) ); ?>"><?php echo esc_html( furniva_t( 'Lighting', 'Đèn' ) ); ?></a>
-					<a href="<?php echo esc_url( home_url( '/?s=' . rawurlencode( furniva_t( 'bed', 'giường' ) ) . '&post_type=product' ) ); ?>"><?php echo esc_html( furniva_t( 'Beds', 'Giường' ) ); ?></a>
+					<a href="<?php echo esc_url( home_url( '/product-category/shoe-racks-storage/' ) ); ?>"><?php echo esc_html( furniva_t( 'Shoe Cabinets', 'Tủ giày' ) ); ?></a>
+					<a href="<?php echo esc_url( home_url( '/product-category/wardrobes/' ) ); ?>"><?php echo esc_html( furniva_t( 'Wardrobes', 'Tủ quần áo' ) ); ?></a>
+					<a href="<?php echo esc_url( home_url( '/product-category/bookshelves/' ) ); ?>"><?php echo esc_html( furniva_t( 'Bookshelves', 'Kệ sách' ) ); ?></a>
+					<a href="<?php echo esc_url( home_url( '/product-category/kitchen-cabinets/' ) ); ?>"><?php echo esc_html( furniva_t( 'Kitchen Cabinets', 'Tủ bếp' ) ); ?></a>
+					<a href="<?php echo esc_url( home_url( '/product-category/chest-of-drawers-sideboards/' ) ); ?>"><?php echo esc_html( furniva_t( 'Sideboards & Drawers', 'Tủ ngăn kéo' ) ); ?></a>
 				</div>
 				<button class="fv-icon-button fv-search-bar__close" type="button" data-furniva-search-close aria-label="<?php echo esc_attr( furniva_t( 'Close search', 'Đóng tìm kiếm' ) ); ?>">
 					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>

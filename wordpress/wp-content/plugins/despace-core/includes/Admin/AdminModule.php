@@ -34,7 +34,7 @@ class AdminModule {
 
 		$product_count = wp_count_posts( 'product' )->publish ?? 0;
 		$log_table     = $wpdb->prefix . 'despace_inventory_logs';
-		$log_count     = $wpdb->get_var( "SHOW TABLES LIKE '$log_table'" ) ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM $log_table" ) : 0;
+		$log_count     = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $log_table ) ) ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$log_table}" ) : 0;
 
 		return array(
 			'products'     => (int) $product_count,

@@ -239,10 +239,10 @@ if ( ! empty( $finish_attr_val ) ) {
                         <?php
                         if ( $product->is_in_stock() ) {
                             $stock = $product->get_stock_quantity();
-                            $stock_text = $stock ? "({$stock} " . esc_html__( 'units', 'sản phẩm' ) . ")" : '';
-                            echo '<span class="ax-stock-in">' . esc_html__( 'In stock', 'Còn hàng' ) . '</span> ' . $stock_text;
+                            $stock_text = $stock ? "({$stock} " . esc_html( furniva_t( 'units', 'sản phẩm' ) ) . ")" : '';
+                            echo '<span class="ax-stock-in">' . esc_html( furniva_t( 'In stock', 'Còn hàng' ) ) . '</span> ' . $stock_text;
                         } else {
-                            echo '<span class="ax-stock-out">' . esc_html__( 'Out of stock', 'Hết hàng' ) . '</span>';
+                            echo '<span class="ax-stock-out">' . esc_html( furniva_t( 'Out of stock', 'Hết hàng' ) ) . '</span>';
                         }
                         ?>
                     </span>

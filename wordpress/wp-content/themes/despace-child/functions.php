@@ -646,6 +646,9 @@ add_action( 'wp_ajax_nopriv_despace_filter', 'furniva_ajax_filter' );
 
 // ---------------------------------------------------------------- AJAX Buy Now
 function furniva_ajax_buy_now() {
+	if ( ! empty( $_POST['nonce'] ) ) {
+		check_ajax_referer( 'furniva_filter', 'nonce' );
+	}
 	$data         = wp_unslash( $_POST );
 	$product_id   = absint( $data['add-to-cart'] ?? 0 );
 	$variation_id = absint( $data['variation_id'] ?? 0 );
@@ -756,8 +759,8 @@ function furniva_render_cart_drawer_html() {
 	$items      = $cart->get_cart();
 	$item_count = $cart->get_cart_contents_count();
 	$subtotal   = (float) $cart->get_subtotal();
-	$threshold  = 500.0;
-	$diff       = $threshold - $subtotal;
+	$threshold  = 5000000.0;
+	$diff       = max( 0.0, $threshold - $subtotal );
 	$percent    = min( 100, round( ( $subtotal / $threshold ) * 100 ) );
 
 	ob_start();
@@ -774,7 +777,7 @@ function furniva_render_cart_drawer_html() {
 		<div class="f-drawer-freeship">
 			<div class="f-freeship-msg">
 				<?php if ( $diff > 0 ) : ?>
-					<?php echo esc_html( furniva_t( 'Add', 'Mua thêm' ) ); ?> <strong>$<?php echo esc_html( number_format( $diff, 2 ) ); ?></strong> <?php echo esc_html( furniva_t( 'more for', 'để được' ) ); ?> <strong><?php echo esc_html( furniva_t( 'FREE Shipping!', 'MIỄN PHÍ VẬN CHUYỂN!' ) ); ?></strong>
+					<?php echo esc_html( furniva_t( 'Add', 'Mua thêm' ) ); ?> <strong><?php echo wp_kses_post( wc_price( $diff ) ); ?></strong> <?php echo esc_html( furniva_t( 'more for', 'để được' ) ); ?> <strong><?php echo esc_html( furniva_t( 'FREE Shipping!', 'MIỄN PHÍ VẬN CHUYỂN!' ) ); ?></strong>
 				<?php else : ?>
 					<span style="color:var(--f-green)">🎉 <?php echo esc_html( furniva_t( 'You qualify for', 'Bạn được hưởng' ) ); ?> <strong><?php echo esc_html( furniva_t( 'FREE Shipping!', 'MIỄN PHÍ VẬN CHUYỂN!' ) ); ?></strong></span>
 				<?php endif; ?>
@@ -1011,9 +1014,29 @@ function furniva_sticky_single_bar() {
 add_action( 'wp_footer', 'furniva_sticky_single_bar' );
 
 // ---------------------------------------------------------------- Wishlist & Cart AJAX Handlers
+function furniva_verify_cart_or_filter_nonce() {
+	$sec = isset( $_POST['security'] ) ? sanitize_text_field( wp_unslash( $_POST['security'] ) ) : '';
+	$non = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
+	if ( $sec && ( wp_verify_nonce( $sec, 'furniva_cart' ) || wp_verify_nonce( $sec, 'furniva_wishlist' ) || wp_verify_nonce( $sec, 'furniva_filter' ) ) ) {
+		return true;
+	}
+	if ( $non && ( wp_verify_nonce( $non, 'furniva_filter' ) || wp_verify_nonce( $non, 'furniva_cart' ) || wp_verify_nonce( $non, 'furniva_wishlist' ) ) ) {
+		return true;
+	}
+	// If neither security nor nonce was sent from a cross-origin request, enforce origin/referer check.
+	$referer = wp_get_referer();
+	if ( $referer && 0 === strpos( $referer, home_url() ) ) {
+		return true;
+	}
+	return false;
+}
+
 function furniva_ajax_update_cart_qty() {
-	$cart_key = sanitize_text_field( $_POST['cart_key'] ?? '' );
-	$quantity = max( 0, intval( $_POST['quantity'] ?? 1 ) );
+	if ( ! furniva_verify_cart_or_filter_nonce() ) {
+		wp_send_json_error( array( 'message' => 'Invalid security token' ), 403 );
+	}
+	$cart_key = sanitize_text_field( wp_unslash( $_POST['cart_item_key'] ?? $_POST['cart_key'] ?? '' ) );
+	$quantity = max( 0, intval( $_POST['quantity'] ?? $_POST['qty'] ?? 1 ) );
 
 	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
 		wp_send_json_error( array( 'message' => 'Cart not available' ) );
@@ -1028,18 +1051,18 @@ function furniva_ajax_update_cart_qty() {
 		WC()->cart->calculate_totals();
 	}
 
-	$subtotal = (float) WC()->cart->get_subtotal();
+	$subtotal   = (float) WC()->cart->get_subtotal();
 	$item_count = (int) WC()->cart->get_cart_contents_count();
-	$threshold = 500.00;
-	$remaining = max( 0.00, $threshold - $subtotal );
-	$percent = min( 100.0, ( $subtotal / $threshold ) * 100.0 );
+	$threshold  = 5000000.00;
+	$remaining  = max( 0.00, $threshold - $subtotal );
+	$percent    = min( 100.0, ( $subtotal / $threshold ) * 100.0 );
 
 	wp_send_json_success( array(
 		'subtotal'       => $subtotal,
-		'subtotal_html'  => '$' . number_format( $subtotal, 2 ),
+		'subtotal_html'  => wp_kses_post( wc_price( $subtotal ) ),
 		'item_count'     => $item_count,
 		'remaining'      => $remaining,
-		'remaining_html' => '$' . number_format( $remaining, 2 ),
+		'remaining_html' => wp_kses_post( wc_price( $remaining ) ),
 		'percent'        => round( $percent, 1 ),
 		'is_free'        => ( $remaining <= 0.00 ),
 	) );
@@ -1050,7 +1073,10 @@ add_action( 'wp_ajax_despace_cart_update_qty', 'furniva_ajax_update_cart_qty' );
 add_action( 'wp_ajax_nopriv_despace_cart_update_qty', 'furniva_ajax_update_cart_qty' );
 
 function furniva_ajax_remove_cart_item() {
-	$cart_key = sanitize_text_field( $_POST['cart_key'] ?? '' );
+	if ( ! furniva_verify_cart_or_filter_nonce() ) {
+		wp_send_json_error( array( 'message' => 'Invalid security token' ), 403 );
+	}
+	$cart_key = sanitize_text_field( wp_unslash( $_POST['cart_item_key'] ?? $_POST['cart_key'] ?? '' ) );
 
 	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
 		wp_send_json_error( array( 'message' => 'Cart not available' ) );
@@ -1061,18 +1087,18 @@ function furniva_ajax_remove_cart_item() {
 		WC()->cart->calculate_totals();
 	}
 
-	$subtotal = (float) WC()->cart->get_subtotal();
+	$subtotal   = (float) WC()->cart->get_subtotal();
 	$item_count = (int) WC()->cart->get_cart_contents_count();
-	$threshold = 500.00;
-	$remaining = max( 0.00, $threshold - $subtotal );
-	$percent = min( 100.0, ( $subtotal / $threshold ) * 100.0 );
+	$threshold  = 5000000.00;
+	$remaining  = max( 0.00, $threshold - $subtotal );
+	$percent    = min( 100.0, ( $subtotal / $threshold ) * 100.0 );
 
 	wp_send_json_success( array(
 		'subtotal'       => $subtotal,
-		'subtotal_html'  => '$' . number_format( $subtotal, 2 ),
+		'subtotal_html'  => wp_kses_post( wc_price( $subtotal ) ),
 		'item_count'     => $item_count,
 		'remaining'      => $remaining,
-		'remaining_html' => '$' . number_format( $remaining, 2 ),
+		'remaining_html' => wp_kses_post( wc_price( $remaining ) ),
 		'percent'        => round( $percent, 1 ),
 		'is_free'        => ( $remaining <= 0.00 ),
 	) );
@@ -1083,6 +1109,9 @@ add_action( 'wp_ajax_despace_cart_remove_item', 'furniva_ajax_remove_cart_item' 
 add_action( 'wp_ajax_nopriv_despace_cart_remove_item', 'furniva_ajax_remove_cart_item' );
 
 function furniva_ajax_wishlist_add_to_cart() {
+	if ( ! furniva_verify_cart_or_filter_nonce() ) {
+		wp_send_json_error( array( 'message' => 'Invalid security token' ), 403 );
+	}
 	if ( ! is_user_logged_in() ) {
 		wp_send_json_error( array(
 			'require_login' => true,
@@ -1200,6 +1229,9 @@ add_action( 'wp_ajax_despace_wishlist_clear', 'furniva_ajax_wishlist_clear' );
 add_action( 'wp_ajax_nopriv_despace_wishlist_clear', 'furniva_ajax_wishlist_clear' );
 
 function furniva_ajax_wishlist_toggle() {
+	if ( ! furniva_verify_cart_or_filter_nonce() ) {
+		wp_send_json_error( array( 'message' => 'Invalid security token' ), 403 );
+	}
 	if ( ! is_user_logged_in() ) {
 		wp_send_json_error( array(
 			'require_login' => true,

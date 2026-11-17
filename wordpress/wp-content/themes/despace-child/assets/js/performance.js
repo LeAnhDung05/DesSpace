@@ -105,34 +105,9 @@
        ============================================================ */
 
     function enhanceResponsiveImages() {
-        // Add srcset for product images if missing
-        const productImages = document.querySelectorAll(
-            '.f-product-card img, ' +
-            '.ax-gallery-main img, ' +
-            '.woocommerce-product-gallery img'
-        );
-
-        productImages.forEach(img => {
-            if (img.src && !img.srcset && img.width) {
-                const baseSrc = img.src.replace(/-[0-9]+x[0-9]+/, '');
-                const sizes = [
-                    { suffix: '-150x150', width: 150 },
-                    { suffix: '-300x300', width: 300 },
-                    { suffix: '-600x600', width: 600 },
-                    { suffix: '-1024x1024', width: 1024 }
-                ];
-
-                let srcset = img.src + ' ' + (img.width || 600) + 'w';
-
-                sizes.forEach(size => {
-                    if (baseSrc !== img.src) {
-                        srcset += ', ' + baseSrc + size.suffix + '.jpg ' + size.width + 'w';
-                    }
-                });
-
-                img.sizes = '(max-width: 600px) 100vw, (max-width: 1024px) 50vw, 33vw';
-            }
-        });
+        // WordPress and WooCommerce already generate validated srcset attributes
+        // based on actual existing attachment metadata sizes. Do not fabricate
+        // non-existent -150x150 / -600x600 filenames in JS.
     }
 
     /* ============================================================

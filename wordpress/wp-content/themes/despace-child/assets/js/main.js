@@ -1455,7 +1455,7 @@ jQuery(function ($) {
 			var $target = $(e.target);
 
 			// A. Add to Cart triggers
-			var $addBtn = $target.closest(".add_to_cart_button, .single_add_to_cart_button, #axAddToCart, .f-card-add, .f-sticky-add-btn, .ajax_add_to_cart, form.cart button[type='submit']");
+			var $addBtn = $target.closest(".add_to_cart_button, .single_add_to_cart_button, #axAddToCart, #axModalAddToCartBtn, .f-card-add, .f-sticky-add-btn, .ajax_add_to_cart, form.cart button[type='submit']");
 			if ($addBtn.length) {
 				e.preventDefault();
 				e.stopPropagation();

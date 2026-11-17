@@ -132,11 +132,11 @@ class InventoryReconciler {
 		$total_delta  = (float) ( $agg['total_delta'] ?? 0.0 );
 
 		// 2. Earliest recorded log for baseline initial stock.
-		$first_log_sql = "SELECT quantity_before, stock_after FROM {$table_name} WHERE {$where_sql} ORDER BY created_at ASC, log_id ASC LIMIT 1";
+		$first_log_sql = "SELECT quantity_before, stock_after FROM {$table_name} WHERE {$where_sql} ORDER BY created_at ASC, id ASC LIMIT 1";
 		$first_log     = $wpdb->get_row( $wpdb->prepare( $first_log_sql, $where_values ), ARRAY_A );
 
 		// 3. Latest recorded log for stock_after verification.
-		$last_log_sql = "SELECT stock_after FROM {$table_name} WHERE {$where_sql} ORDER BY created_at DESC, log_id DESC LIMIT 1";
+		$last_log_sql = "SELECT stock_after FROM {$table_name} WHERE {$where_sql} ORDER BY created_at DESC, id DESC LIMIT 1";
 		$last_log     = $wpdb->get_row( $wpdb->prepare( $last_log_sql, $where_values ), ARRAY_A );
 
 		$initial_stock = null;

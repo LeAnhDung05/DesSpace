@@ -36,6 +36,9 @@ class Product3DModule {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
+		if ( class_exists( 'DeSpace\\Product3D\\Desktop3DSyncModule' ) ) {
+			Desktop3DSyncModule::init();
+		}
 	}
 
 	/**
@@ -79,8 +82,18 @@ class Product3DModule {
 	 * Bypass false-positive extension checks for GLB.
 	 */
 	public function correct_filetype_ext( $data, $file, $filename, $mimes ) {
+		if ( ! current_user_can( 'manage_woocommerce' ) && ! current_user_can( 'upload_files' ) && ! current_user_can( 'manage_despace_3d' ) ) {
+			return $data;
+		}
 		$ext = strtolower( pathinfo( $filename, PATHINFO_EXTENSION ) );
 		if ( 'glb' === $ext ) {
+			if ( is_string( $file ) && is_readable( $file ) && filesize( $file ) >= 4 ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+				$magic = file_get_contents( $file, false, null, 0, 4 );
+				if ( 'glTF' !== $magic ) {
+					return $data;
+				}
+			}
 			$data['ext']  = 'glb';
 			$data['type'] = 'model/gltf-binary';
 		} elseif ( 'gltf' === $ext ) {
@@ -164,7 +177,7 @@ class Product3DModule {
 
 			<div class="despace-meta-row">
 				<label>
-					<input type="checkbox" name="despace_enable_ar" value="yes" <?php checked( 'yes', $enable_ar ? 'yes' : 'yes' ); ?> />
+					<input type="checkbox" name="despace_enable_ar" value="yes" <?php checked( 'yes', $enable_ar ? $enable_ar : 'yes' ); ?> />
 					<?php esc_html_e( 'Kích hoạt thực tế ảo tăng cường AR (WebXR / SceneViewer / QuickLook)', 'despace-core' ); ?>
 				</label>
 			</div>
@@ -430,9 +443,9 @@ class Product3DModule {
 				`product_id` bigint(20) unsigned NOT NULL,
 				`variant_id` bigint(20) unsigned DEFAULT 0,
 				`sku` varchar(100) DEFAULT '',
-				`glb_url` text DEFAULT '',
-				`usdz_url` text DEFAULT '',
-				`thumbnail_url` text DEFAULT '',
+				`glb_url` text,
+				`usdz_url` text,
+				`thumbnail_url` text,
 				`width` decimal(10,2) DEFAULT 0.00,
 				`depth` decimal(10,2) DEFAULT 0.00,
 				`height` decimal(10,2) DEFAULT 0.00,

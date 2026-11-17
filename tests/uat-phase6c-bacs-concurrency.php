@@ -5,6 +5,7 @@
  * Runs against live MariaDB and HPOS.
  */
 
+ini_set( 'memory_limit', '512M' );
 require_once __DIR__ . '/../wordpress/wp-load.php';
 
 use DeSpace\CheckoutOrders\Payment\PaymentStatusGuard;
@@ -80,8 +81,8 @@ echo "Initial date_paid(): " . var_export( $order->get_date_paid(), true ) . "\n
 // 3. Spawn Two Concurrent PHP Subprocesses
 echo "Spawning Worker A and Worker B concurrently against Order #{$order_id}...\n";
 
-$cmd_a = sprintf( 'php %s worker %d Worker_A 0 %d', escapeshellarg( __FILE__ ), $order_id, $admin_id );
-$cmd_b = sprintf( 'php %s worker %d Worker_B 15 %d', escapeshellarg( __FILE__ ), $order_id, $admin_id ); // 15ms offset to hit while A processes inside lock
+$cmd_a = sprintf( 'php -d memory_limit=512M %s worker %d Worker_A 0 %d', escapeshellarg( __FILE__ ), $order_id, $admin_id );
+$cmd_b = sprintf( 'php -d memory_limit=512M %s worker %d Worker_B 15 %d', escapeshellarg( __FILE__ ), $order_id, $admin_id ); // 15ms offset to hit while A processes inside lock
 
 $descriptors = array(
 	0 => array( 'pipe', 'r' ),

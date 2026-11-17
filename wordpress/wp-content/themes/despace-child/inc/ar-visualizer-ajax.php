@@ -7,21 +7,56 @@
 add_action('wp_ajax_ar_save_layout', 'ar_save_layout');
 add_action('wp_ajax_nopriv_ar_save_layout', 'ar_save_layout');
 
+function ar_get_guest_layout_key() {
+    if ( function_exists( 'WC' ) && WC()->session && method_exists( WC()->session, 'get_customer_id' ) ) {
+        return 'ar_guest_layout_' . md5( (string) WC()->session->get_customer_id() );
+    }
+    $ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : 'guest';
+    $ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
+    return 'ar_guest_layout_' . substr( md5( $ip . '|' . $ua ), 0, 16 );
+}
+
 function ar_save_layout() {
     check_ajax_referer('ar_security', 'nonce');
 
     $user_id = get_current_user_id();
-    $layout_data = isset($_POST['layout_data']) ? json_decode(stripslashes($_POST['layout_data']), true) : array();
+    $raw_json = isset($_POST['layout_data']) ? wp_unslash($_POST['layout_data']) : '';
+    if ( strlen( $raw_json ) > 524288 ) {
+        wp_send_json_error(array('message' => 'Layout payload too large'));
+        return;
+    }
+    $layout_data = ! empty( $raw_json ) ? json_decode($raw_json, true) : array();
 
-    if (empty($layout_data)) {
+    if (empty($layout_data) || ! is_array($layout_data)) {
         wp_send_json_error(array('message' => 'No layout data provided'));
         return;
     }
 
+    $sanitized_products = array();
+    if ( isset( $layout_data['products'] ) && is_array( $layout_data['products'] ) ) {
+        foreach ( array_slice( $layout_data['products'], 0, 50 ) as $item ) {
+            if ( ! is_array( $item ) ) {
+                continue;
+            }
+            $sanitized_products[] = array(
+                'id'       => absint( $item['id'] ?? 0 ),
+                'name'     => sanitize_text_field( $item['name'] ?? '' ),
+                'price'    => (float) ( $item['price'] ?? 0 ),
+                'image'    => esc_url_raw( $item['image'] ?? '' ),
+                'x'        => (float) ( $item['x'] ?? 0 ),
+                'y'        => (float) ( $item['y'] ?? 0 ),
+                'width'    => (float) ( $item['width'] ?? 100 ),
+                'height'   => (float) ( $item['height'] ?? 100 ),
+                'scale'    => (float) ( $item['scale'] ?? 1 ),
+                'rotation' => (float) ( $item['rotation'] ?? 0 ),
+            );
+        }
+    }
+
     $layout = array(
-        'user_id' => $user_id,
-        'products' => $layout_data['products'],
-        'room_image' => isset($layout_data['room_image']) ? $layout_data['room_image'] : '',
+        'user_id'    => $user_id,
+        'products'   => $sanitized_products,
+        'room_image' => isset($layout_data['room_image']) ? sanitize_text_field($layout_data['room_image']) : '',
         'created_at' => current_time('mysql'),
     );
 
@@ -41,7 +76,7 @@ function ar_save_layout() {
         ));
     } else {
         // Save to session/localStorage key
-        $guest_key = 'ar_guest_layout_' . session_id();
+        $guest_key = ar_get_guest_layout_key();
         set_transient($guest_key, $layout, 7 * DAY_IN_SECONDS);
 
         wp_send_json_success(array(
@@ -64,7 +99,7 @@ function ar_get_layouts() {
         $layouts = get_user_meta($user_id, '_ar_saved_layouts', true);
         wp_send_json_success(array('layouts' => $layouts ?: array()));
     } else {
-        $guest_key = 'ar_guest_layout_' . session_id();
+        $guest_key = ar_get_guest_layout_key();
         $layout = get_transient($guest_key);
         wp_send_json_success(array('layouts' => $layout ? array($guest_key => $layout) : array()));
     }
@@ -72,6 +107,7 @@ function ar_get_layouts() {
 
 // Delete Layout
 add_action('wp_ajax_ar_delete_layout', 'ar_delete_layout');
+add_action('wp_ajax_nopriv_ar_delete_layout', 'ar_delete_layout');
 
 function ar_delete_layout() {
     check_ajax_referer('ar_security', 'nonce');
@@ -95,7 +131,7 @@ function ar_delete_layout() {
             wp_send_json_error(array('message' => 'Layout not found'));
         }
     } else {
-        $guest_key = 'ar_guest_layout_' . session_id();
+        $guest_key = ar_get_guest_layout_key();
         if ($guest_key === $layout_id) {
             delete_transient($guest_key);
             wp_send_json_success(array('message' => 'Layout deleted'));

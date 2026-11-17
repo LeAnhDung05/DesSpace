@@ -443,7 +443,7 @@ function axgnud_render_3d_manager_page() {
 							$product = wc_get_product( $row->product_id );
 							if ( ! $product ) continue;
 							$img_id = $product->get_image_id();
-							$img_thumb = $img_id ? wp_get_attachment_image_url( $img_id, 'thumbnail' ) : wc_placeholder_img_src();
+							$img_thumb = $img_id ? wp_get_attachment_image_url( $img_id, 'woocommerce_thumbnail' ) : wc_placeholder_img_src();
 							$product_cats = wp_get_post_terms( $row->product_id, 'product_cat', array( 'fields' => 'names' ) );
 							$cat_display = ! empty( $product_cats ) ? implode( ', ', $product_cats ) : '—';
 							$has_glb = ! empty( $row->glb_url );

@@ -144,10 +144,13 @@ add_action( 'woocommerce_created_customer', 'despace_save_registration_fields', 
    ========================================================================== */
 
 /**
- * Gate 1: Require login to access Checkout.
+ * Gate 1: Require login to access Checkout (only when WooCommerce Guest Checkout is disabled).
  * Redirects guests from /checkout/ to /my-account/?action=login&redirect_to=checkout.
  */
 function despace_require_login_for_checkout() {
+	if ( 'yes' === get_option( 'woocommerce_enable_guest_checkout', 'yes' ) ) {
+		return;
+	}
 	if ( function_exists( 'is_checkout' ) && is_checkout() && ! is_user_logged_in() && ! is_order_received_page() ) {
 		wc_add_notice(
 			furniva_t(
@@ -170,7 +173,8 @@ function despace_require_login_for_checkout() {
 add_action( 'template_redirect', 'despace_require_login_for_checkout' );
 
 /**
- * Gate 2: Server-side validation requiring login before adding items to Cart.
+ * Gate 2: Server-side validation requiring login before adding items to Cart
+ * (only enforced when WooCommerce Guest Checkout is disabled).
  *
  * @param bool $passed     Validation status.
  * @param int  $product_id Product ID.
@@ -178,6 +182,9 @@ add_action( 'template_redirect', 'despace_require_login_for_checkout' );
  * @return bool
  */
 function despace_require_login_for_add_to_cart( $passed, $product_id, $quantity ) {
+	if ( 'yes' === get_option( 'woocommerce_enable_guest_checkout', 'yes' ) ) {
+		return $passed;
+	}
 	if ( ! is_user_logged_in() ) {
 		$login_url    = add_query_arg( 'action', 'login', wc_get_page_permalink( 'myaccount' ) );
 		$register_url = add_query_arg( 'action', 'register', wc_get_page_permalink( 'myaccount' ) );
@@ -204,7 +211,7 @@ add_filter( 'woocommerce_add_to_cart_validation', 'despace_require_login_for_add
  * @param WP_User $user     Logged in or registered user.
  * @return string
  */
-function despace_preserve_auth_redirect( $redirect, $user ) {
+function despace_preserve_auth_redirect( $redirect, $user = null ) {
 	if ( ! empty( $_REQUEST['redirect_to'] ) ) {
 		$target = esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) );
 		// Validate that target is an internal URL
@@ -218,7 +225,7 @@ function despace_preserve_auth_redirect( $redirect, $user ) {
 	return $redirect;
 }
 add_filter( 'woocommerce_login_redirect', 'despace_preserve_auth_redirect', 10, 2 );
-add_filter( 'woocommerce_registration_redirect', 'despace_preserve_auth_redirect', 10, 2 );
+add_filter( 'woocommerce_registration_redirect', 'despace_preserve_auth_redirect', 10, 1 );
 
 /**
  * Gate 4: Render Luxury Auth Gate Modal in footer for unauthenticated visitors.
@@ -273,5 +280,5 @@ function axgnud_validate_registration_fields( $username, $email, $validation_err
 function axgnud_save_registration_fields( $customer_id ) { return despace_save_registration_fields( $customer_id ); }
 function axgnud_require_login_for_checkout() { return despace_require_login_for_checkout(); }
 function axgnud_require_login_for_add_to_cart( $passed, $product_id, $quantity ) { return despace_require_login_for_add_to_cart( $passed, $product_id, $quantity ); }
-function axgnud_preserve_auth_redirect( $redirect, $user ) { return despace_preserve_auth_redirect( $redirect, $user ); }
+function axgnud_preserve_auth_redirect( $redirect, $user = null ) { return despace_preserve_auth_redirect( $redirect, $user ); }
 function axgnud_render_auth_modal() { return despace_render_auth_modal(); }

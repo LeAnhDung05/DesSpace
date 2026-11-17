@@ -17,9 +17,17 @@ add_filter( 'wp_mail_from_name', function( $name ) {
 } );
 
 add_action( 'phpmailer_init', function( $phpmailer ) {
+	$mailpit_host = getenv( 'DESPACE_MAILPIT_HOST' ) ?: 'despace-mailpit';
+	$mailpit_port = (int) ( getenv( 'DESPACE_MAILPIT_PORT' ) ?: 1025 );
+
+	// Only route through Mailpit when its container hostname resolves in the current environment.
+	if ( gethostbyname( $mailpit_host ) === $mailpit_host && ! filter_var( $mailpit_host, FILTER_VALIDATE_IP ) ) {
+		return;
+	}
+
 	$phpmailer->isSMTP();
-	$phpmailer->Host       = 'despace-mailpit';
-	$phpmailer->Port       = 1025;
+	$phpmailer->Host       = $mailpit_host;
+	$phpmailer->Port       = $mailpit_port;
 	$phpmailer->SMTPAuth   = false;
 	$phpmailer->SMTPSecure = '';
 } );

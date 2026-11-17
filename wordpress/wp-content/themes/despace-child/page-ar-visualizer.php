@@ -317,7 +317,7 @@ $shop_url = wc_get_page_permalink( 'shop' );
                         </svg>
                         <span><?php echo esc_html( furniva_t( 'Share', 'Chia sẻ' ) ); ?></span>
                     </button>
-                    <button type="button" class="ar-btn ar-btn-primary" id="arCaptureBtn">
+                    <button type="button" class="ar-btn ar-btn-primary" id="arSaveImageBtn">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                             <circle cx="8.5" cy="8.5" r="1.5"/>
@@ -382,7 +382,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
         init: function() {
             this.canvas = document.getElementById('arRoomCanvas');
-            this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
+            this.ctx = (this.canvas && typeof this.canvas.getContext === 'function') ? this.canvas.getContext('2d') : null;
             this.bindEvents();
             this.initProductCards();
         },
@@ -447,7 +447,7 @@ window.addEventListener('DOMContentLoaded', function() {
                 saveLayoutBtn.addEventListener('click', () => this.saveLayout());
             }
 
-            const captureResultBtn = document.getElementById('arCaptureBtn');
+            const captureResultBtn = document.getElementById('arSaveImageBtn');
             if (captureResultBtn) {
                 captureResultBtn.addEventListener('click', () => this.captureResult());
             }
@@ -729,7 +729,12 @@ window.addEventListener('DOMContentLoaded', function() {
                 // Product info tooltip
                 const info = document.createElement('div');
                 info.className = 'ar-product-info-tooltip';
-                info.innerHTML = `<strong>${product.name}</strong><span>${formatPrice(product.price)}</span>`;
+                const strongEl = document.createElement('strong');
+                strongEl.textContent = product.name || '';
+                const spanEl = document.createElement('span');
+                spanEl.textContent = formatPrice(product.price);
+                info.appendChild(strongEl);
+                info.appendChild(spanEl);
                 productEl.appendChild(info);
 
                 // Event listeners
@@ -960,10 +965,11 @@ window.addEventListener('DOMContentLoaded', function() {
 
     // Helper function
     function formatPrice(price) {
+        var num = parseFloat(price) || 0;
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
             currency: 'VND'
-        }).format(price * 25000); // Assuming USD to VND conversion
+        }).format(num < 10000 ? num * 25000 : num);
     }
 
     // Initialize
