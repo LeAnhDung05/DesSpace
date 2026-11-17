@@ -282,12 +282,28 @@ class Product3DModule {
 			$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table_axgnud} WHERE product_id = %d LIMIT 1", $product_id ), ARRAY_A );
 		}
 
+		$resolve_asset_url = static function( string $raw ): string {
+			$raw = trim( $raw );
+			if ( '' === $raw ) {
+				return '';
+			}
+			$wp_content_pos = strpos( $raw, '/wp-content/' );
+			if ( false !== $wp_content_pos ) {
+				$rel_after_content = substr( $raw, $wp_content_pos + strlen( '/wp-content/' ) );
+				return content_url( ltrim( $rel_after_content, '/' ) );
+			}
+			if ( 0 === strpos( $raw, 'http://' ) || 0 === strpos( $raw, 'https://' ) ) {
+				return $raw;
+			}
+			return content_url( ltrim( str_replace( '/wp-content', '', $raw ), '/' ) );
+		};
+
 		if ( $row && ! empty( $row['glb_url'] ) ) {
 			return array(
 				'has_3d'     => true,
-				'glb_url'    => content_url( ltrim( str_replace( '/wp-content', '', $row['glb_url'] ), '/' ) ),
-				'usdz_url'   => ! empty( $row['usdz_url'] ) ? content_url( ltrim( str_replace( '/wp-content', '', $row['usdz_url'] ), '/' ) ) : '',
-				'thumbnail'  => ! empty( $row['thumbnail_url'] ) ? content_url( ltrim( str_replace( '/wp-content', '', $row['thumbnail_url'] ), '/' ) ) : '',
+				'glb_url'    => $resolve_asset_url( (string) $row['glb_url'] ),
+				'usdz_url'   => ! empty( $row['usdz_url'] ) ? $resolve_asset_url( (string) $row['usdz_url'] ) : '',
+				'thumbnail'  => ! empty( $row['thumbnail_url'] ) ? $resolve_asset_url( (string) $row['thumbnail_url'] ) : '',
 				'ar_enabled' => (bool) ( $row['ar_enabled'] ?? 1 ),
 				'width'      => $row['width'] ?? 0,
 				'depth'      => $row['depth'] ?? 0,

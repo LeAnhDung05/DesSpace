@@ -44,6 +44,9 @@ if ( ! function_exists( 'esc_url_raw' ) ) {
 if ( ! function_exists( 'esc_html' ) ) {
 	function esc_html( $s ) { return htmlspecialchars( (string) $s, ENT_QUOTES, 'UTF-8' ); }
 }
+if ( ! function_exists( 'wp_kses_post' ) ) {
+	function wp_kses_post( $s ) { return (string) $s; }
+}
 if ( ! function_exists( 'absint' ) ) {
 	function absint( $n ) { return abs( (int) $n ); }
 }
@@ -277,7 +280,7 @@ echo "   DeSpace Desktop 3D Sync & Multi-Angle Capture Suite (TC01 - TC12)    \n
 echo "========================================================================\n";
 
 $pass_count = 0;
-$total_tests = 12;
+$total_tests = 13;
 
 function assert_test( $name, $condition, &$pass_count ) {
 	if ( $condition ) {
@@ -364,6 +367,34 @@ $GLOBALS['mock_postmeta'][1001]['_sku'] = 'DESPACE-BATCH-001';
 $batch_req = new WP_REST_Request( $batch_payload, array( 'x_despace_desktop_key' => 'despace-desktop-studio-secret-2026' ) );
 $batch_resp = $rest->desktop_batch_sync_excel( $batch_req );
 assert_test( "TC12: Excel batch sync endpoint processes items & queues jobs", $batch_resp->status === 200 && $batch_resp->data['success'] === true && $batch_resp->data['queued_count'] >= 1, $pass_count );
+
+// TC13: One-click Desktop Product Publish + Auto 3D (.GLB & .USDZ) endpoint
+$fake_glb  = "glTF" . pack( "VV", 2, 20 ) . "JSON    ";
+$fake_usdz = "PK\x03\x04" . str_repeat( "\x00", 60 );
+$pub_payload = array(
+	'sku'           => 'DSP-AUTO3D-013',
+	'name'          => 'Tủ giày thông minh Auto 3D',
+	'regular_price' => 2650000,
+	'sale_price'    => 2190000,
+	'category'      => 'tu-giay-luu-tru',
+	'dimensions'    => array( 'width' => 114, 'depth' => 33, 'height' => 76 ),
+	'glb_base64'    => base64_encode( $fake_glb ),
+	'usdz_base64'   => base64_encode( $fake_usdz ),
+	'vertex_count'  => 480,
+	'face_count'    => 240,
+);
+$pub_req  = new WP_REST_Request( $pub_payload, array( 'x_despace_desktop_key' => 'despace-desktop-studio-secret-2026' ) );
+$pub_resp = $rest->desktop_publish_product( $pub_req );
+assert_test(
+	"TC13: /desktop-3d/products/publish creates product & attaches GLB + USDZ",
+	$pub_resp->status === 201
+		&& ! empty( $pub_resp->data['success'] )
+		&& ! empty( $pub_resp->data['product_id'] )
+		&& ! empty( $pub_resp->data['glb_url'] )
+		&& ! empty( $pub_resp->data['usdz_url'] )
+		&& ! empty( $pub_resp->data['ar_enabled'] ),
+	$pass_count
+);
 
 echo "========================================================================\n";
 echo sprintf( "RESULT: %d/%d TESTS PASSED (100%% Success Rate)\n", $pass_count, $total_tests );

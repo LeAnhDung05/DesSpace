@@ -34,7 +34,7 @@ print("  DeSpace 3D Studio Desktop — Core Engine Test Suite (TC-PY01 - TC-PY10
 print("=" * 72)
 
 passed = 0
-total = 10
+total = 12
 
 def check(name: str, condition: bool):
     global passed
@@ -167,6 +167,33 @@ e2e_res = engine.reconstruct(
 check(
     "TC-PY10: End-to-end simulation: reconstruction, thumbnail & GLB output",
     e2e_res["success"] and Path(e2e_res["glb_path"]).exists() and Path(e2e_res["thumbnail_path"]).exists()
+)
+
+# TC-PY11: Apple AR Quick Look USDZ generation & strict 64-byte alignment
+usdz_ok = False
+if "usdz_path" in e2e_res and Path(e2e_res["usdz_path"]).exists():
+    usdz_raw = Path(e2e_res["usdz_path"]).read_bytes()
+    # Verify PK\x03\x04 local header and 64-byte data offset for first entry (model.usda)
+    if usdz_raw[:4] == b"PK\x03\x04":
+        fname_len, extra_len = struct.unpack("<HH", usdz_raw[26:30])
+        first_data_offset = 30 + fname_len + extra_len
+        usdz_ok = (first_data_offset % 64 == 0) and (b"UsdPreviewSurface" in usdz_raw) and (b'subdivisionScheme = "none"' in usdz_raw)
+
+check(
+    "TC-PY11: Apple AR Quick Look (.usdz) 64-byte ZIP alignment & UsdPreviewSurface",
+    usdz_ok
+)
+
+# TC-PY12: Bilingual Vietnamese & English archetype resolution + new archetypes
+arch_ok = (
+    engine._resolve_archetype("tu-giay-luu-tru", "Tủ giày 3 cánh DeSpace") == "shoe_cabinet"
+    and engine._resolve_archetype("tu-quan-ao", "Tủ quần áo 2 cánh") == "wardrobe"
+    and engine._resolve_archetype("ke-sach-tu-trung-bay", "Kệ sách gỗ sồi") == "bookcase"
+    and engine._resolve_archetype("ghe-don", "Ghế bành Bắc Âu") == "chair"
+)
+check(
+    "TC-PY12: Bilingual VI/EN furniture archetype detection (shoe_cabinet, wardrobe, bookcase)",
+    arch_ok
 )
 
 print("=" * 72)

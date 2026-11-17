@@ -53,3 +53,6 @@ __pycache__/
 *.pyc
 desktop_app/output/*
 !desktop_app/output/.gitkeep
+desktop_app/temp/
+desktop_app/settings.json
+wordpress/wp-content/jetpack-waf/

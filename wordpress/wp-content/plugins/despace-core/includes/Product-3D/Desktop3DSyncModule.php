@@ -235,6 +235,9 @@ class Desktop3DSyncModule {
 		$sync_status = get_post_meta( $post->ID, '_despace_3d_sync_status', true ) ?: 'idle';
 		$last_job_id = get_post_meta( $post->ID, '_despace_3d_last_job_id', true );
 		$auto_sync   = get_post_meta( $post->ID, '_despace_3d_auto_sync', true );
+		if ( '' === $auto_sync ) {
+			$auto_sync = 'yes';
+		}
 
 		$sku = get_post_meta( $post->ID, '_sku', true );
 		if ( ! $sku && function_exists( 'wc_get_product' ) ) {
@@ -575,10 +578,10 @@ class Desktop3DSyncModule {
 		$auto_sync = isset( $_POST['despace_3d_auto_sync'] ) ? 'yes' : 'no';
 		update_post_meta( $post_id, '_despace_3d_auto_sync', $auto_sync );
 
-		// If auto-sync is enabled and we have at least front + 2 other angles, automatically create job
+		// If auto-sync is enabled and product has at least 1 image, automatically dispatch 3D job
 		if ( 'yes' === $auto_sync ) {
 			$angles_data = self::get_product_multi_angles( $post_id );
-			if ( self::count_valid_angles( $angles_data ) >= 3 ) {
+			if ( self::count_valid_angles( $angles_data ) >= 1 ) {
 				self::dispatch_sync_job( $post_id, 'auto_save' );
 			}
 		}
@@ -613,11 +616,11 @@ class Desktop3DSyncModule {
 		$sku  = $product ? $product->get_sku() : ( get_post_meta( $product_id, '_sku', true ) ?: 'DESPACE-' . $product_id );
 		$name = $product ? $product->get_name() : get_the_title( $product_id );
 
-		// Gather dimensions
+		// Gather dimensions (prioritize explicit axgnud_dim_* before WC _width/_length)
 		$dimensions = array(
-			'width'  => floatval( get_post_meta( $product_id, '_width', true ) ?: ( get_post_meta( $product_id, 'axgnud_dim_width', true ) ?: 100 ) ),
-			'depth'  => floatval( get_post_meta( $product_id, '_length', true ) ?: ( get_post_meta( $product_id, 'axgnud_dim_depth', true ) ?: 80 ) ),
-			'height' => floatval( get_post_meta( $product_id, '_height', true ) ?: ( get_post_meta( $product_id, 'axgnud_dim_height', true ) ?: 75 ) ),
+			'width'  => floatval( get_post_meta( $product_id, 'axgnud_dim_width', true ) ?: ( get_post_meta( $product_id, '_width', true ) ?: 100 ) ),
+			'depth'  => floatval( get_post_meta( $product_id, 'axgnud_dim_depth', true ) ?: ( get_post_meta( $product_id, '_length', true ) ?: 80 ) ),
+			'height' => floatval( get_post_meta( $product_id, 'axgnud_dim_height', true ) ?: ( get_post_meta( $product_id, '_height', true ) ?: 75 ) ),
 			'unit'   => 'cm',
 		);
 
@@ -793,38 +796,51 @@ class Desktop3DSyncModule {
 		update_post_meta( $product_id, '_despace_glb_url', $glb_url );
 		update_post_meta( $product_id, '_axgnud_model_glb', $glb_url );
 		update_post_meta( $product_id, '_glb_file', $glb_url );
+		update_post_meta( $product_id, '_ar_glb_url', $glb_url );
 		if ( $usdz_url ) {
 			update_post_meta( $product_id, '_despace_model_usdz', $usdz_url );
 			update_post_meta( $product_id, '_axgnud_model_usdz', $usdz_url );
+			update_post_meta( $product_id, '_usdz_file', $usdz_url );
+			update_post_meta( $product_id, '_ar_usdz_url', $usdz_url );
 		}
 		update_post_meta( $product_id, '_ar_enabled', 'yes' );
 		update_post_meta( $product_id, '_despace_enable_ar', 'yes' );
 		update_post_meta( $product_id, '_axgnud_3d_status', 'published' );
+		update_post_meta( $product_id, '_despace_3d_status', 'published' );
 		update_post_meta( $product_id, '_despace_3d_sync_status', 'completed' );
+		update_post_meta( $product_id, '_has_3d_model', 'yes' );
 
-		// 3. Update or Insert into wp_despace_product_3d_models
-		$table_models = $wpdb->prefix . 'despace_product_3d_models';
-		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_models ) ) === $table_models ) {
-			$dims = json_decode( $job['dimensions_json'] ?? '{}', true );
-			$width  = floatval( $dims['width'] ?? 0 );
-			$depth  = floatval( $dims['depth'] ?? 0 );
-			$height = floatval( $dims['height'] ?? 0 );
+		// 3. Update or Insert into wp_despace_product_3d_models (and legacy wp_axgnud_product_3d_models if present)
+		$dims   = json_decode( $job['dimensions_json'] ?? '{}', true );
+		$width  = floatval( $dims['width'] ?? 0 );
+		$depth  = floatval( $dims['depth'] ?? 0 );
+		$height = floatval( $dims['height'] ?? 0 );
+
+		$candidate_tables = array(
+			$wpdb->prefix . 'despace_product_3d_models',
+			$wpdb->prefix . 'axgnud_product_3d_models',
+		);
+
+		foreach ( $candidate_tables as $table_models ) {
+			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_models ) ) !== $table_models ) {
+				continue;
+			}
 
 			$exists = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table_models} WHERE product_id = %d LIMIT 1", $product_id ) );
 			if ( $exists ) {
 				$wpdb->update(
 					$table_models,
 					array(
-						'sku'          => $sku,
-						'glb_url'      => $glb_url,
-						'usdz_url'     => $usdz_url,
-						'thumbnail_url'=> $thumbnail_url,
-						'width'        => $width,
-						'depth'        => $depth,
-						'height'       => $height,
-						'model_status' => 'published',
-						'ar_enabled'   => 1,
-						'updated_at'   => $now,
+						'sku'           => $sku,
+						'glb_url'       => $glb_url,
+						'usdz_url'      => $usdz_url,
+						'thumbnail_url' => $thumbnail_url,
+						'width'         => $width,
+						'depth'         => $depth,
+						'height'        => $height,
+						'model_status'  => 'published',
+						'ar_enabled'    => 1,
+						'updated_at'    => $now,
 					),
 					array( 'product_id' => $product_id ),
 					array( '%s', '%s', '%s', '%s', '%f', '%f', '%f', '%s', '%d', '%s' ),
@@ -834,19 +850,19 @@ class Desktop3DSyncModule {
 				$wpdb->insert(
 					$table_models,
 					array(
-						'product_id'   => $product_id,
-						'sku'          => $sku,
-						'glb_url'      => $glb_url,
-						'usdz_url'     => $usdz_url,
-						'thumbnail_url'=> $thumbnail_url,
-						'width'        => $width,
-						'depth'        => $depth,
-						'height'       => $height,
-						'unit'         => 'cm',
-						'model_status' => 'published',
-						'ar_enabled'   => 1,
-						'created_at'   => $now,
-						'updated_at'   => $now,
+						'product_id'    => $product_id,
+						'sku'           => $sku,
+						'glb_url'       => $glb_url,
+						'usdz_url'      => $usdz_url,
+						'thumbnail_url' => $thumbnail_url,
+						'width'         => $width,
+						'depth'         => $depth,
+						'height'        => $height,
+						'unit'          => 'cm',
+						'model_status'  => 'published',
+						'ar_enabled'    => 1,
+						'created_at'    => $now,
+						'updated_at'    => $now,
 					),
 					array( '%d', '%s', '%s', '%s', '%s', '%f', '%f', '%f', '%s', '%s', '%d', '%s', '%s' )
 				);
@@ -854,6 +870,353 @@ class Desktop3DSyncModule {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Create or update a WooCommerce product directly from DeSpace Desktop Studio,
+	 * import product photos, attach auto-constructed GLB + USDZ 3D models, and publish.
+	 *
+	 * @param array $data Product, media, and 3D model payload.
+	 * @return array Result summary with product_id, permalink, glb_url, usdz_url.
+	 */
+	public static function publish_product_from_desktop( array $data ): array {
+		global $wpdb;
+
+		$raw_sku = sanitize_text_field( (string) ( $data['sku'] ?? '' ) );
+		if ( '' === $raw_sku ) {
+			$raw_sku = 'DSP-' . strtoupper( wp_generate_password( 6, false ) );
+		}
+
+		$name        = sanitize_text_field( (string) ( $data['name'] ?? $data['product_name'] ?? $raw_sku ) );
+		$name_en     = sanitize_text_field( (string) ( $data['name_en'] ?? '' ) );
+		$reg_price   = isset( $data['regular_price'] ) && '' !== (string) $data['regular_price'] ? floatval( $data['regular_price'] ) : 0.0;
+		$sale_price  = isset( $data['sale_price'] ) && '' !== (string) $data['sale_price'] ? floatval( $data['sale_price'] ) : 0.0;
+		$stock_qty   = isset( $data['stock_quantity'] ) && '' !== (string) $data['stock_quantity'] ? intval( $data['stock_quantity'] ) : 20;
+		$short_desc  = isset( $data['short_description'] ) ? wp_kses_post( (string) $data['short_description'] ) : '';
+		$description = isset( $data['description'] ) ? wp_kses_post( (string) $data['description'] ) : '';
+		$category_in = sanitize_text_field( (string) ( $data['category'] ?? '' ) );
+		$badge       = sanitize_text_field( (string) ( $data['badge'] ?? 'New' ) );
+		$finish_col  = sanitize_text_field( (string) ( $data['color'] ?? $data['material'] ?? '' ) );
+
+		$dims_in = is_array( $data['dimensions'] ?? null ) ? $data['dimensions'] : array();
+		$width   = max( 10.0, floatval( $dims_in['width'] ?? $data['width'] ?? 100.0 ) );
+		$depth   = max( 10.0, floatval( $dims_in['depth'] ?? $data['depth'] ?? 80.0 ) );
+		$height  = max( 10.0, floatval( $dims_in['height'] ?? $data['height'] ?? 75.0 ) );
+
+		// 1. Locate existing product by ID or SKU, or create a new WooCommerce Simple Product
+		$product_id = absint( $data['product_id'] ?? 0 );
+		if ( ! $product_id && function_exists( 'wc_get_product_id_by_sku' ) ) {
+			$product_id = (int) wc_get_product_id_by_sku( $raw_sku );
+		}
+		if ( ! $product_id && isset( $wpdb->postmeta ) ) {
+			$product_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_sku' AND meta_value = %s LIMIT 1", $raw_sku ) );
+		}
+
+		$is_new_product = ( 0 === $product_id );
+
+		if ( class_exists( 'WC_Product_Simple' ) ) {
+			$wc_product = $product_id ? wc_get_product( $product_id ) : null;
+			if ( ! $wc_product || ! is_a( $wc_product, 'WC_Product' ) ) {
+				$wc_product     = new \WC_Product_Simple();
+				$is_new_product = true;
+			}
+
+			$wc_product->set_name( $name );
+			$wc_product->set_status( 'publish' );
+			$wc_product->set_catalog_visibility( 'visible' );
+
+			try {
+				$wc_product->set_sku( $raw_sku );
+			} catch ( \Throwable $e ) {
+				// Keep existing SKU if duplicate check throws
+			}
+
+			if ( $reg_price > 0 ) {
+				$wc_product->set_regular_price( (string) $reg_price );
+			} elseif ( $is_new_product && 0.0 === $reg_price ) {
+				$wc_product->set_regular_price( '2500000' );
+			}
+
+			if ( $sale_price > 0 && ( 0.0 === $reg_price || $sale_price < $reg_price ) ) {
+				$wc_product->set_sale_price( (string) $sale_price );
+			}
+
+			if ( '' !== $short_desc ) {
+				$wc_product->set_short_description( $short_desc );
+			} elseif ( $is_new_product ) {
+				$wc_product->set_short_description(
+					sprintf(
+						'%s thiết kế chuẩn kiến trúc DeSpace (Rộng %s × Sâu %s × Cao %s cm), tích hợp sẵn mô hình 3D 360° & Camera AR tỷ lệ thực 1:1.',
+						$name,
+						$width,
+						$depth,
+						$height
+					)
+				);
+			}
+
+			if ( '' !== $description ) {
+				$wc_product->set_description( $description );
+			}
+
+			$wc_product->set_manage_stock( true );
+			$wc_product->set_stock_quantity( max( 0, $stock_qty ) );
+			$wc_product->set_stock_status( $stock_qty > 0 ? 'instock' : 'outofstock' );
+
+			// Map physical dimensions consistently across WooCommerce & AR Visualizer
+			$wc_product->set_length( (string) $width );
+			$wc_product->set_width( (string) $depth );
+			$wc_product->set_height( (string) $height );
+
+			$product_id = (int) $wc_product->save();
+		} else {
+			// Standalone / Mock CLI fallback when WooCommerce runtime is not loaded
+			if ( ! $product_id ) {
+				if ( function_exists( 'wp_insert_post' ) ) {
+					$product_id = (int) wp_insert_post( array(
+						'post_title'   => $name,
+						'post_content' => $description,
+						'post_excerpt' => $short_desc,
+						'post_status'  => 'publish',
+						'post_type'    => 'product',
+					) );
+				} else {
+					$product_id = random_int( 1000, 99999 );
+					$GLOBALS['mock_posts'][ $product_id ] = array( 'post_title' => $name );
+				}
+			}
+			update_post_meta( $product_id, '_sku', $raw_sku );
+			if ( $reg_price > 0 ) {
+				update_post_meta( $product_id, '_regular_price', (string) $reg_price );
+				update_post_meta( $product_id, '_price', (string) ( $sale_price > 0 ? $sale_price : $reg_price ) );
+			}
+			update_post_meta( $product_id, '_stock', (string) $stock_qty );
+		}
+
+		// Sync explicit dimension & bilingual metadata
+		update_post_meta( $product_id, '_length', (string) $width );
+		update_post_meta( $product_id, '_width', (string) $depth );
+		update_post_meta( $product_id, '_height', (string) $height );
+		update_post_meta( $product_id, 'axgnud_dim_width', (string) $width );
+		update_post_meta( $product_id, 'axgnud_dim_depth', (string) $depth );
+		update_post_meta( $product_id, 'axgnud_dim_height', (string) $height );
+
+		if ( $name_en ) {
+			update_post_meta( $product_id, '_despace_title_en', $name_en );
+		}
+		if ( $badge ) {
+			update_post_meta( $product_id, '_despace_badge', $badge );
+		}
+		if ( $finish_col ) {
+			update_post_meta( $product_id, '_despace_finish_color', $finish_col );
+		}
+
+		// 2. Assign WooCommerce Category (product_cat)
+		if ( $category_in && function_exists( 'wp_set_object_terms' ) && function_exists( 'get_term_by' ) ) {
+			$term_id = 0;
+			if ( is_numeric( $category_in ) ) {
+				$term_id = absint( $category_in );
+			} else {
+				$term = get_term_by( 'slug', sanitize_title( $category_in ), 'product_cat' );
+				if ( ! $term ) {
+					$term = get_term_by( 'name', $category_in, 'product_cat' );
+				}
+				if ( ! $term ) {
+					// Map common Desktop archetype / Vietnamese slugs to store categories if available
+					$archetype_cat_map = array(
+						'shoe_cabinet'         => 'shoe-racks-storage',
+						'tu-giay-luu-tru'      => 'shoe-racks-storage',
+						'cabinet'              => 'chest-of-drawers-sideboards',
+						'tu-bep'               => 'kitchen-cabinets',
+						'wardrobe'             => 'wardrobes',
+						'tu-quan-ao'           => 'wardrobes',
+						'bookcase'             => 'bookshelves',
+						'ke-sach-tu-trung-bay' => 'bookshelves',
+					);
+					$mapped_slug = $archetype_cat_map[ strtolower( $category_in ) ] ?? '';
+					if ( $mapped_slug ) {
+						$term = get_term_by( 'slug', $mapped_slug, 'product_cat' );
+					}
+				}
+				if ( $term && ! is_wp_error( $term ) ) {
+					$term_id = (int) $term->term_id;
+				} elseif ( function_exists( 'wp_insert_term' ) ) {
+					$inserted = wp_insert_term( $category_in, 'product_cat' );
+					if ( ! is_wp_error( $inserted ) && ! empty( $inserted['term_id'] ) ) {
+						$term_id = (int) $inserted['term_id'];
+					}
+				}
+			}
+			if ( $term_id > 0 ) {
+				wp_set_object_terms( $product_id, array( $term_id ), 'product_cat' );
+			}
+		}
+
+		// 3. Ingest Product Photos (Base64 or URLs) into Media Library & Multi-Angle Meta
+		$images_in      = is_array( $data['images'] ?? null ) ? $data['images'] : array();
+		$attachment_ids = array();
+		$angle_order    = array( 'front', 'perspective', 'side', 'back', 'top' );
+		$upload_dir     = wp_upload_dir();
+
+		foreach ( $images_in as $idx => $img_item ) {
+			if ( ! is_array( $img_item ) ) {
+				continue;
+			}
+			$angle_key = sanitize_key( $img_item['angle'] ?? ( $angle_order[ $idx ] ?? 'extra' ) );
+			$att_id    = 0;
+			$att_url   = '';
+
+			if ( ! empty( $img_item['data_base64'] ) ) {
+				$raw_bytes = base64_decode( (string) $img_item['data_base64'], true );
+				if ( $raw_bytes && strlen( $raw_bytes ) > 32 ) {
+					$orig_name = sanitize_file_name( $img_item['filename'] ?? ( $raw_sku . '-' . $angle_key . '.jpg' ) );
+					$ext       = strtolower( pathinfo( $orig_name, PATHINFO_EXTENSION ) );
+					if ( ! in_array( $ext, array( 'jpg', 'jpeg', 'png', 'webp' ), true ) ) {
+						$ext       = 'jpg';
+						$orig_name .= '.jpg';
+					}
+					$img_dir = $upload_dir['basedir'] . '/despace-desktop-products';
+					wp_mkdir_p( $img_dir );
+					$unique_name = sanitize_file_name( $raw_sku . '-' . $angle_key . '-' . time() . '-' . $idx . '.' . $ext );
+					$dest_path   = $img_dir . '/' . $unique_name;
+					// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+					file_put_contents( $dest_path, $raw_bytes );
+					$att_url = $upload_dir['baseurl'] . '/despace-desktop-products/' . $unique_name;
+
+					if ( function_exists( 'wp_insert_attachment' ) ) {
+						$mime_map = array(
+							'jpg'  => 'image/jpeg',
+							'jpeg' => 'image/jpeg',
+							'png'  => 'image/png',
+							'webp' => 'image/webp',
+						);
+						$att_id = (int) wp_insert_attachment(
+							array(
+								'guid'           => $att_url,
+								'post_mime_type' => $mime_map[ $ext ] ?? 'image/jpeg',
+								'post_title'     => $name . ' (' . strtoupper( $angle_key ) . ')',
+								'post_content'   => '',
+								'post_status'    => 'inherit',
+							),
+							$dest_path,
+							$product_id
+						);
+						if ( $att_id > 0 ) {
+							if ( ! function_exists( 'wp_generate_attachment_metadata' ) && defined( 'ABSPATH' ) && file_exists( ABSPATH . 'wp-admin/includes/image.php' ) ) {
+								require_once ABSPATH . 'wp-admin/includes/image.php';
+							}
+							if ( function_exists( 'wp_generate_attachment_metadata' ) && function_exists( 'wp_update_attachment_metadata' ) ) {
+								$meta_data = wp_generate_attachment_metadata( $att_id, $dest_path );
+								wp_update_attachment_metadata( $att_id, $meta_data );
+							}
+						}
+					}
+				}
+			} elseif ( ! empty( $img_item['url'] ) ) {
+				$att_url = esc_url_raw( (string) $img_item['url'] );
+			}
+
+			if ( $att_id > 0 ) {
+				$attachment_ids[] = $att_id;
+			}
+			if ( in_array( $angle_key, $angle_order, true ) ) {
+				if ( $att_id > 0 ) {
+					update_post_meta( $product_id, "_despace_3d_angle_{$angle_key}", $att_id );
+				}
+				if ( $att_url ) {
+					update_post_meta( $product_id, "_despace_3d_angle_{$angle_key}_url", $att_url );
+				}
+			}
+		}
+
+		if ( ! empty( $attachment_ids ) ) {
+			update_post_meta( $product_id, '_thumbnail_id', $attachment_ids[0] );
+			if ( count( $attachment_ids ) > 1 ) {
+				update_post_meta( $product_id, '_product_image_gallery', implode( ',', array_slice( $attachment_ids, 1 ) ) );
+			}
+		}
+
+		// 4. Save Auto-Constructed 3D Assets (.GLB + .USDZ + Thumbnail) & Complete Job
+		$safe_sku      = sanitize_file_name( $raw_sku );
+		$target_3d_dir = $upload_dir['basedir'] . '/3d/' . $safe_sku;
+		wp_mkdir_p( $target_3d_dir );
+
+		$glb_url   = '';
+		$usdz_url  = '';
+		$thumb_url = '';
+		$glb_size  = 0;
+
+		if ( ! empty( $data['glb_base64'] ) ) {
+			$glb_bin = base64_decode( (string) $data['glb_base64'], true );
+			if ( $glb_bin && strlen( $glb_bin ) >= 12 && 'glTF' === substr( $glb_bin, 0, 4 ) ) {
+				$glb_file = $target_3d_dir . '/model.glb';
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+				file_put_contents( $glb_file, $glb_bin );
+				$glb_url  = $upload_dir['baseurl'] . '/3d/' . $safe_sku . '/model.glb';
+				$glb_size = strlen( $glb_bin );
+			}
+		} elseif ( ! empty( $data['glb_url'] ) ) {
+			$glb_url = esc_url_raw( (string) $data['glb_url'] );
+		}
+
+		if ( ! empty( $data['usdz_base64'] ) ) {
+			$usdz_bin = base64_decode( (string) $data['usdz_base64'], true );
+			if ( $usdz_bin && strlen( $usdz_bin ) >= 30 && "PK\x03\x04" === substr( $usdz_bin, 0, 4 ) ) {
+				$usdz_file = $target_3d_dir . '/model.usdz';
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+				file_put_contents( $usdz_file, $usdz_bin );
+				$usdz_url = $upload_dir['baseurl'] . '/3d/' . $safe_sku . '/model.usdz';
+			}
+		} elseif ( ! empty( $data['usdz_url'] ) ) {
+			$usdz_url = esc_url_raw( (string) $data['usdz_url'] );
+		}
+
+		if ( ! empty( $data['thumbnail_base64'] ) ) {
+			$thumb_bin = base64_decode( (string) $data['thumbnail_base64'], true );
+			if ( $thumb_bin && strlen( $thumb_bin ) > 32 ) {
+				$thumb_file = $target_3d_dir . '/thumb.png';
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+				file_put_contents( $thumb_file, $thumb_bin );
+				$thumb_url = $upload_dir['baseurl'] . '/3d/' . $safe_sku . '/thumb.png';
+			}
+		}
+
+		$job      = self::dispatch_sync_job( $product_id, 'desktop_publish' );
+		$job_uuid = $job['job_uuid'];
+
+		if ( $glb_url ) {
+			self::complete_job(
+				$job_uuid,
+				$glb_url,
+				array(
+					'usdz_url'        => $usdz_url,
+					'thumbnail_url'   => $thumb_url,
+					'vertex_count'    => intval( $data['vertex_count'] ?? 0 ),
+					'face_count'      => intval( $data['face_count'] ?? 0 ),
+					'file_size_bytes' => intval( $data['file_size'] ?? $glb_size ),
+				)
+			);
+		}
+
+		if ( function_exists( 'wc_delete_product_transients' ) ) {
+			wc_delete_product_transients( $product_id );
+		}
+
+		$permalink = function_exists( 'get_permalink' ) ? get_permalink( $product_id ) : home_url( '/?p=' . $product_id );
+
+		return array(
+			'success'        => true,
+			'is_new_product' => $is_new_product,
+			'product_id'     => $product_id,
+			'sku'            => $raw_sku,
+			'name'           => $name,
+			'permalink'      => $permalink,
+			'job_uuid'       => $job_uuid,
+			'glb_url'        => $glb_url,
+			'usdz_url'       => $usdz_url,
+			'thumbnail_url'  => $thumb_url,
+			'ar_enabled'     => ! empty( $glb_url ) && ! empty( $usdz_url ),
+		);
 	}
 
 	/**

@@ -211,6 +211,28 @@ class RestApiModule {
 				'permission_callback' => array( $this, 'check_desktop_api_permission' ),
 			)
 		);
+
+		// 4.8 Fetch store product categories for Desktop App
+		register_rest_route(
+			self::REST_NAMESPACE,
+			'/desktop-3d/categories',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'desktop_get_categories' ),
+				'permission_callback' => array( $this, 'check_desktop_api_permission' ),
+			)
+		);
+
+		// 4.9 One-click Create/Update Product + Upload Photos + Publish Auto-3D (.GLB & .USDZ)
+		register_rest_route(
+			self::REST_NAMESPACE,
+			'/desktop-3d/products/publish',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'desktop_publish_product' ),
+				'permission_callback' => array( $this, 'check_desktop_api_permission' ),
+			)
+		);
 	}
 
 	/**
@@ -254,7 +276,7 @@ class RestApiModule {
 		return new WP_REST_Response( array(
 			'status'       => 'online',
 			'service'      => 'DeSpace Desktop 3D Model Sync API',
-			'version'      => '2.5.0',
+			'version'      => '3.0.0',
 			'site_url'     => home_url(),
 			'site_name'    => get_bloginfo( 'name' ),
 			'server_time'  => current_time( 'mysql' ),
@@ -262,6 +284,8 @@ class RestApiModule {
 				'multi_angle_capture' => true,
 				'max_angles'          => 5,
 				'glb_upload'          => true,
+				'usdz_upload'         => true,
+				'product_publish'     => true,
 				'excel_batch'         => true,
 			),
 		), 200 );
@@ -434,12 +458,35 @@ class RestApiModule {
 			), 400 );
 		}
 
+		// Save accompanying USDZ (Apple AR Quick Look) and Thumbnail if transmitted
+		$usdz_url = esc_url_raw( (string) ( $request->get_param( 'usdz_url' ) ?? '' ) );
+		if ( ! empty( $request->get_param( 'usdz_base64' ) ) ) {
+			$usdz_data = base64_decode( (string) $request->get_param( 'usdz_base64' ), true );
+			if ( $usdz_data && strlen( $usdz_data ) >= 30 && "PK\x03\x04" === substr( $usdz_data, 0, 4 ) ) {
+				$target_usdz = $target_3d_dir . '/model.usdz';
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+				file_put_contents( $target_usdz, $usdz_data );
+				$usdz_url = $upload_dir['baseurl'] . '/3d/' . sanitize_file_name( $sku ) . '/model.usdz';
+			}
+		}
+
+		$thumb_url = esc_url_raw( (string) ( $request->get_param( 'thumbnail_url' ) ?? '' ) );
+		if ( ! empty( $request->get_param( 'thumbnail_base64' ) ) ) {
+			$thumb_data = base64_decode( (string) $request->get_param( 'thumbnail_base64' ), true );
+			if ( $thumb_data && strlen( $thumb_data ) > 32 ) {
+				$target_thumb = $target_3d_dir . '/thumb.png';
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+				file_put_contents( $target_thumb, $thumb_data );
+				$thumb_url = $upload_dir['baseurl'] . '/3d/' . sanitize_file_name( $sku ) . '/thumb.png';
+			}
+		}
+
 		$metadata = array(
 			'vertex_count'    => intval( $request->get_param( 'vertex_count' ) ?? 0 ),
 			'face_count'      => intval( $request->get_param( 'face_count' ) ?? 0 ),
 			'file_size_bytes' => intval( $request->get_param( 'file_size' ) ?? ( file_exists( $target_3d_dir . '/model.glb' ) ? filesize( $target_3d_dir . '/model.glb' ) : 0 ) ),
-			'usdz_url'        => esc_url_raw( (string) ( $request->get_param( 'usdz_url' ) ?? '' ) ),
-			'thumbnail_url'   => esc_url_raw( (string) ( $request->get_param( 'thumbnail_url' ) ?? '' ) ),
+			'usdz_url'        => $usdz_url,
+			'thumbnail_url'   => $thumb_url,
 		);
 
 		Desktop3DSyncModule::complete_job( $uuid, $glb_url, $metadata );
@@ -451,8 +498,95 @@ class RestApiModule {
 			'product_id' => $product_id,
 			'sku'        => $sku,
 			'glb_url'    => $glb_url,
+			'usdz_url'   => $usdz_url,
 			'metadata'   => $metadata,
 		), 200 );
+	}
+
+	/**
+	 * Fetch store product categories for Desktop Studio dropdown.
+	 */
+	public function desktop_get_categories(): WP_REST_Response {
+		$cats = array();
+		if ( function_exists( 'get_terms' ) ) {
+			$terms = get_terms( array(
+				'taxonomy'   => 'product_cat',
+				'hide_empty' => false,
+			) );
+			if ( is_array( $terms ) && ! is_wp_error( $terms ) ) {
+				foreach ( $terms as $t ) {
+					if ( 'uncategorized' === $t->slug ) {
+						continue;
+					}
+					$cats[] = array(
+						'id'    => (int) $t->term_id,
+						'name'  => $t->name,
+						'slug'  => $t->slug,
+						'count' => (int) $t->count,
+					);
+				}
+			}
+		}
+
+		if ( empty( $cats ) ) {
+			$cats = array(
+				array( 'id' => 0, 'name' => 'Tủ giày & Lưu trữ', 'slug' => 'tu-giay-luu-tru', 'count' => 0 ),
+				array( 'id' => 0, 'name' => 'Tủ quần áo', 'slug' => 'tu-quan-ao', 'count' => 0 ),
+				array( 'id' => 0, 'name' => 'Kệ sách & Tủ trưng bày', 'slug' => 'ke-sach-tu-trung-bay', 'count' => 0 ),
+				array( 'id' => 0, 'name' => 'Tủ bếp', 'slug' => 'tu-bep', 'count' => 0 ),
+				array( 'id' => 0, 'name' => 'Ghế & Đôn', 'slug' => 'ghe-don', 'count' => 0 ),
+				array( 'id' => 0, 'name' => 'Sofa', 'slug' => 'sofa', 'count' => 0 ),
+				array( 'id' => 0, 'name' => 'Bàn ăn & Bàn trà', 'slug' => 'table', 'count' => 0 ),
+				array( 'id' => 0, 'name' => 'Giường ngủ', 'slug' => 'bed', 'count' => 0 ),
+			);
+		}
+
+		return new WP_REST_Response( array(
+			'success'    => true,
+			'categories' => $cats,
+		), 200 );
+	}
+
+	/**
+	 * One-click Desktop Product Publisher: creates/updates product, imports photos,
+	 * attaches auto-generated GLB + USDZ 3D models, and publishes live to Shop.
+	 */
+	public function desktop_publish_product( WP_REST_Request $request ): WP_REST_Response {
+		$keys = array(
+			'product_id', 'sku', 'name', 'product_name', 'name_en',
+			'regular_price', 'sale_price', 'stock_quantity',
+			'short_description', 'description', 'category', 'badge', 'color', 'material',
+			'dimensions', 'width', 'depth', 'height',
+			'images', 'glb_base64', 'glb_url', 'usdz_base64', 'usdz_url',
+			'thumbnail_base64', 'vertex_count', 'face_count', 'file_size',
+		);
+
+		$payload = array();
+		foreach ( $keys as $k ) {
+			$val = $request->get_param( $k );
+			if ( null !== $val ) {
+				$payload[ $k ] = $val;
+			}
+		}
+
+		if ( empty( $payload['name'] ) && empty( $payload['product_name'] ) && empty( $payload['sku'] ) ) {
+			return new WP_REST_Response( array(
+				'success' => false,
+				'code'    => 'missing_product_name',
+				'message' => 'Product name or SKU is required.',
+			), 400 );
+		}
+
+		try {
+			$result = Desktop3DSyncModule::publish_product_from_desktop( $payload );
+			return new WP_REST_Response( $result, 201 );
+		} catch ( \Throwable $e ) {
+			return new WP_REST_Response( array(
+				'success' => false,
+				'code'    => 'publish_failed',
+				'message' => $e->getMessage(),
+			), 500 );
+		}
 	}
 
 	/**
