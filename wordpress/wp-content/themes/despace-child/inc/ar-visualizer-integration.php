@@ -302,12 +302,32 @@ function ar_add_menu_item( $items, $args ) {
 }
 
 /**
- * Add AR link to footer
+ * Add AR link & Network Configuration (LAN IP + Public HTTPS Tunnel) to footer
  */
 add_action( 'wp_footer', 'ar_add_footer_link' );
 
 function ar_add_footer_link() {
+	$net_file = WP_CONTENT_DIR . '/uploads/despace-network.json';
+	$lan_base = 'http://192.168.1.123:8090';
+	$tunnel_base = '';
+	if ( file_exists( $net_file ) ) {
+		$raw = json_decode( (string) file_get_contents( $net_file ), true );
+		if ( is_array( $raw ) ) {
+			if ( ! empty( $raw['lan_base_url'] ) ) {
+				$lan_base = esc_url_raw( $raw['lan_base_url'] );
+			}
+			if ( ! empty( $raw['tunnel_base_url'] ) ) {
+				$tunnel_base = esc_url_raw( $raw['tunnel_base_url'] );
+			}
+		}
+	}
+	$net_config = array(
+		'lanBaseUrl'    => rtrim( $lan_base, '/' ),
+		'tunnelBaseUrl' => rtrim( $tunnel_base, '/' ),
+		'arPageUrl'     => esc_url_raw( ax_get_ar_page_url() ),
+	);
 	echo '<script>';
-	echo 'window.AR_VISUALIZER_URL = "' . esc_url( ax_get_ar_page_url() ) . '";';
+	echo 'window.AR_VISUALIZER_URL = ' . wp_json_encode( ax_get_ar_page_url() ) . ';';
+	echo 'window.DESPACE_AR_NETWORK = ' . wp_json_encode( $net_config ) . ';';
 	echo '</script>';
 }

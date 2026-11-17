@@ -1331,18 +1331,328 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .ax-ar-url-input {
   flex: 1;
-  height: 40px;
+  min-inline-size: 200px;
+  min-block-size: var(--target-size, 42px);
   padding: 0 14px;
   background: #FAF7F2;
-  border: 1px solid #E7E0D7;
-  border-radius: 8px;
-  font-size: 12px;
-  color: #69645D;
+  border: 1.5px solid #D5C9BC;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: #1C1917;
   outline: none;
+}
+
+.ax-copy-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.ax-btn-copy-url {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  min-block-size: var(--target-size, 42px) !important;
+  min-inline-size: 24px !important;
+  padding: 0 18px !important;
+  background: #1C1917 !important;
+  color: #FAF7F2 !important;
+  border: 1.5px solid #1C1917 !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: background 0.2s ease, transform 0.15s ease !important;
+  white-space: nowrap !important;
+}
+
+.ax-btn-copy-url:hover {
+  background: #352F2B !important;
+  border-color: #352F2B !important;
+}
+
+.ax-btn-copy-url[data-copied] {
+  background: #2E6F40 !important;
+  border-color: #2E6F40 !important;
+}
+
+.ax-copy-tip {
+  position: absolute;
+  inset-block-end: calc(100% + 6px);
+  inset-inline-end: 0;
+  background: #1C1917;
+  color: #FAF7F2;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.ax-btn-copy-url[data-copied] + .ax-copy-tip,
+.ax-btn-copy-url[data-failed] + .ax-copy-tip {
+  opacity: 1;
+}
+
+/* QR Network Switcher */
+.ax-qr-net-switch {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #EFE9E0;
+  padding: 3px;
+  border-radius: 999px;
+  margin-top: 12px;
+  width: 100%;
+  justify-content: center;
+}
+
+.ax-qr-net-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: #69645D;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.ax-qr-net-btn.is-active {
+  background: #1C1917;
+  color: #FAF7F2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.ax-desktop-live-cta {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #E2D9CE;
+}
+
+/* Sub-mode Switcher Bar in AR Tab */
+.ax-ar-submode-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.ax-ar-submode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-block-size: var(--target-size, 40px);
+  padding: 8px 18px;
+  background: #FFFFFF;
+  border: 1.5px solid #E2D9CE;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #57524B;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ax-ar-submode-btn:hover {
+  border-color: #9A6745;
+  color: #1C1917;
+}
+
+.ax-ar-submode-btn.is-active {
+  background: #1C1917;
+  border-color: #1C1917;
+  color: #FAF7F2;
+  box-shadow: 0 6px 16px rgba(28, 25, 23, 0.16);
+}
+
+.ax-toolbar-btn-accent {
+  background: #9A6745 !important;
+  color: #FFFFFF !important;
+  border-color: #9A6745 !important;
+}
+
+.ax-toolbar-btn-accent:hover {
+  background: #7D5134 !important;
+  border-color: #7D5134 !important;
+}
+
+/* Dual AR CTA Buttons */
+.ax-ar-cta-dual {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ax-btn-ar-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-block-size: var(--target-size, 48px);
+  padding: 14px 28px;
+  background: #FAF7F2;
+  color: #1C1917 !important;
+  text-decoration: none !important;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 700;
+  border: 1.5px solid #1C1917;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  position: relative;
+}
+
+.ax-btn-ar-secondary:hover {
+  background: #EFE9E0;
+  transform: translateY(-1px);
+}
+
+/* ============================================================
+   LIVE 3D CAMERA AR STUDIO (60FPS WEBRTC + 3D GLB STAGE)
+   ============================================================ */
+.ax-live-cam-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ax-live-cam-viewport {
+  position: relative;
+  width: 100%;
+  height: 480px;
+  max-height: 55vh;
+  min-height: 360px;
+  background: #141210;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1.5px solid #D5C9BC;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+  user-select: none;
+  touch-action: none;
+}
+
+.ax-live-ar-video,
+.ax-live-ar-fallback-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ax-live-ar-floor-grid {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: 0;
+  height: 45%;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+  background-size: 48px 48px;
+  transform: perspective(360px) rotateX(62deg);
+  transform-origin: bottom center;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.55;
+}
+
+.ax-live-ar-object-wrap {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 360px;
+  height: 360px;
+  margin-left: -180px;
+  margin-top: -180px;
+  z-index: 10;
+  will-change: transform;
+  transform: translate3d(0, 0, 0) scale(1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ax-live-ar-object-wrap.is-move-mode {
+  cursor: grab;
+  outline: 2px dashed rgba(250, 247, 242, 0.75);
+  outline-offset: -8px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ax-live-ar-object-wrap.is-move-mode.is-dragging {
+  cursor: grabbing;
+  outline-color: #9A6745;
+}
+
+.ax-live-ar-floor-shadow {
+  position: absolute;
+  bottom: 24px;
+  width: 68%;
+  height: 28px;
+  background: radial-gradient(ellipse at center, rgba(12, 9, 6, 0.62) 0%, rgba(12, 9, 6, 0.25) 48%, rgba(12, 9, 6, 0) 75%);
+  border-radius: 50%;
+  filter: blur(4px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ax-live-ar-model-viewer {
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  --poster-color: transparent;
+  --progress-bar-color: #9A6745;
+  z-index: 2;
+  outline: none;
+}
+
+.ax-pill-dot-live {
+  background: #16A34A;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.25);
+  animation: axLiveDotBlink 1.8s infinite;
+}
+
+@keyframes axLiveDotBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* Form-factor adaptation & Typography polish */
+:root { --target-size: 24px; }
+@media (pointer: coarse) {
+  :root { --target-size: 44px; }
+}
+
+.ax-room-modal h2,
+.ax-room-modal h3,
+.ax-room-modal h4 {
+  text-wrap: balance;
+}
+
+.ax-room-modal p,
+.ax-room-modal li {
+  text-wrap: pretty;
 }
 
 /* Synchronized Price in Modal */
@@ -1371,8 +1681,15 @@
   .ax-qr-checklist li {
     text-align: left;
   }
-  .ax-3d-viewport-wrapper {
+  .ax-3d-viewport-wrapper,
+  .ax-live-cam-viewport {
     height: 380px;
+  }
+  .ax-live-ar-object-wrap {
+    width: 280px;
+    height: 280px;
+    margin-left: -140px;
+    margin-top: -140px;
   }
 }
 
@@ -1383,8 +1700,15 @@
   .ax-3d-interaction-hints {
     display: none;
   }
-  .ax-3d-viewport-wrapper {
+  .ax-3d-viewport-wrapper,
+  .ax-live-cam-viewport {
     height: 320px;
     min-height: 300px;
+  }
+  .ax-live-ar-object-wrap {
+    width: 230px;
+    height: 230px;
+    margin-left: -115px;
+    margin-top: -115px;
   }
 }

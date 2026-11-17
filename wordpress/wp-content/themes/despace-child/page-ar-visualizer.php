@@ -265,6 +265,9 @@ $shop_url = wc_get_page_permalink( 'shop' );
                                     $cat_slugs[] = $cat->slug;
                                 }
                             }
+                            $model_info_card = function_exists( 'ax_get_product_3d_info' ) ? ax_get_product_3d_info( $product_id ) : array();
+                            $card_glb_url    = ! empty( $model_info_card['glb_url'] ) ? $model_info_card['glb_url'] : '';
+                            $card_usdz_url   = ! empty( $model_info_card['usdz_url'] ) ? $model_info_card['usdz_url'] : '';
                         ?>
                         <div class="ar-product-card"
                              data-product-id="<?php echo esc_attr( $product_id ); ?>"
@@ -275,6 +278,8 @@ $shop_url = wc_get_page_permalink( 'shop' );
                              data-product-width="<?php echo esc_attr( $width ); ?>"
                              data-product-height="<?php echo esc_attr( $height ); ?>"
                              data-product-length="<?php echo esc_attr( $length ); ?>"
+                             data-glb-url="<?php echo esc_url( $card_glb_url ); ?>"
+                             data-usdz-url="<?php echo esc_url( $card_usdz_url ); ?>"
                              data-categories="<?php echo esc_attr( implode( ',', $cat_slugs ) ); ?>">
                             <div class="ar-product-image">
                                 <?php echo $product_image; ?>
@@ -641,18 +646,44 @@ window.addEventListener('DOMContentLoaded', function() {
         },
 
         addProductToCanvas: function(card) {
+            if (typeof customElements !== 'undefined' && !customElements.get('model-viewer')) {
+                const mvScript = document.createElement('script');
+                mvScript.type = 'module';
+                mvScript.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js';
+                document.head.appendChild(mvScript);
+            }
+
+            // If user hasn't uploaded or captured a room photo yet, auto-load the default luxury room backdrop
+            if (!this.roomImage) {
+                const defaultRoomUrl = '<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/room-living.jpg' ); ?>';
+                this.loadRoomImage(defaultRoomUrl);
+            }
+
+            const wrapper = document.getElementById('arCanvasWrapper');
+            const rect = wrapper ? wrapper.getBoundingClientRect() : { width: 720, height: 480 };
+            this.canvasWidth = rect.width || 720;
+            this.canvasHeight = rect.height || 480;
+
+            let glbUrl = card.dataset.glbUrl || '';
+            if (glbUrl && window.location.origin.indexOf('localhost') === -1 && glbUrl.indexOf('localhost') !== -1) {
+                glbUrl = glbUrl.replace(/^https?:\/\/localhost(?::\d+)?/i, window.location.origin);
+            }
+
             const productData = {
+                uid: 'ar_item_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
                 id: card.dataset.productId,
                 name: card.dataset.productName,
                 price: card.dataset.productPrice,
                 image: card.dataset.productImage,
+                glbUrl: glbUrl,
                 url: card.dataset.productUrl,
                 width: parseFloat(card.dataset.productWidth) || 100,
                 height: parseFloat(card.dataset.productHeight) || 80,
                 x: this.canvasWidth / 2,
-                y: this.canvasHeight / 2,
+                y: this.canvasHeight * 0.62,
                 scale: 1,
-                rotation: 0
+                rotation: 0,
+                orbitMode: false
             };
 
             this.placedProducts.push(productData);
@@ -660,99 +691,177 @@ window.addEventListener('DOMContentLoaded', function() {
             this.updatePlacedCount();
         },
 
+        updateSingleProductDOM: function(index) {
+            const overlay = document.getElementById('arCanvasOverlay');
+            if (!overlay) return;
+            const product = this.placedProducts[index];
+            if (!product) return;
+            const productEl = overlay.querySelector(`.ar-placed-product[data-uid="${product.uid}"]`);
+            if (!productEl) return;
+
+            const baseSize = 220;
+            const scaledWidth = Math.max(140, baseSize * (product.width / 100) * this.scale * product.scale);
+            const scaledHeight = Math.max(140, baseSize * (product.height / 100) * this.scale * product.scale);
+
+            productEl.style.left = `${product.x}px`;
+            productEl.style.top = `${product.y}px`;
+            productEl.style.width = `${scaledWidth}px`;
+            productEl.style.height = `${scaledHeight}px`;
+
+            const mv = productEl.querySelector('model-viewer');
+            if (mv) {
+                mv.cameraOrbit = `${product.rotation}deg 76deg 105%`;
+                if (product.orbitMode) {
+                    mv.setAttribute('camera-controls', '');
+                    mv.style.pointerEvents = 'auto';
+                } else {
+                    mv.removeAttribute('camera-controls');
+                    mv.style.pointerEvents = 'none';
+                }
+            } else {
+                productEl.style.transform = `translate(-50%, -50%) rotate(${product.rotation}deg)`;
+            }
+        },
+
         renderProducts: function() {
             const overlay = document.getElementById('arCanvasOverlay');
             if (!overlay) return;
 
-            overlay.innerHTML = '';
+            // Remove DOM nodes for deleted products
+            const activeUids = new Set(this.placedProducts.map(p => p.uid));
+            overlay.querySelectorAll('.ar-placed-product').forEach(el => {
+                if (!activeUids.has(el.dataset.uid)) {
+                    el.remove();
+                }
+            });
 
             this.placedProducts.forEach((product, index) => {
-                const productEl = document.createElement('div');
-                productEl.className = 'ar-placed-product';
-                productEl.dataset.index = index;
+                let productEl = overlay.querySelector(`.ar-placed-product[data-uid="${product.uid}"]`);
+                const baseSize = 220;
+                const scaledWidth = Math.max(140, baseSize * (product.width / 100) * this.scale * product.scale);
+                const scaledHeight = Math.max(140, baseSize * (product.height / 100) * this.scale * product.scale);
 
-                const img = document.createElement('img');
-                img.src = product.image;
-                img.alt = product.name;
-                img.draggable = false;
+                if (!productEl) {
+                    productEl = document.createElement('div');
+                    productEl.className = 'ar-placed-product';
+                    productEl.dataset.uid = product.uid;
+                    productEl.dataset.index = index;
+                    productEl.style.cssText = `
+                        left: ${product.x}px;
+                        top: ${product.y}px;
+                        width: ${scaledWidth}px;
+                        height: ${scaledHeight}px;
+                        transform: translate(-50%, -50%);
+                        will-change: left, top, width, height;
+                        background: transparent !important;
+                        border: none !important;
+                        box-shadow: none !important;
+                    `;
 
-                // Calculate size based on real dimensions
-                const baseSize = 120;
-                const scaledWidth = baseSize * (product.width / 100) * this.scale * product.scale;
-                const scaledHeight = baseSize * (product.height / 100) * this.scale * product.scale;
+                    if (product.glbUrl) {
+                        const mv = document.createElement('model-viewer');
+                        mv.setAttribute('src', product.glbUrl);
+                        mv.setAttribute('alt', product.name || 'DeSpace 3D Model');
+                        mv.setAttribute('shadow-intensity', '1.45');
+                        mv.setAttribute('shadow-softness', '0.68');
+                        mv.setAttribute('exposure', '1.05');
+                        mv.setAttribute('tone-mapping', 'neutral');
+                        mv.setAttribute('interaction-prompt', 'none');
+                        mv.setAttribute('crossorigin', 'anonymous');
+                        mv.setAttribute('camera-orbit', `${product.rotation}deg 76deg 105%`);
+                        mv.style.cssText = 'width:100%;height:100%;background:transparent !important;--poster-color:transparent;pointer-events:none;';
+                        productEl.appendChild(mv);
+                    } else {
+                        const img = document.createElement('img');
+                        img.src = product.image;
+                        img.alt = product.name;
+                        img.draggable = false;
+                        productEl.appendChild(img);
+                    }
 
-                productEl.style.cssText = `
-                    left: ${product.x}px;
-                    top: ${product.y}px;
-                    width: ${scaledWidth}px;
-                    height: ${scaledHeight}px;
-                    transform: translate(-50%, -50%) rotate(${product.rotation}deg);
-                `;
+                    // Controls
+                    const controls = document.createElement('div');
+                    controls.className = 'ar-product-controls';
+                    controls.innerHTML = `
+                        <button type="button" class="ar-control-sm" data-action="toggle-3d-orbit" title="Bật/Tắt xoay 3D 360°">
+                            360°
+                        </button>
+                        <button type="button" class="ar-control-sm" data-action="rotate-left" title="Xoay trái 3D">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="1 4 1 10 7 10"/>
+                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="ar-control-sm" data-action="rotate-right" title="Xoay phải 3D">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"/>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="ar-control-sm" data-action="scale-up" title="Phóng to">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="ar-control-sm" data-action="scale-down" title="Thu nhỏ">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="ar-control-sm ar-remove" data-action="remove" title="Xóa">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    `;
 
-                productEl.appendChild(img);
+                    productEl.appendChild(controls);
 
-                // Controls
-                const controls = document.createElement('div');
-                controls.className = 'ar-product-controls';
-                controls.innerHTML = `
-                    <button class="ar-control-sm" data-action="rotate-left" title="Rotate left">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="1 4 1 10 7 10"/>
-                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
-                        </svg>
-                    </button>
-                    <button class="ar-control-sm" data-action="rotate-right" title="Rotate right">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="23 4 23 10 17 10"/>
-                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-                        </svg>
-                    </button>
-                    <button class="ar-control-sm" data-action="scale-up" title="Scale up">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                        </svg>
-                    </button>
-                    <button class="ar-control-sm" data-action="scale-down" title="Scale down">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="5" y1="12" x2="19" y2="12"/>
-                        </svg>
-                    </button>
-                    <button class="ar-control-sm ar-remove" data-action="remove" title="Remove">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                        </svg>
-                    </button>
-                `;
+                    // Product info tooltip
+                    const info = document.createElement('div');
+                    info.className = 'ar-product-info-tooltip';
+                    const strongEl = document.createElement('strong');
+                    strongEl.textContent = product.name || '';
+                    const spanEl = document.createElement('span');
+                    spanEl.textContent = formatPrice(product.price);
+                    info.appendChild(strongEl);
+                    info.appendChild(spanEl);
+                    productEl.appendChild(info);
 
-                productEl.appendChild(controls);
-
-                // Product info tooltip
-                const info = document.createElement('div');
-                info.className = 'ar-product-info-tooltip';
-                const strongEl = document.createElement('strong');
-                strongEl.textContent = product.name || '';
-                const spanEl = document.createElement('span');
-                spanEl.textContent = formatPrice(product.price);
-                info.appendChild(strongEl);
-                info.appendChild(spanEl);
-                productEl.appendChild(info);
-
-                // Event listeners
-                productEl.addEventListener('mousedown', (e) => this.startDrag(e, index));
-                productEl.addEventListener('touchstart', (e) => this.startDrag(e, index));
-
-                controls.querySelectorAll('button').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        this.handleProductAction(index, btn.dataset.action);
+                    // Event listeners
+                    productEl.addEventListener('mousedown', (e) => {
+                        const idx = this.placedProducts.findIndex(p => p.uid === product.uid);
+                        if (idx !== -1 && !this.placedProducts[idx].orbitMode) {
+                            this.startDrag(e, idx);
+                        }
                     });
-                });
+                    productEl.addEventListener('touchstart', (e) => {
+                        const idx = this.placedProducts.findIndex(p => p.uid === product.uid);
+                        if (idx !== -1 && !this.placedProducts[idx].orbitMode) {
+                            this.startDrag(e, idx);
+                        }
+                    }, { passive: false });
 
-                overlay.appendChild(productEl);
+                    controls.querySelectorAll('button').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const idx = this.placedProducts.findIndex(p => p.uid === product.uid);
+                            if (idx !== -1) {
+                                this.handleProductAction(idx, btn.dataset.action, btn);
+                            }
+                        });
+                    });
+
+                    overlay.appendChild(productEl);
+                } else {
+                    productEl.dataset.index = index;
+                    this.updateSingleProductDOM(index);
+                }
             });
         },
 
         startDrag: function(e, index) {
+            if (e.target.closest('.ar-product-controls')) return;
             e.preventDefault();
             this.selectedProduct = index;
             this.isDragging = true;
@@ -769,7 +878,6 @@ window.addEventListener('DOMContentLoaded', function() {
                 y: clientY - rect.top - product.y
             };
 
-            // Highlight selected
             document.querySelectorAll('.ar-placed-product').forEach((el, i) => {
                 el.classList.toggle('selected', i === index);
             });
@@ -793,10 +901,11 @@ window.addEventListener('DOMContentLoaded', function() {
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
             const product = this.placedProducts[this.selectedProduct];
+            if (!product) return;
             product.x = Math.max(0, Math.min(clientX - rect.left - this.dragOffset.x, rect.width));
             product.y = Math.max(0, Math.min(clientY - rect.top - this.dragOffset.y, rect.height));
 
-            this.renderProducts();
+            this.updateSingleProductDOM(this.selectedProduct);
         },
 
         handleTouchStart: function(e) {
@@ -813,29 +922,41 @@ window.addEventListener('DOMContentLoaded', function() {
             this.isDragging = false;
         },
 
-        handleProductAction: function(index, action) {
+        handleProductAction: function(index, action, btnEl) {
             const product = this.placedProducts[index];
+            if (!product) return;
 
             switch(action) {
+                case 'toggle-3d-orbit':
+                    product.orbitMode = !product.orbitMode;
+                    if (btnEl) {
+                        btnEl.style.background = product.orbitMode ? '#9A6745' : '';
+                        btnEl.style.color = product.orbitMode ? '#FFFFFF' : '';
+                    }
+                    this.updateSingleProductDOM(index);
+                    return;
                 case 'rotate-left':
-                    product.rotation -= 15;
-                    break;
+                    product.rotation -= 25;
+                    this.updateSingleProductDOM(index);
+                    return;
                 case 'rotate-right':
-                    product.rotation += 15;
-                    break;
+                    product.rotation += 25;
+                    this.updateSingleProductDOM(index);
+                    return;
                 case 'scale-up':
-                    product.scale = Math.min(product.scale + 0.2, 3);
-                    break;
+                    product.scale = Math.min(product.scale + 0.18, 2.6);
+                    this.updateSingleProductDOM(index);
+                    return;
                 case 'scale-down':
-                    product.scale = Math.max(product.scale - 0.2, 0.3);
-                    break;
+                    product.scale = Math.max(product.scale - 0.18, 0.4);
+                    this.updateSingleProductDOM(index);
+                    return;
                 case 'remove':
                     this.placedProducts.splice(index, 1);
                     this.updatePlacedCount();
-                    break;
+                    this.renderProducts();
+                    return;
             }
-
-            this.renderProducts();
         },
 
         updatePlacedCount: function() {
@@ -897,50 +1018,68 @@ window.addEventListener('DOMContentLoaded', function() {
             document.getElementById('arProductModal').style.display = 'none';
         },
 
-        captureResult: function() {
+        captureResult: async function() {
             const wrapper = document.getElementById('arCanvasWrapper');
             const roomImage = document.getElementById('arRoomImage');
+            const overlay = document.getElementById('arCanvasOverlay');
 
             if (!wrapper || !roomImage) return;
 
-            // Create canvas
             const exportCanvas = document.getElementById('arExportCanvas');
             const ctx = exportCanvas.getContext('2d');
 
-            exportCanvas.width = roomImage.naturalWidth;
-            exportCanvas.height = roomImage.naturalHeight;
+            exportCanvas.width = roomImage.naturalWidth || 1280;
+            exportCanvas.height = roomImage.naturalHeight || 720;
 
-            // Draw room image
-            ctx.drawImage(roomImage, 0, 0);
+            ctx.drawImage(roomImage, 0, 0, exportCanvas.width, exportCanvas.height);
 
-            // Calculate scale for placed products
-            const scaleX = roomImage.naturalWidth / wrapper.offsetWidth;
-            const scaleY = roomImage.naturalHeight / wrapper.offsetHeight;
+            const scaleX = exportCanvas.width / (wrapper.offsetWidth || 1);
+            const scaleY = exportCanvas.height / (wrapper.offsetHeight || 1);
 
-            // Draw placed products
-            this.placedProducts.forEach(product => {
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.src = product.image;
+            for (const product of this.placedProducts) {
+                const productEl = overlay ? overlay.querySelector(`.ar-placed-product[data-uid="${product.uid}"]`) : null;
+                const mv = productEl ? productEl.querySelector('model-viewer') : null;
+                const baseSize = 220;
+                const width = Math.max(140, baseSize * (product.width / 100) * this.scale * product.scale) * scaleX;
+                const height = Math.max(140, baseSize * (product.height / 100) * this.scale * product.scale) * scaleY;
+                const x = product.x * scaleX;
+                const y = product.y * scaleY;
 
-                if (img.complete) {
-                    const x = product.x * scaleX;
-                    const y = product.y * scaleY;
-                    const width = (120 * (product.width / 100) * this.scale * product.scale) * scaleX;
-                    const height = (120 * (product.height / 100) * this.scale * product.scale) * scaleY;
-
-                    ctx.save();
-                    ctx.translate(x, y);
-                    ctx.rotate(product.rotation * Math.PI / 180);
-                    ctx.drawImage(img, -width/2, -height/2, width, height);
-                    ctx.restore();
+                if (mv && typeof mv.toDataURL === 'function') {
+                    try {
+                        const dataUrl = mv.toDataURL('image/png');
+                        await new Promise(resolve => {
+                            const mvImg = new Image();
+                            mvImg.onload = () => {
+                                ctx.drawImage(mvImg, x - width / 2, y - height / 2, width, height);
+                                resolve();
+                            };
+                            mvImg.onerror = resolve;
+                            mvImg.src = dataUrl;
+                        });
+                        continue;
+                    } catch (err) {}
                 }
-            });
 
-            // Download
+                await new Promise(resolve => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        ctx.save();
+                        ctx.translate(x, y);
+                        ctx.rotate(product.rotation * Math.PI / 180);
+                        ctx.drawImage(img, -width / 2, -height / 2, width, height);
+                        ctx.restore();
+                        resolve();
+                    };
+                    img.onerror = resolve;
+                    img.src = product.image;
+                });
+            }
+
             const link = document.createElement('a');
-            link.download = 'ar-room-design.jpg';
-            link.href = exportCanvas.toDataURL('image/jpeg', 0.9);
+            link.download = 'despace-ar-room-design.jpg';
+            link.href = exportCanvas.toDataURL('image/jpeg', 0.92);
             link.click();
         },
 

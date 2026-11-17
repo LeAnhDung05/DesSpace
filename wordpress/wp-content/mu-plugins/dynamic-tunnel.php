@@ -12,9 +12,9 @@ if ( ! empty( $_SERVER['HTTP_HOST'] ) ) {
 	$raw_host  = sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) );
 	$http_host = preg_replace( '/[^a-zA-Z0-9.\-:]/', '', $raw_host );
 
-	// Strictly allow only localhost, loopback, or legitimate tunnel domains (Cloudflare / Ngrok).
+	// Strictly allow localhost, loopback, RFC1918 LAN IPs (for Mobile QR AR), or legitimate tunnel domains (Cloudflare / Ngrok).
 	$is_allowed_tunnel_host = (bool) preg_match(
-		'/^(?:localhost|127\.0\.0\.1|\[::1\]|[a-z0-9\-]+(?:\.[a-z0-9\-]+)*\.(?:trycloudflare\.com|ngrok-free\.app|ngrok\.io|ngrok\.app|loca\.lt))(?::\d{1,5})?$/i',
+		'/^(?:localhost|127\.0\.0\.1|\[::1\]|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}|[a-z0-9\-]+\.local|[a-z0-9\-]+(?:\.[a-z0-9\-]+)*\.(?:trycloudflare\.com|ngrok-free\.app|ngrok\.io|ngrok\.app|loca\.lt))(?::\d{1,5})?$/i',
 		$http_host
 	);
 
