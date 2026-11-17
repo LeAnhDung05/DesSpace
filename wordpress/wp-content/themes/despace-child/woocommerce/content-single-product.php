@@ -116,22 +116,22 @@ if ( ! empty( $finish_attr_val ) ) {
                         endforeach;
                     endif;
                     ?>
+
+                    <!-- Navigation arrows -->
+                    <?php if ( count( $all_images ) > 1 ) : ?>
+                    <button type="button" class="ax-gallery-nav ax-gallery-prev" id="axGalleryPrev" aria-label="Previous image">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+                    <button type="button" class="ax-gallery-nav ax-gallery-next" id="axGalleryNext" aria-label="Next image">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                    <?php endif; ?>
+
+                    <!-- Zoom button -->
+                    <button type="button" class="ax-gallery-zoom" aria-label="Zoom image">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    </button>
                 </div>
-
-                <!-- Navigation arrows -->
-                <?php if ( count( $all_images ) > 1 ) : ?>
-                <button class="ax-gallery-nav ax-gallery-prev" id="axGalleryPrev" aria-label="Previous image">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
-                </button>
-                <button class="ax-gallery-nav ax-gallery-next" id="axGalleryNext" aria-label="Next image">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
-                </button>
-                <?php endif; ?>
-
-                <!-- Zoom button -->
-                <button class="ax-gallery-zoom" aria-label="Zoom image">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-                </button>
 
                 <!-- Thumbnails -->
                 <?php if ( count( $all_images ) > 1 ) : ?>

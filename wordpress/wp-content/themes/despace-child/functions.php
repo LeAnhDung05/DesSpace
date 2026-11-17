@@ -6,7 +6,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'DESPACE_VER', '3.0.0' );
+define( 'DESPACE_VER', '3.1.0' );
 define( 'FURNIVA_VER', DESPACE_VER );
 
 require_once get_stylesheet_directory() . '/inc/template-tags.php';
@@ -48,7 +48,9 @@ add_action( 'init', function() {
 // ---------------------------------------------------------------- assets
 function furniva_assets() {
 	wp_enqueue_style( 'astra', get_template_directory_uri() . '/style.css', array(), null );
-	wp_enqueue_style( 'furniva', get_stylesheet_uri(), array( 'astra' ), FURNIVA_VER );
+	$main_style_path = get_stylesheet_directory() . '/style.css';
+	$main_style_ver  = file_exists( $main_style_path ) ? (string) filemtime( $main_style_path ) : FURNIVA_VER;
+	wp_enqueue_style( 'furniva', get_stylesheet_uri(), array( 'astra' ), $main_style_ver );
 	wp_enqueue_style( 'furniva-fonts', 'https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&family=Playfair+Display:ital,wght@0,400..700;1,400..700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap', array(), null );
 
 	// Animations CSS

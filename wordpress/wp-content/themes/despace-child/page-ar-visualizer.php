@@ -1911,22 +1911,116 @@ window.addEventListener('DOMContentLoaded', function() {
     }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+    .ar-visualizer-page {
+        padding-bottom: 48px;
+    }
+
     .ar-container {
-        padding: 0 16px;
+        padding: 0 14px;
+    }
+
+    .ar-hero {
+        padding: 16px 0 16px;
+        margin-bottom: 18px;
+    }
+
+    .ar-breadcrumb {
+        margin-bottom: 12px;
+        font-size: 12px;
+    }
+
+    .ar-hero .ar-badge {
+        position: static !important;
+        padding: 6px 12px;
+        font-size: 10px;
+        margin-bottom: 10px;
+    }
+
+    .ar-hero-title {
+        font-size: clamp(1.35rem, 5.6vw, 1.75rem);
+        line-height: 1.22;
+        margin: 0 0 8px;
+    }
+
+    .ar-hero-subtitle {
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .ar-workspace {
+        gap: 18px;
+    }
+
+    .ar-canvas-wrapper {
+        min-height: 240px;
+        border-radius: 16px;
+    }
+
+    .ar-upload-zone {
+        min-height: 240px;
+        padding: 24px 16px;
+    }
+
+    .ar-upload-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 14px;
+    }
+
+    .ar-upload-icon svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .ar-upload-content h3 {
+        font-size: 1.15rem;
+        margin: 0 0 6px;
+    }
+
+    .ar-upload-content p {
+        font-size: 13px;
+        margin: 0 0 16px;
     }
 
     .ar-upload-buttons {
-        flex-direction: column;
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .ar-upload-buttons input[type="file"] {
+        display: none !important;
+    }
+
+    .ar-upload-buttons .ar-btn,
+    .ar-upload-buttons label.ar-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex: 1 1 135px;
+        height: 44px !important;
+        min-height: 44px !important;
+        max-height: 48px !important;
+        padding: 0 14px !important;
+        margin: 0 !important;
+        font-size: 13px;
+    }
+
+    .ar-room-info {
+        padding: 16px;
+        border-radius: 14px;
     }
 
     .ar-products-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
     }
 
     .ar-bottom-actions {
         flex-direction: column;
-        gap: 16px;
+        gap: 12px;
     }
 
     .ar-modal-body {
@@ -1934,11 +2028,11 @@ window.addEventListener('DOMContentLoaded', function() {
     }
 
     .ar-modal-image {
-        padding: 24px;
+        padding: 20px;
     }
 
     .ar-modal-info {
-        padding: 24px;
+        padding: 20px;
     }
 }
 </style>

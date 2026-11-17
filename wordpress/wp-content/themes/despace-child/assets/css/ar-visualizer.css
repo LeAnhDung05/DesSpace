@@ -35,6 +35,13 @@
     z-index: 1;
 }
 
+.ar-hero .ar-badge {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    margin: 0 auto 14px;
+}
+
 /* ============================================================
    Workspace Layout
    ============================================================ */
@@ -926,50 +933,108 @@
 }
 
 @media (max-width: 768px) {
+    .ar-hero {
+        padding: 18px 14px 16px;
+    }
+
+    .ar-hero .ar-badge {
+        position: static !important;
+        margin: 0 auto 10px;
+    }
+
+    .ar-hero-title {
+        font-size: clamp(1.35rem, 5.5vw, 1.75rem) !important;
+        line-height: 1.24 !important;
+        margin: 0 0 8px !important;
+    }
+
+    .ar-hero-subtitle {
+        font-size: 13px !important;
+        line-height: 1.5 !important;
+    }
+
     .ar-upload-zone {
-        min-height: 400px;
-        padding: 40px 24px;
+        min-height: 260px;
+        padding: 24px 16px;
     }
 
     .ar-upload-icon {
-        width: 90px;
-        height: 90px;
+        width: 64px;
+        height: 64px;
+        margin-bottom: 14px;
     }
 
     .ar-upload-icon svg {
-        width: 40px;
-        height: 40px;
+        width: 30px;
+        height: 30px;
     }
 
     .ar-upload-content h3 {
-        font-size: 1.3rem;
+        font-size: 1.15rem;
+        margin-bottom: 6px;
+    }
+
+    .ar-upload-content > p {
+        font-size: 13px;
+        margin-bottom: 16px;
     }
 
     .ar-upload-buttons {
-        flex-direction: column;
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        gap: 8px;
     }
 
-    .ar-btn {
-        width: 100%;
+    .ar-upload-buttons input[type="file"] {
+        display: none !important;
+    }
+
+    .ar-upload-buttons .ar-btn,
+    .ar-upload-buttons label.ar-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex: 1 1 135px;
+        height: 44px !important;
+        min-height: 44px !important;
+        max-height: 48px !important;
+        padding: 0 14px !important;
+        margin: 0 !important;
+        font-size: 13px;
     }
 
     .ar-products-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .ar-product-info {
+        padding: 10px;
+    }
+
+    .ar-product-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
     }
 
     .ar-bottom-actions {
         flex-direction: column;
-        gap: 16px;
+        padding: 14px 16px;
+        gap: 12px;
     }
 
     .ar-action-buttons {
         width: 100%;
         flex-wrap: wrap;
+        gap: 8px;
     }
 
     .ar-action-buttons .ar-btn {
         flex: 1;
-        min-width: 120px;
+        min-width: 100px;
+        padding: 10px 12px;
+        font-size: 12.5px;
     }
 
     .ar-modal-body {
@@ -977,11 +1042,11 @@
     }
 
     .ar-modal-image {
-        padding: 32px;
+        padding: 20px;
     }
 
     .ar-modal-info {
-        padding: 32px;
+        padding: 20px;
     }
 }
 

@@ -106,6 +106,9 @@
     transform: translateY(-50%);
     width: 44px;
     height: 44px;
+    padding: 0 !important;
+    min-width: 0 !important;
+    line-height: 1 !important;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(6px);
@@ -135,10 +138,13 @@
 
 .ax-gallery-zoom {
     position: absolute;
-    bottom: 16px;
-    right: 16px;
+    bottom: 14px;
+    right: 14px;
     width: 38px;
     height: 38px;
+    padding: 0 !important;
+    min-width: 0 !important;
+    line-height: 1 !important;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(6px);
@@ -150,6 +156,7 @@
     cursor: pointer;
     transition: all 0.2s;
     z-index: 5;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
 }
 
 .ax-gallery-zoom:hover {
@@ -394,6 +401,14 @@
 .ax-qty-plus {
     width: 44px;
     height: 100%;
+    padding: 0 !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+    box-shadow: none !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: none;
     background: none;
     color: #191816;
@@ -410,7 +425,11 @@
 .ax-qty-input {
     width: 48px;
     height: 100%;
-    border: none;
+    padding: 0 !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
     text-align: center;
     font-size: 14px;
     font-weight: 600;
@@ -702,39 +721,212 @@
 @media (max-width: 1024px) {
     .ax-product-grid {
         grid-template-columns: 1fr;
-        gap: 32px;
+        gap: 28px;
     }
 
     .ax-product-name {
-        font-size: 2.2rem;
+        font-size: clamp(1.5rem, 3.8vw, 2.1rem);
+    }
+
+    .ax-product-price {
+        font-size: clamp(1.4rem, 3.4vw, 1.85rem);
     }
 }
 
 @media (max-width: 768px) {
+    .ax-product-page {
+        padding-bottom: 110px;
+    }
+
     .ax-container {
-        padding: 0 16px;
+        padding: 0 14px;
+    }
+
+    .ax-breadcrumb {
+        padding: 10px 0 6px;
+        font-size: 11.5px;
+    }
+
+    .ax-bc-nav {
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .ax-product-grid {
+        gap: 16px;
+        margin-top: 6px;
+    }
+
+    .ax-badge-designer {
+        top: 10px;
+        left: 10px;
+        padding: 5px 10px;
+        font-size: 9.5px;
+        letter-spacing: 0.08em;
+    }
+
+    .ax-gallery-main {
+        border-radius: 12px;
+    }
+
+    .ax-gallery-nav,
+    .ax-gallery-zoom {
+        width: 34px !important;
+        height: 34px !important;
+        min-width: 34px !important;
+    }
+
+    .ax-gallery-thumbs {
+        gap: 8px;
+        margin-top: 8px;
+    }
+
+    .ax-info-wrap {
+        padding-top: 0;
+    }
+
+    .ax-product-cat {
+        font-size: 10px;
+        margin-bottom: 6px;
     }
 
     .ax-product-name {
-        font-size: 1.8rem;
+        font-size: clamp(1.25rem, 4.8vw, 1.55rem);
+        line-height: 1.24;
+        margin-bottom: 10px;
+    }
+
+    .ax-product-rating {
+        gap: 8px;
+        margin-bottom: 10px;
+        font-size: 12.5px;
+    }
+
+    .ax-product-price {
+        font-size: clamp(1.25rem, 4.6vw, 1.5rem);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .ax-product-price del {
+        font-size: 0.85em;
+    }
+
+    .ax-product-desc {
+        font-size: 13px;
+        line-height: 1.58;
+        margin-bottom: 14px;
+    }
+
+    .ax-divider {
+        margin: 14px 0;
+    }
+
+    .ax-availability {
+        margin-bottom: 14px;
+        font-size: 13px;
+    }
+
+    /* 3D & AR Buttons side-by-side in a balanced 2-column row on mobile */
+    .ax-3d-ar-actions-group {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+        margin: 12px 0 14px !important;
+    }
+
+    .ax-3d-ar-actions-group .ar-product-btn {
+        margin: 0 !important;
+        padding: 10px 6px !important;
+        font-size: 11px !important;
+        letter-spacing: -0.01em;
+        min-height: 42px !important;
+        border-radius: 10px !important;
+        gap: 5px !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .ax-3d-ar-actions-group .ar-product-btn svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+    }
+
+    /* Keep Quantity Stepper + Add to Cart side-by-side on 1 single row */
+    .ax-buy-actions {
+        margin-bottom: 18px;
+    }
+
+    .ax-qty-cart {
+        flex-direction: row !important;
+        align-items: stretch;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .ax-qty-stepper {
+        height: 44px;
+        width: 106px !important;
+        flex: 0 0 106px !important;
+    }
+
+    .ax-qty-minus,
+    .ax-qty-plus {
+        width: 34px;
+        min-width: 34px;
+        font-size: 16px;
+    }
+
+    .ax-qty-input {
+        width: 38px;
+        font-size: 13.5px;
+    }
+
+    .ax-btn-cart {
+        flex: 1;
+        width: auto;
+        height: 44px;
+        padding: 0 16px;
+        font-size: 13.5px;
+    }
+
+    .ax-btn-wishlist {
+        height: 40px;
+        padding: 8px 14px;
+        font-size: 13px;
     }
 
     .ax-trust-features {
         grid-template-columns: 1fr;
-        gap: 12px;
+        gap: 10px;
+        padding: 14px 0;
+    }
+
+    .ax-product-tabs,
+    .ax-related-section {
+        margin-top: 36px;
+        padding-top: 20px;
+    }
+
+    .ax-tabs-nav {
+        margin-bottom: 20px;
     }
 
     #ax-tab-description .ax-tab-inner {
         grid-template-columns: 1fr;
-        gap: 24px;
+        gap: 18px;
     }
 
-    .ax-qty-cart {
-        flex-direction: column;
-    }
-
-    .ax-btn-cart {
-        width: 100%;
+    .ax-tab-text h3 {
+        font-size: 1.35rem;
+        margin-bottom: 12px;
     }
 }
 
@@ -745,7 +937,7 @@
     }
 
     .ax-tab-btn {
-        padding: 12px 20px;
-        font-size: 14px;
+        padding: 10px 16px;
+        font-size: 13px;
     }
 }

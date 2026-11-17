@@ -174,17 +174,6 @@ input[type="radio"]:focus-visible {
    7. Touch Device Optimizations
    -------------------------------------------------- */
 @media (hover: none) and (pointer: coarse) {
-    /* Larger touch targets */
-    .ax-color-swatch {
-        min-width: 44px;
-        min-height: 44px;
-    }
-
-    .f-btn,
-    .ax-btn {
-        min-height: 44px;
-    }
-
     /* Remove hover effects on touch */
     .f-product-card:hover,
     .ax-product-card:hover {
@@ -198,14 +187,12 @@ input[type="radio"]:focus-visible {
 }
 
 /* --------------------------------------------------
-   8. Minimum Touch Target Size (44x44)
+   8. Minimum Touch Target Size (WCAG 2.5.8 24x24)
    -------------------------------------------------- */
 .ax-color-swatch,
-button:not(.f-filter-close-drawer):not(.f-filter-reset-link),
-.woocommerce form .form-row label,
-.woocommerce-page form .form-row label {
-    min-height: 44px;
-    min-width: 44px;
+button:not(.f-filter-close-drawer):not(.f-filter-reset-link) {
+    min-height: 24px;
+    min-width: 24px;
 }
 
 /* --------------------------------------------------

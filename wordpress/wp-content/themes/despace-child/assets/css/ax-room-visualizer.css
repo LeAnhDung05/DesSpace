@@ -616,6 +616,12 @@
 .ax-scale-btn {
   width: 28px;
   height: 28px;
+  padding: 0 !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+  flex-shrink: 0;
   border-radius: 50%;
   border: 1.5px solid #E7E0D7;
   background: #FAF7F2;
@@ -653,6 +659,12 @@
 .ax-scale-reset-btn {
   width: 28px;
   height: 28px;
+  padding: 0 !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+  flex-shrink: 0;
   border-radius: 50%;
   border: 1px solid transparent;
   background: transparent;
@@ -764,6 +776,12 @@
 .ax-modal-qty-btn {
   width: 36px;
   height: 100%;
+  padding: 0 !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+  flex-shrink: 0;
   border: none;
   background: transparent;
   font-size: 16px;
@@ -783,7 +801,11 @@
 .ax-modal-qty-stepper input[type="number"] {
   width: 40px;
   height: 100%;
-  border: none;
+  padding: 0 !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
   background: transparent;
   text-align: center;
   font-size: 14px;
@@ -919,7 +941,17 @@
   outline: none;
   --poster-color: transparent;
   --progress-bar-color: #9A6745;
+  --progress-bar-height: 2px;
   --progress-mask: transparent;
+}
+
+.ax-main-model-viewer::part(default-progress-bar) {
+  height: 2px;
+  background-color: #9A6745;
+}
+
+.ax-live-ar-model-viewer::part(default-progress-bar) {
+  display: none;
 }
 
 /* 3D Dimension & Meta Info Pill (Top Left) */
@@ -1055,10 +1087,8 @@
   justify-content: center;
   padding: 30px;
   text-align: center;
-  background: rgba(250, 247, 242, 0.95);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  z-index: 20;
+  background: #F8F4EE;
+  z-index: 30;
 }
 
 .ax-spinner {
@@ -1640,9 +1670,6 @@
 
 /* Form-factor adaptation & Typography polish */
 :root { --target-size: 24px; }
-@media (pointer: coarse) {
-  :root { --target-size: 44px; }
-}
 
 .ax-room-modal h2,
 .ax-room-modal h3,
@@ -1669,46 +1696,411 @@
   margin-left: 6px;
 }
 
-/* Responsive adjustments for AR */
+/* Responsive adjustments for Tablet & Mobile */
 @media (max-width: 860px) {
   .ax-ar-steps-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding-top: 14px;
   }
   .ax-desktop-qr-layout {
     flex-direction: column;
     text-align: center;
+    gap: 18px;
   }
   .ax-qr-checklist li {
     text-align: left;
   }
   .ax-3d-viewport-wrapper,
   .ax-live-cam-viewport {
-    height: 380px;
-  }
-  .ax-live-ar-object-wrap {
-    width: 280px;
-    height: 280px;
-    margin-left: -140px;
-    margin-top: -140px;
-  }
-}
-
-@media (max-width: 520px) {
-  .ax-ar-steps-grid {
-    grid-template-columns: 1fr;
-  }
-  .ax-3d-interaction-hints {
-    display: none;
-  }
-  .ax-3d-viewport-wrapper,
-  .ax-live-cam-viewport {
-    height: 320px;
+    height: clamp(320px, 48vh, 420px);
+    height: clamp(320px, 48dvh, 420px);
     min-height: 300px;
   }
   .ax-live-ar-object-wrap {
-    width: 230px;
-    height: 230px;
-    margin-left: -115px;
-    margin-top: -115px;
+    width: 260px;
+    height: 260px;
+    margin-left: -130px;
+    margin-top: -130px;
+  }
+}
+
+@media (max-width: 768px) {
+  .ax-room-modal {
+    padding: 0 !important;
+    align-items: flex-end;
+  }
+
+  .ax-room-modal-dialog {
+    width: 100%;
+    max-width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: none;
+  }
+
+  /* Compact 2-row Mobile Header: no text wrapping collisions */
+  .ax-room-modal-header {
+    flex-wrap: wrap;
+    padding: 10px 14px 8px;
+    gap: 8px;
+  }
+
+  .ax-room-modal-head-left {
+    flex: 1 1 calc(100% - 48px);
+    min-width: 0;
+  }
+
+  .ax-room-modal-head-left .ax-room-badge,
+  .ax-room-modal-subtitle {
+    display: none !important;
+  }
+
+  .ax-room-modal-title {
+    font-size: 16px;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ax-room-modal-close {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    max-width: 34px !important;
+    max-height: 34px !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    order: 2;
+  }
+
+  .ax-room-mode-switch {
+    order: 3;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 3px;
+    gap: 3px;
+  }
+
+  .ax-mode-tab {
+    justify-content: center;
+    padding: 6px 8px;
+    font-size: 12px;
+    min-height: 32px;
+    white-space: nowrap;
+  }
+
+  .ax-mode-tab svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  /* Modal Body */
+  .ax-room-modal-body {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  /* Prevent top-left pill & top-right toolbar from colliding inside 3D/AR stage */
+  .ax-3d-info-pill,
+  .ax-live-ar-pill {
+    display: none !important;
+  }
+
+  .ax-3d-quick-toolbar,
+  .despace-stage-mode-bar,
+  #axLiveGestureBar {
+    top: 10px !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: max-content;
+    max-width: calc(100% - 16px);
+    justify-content: center;
+    padding: 3px !important;
+    gap: 4px !important;
+  }
+
+  .ax-toolbar-btn,
+  .despace-stage-mode-btn {
+    padding: 5px 10px !important;
+    font-size: 11px !important;
+    min-height: 28px !important;
+    white-space: nowrap;
+  }
+
+  .ax-stage-hint {
+    bottom: 8px;
+    padding: 6px 12px;
+    font-size: 10.5px;
+    line-height: 1.35;
+    white-space: normal !important;
+    text-align: center;
+    width: calc(100% - 20px);
+    max-width: 340px;
+    border-radius: 12px;
+  }
+
+  .ax-3d-interaction-hints {
+    display: none !important;
+  }
+
+  /* Maximize 3D & Camera Viewport on Mobile */
+  .ax-3d-viewport-wrapper {
+    height: clamp(340px, 60vh, 520px);
+    height: clamp(340px, 60dvh, 520px);
+    max-height: none;
+    min-height: 320px;
+    border-radius: 14px;
+  }
+
+  .ax-live-cam-viewport {
+    height: clamp(300px, 48vh, 440px);
+    height: clamp(300px, 48dvh, 440px);
+    max-height: none;
+    min-height: 280px;
+    border-radius: 14px;
+  }
+
+  /* Sub-mode bar: compact 2-column row instead of 2 tall stacked rows */
+  .ax-ar-submode-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .ax-ar-submode-btn {
+    justify-content: center;
+    padding: 6px 6px !important;
+    gap: 5px !important;
+    font-size: 11px !important;
+    min-height: 34px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ax-ar-submode-btn svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  .ax-ar-submode-btn span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Live Camera Controls Dock: compact 2-row layout */
+  .ax-live-cam-controls {
+    padding: 8px 10px !important;
+    gap: 8px !important;
+    border-radius: 12px !important;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ax-live-cam-controls .ax-control-group {
+    width: 100%;
+    justify-content: space-between;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .ax-live-cam-controls .ax-control-group::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ax-live-cam-controls .ax-control-label {
+    font-size: 10.5px;
+    white-space: nowrap;
+  }
+
+  .ax-live-cam-controls .ax-scale-controls {
+    flex: 1;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .ax-live-cam-controls .ax-scale-controls input[type="range"] {
+    flex: 1;
+    min-width: 70px;
+    max-width: 140px;
+  }
+
+  .ax-scale-btn,
+  .ax-scale-reset-btn {
+    width: 26px !important;
+    height: 26px !important;
+    min-width: 26px !important;
+    min-height: 26px !important;
+    font-size: 14px;
+  }
+
+  .ax-pill-btn {
+    padding: 5px 10px !important;
+    font-size: 11px !important;
+    min-height: 28px !important;
+    white-space: nowrap;
+  }
+
+  /* Device AR Cards on Mobile */
+  .ax-ar-device-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .ax-device-icon-badge {
+    padding: 4px 10px;
+    font-size: 10.5px;
+    margin-bottom: 8px;
+  }
+
+  .ax-ar-title,
+  .ax-qr-title {
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+
+  .ax-ar-subtitle,
+  .ax-qr-desc {
+    font-size: 12.5px;
+    line-height: 1.45;
+    margin-bottom: 12px;
+  }
+
+  .ax-ar-cta-area {
+    margin-bottom: 14px;
+  }
+
+  .ax-ar-cta-dual {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .ax-btn-ar-launch,
+  .ax-btn-ar-secondary {
+    width: 100%;
+    padding: 11px 16px;
+    font-size: 13px;
+    min-height: 42px;
+    box-sizing: border-box;
+  }
+
+  .ax-ar-step {
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+
+  .ax-step-num {
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+
+  .ax-ar-step h4 {
+    font-size: 12px;
+    margin-bottom: 3px;
+  }
+
+  .ax-ar-step p {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  /* Compact Modal Footer on Mobile */
+  .ax-room-modal-footer {
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+    gap: 8px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .ax-modal-product-summary {
+    flex: 1 1 100%;
+    min-width: 0;
+    gap: 10px;
+  }
+
+  .ax-modal-product-thumb {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  .ax-modal-product-meta {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .ax-modal-prod-title {
+    font-size: 13.5px;
+    margin: 0 0 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ax-modal-sale-price {
+    font-size: 13.5px;
+  }
+
+  .ax-modal-reg-price {
+    font-size: 11.5px;
+  }
+
+  .ax-modal-prod-dims {
+    font-size: 10.5px;
+    padding: 1px 6px;
+  }
+
+  .ax-modal-actions {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .ax-modal-qty-stepper {
+    height: 38px;
+  }
+
+  .ax-modal-qty-btn {
+    width: 32px;
+    min-width: 32px;
+    font-size: 15px;
+  }
+
+  .ax-modal-qty-stepper input[type="number"] {
+    width: 34px;
+    font-size: 13px;
+  }
+
+  .ax-btn-modal-cart {
+    flex: 1;
+    height: 38px;
+    padding: 0 16px;
+    font-size: 13px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .ax-live-ar-object-wrap {
+    width: 220px;
+    height: 220px;
+    margin-left: -110px;
+    margin-top: -110px;
+  }
+  .ax-toolbar-btn span {
+    font-size: 10.5px;
   }
 }

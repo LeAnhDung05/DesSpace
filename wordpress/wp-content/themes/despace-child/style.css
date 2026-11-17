@@ -9617,13 +9617,125 @@ body.single-post,
 }
 
 /* ============================================================
-   19. Mobile UI Perfection & Responsive Polish (390px - 768px)
+   19. Mobile UI Perfection & Responsive Polish (320px - 1023px)
    ============================================================ */
+@media (max-width: 1023.98px) {
+    /* Elevate Sticky Add-to-Cart Bar cleanly ABOVE the 54px Mobile Bottom Shortcuts Nav */
+    .fv-mobile-shortcuts {
+        height: calc(54px + env(safe-area-inset-bottom, 0px)) !important;
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+        z-index: 800 !important;
+    }
+
+    .f-sticky-bar,
+    #furniva-sticky-bar {
+        bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
+        width: calc(100vw - 16px) !important;
+        max-width: 520px !important;
+        height: 50px !important;
+        max-height: 50px !important;
+        padding: 6px 8px 6px 10px !important;
+        z-index: 820 !important;
+    }
+
+    .f-sticky-bar-inner {
+        gap: 8px !important;
+    }
+
+    .f-sticky-bar-left {
+        gap: 8px !important;
+    }
+
+    .f-sticky-img-box,
+    .f-sticky-img {
+        width: 34px !important;
+        height: 34px !important;
+        min-width: 34px !important;
+        min-height: 34px !important;
+        max-width: 34px !important;
+        max-height: 34px !important;
+    }
+
+    .f-sticky-meta strong {
+        font-size: 12px !important;
+        max-width: clamp(110px, 38vw, 220px) !important;
+    }
+
+    .f-sticky-price {
+        font-size: 11.5px !important;
+    }
+
+    .f-sticky-bar-right .f-btn {
+        padding: 0 14px !important;
+        height: 36px !important;
+        min-height: 36px !important;
+        font-size: 12px !important;
+        white-space: nowrap !important;
+    }
+
+    /* Hide all fixed bottom bars & floating docks when 3D/AR Modal is open */
+    body:has(#ax-room-visualizer-modal[aria-hidden="false"]) .fv-mobile-shortcuts,
+    body:has(#ax-room-visualizer-modal[aria-hidden="false"]) #furniva-sticky-bar,
+    body:has(#ax-room-visualizer-modal[aria-hidden="false"]) .ax-chat-dock,
+    body:has(#ax-room-visualizer-modal[aria-hidden="false"]) .f-back-to-top {
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+}
+
 @media (max-width: 768px) {
-    /* Prevent any horizontal page wiggling */
-    html, body {
-        overflow-x: hidden !important;
+    /* Prevent horizontal overflow without breaking position: sticky */
+    body {
+        overflow-x: clip;
         position: relative;
+    }
+
+    /* Compact Sticky Header on Mobile to preserve viewport height */
+    .fv-announcement {
+        min-height: 28px !important;
+        font-size: 11px !important;
+        transition: max-height 0.25s ease, opacity 0.2s ease !important;
+        max-height: 32px;
+    }
+
+    .fv-header.is-scrolled .fv-announcement {
+        max-height: 0 !important;
+        opacity: 0 !important;
+        overflow: hidden !important;
+        padding: 0 !important;
+        border: 0 !important;
+    }
+
+    body.furniva-site .fv-header__bar {
+        min-height: 52px !important;
+    }
+
+    .fv-header__logo img.fv-brand-logo-img {
+        max-height: 36px !important;
+    }
+
+    .fv-header__subnav-inner {
+        min-height: 34px !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    .fv-subnav-link {
+        font-size: 11.5px !important;
+        padding: 4px 2px !important;
+    }
+
+    /* Compact Page Headers & Banners on Mobile */
+    .f-page-head {
+        padding: 22px 0 !important;
+        margin-bottom: 20px !important;
+    }
+
+    .f-page-title {
+        font-size: clamp(1.45rem, 6vw, 1.9rem) !important;
+        line-height: 1.2 !important;
+        margin-bottom: 6px !important;
     }
 
     /* Mobile: Always visible immediately without blank flashes */
@@ -9634,11 +9746,126 @@ body.single-post,
         transition: none !important;
     }
 
+    /* Shop Archive & Product Grid Mobile Polish */
+    .f-wrap {
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+    }
+
+    .f-shop-hero-left {
+        padding-top: 16px !important;
+        padding-bottom: 12px !important;
+    }
+
+    .f-shop-title {
+        font-size: clamp(1.35rem, 5.6vw, 1.75rem) !important;
+        line-height: 1.22 !important;
+    }
+
+    .f-shop-layout {
+        padding: 16px 0 48px !important;
+    }
+
+    .f-shop-head {
+        margin-bottom: 14px !important;
+        gap: 10px !important;
+    }
+
+    .f-shop-head-left {
+        width: 100%;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .f-filter-toggle {
+        padding: 7px 14px !important;
+        min-height: 36px !important;
+        font-size: 12.5px !important;
+    }
+
+    .f-result-count {
+        font-size: 12.5px !important;
+    }
+
+    .f-shop-head-right {
+        width: 100%;
+        justify-content: stretch !important;
+    }
+
+    .f-shop-head-right .woocommerce-ordering {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+
+    .f-shop-head-right .woocommerce-ordering select {
+        width: 100% !important;
+        min-height: 38px !important;
+        height: 38px !important;
+        padding: 0 32px 0 12px !important;
+        font-size: 12.5px !important;
+        border-radius: 8px !important;
+    }
+
+    ul.f-products,
+    ul.products,
+    .woocommerce ul.products {
+        padding: 0 !important;
+        margin: 0 !important;
+        list-style: none !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 14px 10px !important;
+    }
+
+    .f-card {
+        border-radius: 10px !important;
+    }
+
+    .f-card-badges {
+        top: 8px !important;
+        left: 8px !important;
+        max-width: calc(100% - 66px);
+    }
+
+    .f-badge-custom,
+    .f-badge-sale,
+    .f-badge-new {
+        font-size: 9px !important;
+        padding: 3px 7px !important;
+        letter-spacing: 0.03em !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .f-card-actions {
+        top: 8px !important;
+        right: 8px !important;
+        gap: 5px !important;
+    }
+
+    .f-card-3d-btn {
+        height: 24px !important;
+        min-height: 24px !important;
+        padding: 0 7px !important;
+        font-size: 10px !important;
+    }
+
+    .f-card-wishlist-btn,
+    .f-card-actions .yith-wcwl-add-to-wishlist-button {
+        width: 28px !important;
+        height: 28px !important;
+        min-width: 28px !important;
+        min-height: 28px !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        color: #232220 !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+    }
+
     /* Product Cards in Grid: Strictly align titles, ratings, prices, and buttons */
     .f-card-body {
         display: flex !important;
         flex-direction: column !important;
-        padding: 10px 4px 6px !important;
+        padding: 8px 8px 8px !important;
     }
 
     .woocommerce ul.products li.product .woocommerce-loop-product__title,
@@ -9653,8 +9880,8 @@ body.single-post,
         max-height: 2.7em !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
-        font-size: 14px !important;
-        margin: 0 0 5px 0 !important;
+        font-size: 13.5px !important;
+        margin: 0 0 4px 0 !important;
     }
 
     .f-card-title a,
@@ -9675,24 +9902,65 @@ body.single-post,
     }
 
     .f-card-price {
-        font-size: 13.5px !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: baseline !important;
+        gap: 2px 6px !important;
+        font-size: 12.5px !important;
         margin-bottom: 8px !important;
     }
 
-    .f-card-add {
-        min-height: 38px !important;
+    .f-card-price del {
         font-size: 11px !important;
-        border-radius: 4px !important;
     }
 
-    /* Floating Dock: Elevate above Single-Product Sticky Add-to-Cart Bar */
+    .f-card-add {
+        min-height: 36px !important;
+        font-size: 11.5px !important;
+        border-radius: 6px !important;
+    }
+
+    /* Declutter Floating Buttons on Mobile: hide extra back-to-top, AR FAB & social circles */
+    #ast-scroll-top,
+    .ast-scroll-to-top-right,
+    .f-back-to-top,
+    .ar-fab,
+    .ax-chat-links {
+        display: none !important;
+    }
+
+    /* Compact non-intrusive AI Assistant button above bottom bar */
+    .ax-chat-dock {
+        right: 12px !important;
+        bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+        transition: opacity 0.2s ease, transform 0.2s ease, bottom 0.25s ease !important;
+    }
+
+    .ax-chat-toggle {
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+    }
+
+    .ax-chat-mascot-img {
+        width: 38px !important;
+        height: 38px !important;
+    }
+
     body.single-product .ax-chat-dock,
     body:has(#furniva-sticky-bar.is-visible) .ax-chat-dock {
-        bottom: calc(142px + env(safe-area-inset-bottom, 0px)) !important;
-        transition: bottom 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        bottom: calc(118px + env(safe-area-inset-bottom, 0px)) !important;
     }
 
-    /* Hide floating dock when mobile menu, cart drawer, or modal is open */
+    .ax-chat-panel {
+        right: 0 !important;
+        width: min(350px, calc(100vw - 24px)) !important;
+        max-height: 62vh !important;
+        max-height: 62dvh !important;
+    }
+
+    /* Hide floating dock when mobile menu, cart drawer, or search is open */
     body.is-menu-open .ax-chat-dock,
     body.drawer-open .ax-chat-dock,
     body.search-open .ax-chat-dock,
@@ -9700,22 +9968,6 @@ body.single-post,
         opacity: 0 !important;
         pointer-events: none !important;
         transform: translateY(24px) scale(0.9) !important;
-    }
-
-    .ax-chat-dock {
-        transition: opacity 0.2s ease, transform 0.2s ease, bottom 0.25s ease !important;
-    }
-
-    /* Hide duplicate Astra scroll-to-top on mobile */
-    #ast-scroll-top,
-    .ast-scroll-to-top-right {
-        display: none !important;
-    }
-
-    /* Mobile Shortcuts Nav Polish */
-    .fv-mobile-shortcuts {
-        height: calc(56px + env(safe-area-inset-bottom, 0px)) !important;
-        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
     }
 
     /* Shop Guide Ornament Overflow fix */

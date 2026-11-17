@@ -601,26 +601,41 @@
 
 @media (max-width: 768px) {
   .fv-bento-section {
-    margin-top: 40px;
-    margin-bottom: 50px;
+    margin-top: 28px;
+    margin-bottom: 36px;
   }
 
   .fv-bento-header {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    padding: 24px 20px;
-    gap: 24px;
+    padding: 18px 16px;
+    gap: 16px;
+    margin-bottom: 14px;
+  }
+
+  .fv-bento-eyebrow-wrap {
+    margin-bottom: 6px;
+  }
+
+  .fv-bento-eyebrow {
+    font-size: 10.5px;
   }
 
   .fv-bento-title {
-    font-size: 30px;
+    font-size: clamp(1.4rem, 5.8vw, 1.75rem);
+    margin-bottom: 8px;
+  }
+
+  .fv-bento-desc {
+    font-size: 13px;
+    line-height: 1.5;
   }
 
   .fv-bento-commitments {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    gap: 12px 10px;
   }
 
   .fv-bento-commit-divider {
@@ -629,15 +644,31 @@
 
   .fv-bento-commit-item {
     min-width: unset;
+    gap: 5px;
+  }
+
+  .fv-bento-commit-text {
+    font-size: 11.5px;
   }
 
   .fv-bento-header__right {
-    width: 100%;
-    justify-content: center;
+    display: none;
+  }
+
+  .fv-bento-grid,
+  .fv-bento-row,
+  .fv-bento-col-stack {
+    gap: 12px;
+  }
+
+  .fv-bento-row--upper,
+  .fv-bento-row--lower {
+    min-height: 0;
   }
 
   .fv-bento-col-stack {
     grid-template-columns: 1fr;
+    height: auto;
   }
 
   .fv-bento-row--lower {
@@ -645,21 +676,52 @@
   }
 
   .fv-bento-card--living {
-    height: 420px;
-  }
-
-  .fv-bento-card--living .fv-bento-card__title {
-    font-size: 44px;
+    height: auto;
+    min-height: 340px;
   }
 
   .fv-bento-card--living .fv-bento-card__content {
-    padding: 28px 24px;
+    padding: 22px 18px 68px;
+  }
+
+  .fv-bento-card--living .fv-bento-card__tag {
+    font-size: 10.5px;
+    margin-bottom: 6px;
+  }
+
+  .fv-bento-card--living .fv-bento-card__title {
+    font-size: clamp(1.65rem, 6.8vw, 2.1rem);
+    line-height: 1.12;
+    margin-bottom: 10px;
+  }
+
+  .fv-bento-card--living .fv-bento-card__rule {
+    margin-bottom: 10px;
+  }
+
+  .fv-bento-card--living .fv-bento-card__subcats {
+    font-size: 12.5px;
+    line-height: 1.45;
+    margin-bottom: 16px;
+  }
+
+  .fv-bento-card--living .fv-bento-pill-btn {
+    padding: 9px 18px;
+    font-size: 12.5px;
   }
 
   .fv-bento-card__footer {
-    left: 24px;
-    right: 24px;
-    bottom: 20px;
+    left: 18px;
+    right: 18px;
+    bottom: 14px;
+  }
+
+  .fv-bento-nav-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    font-size: 12px;
   }
 
   .fv-bento-card--dining,
@@ -667,7 +729,8 @@
   .fv-bento-card--workspace,
   .fv-bento-card--lighting,
   .fv-bento-card--decor {
-    height: 220px;
+    height: auto;
+    min-height: 190px;
   }
 
   .fv-bento-card--dining .fv-bento-card__content,
@@ -675,7 +738,30 @@
   .fv-bento-card--workspace .fv-bento-card__content,
   .fv-bento-card--lighting .fv-bento-card__content,
   .fv-bento-card--decor .fv-bento-card__content {
-    max-width: 75%;
-    padding: 20px 22px;
+    max-width: 82%;
+    padding: 18px 18px;
+  }
+
+  .fv-bento-card--dining .fv-bento-card__title,
+  .fv-bento-card--bedroom .fv-bento-card__title,
+  .fv-bento-card__title--split {
+    font-size: clamp(1.35rem, 5.5vw, 1.65rem);
+    line-height: 1.15;
+    margin-bottom: 6px;
+  }
+
+  .fv-bento-card--dining .fv-bento-card__subcats,
+  .fv-bento-card--bedroom .fv-bento-card__subcats,
+  .fv-bento-card--workspace .fv-bento-card__subcats,
+  .fv-bento-card--lighting .fv-bento-card__subcats,
+  .fv-bento-card--decor .fv-bento-card__subcats {
+    font-size: 12px;
+    line-height: 1.4;
+    margin-bottom: 10px;
+  }
+
+  .fv-bento-pill-btn {
+    padding: 7px 14px;
+    font-size: 11.5px;
   }
 }
