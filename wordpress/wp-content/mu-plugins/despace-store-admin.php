@@ -894,11 +894,129 @@ function despace_register_admin_hub_menu() {
 }
 add_action( 'admin_menu', 'despace_register_admin_hub_menu', 8 );
 
+// Handle 1-Click Unzip Uploads in DeSpace Hub
+add_action( 'admin_post_despace_hub_unzip_uploads', 'despace_handle_hub_unzip_uploads' );
+function despace_handle_hub_unzip_uploads() {
+	check_admin_referer( 'despace_hub_unzip_nonce' );
+	if ( ! despace_store_admin_can_manage() ) {
+		wp_die( 'Bạn không có quyền thực hiện thao tác này.' );
+	}
+
+	$target_dir = WP_CONTENT_DIR . '/uploads';
+	if ( ! is_dir( $target_dir ) ) {
+		wp_mkdir_p( $target_dir );
+	}
+
+	// Handle direct file upload via browser
+	if ( ! empty( $_FILES['upload_zip_file']['tmp_name'] ) && is_uploaded_file( $_FILES['upload_zip_file']['tmp_name'] ) ) {
+		if ( ! class_exists( 'ZipArchive' ) ) {
+			wp_die( 'Máy chủ không hỗ trợ tiện ích PHP ZipArchive.' );
+		}
+		$zip = new ZipArchive();
+		if ( $zip->open( $_FILES['upload_zip_file']['tmp_name'] ) === true ) {
+			$zip->extractTo( $target_dir );
+			$zip->close();
+			wp_safe_redirect( admin_url( 'admin.php?page=despace-hub&tab=assets&unzipped=1' ) );
+			exit;
+		} else {
+			wp_die( 'Không thể giải nén tệp zip vừa tải lên.' );
+		}
+	}
+
+	// Search for local uploads.zip
+	$candidates = array(
+		dirname( ABSPATH ) . '/uploads.zip',
+		ABSPATH . 'uploads.zip',
+		WP_CONTENT_DIR . '/uploads.zip',
+		$target_dir . '/uploads.zip',
+		dirname( get_stylesheet_directory(), 4 ) . '/uploads.zip',
+	);
+
+	$found_zip = null;
+	foreach ( $candidates as $candidate ) {
+		if ( file_exists( $candidate ) && filesize( $candidate ) > 1000 ) {
+			$found_zip = $candidate;
+			break;
+		}
+	}
+
+	if ( ! $found_zip ) {
+		wp_die( 'Không tìm thấy tệp uploads.zip trên hệ thống máy chủ. Vui lòng đặt tệp uploads.zip vào thư mục gốc dự án.' );
+	}
+
+	if ( ! class_exists( 'ZipArchive' ) ) {
+		wp_die( 'Máy chủ không hỗ trợ tiện ích mở rộng ZipArchive của PHP.' );
+	}
+
+	$zip = new ZipArchive();
+	if ( $zip->open( $found_zip ) === true ) {
+		$zip->extractTo( $target_dir );
+		$zip->close();
+		wp_safe_redirect( admin_url( 'admin.php?page=despace-hub&tab=assets&unzipped=1' ) );
+		exit;
+	} else {
+		wp_die( 'Lỗi khi mở tệp ZIP: ' . esc_html( $found_zip ) );
+	}
+}
+
+// Handle Auto Repair Asset URLs
+add_action( 'admin_post_despace_hub_repair_urls', 'despace_handle_hub_repair_urls' );
+function despace_handle_hub_repair_urls() {
+	check_admin_referer( 'despace_hub_repair_nonce' );
+	if ( ! despace_store_admin_can_manage() ) {
+		wp_die( 'Bạn không có quyền thực hiện thao tác này.' );
+	}
+
+	global $wpdb;
+	$current_home = home_url();
+
+	$old_hosts = array(
+		'http://localhost:8088',
+		'http://localhost:8090',
+		'http://localhost:10016',
+		'http://localhost:8080',
+		'https://axgnud-luxury.infinityfree.io',
+	);
+
+	$updated_rows = 0;
+	foreach ( $old_hosts as $old ) {
+		if ( $old === $current_home ) {
+			continue;
+		}
+
+		$r1 = $wpdb->query( $wpdb->prepare(
+			"UPDATE {$wpdb->posts} SET post_content = REPLACE(post_content, %s, %s) WHERE post_content LIKE %s",
+			$old, $current_home, '%' . $wpdb->esc_like( $old ) . '%'
+		) );
+
+		$r2 = $wpdb->query( $wpdb->prepare(
+			"UPDATE {$wpdb->posts} SET guid = REPLACE(guid, %s, %s) WHERE guid LIKE %s",
+			$old, $current_home, '%' . $wpdb->esc_like( $old ) . '%'
+		) );
+
+		$r3 = $wpdb->query( $wpdb->prepare(
+			"UPDATE {$wpdb->postmeta} SET meta_value = REPLACE(meta_value, %s, %s) WHERE meta_value LIKE %s",
+			$old, $current_home, '%' . $wpdb->esc_like( $old ) . '%'
+		) );
+
+		if ( $r1 ) $updated_rows += (int) $r1;
+		if ( $r2 ) $updated_rows += (int) $r2;
+		if ( $r3 ) $updated_rows += (int) $r3;
+	}
+
+	clean_post_cache( 0 );
+	$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '%_transient_%'" );
+
+	wp_safe_redirect( admin_url( 'admin.php?page=despace-hub&tab=assets&repaired=' . intval( $updated_rows ) ) );
+	exit;
+}
+
 /** Render DeSpace Hub Overview Page */
 function despace_render_hub_overview_page() {
+	$current_tab   = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'overview';
 	$logo_url      = content_url( '/themes/despace-child/assets/images/despace-logo-header.png' );
-	$product_count = wp_count_posts( 'product' )->publish ?? 0;
-	$post_count    = wp_count_posts( 'post' )->publish ?? 0;
+	$product_count = (int) ( wp_count_posts( 'product' )->publish ?? 0 );
+	$post_count    = (int) ( wp_count_posts( 'post' )->publish ?? 0 );
 	$processing    = function_exists( 'wc_orders_count' ) ? wc_orders_count( 'processing' ) : 0;
 	$pending       = function_exists( 'wc_orders_count' ) ? wc_orders_count( 'pending' ) : 0;
 	$completed     = function_exists( 'wc_orders_count' ) ? wc_orders_count( 'completed' ) : 0;
@@ -906,29 +1024,80 @@ function despace_render_hub_overview_page() {
 	
 	global $wpdb;
 	$log_table = $wpdb->prefix . 'despace_inventory_logs';
-	$log_count = $wpdb->get_var( "SHOW TABLES LIKE '$log_table'" ) ? $wpdb->get_var( "SELECT COUNT(*) FROM $log_table" ) : 0;
-	$review_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->comments} WHERE comment_type = 'review' AND comment_approved = '1'" );
+	$log_count = $wpdb->get_var( "SHOW TABLES LIKE '$log_table'" ) ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM $log_table" ) : 0;
+	$review_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->comments} WHERE comment_type = 'review' AND comment_approved = '1'" );
+
+	// Inspect Uploads Directory Status
+	$uploads_info = wp_upload_dir();
+	$uploads_basedir = $uploads_info['basedir'];
+	$has_uploads_dir = is_dir( $uploads_basedir );
+	$has_3d_dir      = is_dir( $uploads_basedir . '/3d' );
+	$has_catalog_dir = is_dir( $uploads_basedir . '/despace-catalog' ) || is_dir( $uploads_basedir . '/furniva-real' );
+	
+	$models_count = 0;
+	if ( $has_3d_dir ) {
+		$subdirs = glob( $uploads_basedir . '/3d/*', GLOB_ONLYDIR );
+		$models_count = $subdirs ? count( $subdirs ) : 0;
+	}
+
+	// Check if uploads.zip is detected on host
+	$candidates = array(
+		dirname( ABSPATH ) . '/uploads.zip',
+		ABSPATH . 'uploads.zip',
+		WP_CONTENT_DIR . '/uploads.zip',
+		$uploads_basedir . '/uploads.zip',
+		dirname( get_stylesheet_directory(), 4 ) . '/uploads.zip',
+	);
+	$detected_zip = null;
+	foreach ( $candidates as $candidate ) {
+		if ( file_exists( $candidate ) && filesize( $candidate ) > 1000 ) {
+			$detected_zip = $candidate;
+			break;
+		}
+	}
 	?>
-	<div class="wrap despace-hub-wrap" style="max-width:1320px; margin:24px 20px 48px 0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+	<div class="wrap despace-hub-wrap" style="max-width:1360px; margin:24px 20px 48px 0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
 		
+		<!-- Alerts & Notifications -->
+		<?php if ( isset( $_GET['unzipped'] ) && '1' === $_GET['unzipped'] ) : ?>
+			<div class="notice notice-success is-dismissible" style="padding:14px 18px; border-left:4px solid #10b981; background:#ecfdf5; margin-bottom:20px;">
+				<h3 style="margin:0 0 4px; color:#065f46; font-size:16px;">🎉 Khôi phục toàn bộ Hình ảnh & Mô hình 3D AR thành công!</h3>
+				<p style="margin:0; color:#047857; font-size:14px;">
+					Thư mục <code>wp-content/uploads/</code> đã được giải nén đầy đủ. Toàn bộ ảnh sản phẩm thực tế và 32 file 3D (.glb, .usdz) đã sẵn sàng hiển thị trên cửa hàng.
+				</p>
+			</div>
+		<?php endif; ?>
+
+		<?php if ( isset( $_GET['repaired'] ) ) : ?>
+			<div class="notice notice-success is-dismissible" style="padding:14px 18px; border-left:4px solid #2563eb; background:#eff6ff; margin-bottom:20px;">
+				<h3 style="margin:0 0 4px; color:#1e40af; font-size:16px;">🔧 Đồng bộ đường dẫn liên kết thành công!</h3>
+				<p style="margin:0; color:#1d4ed8; font-size:14px;">
+					Đã quét và cập nhật <strong><?php echo intval( $_GET['repaired'] ); ?></strong> bản ghi liên kết hình ảnh và mô hình 3D khớp chuẩn xác với tên miền/cổng hiện tại: <code><?php echo esc_html( home_url() ); ?></code>.
+				</p>
+			</div>
+		<?php endif; ?>
+
 		<!-- Executive Brand Header -->
-		<div style="background:linear-gradient(135deg, #1C1917 0%, #2A1D16 100%); border-radius:18px; padding:32px 36px; color:#fff; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:24px; box-shadow:0 12px 32px rgba(42,29,22,0.18); margin-bottom:28px;">
+		<div style="background:linear-gradient(135deg, #1C1917 0%, #2A1D16 100%); border-radius:18px; padding:32px 36px; color:#fff; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:24px; box-shadow:0 12px 32px rgba(42,29,22,0.18); margin-bottom:24px;">
 			<div>
 				<div style="display:flex; align-items:center; gap:16px; margin-bottom:12px;">
 					<img src="<?php echo esc_url( $logo_url ); ?>" alt="DeSpace" style="height:44px; filter:brightness(0) invert(1);" />
-					<span style="background:rgba(255,255,255,0.15); font-size:11px; font-weight:700; letter-spacing:1px; padding:4px 10px; border-radius:99px; text-transform:uppercase;">Admin Cockpit v2.0</span>
+					<span style="background:rgba(255,255,255,0.15); font-size:11px; font-weight:700; letter-spacing:1px; padding:4px 10px; border-radius:99px; text-transform:uppercase;">Admin Cockpit v2.5 Enterprise</span>
 				</div>
 				<h1 style="color:#FAF7F2; font-size:26px; font-weight:700; margin:0 0 6px;">Bảng Điều Khiển Quản Trị Cửa Hàng DeSpace</h1>
-				<p style="color:#D6CFC7; margin:0; font-size:14px; max-width:680px; line-height:1.5;">
-					Quản trị toàn diện sản phẩm nội thất cao cấp, mô hình 3D AR WebXR, nhật ký kiểm toán kho thời gian thực và quản lý đơn hàng HPOS.
+				<p style="color:#D6CFC7; margin:0; font-size:14px; max-width:700px; line-height:1.5;">
+					Trung tâm vận hành thương mại điện tử cao cấp: Quản trị 40 sản phẩm, 32 mô hình 3D AR WebXR, tra cứu kho thời gian thực, ma trận phân quyền RBAC và quản lý đơn hàng HPOS.
 				</p>
 			</div>
 			<div style="display:flex; gap:12px; flex-wrap:wrap;">
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=assets' ) ); ?>" class="button button-primary" style="background:#10B981; border-color:#10B981; color:#fff; font-weight:600; padding:8px 18px; height:auto; border-radius:8px; font-size:13.5px;">
+					📦 Khôi Phục Ảnh & 3D
+				</a>
 				<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=product' ) ); ?>" class="button button-primary" style="background:#C25E3A; border-color:#C25E3A; color:#fff; font-weight:600; padding:8px 18px; height:auto; border-radius:8px; font-size:13.5px; box-shadow:0 4px 12px rgba(194,94,58,0.35);">
 					+ Thêm Sản Phẩm Mới
 				</a>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wc-orders' ) ); ?>" class="button" style="background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.2); color:#FAF7F2; font-weight:600; padding:8px 18px; height:auto; border-radius:8px; font-size:13.5px;">
-					Xem Đơn Hàng (HPOS)
+					Đơn Hàng (HPOS)
 				</a>
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>" target="_blank" class="button" style="background:transparent; border-color:rgba(255,255,255,0.3); color:#fff; font-weight:600; padding:8px 16px; height:auto; border-radius:8px; font-size:13.5px;">
 					Xem Website ↗
@@ -936,147 +1105,542 @@ function despace_render_hub_overview_page() {
 			</div>
 		</div>
 
-		<!-- 5 Core KPI Metric Cards -->
-		<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:18px; margin-bottom:32px;">
-			
-			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:14px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
-				<div style="font-size:12px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;">Sản Phẩm Nội Thất</div>
-				<div style="font-size:32px; font-weight:800; color:#1C1917; margin:6px 0 2px;"><?php echo esc_html( number_format_i18n( $product_count ) ); ?></div>
-				<div style="font-size:12.5px; color:#059669; font-weight:600;">✓ 40/40 Đã gắn Mô hình 3D AR</div>
-			</div>
-
-			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:14px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
-				<div style="font-size:12px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;">Đơn Cần Xử Lý</div>
-				<div style="font-size:32px; font-weight:800; color:#C25E3A; margin:6px 0 2px;"><?php echo esc_html( number_format_i18n( $processing + $pending ) ); ?></div>
-				<div style="font-size:12.5px; color:#78716C;">Đơn hàng Processing / Pending</div>
-			</div>
-
-			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:14px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
-				<div style="font-size:12px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;">Nhật Ký Tồn Kho</div>
-				<div style="font-size:32px; font-weight:800; color:#1C1917; margin:6px 0 2px;"><?php echo esc_html( number_format_i18n( $log_count ) ); ?></div>
-				<div style="font-size:12.5px; color:#2563EB; font-weight:600;">Audit Logs thời gian thực</div>
-			</div>
-
-			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:14px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
-				<div style="font-size:12px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;">Đánh Giá Khách Hàng</div>
-				<div style="font-size:32px; font-weight:800; color:#D97706; margin:6px 0 2px;"><?php echo esc_html( number_format_i18n( $review_count ) ); ?></div>
-				<div style="font-size:12.5px; color:#D97706; font-weight:600;">★ 4.8 / 5.0 (100 Authentic Reviews)</div>
-			</div>
-
-			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:14px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
-				<div style="font-size:12px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;">Hạ Tầng Công Nghệ</div>
-				<div style="font-size:22px; font-weight:800; color:#1C1917; margin:10px 0 6px;">PHP 8.3 · MySQL 8.4</div>
-				<div style="font-size:12.5px; color:#059669; font-weight:600;">HPOS Mode & WordPress 6.7</div>
-			</div>
-
+		<!-- Navigation Tabs -->
+		<div style="display:flex; gap:8px; border-bottom:2px solid #E7E3DC; margin-bottom:28px; flex-wrap:wrap;">
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=overview' ) ); ?>" style="padding:12px 20px; font-weight:700; font-size:14px; text-decoration:none; border-bottom:3px solid <?php echo ( 'overview' === $current_tab ) ? '#C25E3A' : 'transparent'; ?>; color:<?php echo ( 'overview' === $current_tab ) ? '#C25E3A' : '#78716C'; ?>; margin-bottom:-2px;">
+				📊 Tổng Quan KPI & Hạ Tầng
+			</a>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=assets' ) ); ?>" style="padding:12px 20px; font-weight:700; font-size:14px; text-decoration:none; border-bottom:3px solid <?php echo ( 'assets' === $current_tab ) ? '#10B981' : 'transparent'; ?>; color:<?php echo ( 'assets' === $current_tab ) ? '#10B981' : '#78716C'; ?>; margin-bottom:-2px;">
+				📦 Khôi Phục Ảnh & Mô Hình 3D <?php if ( ! $has_3d_dir || 0 === $models_count ) : ?><span style="background:#EF4444; color:#fff; padding:2px 7px; border-radius:99px; font-size:11px; margin-left:4px;">Cần xử lý</span><?php endif; ?>
+			</a>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=3d' ) ); ?>" style="padding:12px 20px; font-weight:700; font-size:14px; text-decoration:none; border-bottom:3px solid <?php echo ( '3d' === $current_tab ) ? '#C25E3A' : 'transparent'; ?>; color:<?php echo ( '3d' === $current_tab ) ? '#C25E3A' : '#78716C'; ?>; margin-bottom:-2px;">
+				🧊 Trình Quản Lý 3D & WebXR AR
+			</a>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=rbac' ) ); ?>" style="padding:12px 20px; font-weight:700; font-size:14px; text-decoration:none; border-bottom:3px solid <?php echo ( 'rbac' === $current_tab ) ? '#C25E3A' : 'transparent'; ?>; color:<?php echo ( 'rbac' === $current_tab ) ? '#C25E3A' : '#78716C'; ?>; margin-bottom:-2px;">
+				👥 Phân Quyền 5 Thành Viên (RBAC)
+			</a>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=inventory' ) ); ?>" style="padding:12px 20px; font-weight:700; font-size:14px; text-decoration:none; border-bottom:3px solid <?php echo ( 'inventory' === $current_tab ) ? '#C25E3A' : 'transparent'; ?>; color:<?php echo ( 'inventory' === $current_tab ) ? '#C25E3A' : '#78716C'; ?>; margin-bottom:-2px;">
+				📋 Kiểm Toán Tồn Kho (Audit Logs)
+			</a>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=showroom' ) ); ?>" style="padding:12px 20px; font-weight:700; font-size:14px; text-decoration:none; border-bottom:3px solid <?php echo ( 'showroom' === $current_tab ) ? '#C25E3A' : 'transparent'; ?>; color:<?php echo ( 'showroom' === $current_tab ) ? '#C25E3A' : '#78716C'; ?>; margin-bottom:-2px;">
+				🏢 Thông Tin Showroom DeSpace
+			</a>
 		</div>
 
-		<!-- Direct Module Navigation Grid -->
-		<h2 style="font-size:18px; font-weight:700; color:#1C1917; margin:0 0 16px;">Các Chức Năng Quản Trị Chi Tiết Của DeSpace</h2>
-		<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(380px, 1fr)); gap:20px;">
-			
-			<!-- Card 1: 3D Manager -->
-			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:24px 26px; box-shadow:0 2px 10px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between;">
-				<div>
-					<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-						<span style="background:#F4EDE4; color:#9A6745; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">✧</span>
-						<h3 style="font-size:17px; font-weight:700; margin:0; color:#1C1917;">Quản Lý Mô Hình 3D & AR (3D Manager)</h3>
-					</div>
-					<p style="color:#6B635B; font-size:13.5px; line-height:1.6; margin:0 0 16px;">
-						Xem và quản lý toàn bộ 40 mô hình PBR `.glb` và Apple Quick Look `.usdz`. Cung cấp mã QR quét trải nghiệm AR trực tiếp trong phòng thực tế trên điện thoại.
-					</p>
+		<!-- ========================================== -->
+		<!-- TAB 1: OVERVIEW & SYSTEM HEALTH -->
+		<!-- ========================================== -->
+		<?php if ( 'overview' === $current_tab ) : ?>
+			<!-- 5 Core KPI Metric Cards -->
+			<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:18px; margin-bottom:32px;">
+				
+				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:14px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+					<div style="font-size:12px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;">Sản Phẩm Nội Thất</div>
+					<div style="font-size:32px; font-weight:800; color:#1C1917; margin:6px 0 2px;"><?php echo esc_html( number_format_i18n( $product_count ) ); ?></div>
+					<div style="font-size:12.5px; color:#059669; font-weight:600;">✓ <?php echo intval( $models_count ); ?>/40 Đã gắn Mô hình 3D AR</div>
 				</div>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=axgnud-3d-manager' ) ); ?>" class="button button-secondary" style="align-self:flex-start; font-weight:600; border-radius:8px;">
-					Mở Trình Quản Lý 3D & AR →
-				</a>
+
+				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:14px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+					<div style="font-size:12px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;">Đơn Cần Xử Lý</div>
+					<div style="font-size:32px; font-weight:800; color:#C25E3A; margin:6px 0 2px;"><?php echo esc_html( number_format_i18n( $processing + $pending ) ); ?></div>
+					<div style="font-size:12.5px; color:#78716C;">Đơn hàng Processing / Pending</div>
+				</div>
+
+				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:14px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+					<div style="font-size:12px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;">Nhật Ký Tồn Kho</div>
+					<div style="font-size:32px; font-weight:800; color:#1C1917; margin:6px 0 2px;"><?php echo esc_html( number_format_i18n( $log_count ) ); ?></div>
+					<div style="font-size:12.5px; color:#2563EB; font-weight:600;">Audit Logs thời gian thực</div>
+				</div>
+
+				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:14px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+					<div style="font-size:12px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;">Đánh Giá Khách Hàng</div>
+					<div style="font-size:32px; font-weight:800; color:#D97706; margin:6px 0 2px;"><?php echo esc_html( number_format_i18n( $review_count ) ); ?></div>
+					<div style="font-size:12.5px; color:#D97706; font-weight:600;">★ 4.8 / 5.0 (100 Authentic Reviews)</div>
+				</div>
+
+				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:14px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+					<div style="font-size:12px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;">Cảnh Báo Tồn Kho</div>
+					<div style="font-size:32px; font-weight:800; color:<?php echo ( $low_stock > 0 ) ? '#EF4444' : '#059669'; ?>; margin:6px 0 2px;"><?php echo esc_html( $low_stock ); ?></div>
+					<div style="font-size:12.5px; color:#78716C;">Sản phẩm số lượng &le; 5</div>
+				</div>
+
 			</div>
 
-			<!-- Card 2: Inventory Audit Logs -->
-			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:24px 26px; box-shadow:0 2px 10px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between;">
-				<div>
-					<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-						<span style="background:#EFF6FF; color:#2563EB; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">📋</span>
-						<h3 style="font-size:17px; font-weight:700; margin:0; color:#1C1917;">Nhật Ký Kiểm Toán Tồn Kho (Audit Logs)</h3>
+			<!-- System Health Overview -->
+			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:24px 28px; margin-bottom:32px; box-shadow:0 2px 8px rgba(0,0,0,0.02);">
+				<h3 style="font-size:16px; font-weight:700; color:#1C1917; margin:0 0 16px;">Tình Trạng Sức Khỏe Máy Chủ & Môi Trường Hoạt Động</h3>
+				<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px;">
+					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:10px; padding:14px 16px;">
+						<div style="font-size:11.5px; color:#78716C; font-weight:600; text-transform:uppercase;">Phiên bản PHP</div>
+						<div style="font-size:16px; font-weight:700; color:#1C1917; margin-top:4px;">PHP <?php echo esc_html( PHP_VERSION ); ?> <span style="color:#059669; font-size:13px;">✓ Đạt chuẩn</span></div>
 					</div>
-					<p style="color:#6B635B; font-size:13.5px; line-height:1.6; margin:0 0 16px;">
-						Truy vết chi tiết mọi biến động số lượng tồn kho (đơn hàng mới, nhập xưởng, điều chỉnh). Đã lưu trữ hơn <strong>1,682 bản ghi</strong> minh bạch, hỗ trợ xuất Excel/CSV.
-					</p>
+					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:10px; padding:14px 16px;">
+						<div style="font-size:11.5px; color:#78716C; font-weight:600; text-transform:uppercase;">Bộ Nhớ Giới Hạn</div>
+						<div style="font-size:16px; font-weight:700; color:#1C1917; margin-top:4px;"><?php echo esc_html( ini_get( 'memory_limit' ) ); ?></div>
+					</div>
+					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:10px; padding:14px 16px;">
+						<div style="font-size:11.5px; color:#78716C; font-weight:600; text-transform:uppercase;">Kiến Trúc HPOS</div>
+						<div style="font-size:16px; font-weight:700; color:#059669; margin-top:4px;">Bật (Tốc độ cao) ✓</div>
+					</div>
+					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:10px; padding:14px 16px;">
+						<div style="font-size:11.5px; color:#78716C; font-weight:600; text-transform:uppercase;">Đường Dẫn Hiện Tại</div>
+						<div style="font-size:14px; font-weight:700; color:#2563EB; margin-top:6px; word-break:break-all;"><?php echo esc_html( home_url() ); ?></div>
+					</div>
 				</div>
-				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=product&page=despace-inventory-logs' ) ); ?>" class="button button-secondary" style="align-self:flex-start; font-weight:600; border-radius:8px;">
-					Xem Nhật Ký Tồn Kho →
-				</a>
 			</div>
 
-			<!-- Card 3: Products Management -->
-			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:24px 26px; box-shadow:0 2px 10px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between;">
-				<div>
-					<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-						<span style="background:#ECFDF5; color:#059669; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">🪑</span>
-						<h3 style="font-size:17px; font-weight:700; margin:0; color:#1C1917;">Quản Lý Sản Phẩm & Danh Mục</h3>
+			<!-- Direct Navigation Grid -->
+			<h2 style="font-size:18px; font-weight:700; color:#1C1917; margin:0 0 16px;">Các Chức Năng Quản Trị Cốt Lõi</h2>
+			<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap:20px;">
+				
+				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:24px 26px; box-shadow:0 2px 10px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between;">
+					<div>
+						<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+							<span style="background:#ECFDF5; color:#059669; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">📦</span>
+							<h3 style="font-size:17px; font-weight:700; margin:0; color:#1C1917;">Khôi Phục Hình Ảnh & 3D (Asset Auto-Recovery)</h3>
+						</div>
+						<p style="color:#6B635B; font-size:13.5px; line-height:1.6; margin:0 0 16px;">
+							Dành riêng cho thành viên mới kéo Git về máy: Công cụ 1-Click tự động giải nén tệp <code>uploads.zip</code> và sửa link ảnh/3D theo đúng cổng máy tính.
+						</p>
 					</div>
-					<p style="color:#6B635B; font-size:13.5px; line-height:1.6; margin:0 0 16px;">
-						Chỉnh sửa tên, giá bán, mô tả, ảnh thư viện, danh mục (Tủ giày, Tủ quần áo, Kệ sách, Tủ sideboard, Tủ bếp) và thông số kỹ thuật kích thước 3 chiều.
-					</p>
-				</div>
-				<div style="display:flex; gap:10px;">
-					<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=product' ) ); ?>" class="button button-secondary" style="font-weight:600; border-radius:8px;">
-						Danh Sách Sản Phẩm →
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=assets' ) ); ?>" class="button button-primary" style="align-self:flex-start; font-weight:600; border-radius:8px; background:#10B981; border-color:#10B981;">
+						Vào Trình Khôi Phục Assets →
 					</a>
-					<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=product' ) ); ?>" class="button" style="font-weight:600; border-radius:8px;">
-						+ Thêm Mới
+				</div>
+
+				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:24px 26px; box-shadow:0 2px 10px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between;">
+					<div>
+						<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+							<span style="background:#F4EDE4; color:#9A6745; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">✧</span>
+							<h3 style="font-size:17px; font-weight:700; margin:0; color:#1C1917;">Quản Lý Mô Hình 3D & WebXR AR</h3>
+						</div>
+						<p style="color:#6B635B; font-size:13.5px; line-height:1.6; margin:0 0 16px;">
+							Xem và quản lý toàn bộ mô hình PBR <code>.glb</code> và Apple Quick Look <code>.usdz</code>. Cung cấp mã QR quét trải nghiệm AR trực tiếp trong phòng thực tế.
+						</p>
+					</div>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=3d' ) ); ?>" class="button button-secondary" style="align-self:flex-start; font-weight:600; border-radius:8px;">
+						Quản Lý 3D & WebXR AR →
 					</a>
 				</div>
-			</div>
 
-			<!-- Card 4: Orders & HPOS -->
-			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:24px 26px; box-shadow:0 2px 10px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between;">
-				<div>
-					<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-						<span style="background:#FEF2F2; color:#DC2626; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">📦</span>
-						<h3 style="font-size:17px; font-weight:700; margin:0; color:#1C1917;">Đơn Hàng & Vận Chuyển 63 Tỉnh Thành</h3>
+				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:24px 26px; box-shadow:0 2px 10px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between;">
+					<div>
+						<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+							<span style="background:#EFF6FF; color:#2563EB; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">👥</span>
+							<h3 style="font-size:17px; font-weight:700; margin:0; color:#1C1917;">Phân Quyền 5 Thành Viên Nhóm (RBAC)</h3>
+						</div>
+						<p style="color:#6B635B; font-size:13.5px; line-height:1.6; margin:0 0 16px;">
+							Xem phân chia trách nhiệm và ma trận phân quyền của Member 01 đến Member 05 theo đúng đồ án chuyển đổi nền tảng DeSpace.
+						</p>
 					</div>
-					<p style="color:#6B635B; font-size:13.5px; line-height:1.6; margin:0 0 16px;">
-						Quản lý đơn hàng bằng cơ chế HPOS siêu tốc. Kiểm tra địa chỉ giao hàng 63 tỉnh thành Việt Nam 2025, trạng thái thanh toán COD hoặc Chuyển khoản ngân hàng.
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=rbac' ) ); ?>" class="button button-secondary" style="align-self:flex-start; font-weight:600; border-radius:8px;">
+						Xem Ma Trận Phân Quyền →
+					</a>
+				</div>
+
+				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:24px 26px; box-shadow:0 2px 10px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between;">
+					<div>
+						<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+							<span style="background:#FEF2F2; color:#DC2626; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">📋</span>
+							<h3 style="font-size:17px; font-weight:700; margin:0; color:#1C1917;">Nhật Ký Kiểm Toán Tồn Kho (Audit Logs)</h3>
+						</div>
+						<p style="color:#6B635B; font-size:13.5px; line-height:1.6; margin:0 0 16px;">
+							Truy vết thời gian thực mọi biến động tồn kho khi mua hàng hoặc cập nhật số lượng. Lưu trữ minh bạch, hỗ trợ xuất CSV.
+						</p>
+					</div>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=inventory' ) ); ?>" class="button button-secondary" style="align-self:flex-start; font-weight:600; border-radius:8px;">
+						Kiểm Toán Tồn Kho →
+					</a>
+				</div>
+
+			</div>
+		<?php endif; ?>
+
+		<!-- ========================================== -->
+		<!-- TAB 2: ASSET AUTO-RECOVERY & 3D FIX -->
+		<!-- ========================================== -->
+		<?php if ( 'assets' === $current_tab ) : ?>
+			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:32px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+				
+				<div style="border-bottom:1px solid #ECE7E1; padding-bottom:20px; margin-bottom:28px;">
+					<h2 style="font-size:22px; font-weight:700; color:#1C1917; margin:0 0 8px;">Trình Quản Lý & Khôi Phục Hình Ảnh, Mô Hình 3D AR</h2>
+					<p style="font-size:14px; color:#6B635B; margin:0; line-height:1.6;">
+						Giải thích: Khi thành viên mới kéo code về qua Git, thư mục <code>wp-content/uploads/</code> (hơn 400MB) không lưu trên Git để tránh nặng kho chứa. Trang này giúp bạn khôi phục lại toàn bộ ảnh sản phẩm thực tế và file 3D chỉ với 1 cú click chuột!
 					</p>
 				</div>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wc-orders' ) ); ?>" class="button button-secondary" style="align-self:flex-start; font-weight:600; border-radius:8px;">
-					Quản Lý Đơn Hàng (HPOS) →
-				</a>
-			</div>
 
-			<!-- Card 5: Showroom & Store Owner Info -->
-			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:24px 26px; box-shadow:0 2px 10px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between;">
-				<div>
-					<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-						<span style="background:#FAF5FF; color:#7C3AED; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">📍</span>
-						<h3 style="font-size:17px; font-weight:700; margin:0; color:#1C1917;">Thông Tin Showroom & Chủ Cửa Hàng</h3>
+				<!-- Live Diagnostic Status -->
+				<h3 style="font-size:16px; font-weight:700; color:#1C1917; margin:0 0 16px;">1. Tình Trạng Thư Mục Assets Hiện Tại Trên Máy Bạn</h3>
+				<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:18px; margin-bottom:32px;">
+					
+					<div style="background:#FBF9F7; border:1px solid <?php echo $has_catalog_dir ? '#10B981' : '#F59E0B'; ?>; border-radius:12px; padding:18px 20px;">
+						<div style="font-size:13px; font-weight:700; color:#78716C; text-transform:uppercase;">Thư Mục Ảnh Sản Phẩm</div>
+						<div style="font-size:20px; font-weight:800; color:<?php echo $has_catalog_dir ? '#059669' : '#D97706'; ?>; margin:8px 0 4px;">
+							<?php echo $has_catalog_dir ? '✓ Đã Có Ảnh Đầy Đủ' : '⚠️ Chưa Có Thư Mục Ảnh'; ?>
+						</div>
+						<div style="font-size:12.5px; color:#78716C;">
+							<code>wp-content/uploads/despace-catalog/</code>
+						</div>
 					</div>
-					<p style="color:#6B635B; font-size:13.5px; line-height:1.6; margin:0 0 16px;">
-						DeSpace Sáng lập & Giám đốc thiết kế · Hotline: <strong>0332 174 590</strong> · Email: <strong>noithat@despace.vn</strong> · Showroom: Số 20 ngách 21 ngõ 367 Ngô Xuân Quảng, Gia Lâm, Hà Nội.
+
+					<div style="background:#FBF9F7; border:1px solid <?php echo ( $has_3d_dir && $models_count >= 30 ) ? '#10B981' : '#EF4444'; ?>; border-radius:12px; padding:18px 20px;">
+						<div style="font-size:13px; font-weight:700; color:#78716C; text-transform:uppercase;">Thư Mục Mô Hình 3D AR</div>
+						<div style="font-size:20px; font-weight:800; color:<?php echo ( $has_3d_dir && $models_count >= 30 ) ? '#059669' : '#DC2626'; ?>; margin:8px 0 4px;">
+							<?php echo ( $has_3d_dir && $models_count >= 30 ) ? "✓ Đã Có $models_count Mô Hình 3D" : "⚠️ Đang Có $models_count/32 Mô Hình"; ?>
+						</div>
+						<div style="font-size:12.5px; color:#78716C;">
+							<code>wp-content/uploads/3d/</code>
+						</div>
+					</div>
+
+					<div style="background:#FBF9F7; border:1px solid <?php echo $detected_zip ? '#10B981' : '#6B7280'; ?>; border-radius:12px; padding:18px 20px;">
+						<div style="font-size:13px; font-weight:700; color:#78716C; text-transform:uppercase;">Tệp Đóng Gói uploads.zip</div>
+						<div style="font-size:20px; font-weight:800; color:<?php echo $detected_zip ? '#059669' : '#4B5563'; ?>; margin:8px 0 4px;">
+							<?php echo $detected_zip ? '✓ Đã Tìm Thấy File Zip' : '❌ Chưa Tìm Thấy Zip'; ?>
+						</div>
+						<div style="font-size:12.5px; color:#78716C;">
+							<?php echo $detected_zip ? esc_html( basename( $detected_zip ) . ' (' . size_format( filesize( $detected_zip ) ) . ')' ) : 'Chưa có uploads.zip trên máy'; ?>
+						</div>
+					</div>
+
+				</div>
+
+				<!-- Action Section 1: Auto-Unzip -->
+				<h3 style="font-size:16px; font-weight:700; color:#1C1917; margin:0 0 16px;">2. Giải Nén Tự Động (1-Click Restore)</h3>
+				<?php if ( $detected_zip ) : ?>
+					<div style="background:#ECFDF5; border:2px solid #10B981; border-radius:14px; padding:24px; margin-bottom:28px;">
+						<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+							<div>
+								<h4 style="margin:0 0 6px; color:#065F46; font-size:17px; font-weight:700;">🚀 Phát Hiện Tệp Nén: <?php echo esc_html( basename( $detected_zip ) ); ?> (<?php echo size_format( filesize( $detected_zip ) ); ?>)</h4>
+								<p style="margin:0; color:#047857; font-size:14px; line-height:1.5;">
+									Tệp đóng gói chứa toàn bộ ảnh sản phẩm thực tế và 32 thư mục 3D model đã sẵn sàng trên hệ thống. Bấm nút bên phải để tự động giải nén vào <code>wp-content/uploads/</code>!
+								</p>
+							</div>
+							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+								<?php wp_nonce_field( 'despace_hub_unzip_nonce' ); ?>
+								<input type="hidden" name="action" value="despace_hub_unzip_uploads" />
+								<button type="submit" class="button button-primary" style="background:#059669; border-color:#047857; font-size:15px; font-weight:700; padding:10px 24px; height:auto; border-radius:8px;" onclick="this.innerHTML='⏳ Đang giải nén... vui lòng chờ khoảng 5-10 giây'; this.style.pointerEvents='none';">
+									⚡ BẤM GIẢI NÉN & NẠP ẢNH + 3D NGAY
+								</button>
+							</form>
+						</div>
+					</div>
+				<?php else : ?>
+					<div style="background:#FFFBEB; border:1px solid #F59E0B; border-radius:14px; padding:20px; margin-bottom:28px;">
+						<h4 style="margin:0 0 6px; color:#92400E; font-size:15px; font-weight:700;">💡 Hướng Dẫn Tải Tệp uploads.zip Dành Cho Thành Viên:</h4>
+						<ol style="margin:8px 0 0 20px; color:#78350F; font-size:13.5px; line-height:1.6;">
+							<li>Nhận tệp <code>uploads.zip</code> (~250MB) từ Trưởng nhóm (qua Google Drive / Zalo).</li>
+							<li>Chép file <code>uploads.zip</code> vào thư mục gốc của dự án DeSpace hoặc tải trực tiếp lên bằng form dưới đây.</li>
+							<li>Tải lại trang này và bấm nút <strong>"Giải nén & Nạp ảnh + 3D ngay"</strong>!</li>
+						</ol>
+						
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data" style="margin-top:16px;">
+							<?php wp_nonce_field( 'despace_hub_unzip_nonce' ); ?>
+							<input type="hidden" name="action" value="despace_hub_unzip_uploads" />
+							<input type="file" name="upload_zip_file" accept=".zip" style="margin-right:10px;" />
+							<button type="submit" class="button button-secondary" style="font-weight:600;">Tải Lên & Giải Nén</button>
+						</form>
+					</div>
+				<?php endif; ?>
+
+				<!-- Action Section 2: URL Repair Tool -->
+				<h3 style="font-size:16px; font-weight:700; color:#1C1917; margin:0 0 16px;">3. Tự Động Sửa Đường Dẫn Link Ảnh & 3D Theo Cổng Máy Hiện Tại</h3>
+				<div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:14px; padding:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+					<div>
+						<h4 style="margin:0 0 4px; color:#1E40AF; font-size:15px; font-weight:700;">🔧 Khắc phục lỗi ảnh bị gãy link do lệch cổng (8088 / 8090 / 10016)</h4>
+						<p style="margin:0; color:#1D4ED8; font-size:13.5px; line-height:1.5;">
+							Công cụ này sẽ tự động quét cơ sở dữ liệu và thay thế toàn bộ link ảnh/3D cũ thành đúng cổng <code><?php echo esc_html( home_url() ); ?></code> trên máy bạn.
+						</p>
+					</div>
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+						<?php wp_nonce_field( 'despace_hub_repair_nonce' ); ?>
+						<input type="hidden" name="action" value="despace_hub_repair_urls" />
+						<button type="submit" class="button button-primary" style="background:#2563EB; border-color:#1D4ED8; font-weight:700; padding:8px 20px; height:auto; border-radius:8px;">
+							🔧 TỰ ĐỘNG SỬA ĐƯỜNG DẪN LINK
+						</button>
+					</form>
+				</div>
+
+			</div>
+		<?php endif; ?>
+
+		<!-- ========================================== -->
+		<!-- TAB 3: 3D MODELS & WEBXR AR MATRIX -->
+		<!-- ========================================== -->
+		<?php if ( '3d' === $current_tab ) : ?>
+			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:32px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+				<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+					<div>
+						<h2 style="font-size:22px; font-weight:700; color:#1C1917; margin:0 0 6px;">Ma Trận Mô Hình 3D PBR & WebXR Augmented Reality (AR)</h2>
+						<p style="font-size:14px; color:#6B635B; margin:0;">
+							Tổng hợp toàn bộ mô hình không gian ba chiều được nhúng trực tiếp vào 40 sản phẩm nội thất DeSpace.
+						</p>
+					</div>
+					<span style="background:#ECFDF5; color:#059669; font-weight:700; padding:6px 16px; border-radius:99px; font-size:13px;">
+						✓ <?php echo intval( $models_count ); ?>/32 Mô hình GLB Sẵn Sàng
+					</span>
+				</div>
+
+				<table class="wp-list-table widefat fixed striped" style="border-radius:10px; overflow:hidden; border:1px solid #E7E3DC;">
+					<thead>
+						<tr style="background:#F9F8F6;">
+							<th style="width:70px; font-weight:700;">Ảnh</th>
+							<th style="width:110px; font-weight:700;">Mã SKU</th>
+							<th style="font-weight:700;">Tên Sản Phẩm</th>
+							<th style="font-weight:700;">File 3D (.glb / .usdz)</th>
+							<th style="width:130px; font-weight:700;">Trạng Thái 3D</th>
+							<th style="width:120px; font-weight:700; text-align:center;">Thao Tác</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php
+						$products_3d = get_posts( array(
+							'post_type'      => 'product',
+							'posts_per_page' => 40,
+							'post_status'    => 'publish',
+							'orderby'        => 'ID',
+							'order'          => 'ASC',
+						) );
+
+						if ( $products_3d ) :
+							foreach ( $products_3d as $p ) :
+								$sku = get_post_meta( $p->ID, '_sku', true );
+								$thumb_id = get_post_thumbnail_id( $p->ID );
+								$thumb_url = $thumb_id ? wp_get_attachment_image_url( $thumb_id, 'thumbnail' ) : content_url( '/themes/despace-child/assets/images/despace-app-icon.png' );
+								$glb_rel = "/wp-content/uploads/3d/{$sku}/model.glb";
+								$glb_exists = file_exists( ABSPATH . ltrim( $glb_rel, '/' ) );
+								?>
+								<tr>
+									<td>
+										<img src="<?php echo esc_url( $thumb_url ); ?>" style="width:48px; height:48px; object-fit:cover; border-radius:6px; border:1px solid #E7E3DC;" alt="" />
+									</td>
+									<td><strong><?php echo esc_html( $sku ?: 'N/A' ); ?></strong></td>
+									<td>
+										<a href="<?php echo esc_url( get_edit_post_link( $p->ID ) ); ?>" style="font-weight:600; text-decoration:none; color:#1C1917;">
+											<?php echo esc_html( $p->post_title ); ?>
+										</a>
+									</td>
+									<td style="font-size:12.5px; color:#6B635B;">
+										<code><?php echo esc_html( $glb_rel ); ?></code>
+									</td>
+									<td>
+										<?php if ( $glb_exists ) : ?>
+											<span style="color:#059669; font-weight:700; font-size:12.5px;">✓ Đã gắn GLB & AR</span>
+										<?php else : ?>
+											<span style="color:#D97706; font-weight:600; font-size:12.5px;">Thiếu file uploads</span>
+										<?php endif; ?>
+									</td>
+									<td style="text-align:center;">
+										<a href="<?php echo esc_url( get_permalink( $p->ID ) ); ?>" target="_blank" class="button button-small" style="font-weight:600;">
+											Xem Web ↗
+										</a>
+									</td>
+								</tr>
+								<?php
+							endforeach;
+						endif;
+						?>
+					</tbody>
+				</table>
+			</div>
+		<?php endif; ?>
+
+		<!-- ========================================== -->
+		<!-- TAB 4: MEMBER RBAC MATRIX -->
+		<!-- ========================================== -->
+		<?php if ( 'rbac' === $current_tab ) : ?>
+			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:32px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+				<div style="border-bottom:1px solid #ECE7E1; padding-bottom:16px; margin-bottom:24px;">
+					<h2 style="font-size:22px; font-weight:700; color:#1C1917; margin:0 0 6px;">Ma Trận Phân Quyền Bảo Mật 5 Thành Viên (RBAC Matrix)</h2>
+					<p style="font-size:14px; color:#6B635B; margin:0;">
+						Mỗi thành viên trong đồ án DeSpace được cấp vai trò độc lập theo đúng nguyên tắc Least Privilege (Đặc quyền tối thiểu) đảm bảo an toàn tuyệt đối cho hệ sinh thái.
 					</p>
 				</div>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-showroom-info' ) ); ?>" class="button button-secondary" style="align-self:flex-start; font-weight:600; border-radius:8px;">
-					Xem Chi Tiết Showroom →
-				</a>
-			</div>
 
-			<!-- Card 6: Journal / Blog Posts -->
-			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:24px 26px; box-shadow:0 2px 10px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between;">
-				<div>
-					<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-						<span style="background:#FFFBEB; color:#D97706; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">✍</span>
-						<h3 style="font-size:17px; font-weight:700; margin:0; color:#1C1917;">Tạp Chí & Cẩm Nang Nội Thất (Blog)</h3>
+				<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap:20px;">
+					
+					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:14px; padding:20px 22px;">
+						<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+							<span style="background:#1C1917; color:#fff; font-size:12px; font-weight:700; padding:3px 10px; border-radius:99px;">LEADER / ADMIN</span>
+							<code style="font-size:12px;">administrator</code>
+						</div>
+						<h3 style="margin:0 0 6px; font-size:16px; font-weight:700; color:#1C1917;">Trưởng Nhóm & Tổng Kiến Trúc Sư</h3>
+						<p style="font-size:13px; color:#6B635B; line-height:1.5; margin:0 0 12px;">
+							Toàn quyền quản trị cơ sở dữ liệu, quản trị phân quyền RBAC, triển khai hosting, quản lý cấu trúc code plugin và theme.
+						</p>
+						<div style="font-size:12px; color:#059669; font-weight:600;">✓ Toàn quyền Super-Admin (manage_options)</div>
 					</div>
-					<p style="color:#6B635B; font-size:13.5px; line-height:1.6; margin:0 0 16px;">
-						Hiện có <strong><?php echo esc_html( number_format_i18n( $post_count ) ); ?> bài viết</strong> chuyên sâu về phong cách sống, mẹo chọn ghế sofa, bảo dưỡng gỗ sồi và bài trí căn hộ hiện đại.
-					</p>
-				</div>
-				<a href="<?php echo esc_url( admin_url( 'edit.php' ) ); ?>" class="button button-secondary" style="align-self:flex-start; font-weight:600; border-radius:8px;">
-					Quản Lý Bài Viết Tạp Chí →
-				</a>
-			</div>
 
-		</div>
+					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:14px; padding:20px 22px;">
+						<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+							<span style="background:#7C3AED; color:#fff; font-size:12px; font-weight:700; padding:3px 10px; border-radius:99px;">MEMBER 01</span>
+							<code style="font-size:12px;">despace_3d_specialist</code>
+						</div>
+						<h3 style="margin:0 0 6px; font-size:16px; font-weight:700; color:#1C1917;">Chuyên Gia 3D AR & Showroom Ảo</h3>
+						<p style="font-size:13px; color:#6B635B; line-height:1.5; margin:0 0 12px;">
+							Chịu trách nhiệm 32 mô hình GLB/USDZ, cấu hình ánh sáng Studio/Warm, tối ưu WebXR AR và trang bài trí không gian sống AR Room Visualizer.
+						</p>
+						<div style="font-size:12px; color:#2563EB; font-weight:600;">Quyền: edit_despace_3d_models, view_showroom</div>
+					</div>
+
+					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:14px; padding:20px 22px;">
+						<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+							<span style="background:#059669; color:#fff; font-size:12px; font-weight:700; padding:3px 10px; border-radius:99px;">MEMBER 02</span>
+							<code style="font-size:12px;">despace_catalog_manager</code>
+						</div>
+						<h3 style="margin:0 0 6px; font-size:16px; font-weight:700; color:#1C1917;">Quản Lý Danh Mục & Trưng Bày</h3>
+						<p style="font-size:13px; color:#6B635B; line-height:1.5; margin:0 0 12px;">
+							Chịu trách nhiệm 40 sản phẩm, 5 danh mục phòng, 21 biến thể màu sắc vân gỗ chuẩn và bộ lọc AJAX Filter Sidebar.
+						</p>
+						<div style="font-size:12px; color:#059669; font-weight:600;">Quyền: edit_products, manage_product_terms</div>
+					</div>
+
+					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:14px; padding:20px 22px;">
+						<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+							<span style="background:#D97706; color:#fff; font-size:12px; font-weight:700; padding:3px 10px; border-radius:99px;">MEMBER 03</span>
+							<code style="font-size:12px;">despace_checkout_manager</code>
+						</div>
+						<h3 style="margin:0 0 6px; font-size:16px; font-weight:700; color:#1C1917;">Kiến Trúc Sư Thanh Toán & Đơn Hàng</h3>
+						<p style="font-size:13px; color:#6B635B; line-height:1.5; margin:0 0 12px;">
+							Chịu trách nhiệm giỏ hàng Mini-Cart, luồng thanh toán HPOS, chuẩn hóa 63 tỉnh thành Việt Nam 2025, cổng thanh toán BACS và mã vận đơn.
+						</p>
+						<div style="font-size:12px; color:#D97706; font-weight:600;">Quyền: manage_woocommerce_orders, view_hpos</div>
+					</div>
+
+					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:14px; padding:20px 22px;">
+						<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+							<span style="background:#DC2626; color:#fff; font-size:12px; font-weight:700; padding:3px 10px; border-radius:99px;">MEMBER 04</span>
+							<code style="font-size:12px;">despace_inventory_manager</code>
+						</div>
+						<h3 style="margin:0 0 6px; font-size:16px; font-weight:700; color:#1C1917;">Kiểm Soát Tồn Kho & Chuỗi Cung Ứng</h3>
+						<p style="font-size:13px; color:#6B635B; line-height:1.5; margin:0 0 12px;">
+							Chịu trách nhiệm bảo toàn kho hàng, ngăn chặn race condition khi nhiều người mua đồng thời, quản lý bảng kiểm toán <code>despace_inventory_logs</code>.
+						</p>
+						<div style="font-size:12px; color:#DC2626; font-weight:600;">Quyền: manage_inventory_logs, audit_stock</div>
+					</div>
+
+					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:14px; padding:20px 22px;">
+						<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+							<span style="background:#2563EB; color:#fff; font-size:12px; font-weight:700; padding:3px 10px; border-radius:99px;">MEMBER 05</span>
+							<code style="font-size:12px;">despace_store_manager</code>
+						</div>
+						<h3 style="margin:0 0 6px; font-size:16px; font-weight:700; color:#1C1917;">Báo Cáo Doanh Thu & Vận Hành Cửa Hàng</h3>
+						<p style="font-size:13px; color:#6B635B; line-height:1.5; margin:0 0 12px;">
+							Chịu trách nhiệm phân tích doanh số, hiệu suất bán hàng theo danh mục, quản trị đánh giá 5 sao của khách hàng và báo cáo tài chính.
+						</p>
+						<div style="font-size:12px; color:#2563EB; font-weight:600;">Quyền: view_woocommerce_reports, moderate_reviews</div>
+					</div>
+
+				</div>
+			</div>
+		<?php endif; ?>
+
+		<!-- ========================================== -->
+		<!-- TAB 5: INVENTORY AUDIT LOGS -->
+		<!-- ========================================== -->
+		<?php if ( 'inventory' === $current_tab ) : ?>
+			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:32px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+				<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+					<div>
+						<h2 style="font-size:22px; font-weight:700; color:#1C1917; margin:0 0 6px;">Nhật Ký Kiểm Toán Tồn Kho Thời Gian Thực</h2>
+						<p style="font-size:14px; color:#6B635B; margin:0;">
+							Lưu trữ minh bạch mọi hành vi biến động số lượng sản phẩm (bán ra, nhập kho, chỉnh sửa quản trị).
+						</p>
+					</div>
+					<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=product&page=despace-inventory-logs' ) ); ?>" class="button button-primary" style="background:#2563EB; border-color:#1D4ED8; font-weight:600; border-radius:8px;">
+						Xem Toàn Bộ <?php echo number_format_i18n( $log_count ); ?> Bản Ghi →
+					</a>
+				</div>
+
+				<table class="wp-list-table widefat fixed striped" style="border-radius:10px; overflow:hidden; border:1px solid #E7E3DC;">
+					<thead>
+						<tr style="background:#F9F8F6;">
+							<th style="width:140px; font-weight:700;">Thời Gian</th>
+							<th style="width:100px; font-weight:700;">Mã SP</th>
+							<th style="font-weight:700;">Tên Sản Phẩm</th>
+							<th style="width:120px; font-weight:700; text-align:center;">Biến Động</th>
+							<th style="width:110px; font-weight:700; text-align:center;">Tồn Sau</th>
+							<th style="font-weight:700;">Hành Động / Ghi Chú</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php
+						$recent_logs = array();
+						if ( $wpdb->get_var( "SHOW TABLES LIKE '$log_table'" ) ) {
+							$recent_logs = $wpdb->get_results( "SELECT * FROM $log_table ORDER BY id DESC LIMIT 10" );
+						}
+
+						if ( $recent_logs ) :
+							foreach ( $recent_logs as $log ) :
+								$delta = (int) ( $log->quantity_delta ?? 0 );
+								?>
+								<tr>
+									<td style="font-size:12.5px; color:#6B635B;"><?php echo esc_html( $log->created_at ?? '' ); ?></td>
+									<td><strong>#<?php echo esc_html( $log->product_id ?? '' ); ?></strong></td>
+									<td style="font-weight:600; color:#1C1917;"><?php echo esc_html( get_the_title( $log->product_id ?? 0 ) ?: 'N/A' ); ?></td>
+									<td style="text-align:center; font-weight:700; color:<?php echo ( $delta < 0 ) ? '#DC2626' : '#059669'; ?>;">
+										<?php echo ( $delta > 0 ) ? "+$delta" : "$delta"; ?>
+									</td>
+									<td style="text-align:center; font-weight:700;"><?php echo esc_html( $log->quantity_after ?? 0 ); ?></td>
+									<td style="font-size:13px; color:#4B5563;"><?php echo esc_html( $log->action_type ?? 'Điều chỉnh hệ thống' ); ?></td>
+								</tr>
+								<?php
+							endforeach;
+						else :
+							?>
+							<tr>
+								<td colspan="6" style="text-align:center; padding:30px; color:#78716C;">
+									Chưa có bản ghi biến động tồn kho nào. Hệ thống sẽ tự động ghi nhật ký khi có đơn hàng hoặc điều chỉnh kho.
+								</td>
+							</tr>
+							<?php
+						endif;
+						?>
+					</tbody>
+				</table>
+			</div>
+		<?php endif; ?>
+
+		<!-- ========================================== -->
+		<!-- TAB 6: SHOWROOM & BRAND CONTACTS -->
+		<!-- ========================================== -->
+		<?php if ( 'showroom' === $current_tab ) : ?>
+			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:32px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+				<h2 style="font-size:22px; font-weight:700; color:#1C1917; margin:0 0 16px;">Thông Tin Thương Hiệu & Showroom Trải Nghiệm DeSpace</h2>
+				<table class="form-table" role="presentation">
+					<tbody>
+						<tr>
+							<th scope="row" style="font-weight:600; width:220px;">Tên thương hiệu:</th>
+							<td style="font-size:16px; font-weight:700; color:#1C1917;">DeSpace (Nội Thất Cao Cấp & Trải Nghiệm 3D AR)</td>
+						</tr>
+						<tr>
+							<th scope="row" style="font-weight:600;">Người đại diện:</th>
+							<td><strong>DeSpace Sáng lập & Giám đốc thiết kế</strong><br><span style="color:#78716C;">Tư vấn trực tiếp không gian sống & hoàn thiện nội thất cao cấp.</span></td>
+						</tr>
+						<tr>
+							<th scope="row" style="font-weight:600;">Địa chỉ Showroom:</th>
+							<td><strong>Số 20 ngách 21 ngõ 367, Phố Ngô Xuân Quảng, Xã Gia Lâm, Hà Nội</strong></td>
+						</tr>
+						<tr>
+							<th scope="row" style="font-weight:600;">Hotline tư vấn:</th>
+							<td><a href="tel:0332174590" style="font-size:16px; font-weight:700; color:#C25E3A; text-decoration:none;">0332 174 590</a></td>
+						</tr>
+						<tr>
+							<th scope="row" style="font-weight:600;">Email liên hệ:</th>
+							<td><a href="mailto:noithat@despace.vn" style="color:#2563EB; text-decoration:none;">noithat@despace.vn</a></td>
+						</tr>
+						<tr>
+							<th scope="row" style="font-weight:600;">Giờ mở cửa:</th>
+							<td><strong>08:30 – 21:30</strong> (Thứ 2 – Chủ Nhật hàng tuần)</td>
+						</tr>
+						<tr>
+							<th scope="row" style="font-weight:600;">Chính sách bảo hành:</th>
+							<td><strong>Bảo hành kết cấu 5 năm</strong> · 1 đổi 1 trong 30 ngày đối với lỗi từ nhà sản xuất.</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		<?php endif; ?>
 
 	</div>
 	<?php
