@@ -84,37 +84,29 @@ $colors       = wc_get_product_terms( $id, 'pa_color' );
 		</div>
 
 		<div class="f-card-body">
-			<?php
-			$p_dims = $product->get_dimensions( false );
-			$card_dim_str = ( ! empty( $p_dims['length'] ) && ! empty( $p_dims['width'] ) && ! empty( $p_dims['height'] ) )
-				? sprintf( '%s × %s × %s cm', $p_dims['length'], $p_dims['width'], $p_dims['height'] )
-				: '';
-			?>
-			<!-- 4. Category + Subtle Dimensions -->
-			<div class="f-card-meta-row">
-				<?php if ( $cat_name ) : ?>
-					<span class="f-card-cat"><?php echo esc_html( mb_strtoupper( $cat_name, 'UTF-8' ) ); ?></span>
-				<?php endif; ?>
-				<?php if ( $card_dim_str ) : ?>
-					<span class="f-card-dims"><?php echo esc_html( $card_dim_str ); ?></span>
-				<?php endif; ?>
-			</div>
+			<!-- 4. Category (Clean uppercase text) -->
+			<?php if ( $cat_name ) : ?>
+				<div class="f-card-cat"><?php echo esc_html( strtoupper( $cat_name ) ); ?></div>
+			<?php endif; ?>
 
 			<!-- 5. Product Name -->
 			<h3 class="f-card-title"><a href="<?php echo esc_url( $link ); ?>"><?php echo esc_html( $product->get_name() ); ?></a></h3>
 
-			<!-- 6. Rating (Shown cleanly when reviewed — no zero-star noise) -->
-			<?php
-			$rating_val = (float) $product->get_average_rating();
-			$review_cnt = (int) $product->get_review_count();
-			if ( $review_cnt > 0 ) :
-				$stars_count = (int) round( $rating_val );
-			?>
+			<!-- 6. Rating (Clean gold stars + review count) -->
 			<div class="f-card-rating">
-				<span class="f-stars" aria-label="<?php echo esc_attr( sprintf( furniva_t( 'Rated %s out of 5', 'Đánh giá %s trên 5' ), number_format( $rating_val, 1 ) ) ); ?>"><?php echo esc_html( str_repeat( '★', $stars_count ) . str_repeat( '☆', 5 - $stars_count ) ); ?></span>
-				<span class="f-rating-count">(<?php echo esc_html( $review_cnt ); ?>)</span>
+				<?php
+				$rating_val = (float) $product->get_average_rating();
+				$review_cnt = (int) $product->get_review_count();
+				if ( $review_cnt > 0 ) :
+					$stars_count = (int) round( $rating_val );
+				?>
+					<span class="f-stars" aria-label="<?php echo esc_attr( sprintf( furniva_t( 'Rated %s out of 5', 'Đánh giá %s trên 5' ), number_format( $rating_val, 1 ) ) ); ?>"><?php echo esc_html( str_repeat( '★', $stars_count ) . str_repeat( '☆', 5 - $stars_count ) ); ?></span>
+					<span class="f-rating-count">(<?php echo esc_html( $review_cnt ); ?>)</span>
+				<?php else : ?>
+					<span class="f-stars f-stars--unrated" aria-label="<?php echo esc_attr( furniva_t( 'No reviews yet', 'Chưa có đánh giá' ) ); ?>">☆☆☆☆☆</span>
+					<span class="f-rating-count f-rating-count--empty">(0)</span>
+				<?php endif; ?>
 			</div>
-			<?php endif; ?>
 
 			<!-- 7. Price -->
 			<div class="f-card-price">

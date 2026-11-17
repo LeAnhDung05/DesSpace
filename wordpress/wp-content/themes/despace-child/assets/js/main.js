@@ -1484,20 +1484,6 @@ jQuery(function ($) {
 		}
 	});
 
-	// WCAG 2.2.2 Accessible Pause / Play toggle for announcement bar
-	var announceBar = document.querySelector(".fv-announcement");
-	var announcePauseBtn = document.getElementById("fv-announcement-pause");
-	if (announceBar && announcePauseBtn) {
-		announcePauseBtn.addEventListener("click", function () {
-			var paused = announceBar.classList.toggle("is-paused");
-			var pauseLbl = announcePauseBtn.getAttribute("data-label-pause") || "Pause announcements";
-			var playLbl = announcePauseBtn.getAttribute("data-label-play") || "Play announcements";
-			announcePauseBtn.setAttribute("aria-label", paused ? playLbl : pauseLbl);
-			var glyph = announcePauseBtn.querySelector("span");
-			if (glyph) glyph.textContent = paused ? "▶" : "❚❚";
-		});
-	}
-
 	// Guest Checkout is fully open for Add-to-Cart, Buy Now, AR Cart, and Checkout;
 	// only account-bound Wishlist syncing prompts sign-in for unauthenticated visitors.
 	if (typeof furnivaData !== "undefined" && !furnivaData.isLoggedIn) {

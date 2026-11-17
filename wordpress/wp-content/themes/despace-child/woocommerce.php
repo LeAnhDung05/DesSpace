@@ -40,7 +40,7 @@ if ( is_singular( 'product' ) ) {
 		$hero_image_url = get_stylesheet_directory_uri() . '/assets/images/hero-scandinavian.jpg';
 	}
 	?>
-	<section class="f-shop-hero <?php echo is_shop() ? 'f-shop-hero--no-split' : ''; ?>" aria-label="<?php echo esc_attr( furniva_t( 'Shop Catalogue Header', 'Tiêu đề danh mục cửa hàng' ) ); ?>">
+	<section class="f-shop-hero <?php echo is_shop() ? 'f-shop-hero--no-split' : ''; ?> fv-reveal fv-reveal-up" aria-label="<?php echo esc_attr( furniva_t( 'Shop Catalogue Header', 'Tiêu đề danh mục cửa hàng' ) ); ?>">
 		<div class="f-wrap">
 			<?php if ( ! is_shop() ) : ?>
 			<div class="f-shop-hero-split">
@@ -101,7 +101,7 @@ if ( is_singular( 'product' ) ) {
 								</svg>
 								<div class="f-trust-card-text">
 									<strong class="f-trust-card-val"><?php echo esc_html( furniva_t( 'FREE DELIVERY', 'GIAO HÀNG MIỄN PHÍ' ) ); ?></strong>
-									<span class="f-trust-card-lbl"><?php echo esc_html( furniva_t( 'ORDERS FROM 5,000,000 ₫', 'ĐƠN TỪ 5.000.000 ₫' ) ); ?></span>
+									<span class="f-trust-card-lbl"><?php echo esc_html( furniva_t( 'ON ORDERS OVER $500', 'CHO ĐƠN TRÊN $500' ) ); ?></span>
 								</div>
 							</div>
 						</div>

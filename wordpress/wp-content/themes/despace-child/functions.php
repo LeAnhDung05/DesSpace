@@ -51,7 +51,7 @@ function furniva_assets() {
 	$main_style_path = get_stylesheet_directory() . '/style.css';
 	$main_style_ver  = file_exists( $main_style_path ) ? (string) filemtime( $main_style_path ) : FURNIVA_VER;
 	wp_enqueue_style( 'furniva', get_stylesheet_uri(), array( 'astra' ), $main_style_ver );
-	wp_enqueue_style( 'furniva-fonts', 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Newsreader:ital,opsz,wght@0,6..72,300..500;1,6..72,300..500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap', array(), null );
+	wp_enqueue_style( 'furniva-fonts', 'https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&family=Playfair+Display:ital,wght@0,400..700;1,400..700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap', array(), null );
 
 	// Animations CSS
 	$animations_css = get_stylesheet_directory() . '/assets/css/animations.css';
@@ -204,23 +204,6 @@ function furniva_assets() {
 			get_stylesheet_directory_uri() . '/assets/css/ax-room-visualizer.css',
 			array( 'furniva' ),
 			filemtime( $ax_room_css )
-		);
-	}
-
-	// Quiet Luxury Nordic / Editorial System Layer (loaded after component stylesheets for 100% visual cohesion)
-	$quiet_luxury_css = get_stylesheet_directory() . '/assets/css/quiet-luxury-editorial.css';
-	if ( file_exists( $quiet_luxury_css ) ) {
-		$ql_deps = array( 'furniva' );
-		foreach ( array( 'furniva-homepage-clone', 'furniva-bento-edit', 'furniva-single-product', 'furniva-wishlist-cart', 'furniva-my-account', 'furniva-ax-room-visualizer' ) as $maybe_dep ) {
-			if ( wp_style_is( $maybe_dep, 'enqueued' ) ) {
-				$ql_deps[] = $maybe_dep;
-			}
-		}
-		wp_enqueue_style(
-			'despace-quiet-luxury-editorial',
-			get_stylesheet_directory_uri() . '/assets/css/quiet-luxury-editorial.css',
-			$ql_deps,
-			filemtime( $quiet_luxury_css )
 		);
 	}
 

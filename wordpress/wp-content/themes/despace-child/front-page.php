@@ -174,18 +174,17 @@ $hero_products = array(
 			<?php endif; ?>
 		</section>
 
-		<section class="fv-featured-hero" aria-label="<?php echo esc_attr( furniva_t( 'Featured collection', 'Bộ sưu tập nổi bật' ) ); ?>">
+		<section class="fv-featured-hero fv-reveal fv-reveal-fade" aria-label="<?php echo esc_attr( furniva_t( 'Featured collection', 'Bộ sưu tập nổi bật' ) ); ?>">
 			<div class="fv-featured-hero__grid fv-wrap">
 				<div class="fv-featured-hero__stage">
 					<a href="<?php echo esc_url( $shop_url ); ?>" aria-label="<?php echo esc_attr( furniva_t( 'Explore the DeSpace collection', 'Khám phá bộ sưu tập DeSpace' ) ); ?>">
 						<img src="<?php echo esc_url( $hero_url ); ?>" alt="<?php echo esc_attr( furniva_t( 'Warm Scandinavian living room with natural wood furniture', 'Không gian phòng khách Bắc Âu ấm áp với nội thất gỗ tự nhiên' ) ); ?>" loading="eager" fetchpriority="high" />
-						<span class="fv-home-hero-scrim" aria-hidden="true"></span>
-						<div class="fv-home-hero-copy">
+						<span class="fv-home-hero-copy">
 							<span class="fv-eyebrow"><?php echo esc_html( furniva_t( 'Designed for the everyday', 'Thiết kế cho nhịp sống mỗi ngày' ) ); ?></span>
 							<h1 class="fv-home-hero-title"><?php echo wp_kses_post( furniva_t( 'Quiet form.<br>Lasting presence.', 'Đường nét tĩnh lặng.<br>Vẻ đẹp bền lâu.' ) ); ?></h1>
-							<p class="fv-home-hero-sub"><?php echo esc_html( furniva_t( 'Thoughtful Scandinavian craftsmanship proportioned for modern Vietnamese homes.', 'Nội thất Bắc Âu tinh giản, chuẩn mực tỷ lệ cho tổ ấm đương đại.' ) ); ?></p>
-							<span class="fv-home-hero-cta"><?php echo esc_html( furniva_t( 'Explore the collection', 'Khám phá bộ sưu tập' ) ); ?> <span aria-hidden="true">→</span></span>
-						</div>
+							<span><?php echo esc_html( furniva_t( 'Thoughtful furniture for a home that feels like you.', 'Nội thất được chọn lọc để ngôi nhà mang dấu ấn riêng của bạn.' ) ); ?></span>
+							<span class="fv-home-hero-cta"><?php echo esc_html( furniva_t( 'Explore the collection', 'Khám phá bộ sưu tập' ) ); ?> <span aria-hidden="true">↗</span></span>
+						</span>
 					</a>
 				</div>
 				<div class="fv-featured-hero__aside" aria-label="<?php echo esc_attr( furniva_t( 'Explore more spaces', 'Khám phá thêm không gian' ) ); ?>">
@@ -205,7 +204,7 @@ $hero_products = array(
 		<section class="fv-promise fv-wrap fv-reveal fv-reveal-up" aria-labelledby="fv-promise-title">
 			<div class="fv-promise__heading"><h2 id="fv-promise-title"><?php echo esc_html( furniva_t( 'The DeSpace Promise', 'Cam kết từ DeSpace' ) ); ?></h2><span><?php echo esc_html( furniva_t( 'Thoughtful by nature', 'Chu đáo từ những điều nhỏ' ) ); ?></span></div>
 			<div class="fv-promise__grid">
-				<article class="fv-promise__item"><span class="fv-promise__icon" aria-hidden="true">✧</span><h3><?php echo esc_html( furniva_t( 'Complimentary delivery', 'Giao hàng miễn phí' ) ); ?></h3><p><?php echo esc_html( furniva_t( 'On orders from 5,000,000 ₫', 'Cho đơn hàng từ 5.000.000 ₫' ) ); ?></p></article>
+				<article class="fv-promise__item"><span class="fv-promise__icon" aria-hidden="true">✧</span><h3><?php echo esc_html( furniva_t( 'Complimentary delivery', 'Giao hàng miễn phí' ) ); ?></h3><p><?php echo esc_html( furniva_t( 'On orders over $500', 'Cho đơn hàng trên $500' ) ); ?></p></article>
 				<article class="fv-promise__item"><span class="fv-promise__icon" aria-hidden="true">◇</span><h3><?php echo esc_html( furniva_t( '5-year craft warranty', 'Bảo hành chế tác 5 năm' ) ); ?></h3><p><?php echo esc_html( furniva_t( 'Made to be lived with', 'An tâm đồng hành dài lâu' ) ); ?></p></article>
 				<article class="fv-promise__item"><span class="fv-promise__icon" aria-hidden="true">⌂</span><h3><?php echo esc_html( furniva_t( 'Considered materials', 'Chất liệu được chọn lọc' ) ); ?></h3><p><?php echo esc_html( furniva_t( 'Natural textures, honest finishes', 'Vân gỗ và bề mặt giàu cảm xúc' ) ); ?></p></article>
 				<article class="fv-promise__item"><span class="fv-promise__icon" aria-hidden="true">♡</span><h3><?php echo esc_html( furniva_t( 'Here to help', 'Luôn sẵn sàng hỗ trợ' ) ); ?></h3><p><?php echo esc_html( furniva_t( 'Guidance for choosing with care', 'Tư vấn để bạn chọn đúng điều mình cần' ) ); ?></p></article>

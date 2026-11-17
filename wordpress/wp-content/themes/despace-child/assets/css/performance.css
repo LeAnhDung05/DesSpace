@@ -139,29 +139,49 @@ img[data-src].fv-loaded {
     }
 }
 
-/* Body loaded state — keep instant paint stability (never flash body/header back to opacity 0) */
+/* Body loaded state */
 body.fv-loaded {
-    animation: none;
+    animation: f-fadeIn 0.3s ease-out;
 }
 
+/* Header animation on load */
 body.fv-loaded .fv-header,
 body.fv-loaded .ax-chat-toggle {
-    animation: none;
+    animation: f-fadeInDown 0.5s ease-out;
 }
 
-/* Staggered children animation — handled cleanly by animations.css with reduced-motion support */
+/* Staggered children animation */
 .fv-stagger > * {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+body.fv-loaded .fv-stagger > *:nth-child(1) { transition-delay: 0ms; }
+body.fv-loaded .fv-stagger > *:nth-child(2) { transition-delay: 60ms; }
+body.fv-loaded .fv-stagger > *:nth-child(3) { transition-delay: 120ms; }
+body.fv-loaded .fv-stagger > *:nth-child(4) { transition-delay: 180ms; }
+body.fv-loaded .fv-stagger > *:nth-child(5) { transition-delay: 240ms; }
+body.fv-loaded .fv-stagger > *:nth-child(6) { transition-delay: 300ms; }
+body.fv-loaded .fv-stagger > *:nth-child(7) { transition-delay: 360ms; }
+body.fv-loaded .fv-stagger > *:nth-child(8) { transition-delay: 420ms; }
+
+body.fv-loaded .fv-stagger > * {
     opacity: 1;
-    transform: none;
+    transform: translateY(0);
 }
 
 /* --------------------------------------------------
-   3. Scroll Reveal Animations (deferred to animations.css)
+   3. Scroll Reveal Animations
    -------------------------------------------------- */
+.fv-reveal {
+    opacity: 0;
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
 .fv-reveal.fv-visible,
 .fv-concierge,
-.fv-featured-hero,
-.f-shop-hero {
+.fv-featured-hero {
     opacity: 1 !important;
     transform: none !important;
 }
