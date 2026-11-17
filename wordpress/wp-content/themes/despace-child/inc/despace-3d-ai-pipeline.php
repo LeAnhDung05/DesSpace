@@ -281,27 +281,62 @@ function axgnud_3d_ai_settings_page() {
 		wp_die( 'Bạn không có quyền truy cập trang cài đặt này.' );
 	}
 	if ( isset( $_POST['axgnud_save_settings_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['axgnud_save_settings_nonce'] ) ), 'axgnud_save_settings' ) ) {
-		$fal_key = sanitize_text_field( wp_unslash( $_POST['axgnud_fal_api_key'] ?? '' ) );
-		update_option( 'axgnud_fal_api_key', $fal_key );
-		echo '<div class="notice notice-success is-dismissible"><p>Cài đặt đã được lưu thành công.</p></div>';
+		$key_fields = array(
+			'despace_gemini_api_key' => 'clear_gemini_key',
+			'axgnud_fal_api_key'     => 'clear_fal_key',
+			'despace_tripo_api_key'  => 'clear_tripo_key',
+		);
+		foreach ( $key_fields as $opt_name => $clear_flag ) {
+			if ( ! empty( $_POST[ $clear_flag ] ) ) {
+				delete_option( $opt_name );
+			} elseif ( isset( $_POST[ $opt_name ] ) && '' !== trim( (string) wp_unslash( $_POST[ $opt_name ] ) ) ) {
+				update_option( $opt_name, sanitize_text_field( wp_unslash( $_POST[ $opt_name ] ) ) );
+			}
+		}
+		echo '<div class="notice notice-success is-dismissible"><p>Đã lưu cấu hình AI Concierge & Cloud 3D thành công.</p></div>';
 	}
-	$fal_key = get_option( 'axgnud_fal_api_key', '' );
+	$gemini_key = get_option( 'despace_gemini_api_key', '' );
+	$fal_key    = get_option( 'axgnud_fal_api_key', '' );
+	$tripo_key  = get_option( 'despace_tripo_api_key', '' );
 	?>
 	<div class="wrap">
-		<h1>DeSpace Studio — 3D & AI Render Settings</h1>
-		<p>Cấu hình API Key cho hệ thống AI Image-to-3D (Fal.ai Trellis / Tripo3D).</p>
+		<h1>DeSpace Studio — AI Interior Concierge & Cloud 3D Settings</h1>
+		<p>Cấu hình khóa API cho Trợ lý Nội thất AI (Gemini 2.5 Flash RAG) và hệ thống Cloud AI Image-to-3D (Fal.ai Trellis / Tripo3D v2).</p>
 		<form method="post" action="">
 			<?php wp_nonce_field( 'axgnud_save_settings', 'axgnud_save_settings_nonce' ); ?>
 			<table class="form-table">
 				<tr>
-					<th><label for="axgnud_fal_api_key">Fal.ai API Key (Trellis)</label></th>
+					<th><label for="despace_gemini_api_key">Google Gemini API Key (2.5 Flash)</label></th>
 					<td>
-						<input type="password" name="axgnud_fal_api_key" id="axgnud_fal_api_key" value="" placeholder="<?php echo ! empty( $fal_key ) ? '•••••••••••••••• (Đã lưu)' : 'Nhập API Key...'; ?>" class="regular-text" autocomplete="off" />
-						<p class="description">Lấy API key tại <a href="https://fal.ai" target="_blank" rel="noopener">fal.ai</a>. Khi để trống, hệ thống sẽ sử dụng Procedural 3D Mesh + HTML5 Smart Cutout tự động.</p>
+						<input type="password" name="despace_gemini_api_key" id="despace_gemini_api_key" value="" placeholder="<?php echo ! empty( $gemini_key ) ? '•••••••••••••••• (Đã lưu — nhập mới để thay đổi)' : 'AIzaSy...'; ?>" class="regular-text" autocomplete="off" />
+						<?php if ( ! empty( $gemini_key ) ) : ?>
+							<label style="margin-left:10px;"><input type="checkbox" name="clear_gemini_key" value="1" /> Xóa khóa đã lưu</label>
+						<?php endif; ?>
+						<p class="description">Kích hoạt trí tuệ nhân tạo tạo sinh <strong>Gemini 2.5 Flash RAG</strong> cho Trợ lý Nội thất DeSpace. Khi để trống, hệ thống tự động dùng bộ máy <em>Deterministic Spatial Fit Advisor</em> đo kích thước phòng trực tiếp từ CSDL.</p>
+					</td>
+				</tr>
+				<tr>
+					<th><label for="axgnud_fal_api_key">Fal.ai API Key (Trellis Image-to-3D)</label></th>
+					<td>
+						<input type="password" name="axgnud_fal_api_key" id="axgnud_fal_api_key" value="" placeholder="<?php echo ! empty( $fal_key ) ? '•••••••••••••••• (Đã lưu — nhập mới để thay đổi)' : 'Nhập FAL_KEY...'; ?>" class="regular-text" autocomplete="off" />
+						<?php if ( ! empty( $fal_key ) ) : ?>
+							<label style="margin-left:10px;"><input type="checkbox" name="clear_fal_key" value="1" /> Xóa khóa đã lưu</label>
+						<?php endif; ?>
+						<p class="description">Lấy API key tại <a href="https://fal.ai" target="_blank" rel="noopener">fal.ai</a>. Hỗ trợ gửi ảnh trực tiếp dưới dạng Data URI kể cả khi chạy trên <code>localhost</code>.</p>
+					</td>
+				</tr>
+				<tr>
+					<th><label for="despace_tripo_api_key">Tripo3D v2 API Key</label></th>
+					<td>
+						<input type="password" name="despace_tripo_api_key" id="despace_tripo_api_key" value="" placeholder="<?php echo ! empty( $tripo_key ) ? '•••••••••••••••• (Đã lưu — nhập mới để thay đổi)' : 'tsk_...'; ?>" class="regular-text" autocomplete="off" />
+						<?php if ( ! empty( $tripo_key ) ) : ?>
+							<label style="margin-left:10px;"><input type="checkbox" name="clear_tripo_key" value="1" /> Xóa khóa đã lưu</label>
+						<?php endif; ?>
+						<p class="description">Tùy chọn thay thế hoặc dùng song song với Fal.ai trên DeSpace 3D Studio Desktop v3.1.</p>
 					</td>
 				</tr>
 			</table>
-			<?php submit_button( 'Lưu Cài Đặt' ); ?>
+			<?php submit_button( 'Lưu Cài Đặt AI & 3D' ); ?>
 		</form>
 	</div>
 	<?php
@@ -324,14 +359,29 @@ add_action( 'wp_ajax_axgnud_generate_3d_model', function() {
 		$api_key = get_option( 'axgnud_fal_api_key', '' );
 	}
 
-	$image_url = get_the_post_thumbnail_url( $product_id, 'full' );
+	$thumb_id  = (int) get_post_thumbnail_id( $product_id );
+	$image_url = $thumb_id ? wp_get_attachment_url( $thumb_id ) : get_the_post_thumbnail_url( $product_id, 'full' );
 	if ( ! $image_url ) {
 		wp_send_json_error( array( 'message' => 'Sản phẩm chưa có ảnh đại diện.' ) );
 	}
 
 	if ( empty( $api_key ) ) {
 		update_post_meta( $product_id, '_axgnud_3d_status', 'procedural_3d_active' );
-		wp_send_json_error( array( 'message' => 'Chưa nhập FAL_KEY: Đang dùng chế độ Smart 3D Mesh + Auto Cutout tự động.' ) );
+		wp_send_json_error( array( 'message' => 'Chưa nhập FAL_KEY: Đang dùng chế độ DeSpace Parametric PBR 3D + 64-byte USDZ tự động.' ) );
+	}
+
+	// Convert local attachment to Base64 Data URI when running on localhost/private LAN so Fal.ai can read it
+	$fal_image_input = $image_url;
+	if ( $thumb_id > 0 && preg_match( '/(localhost|127\.0\.0\.1|\.local)/i', $image_url ) ) {
+		$local_file = get_attached_file( $thumb_id );
+		if ( $local_file && is_readable( $local_file ) && filesize( $local_file ) <= 8 * 1024 * 1024 ) {
+			$mime = wp_check_filetype( $local_file )['type'] ?: 'image/jpeg';
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+			$raw_bytes = file_get_contents( $local_file );
+			if ( false !== $raw_bytes ) {
+				$fal_image_input = 'data:' . $mime . ';base64,' . base64_encode( $raw_bytes );
+			}
+		}
 	}
 
 	// Gọi Fal.ai Trellis Image-to-3D API
@@ -342,11 +392,11 @@ add_action( 'wp_ajax_axgnud_generate_3d_model', function() {
 			'Content-Type'  => 'application/json',
 		),
 		'body' => wp_json_encode( array(
-			'image_url'            => $image_url,
-			'ss_guidance_strength' => 7.5,
+			'image_url'              => $fal_image_input,
+			'ss_guidance_strength'   => 7.5,
 			'slat_guidance_strength' => 3.0,
-			'mesh_simplify'        => 0.95,
-			'texture_size'         => 1024,
+			'mesh_simplify'          => 0.95,
+			'texture_size'           => 1024,
 		) ),
 	) );
 

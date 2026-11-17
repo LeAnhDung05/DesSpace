@@ -233,6 +233,38 @@ class RestApiModule {
 				'permission_callback' => array( $this, 'check_desktop_api_permission' ),
 			)
 		);
+
+		// 5. Vietnam 2-Tier Administrative Regions (34 Provinces -> 3,321 Wards/Communes)
+		register_rest_route(
+			self::REST_NAMESPACE,
+			'/regions/provinces',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_vn_provinces' ),
+				'permission_callback' => '__return_true',
+			)
+		);
+
+		register_rest_route(
+			self::REST_NAMESPACE,
+			'/regions/communes',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_vn_communes' ),
+				'permission_callback' => '__return_true',
+			)
+		);
+
+		// 6. AI Interior Design Concierge (Gemini 2.5 Flash RAG + Spatial Fit Engine)
+		register_rest_route(
+			self::REST_NAMESPACE,
+			'/concierge/chat',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'concierge_chat' ),
+				'permission_callback' => '__return_true',
+			)
+		);
 	}
 
 	/**
@@ -812,5 +844,60 @@ class RestApiModule {
 			'limit' => $limit,
 			'items' => array(),
 		), 200 );
+	}
+
+	/**
+	 * GET /despace/v1/regions/provinces — Return 34 Vietnam provinces/municipalities.
+	 */
+	public function get_vn_provinces(): WP_REST_Response {
+		if ( ! class_exists( 'DeSpace\\CheckoutOrders\\Shipping\\VietnamRegions' ) ) {
+			return new WP_REST_Response( array( 'provinces' => array() ), 200 );
+		}
+		$provs = array_values( \DeSpace\CheckoutOrders\Shipping\VietnamRegions::get_provinces() );
+		return new WP_REST_Response( array(
+			'count'     => count( $provs ),
+			'provinces' => $provs,
+		), 200 );
+	}
+
+	/**
+	 * GET /despace/v1/regions/communes?province={code} — Return wards/communes/special zones for a province.
+	 */
+	public function get_vn_communes( WP_REST_Request $request ): WP_REST_Response {
+		$prov_code = sanitize_text_field( (string) ( $request->get_param( 'province' ) ?? '' ) );
+		if ( '' === $prov_code || ! class_exists( 'DeSpace\\CheckoutOrders\\Shipping\\VietnamRegions' ) ) {
+			return new WP_REST_Response( array( 'province_code' => $prov_code, 'count' => 0, 'communes' => array() ), 200 );
+		}
+		$communes = array_values( \DeSpace\CheckoutOrders\Shipping\VietnamRegions::get_communes( $prov_code ) );
+		return new WP_REST_Response( array(
+			'province_code' => $prov_code,
+			'count'         => count( $communes ),
+			'communes'      => $communes,
+		), 200 );
+	}
+
+	/**
+	 * POST /despace/v1/concierge/chat — Grounded AI Interior Design Concierge.
+	 */
+	public function concierge_chat( WP_REST_Request $request ): WP_REST_Response {
+		$message = sanitize_text_field( (string) ( $request->get_param( 'message' ) ?? '' ) );
+		$lang    = sanitize_key( (string) ( $request->get_param( 'language' ) ?? 'vi' ) );
+
+		if ( '' === $message ) {
+			return new WP_REST_Response( array(
+				'code'    => 'empty_message',
+				'message' => 'Message is required.',
+			), 400 );
+		}
+
+		if ( ! class_exists( 'DeSpace\\Catalog\\ConciergeService' ) ) {
+			$svc_path = dirname( __DIR__ ) . '/Catalog/ConciergeService.php';
+			if ( file_exists( $svc_path ) ) {
+				require_once $svc_path;
+			}
+		}
+
+		$result = \DeSpace\Catalog\ConciergeService::answer( $message, $lang );
+		return new WP_REST_Response( $result, 200 );
 	}
 }

@@ -238,6 +238,7 @@ jQuery(function ($) {
 		if (pid) data.push({ name: "add-to-cart", value: pid });
 		data.push({ name: "action", value: "furniva_buy_now" });
 		data.push({ name: "language", value: furnivaData.language });
+		data.push({ name: "nonce", value: furnivaData.nonce });
 
 		$.post(furnivaData.ajaxUrl, $.param(data)).done(function (res) {
 			$btn.prop("disabled", false).text(furnivaData.strings.buyNow);
@@ -1085,16 +1086,29 @@ jQuery(function ($) {
 		if (pid && furnivaData) {
 			$.post(furnivaData.ajaxUrl, {
 				action: 'furniva_wishlist_remove',
-				product_id: pid
+				product_id: pid,
+				nonce: furnivaData.nonce
 			});
 		}
 	});
 
-	// 4. Cart: Recalculate Totals & Free Shipping Bar
+	// Format VND (and optional USD reference in English mode)
+	function formatStoreMoney(amountVnd) {
+		var val = Math.max(0, Math.round(parseFloat(amountVnd) || 0));
+		var vndText = new Intl.NumberFormat('vi-VN').format(val) + ' ₫';
+		if (furnivaData && furnivaData.language && furnivaData.language.indexOf('en') === 0 && val > 0) {
+			var usd = Math.round(val / 25000);
+			return vndText + ' (≈ $' + new Intl.NumberFormat('en-US').format(Math.max(1, usd)) + ')';
+		}
+		return vndText;
+	}
+
+	// 4. Cart: Recalculate Totals & Free Shipping Bar (Strictly VND 5,000,000 threshold)
 	function recalculateCart() {
+		if (!$(".ax-cart-card").length) return;
 		var subtotal = 0;
 		var totalItems = 0;
-		var threshold = 500.00;
+		var threshold = 5000000;
 
 		$(".ax-cart-card").each(function () {
 			var $card = $(this);
@@ -1110,20 +1124,20 @@ jQuery(function ($) {
 		var remaining = Math.max(0, threshold - subtotal);
 		var percent = Math.min(100, (subtotal / threshold) * 100);
 
-		$("#axSummarySubtotal, #axSummaryTotal").text("$" + subtotal.toFixed(2));
+		$("#axSummarySubtotal, #axSummaryTotal").text(formatStoreMoney(subtotal));
 		$("#axSummaryItemCount").text(totalItems);
-		$("#axShippingTarget").text("$" + subtotal.toFixed(2) + " / $500.00");
+		$("#axShippingTarget").text(formatStoreMoney(subtotal) + " / " + formatStoreMoney(threshold));
 		$("#axShippingFill").css("width", percent + "%");
 
 		if (remaining <= 0) {
 			$("#axShippingMessage").html('<strong>' + (furnivaData && furnivaData.language === 'vi' ? 'Chúc mừng!' : 'Congratulations!') + '</strong> ' + (furnivaData && furnivaData.language === 'vi' ? 'Bạn đã nhận MIỄN PHÍ VẬN CHUYỂN!' : 'You unlocked FREE Shipping!') + ' 🎉');
 		} else {
-			$("#axShippingMessage").html((furnivaData && furnivaData.language === 'vi' ? 'Thêm ' : 'Add ') + '<strong id="axShippingDiff">$' + remaining.toFixed(2) + '</strong> ' + (furnivaData && furnivaData.language === 'vi' ? 'nữa để được ' : 'more for ') + '<strong>' + (furnivaData && furnivaData.language === 'vi' ? 'MIỄN PHÍ VẬN CHUYỂN!' : 'FREE Shipping!') + '</strong>');
+			$("#axShippingMessage").html((furnivaData && furnivaData.language === 'vi' ? 'Thêm ' : 'Add ') + '<strong id="axShippingDiff">' + formatStoreMoney(remaining) + '</strong> ' + (furnivaData && furnivaData.language === 'vi' ? 'nữa để được ' : 'more for ') + '<strong>' + (furnivaData && furnivaData.language === 'vi' ? 'MIỄN PHÍ VẬN CHUYỂN!' : 'FREE Shipping!') + '</strong>');
 		}
 	}
 
-	// 5. Cart: Quantity +/-
-	$(document).on("click", ".ax-qty-plus", function () {
+	// 5. Cart: Quantity +/- (Scoped strictly to .ax-cart-card so it never double-fires on .ax-cart-item or PDP)
+	$(document).on("click", ".ax-cart-card .ax-qty-plus", function () {
 		var $btn = $(this),
 			$card = $btn.closest(".ax-cart-card"),
 			$val = $card.find(".ax-qty-val"),
@@ -1135,11 +1149,12 @@ jQuery(function ($) {
 		$card.data("qty", qty);
 		recalculateCart();
 
-		if (cartKey && !cartKey.startsWith("demo_") && furnivaData) {
+		if (cartKey && !String(cartKey).startsWith("demo_") && furnivaData) {
 			$.post(furnivaData.ajaxUrl, {
 				action: 'furniva_cart_update_qty',
 				cart_key: cartKey,
-				quantity: qty
+				quantity: qty,
+				nonce: furnivaData.nonce
 			}).done(function (res) {
 				if (res && res.success) {
 					if (res.data.subtotal_html) $(".f-cart-total").html(res.data.subtotal_html);
@@ -1149,7 +1164,7 @@ jQuery(function ($) {
 		}
 	});
 
-	$(document).on("click", ".ax-qty-minus", function () {
+	$(document).on("click", ".ax-cart-card .ax-qty-minus", function () {
 		var $btn = $(this),
 			$card = $btn.closest(".ax-cart-card"),
 			$val = $card.find(".ax-qty-val"),
@@ -1162,11 +1177,12 @@ jQuery(function ($) {
 			$card.data("qty", qty);
 			recalculateCart();
 
-			if (cartKey && !cartKey.startsWith("demo_") && furnivaData) {
+			if (cartKey && !String(cartKey).startsWith("demo_") && furnivaData) {
 				$.post(furnivaData.ajaxUrl, {
 					action: 'furniva_cart_update_qty',
 					cart_key: cartKey,
-					quantity: qty
+					quantity: qty,
+					nonce: furnivaData.nonce
 				}).done(function (res) {
 					if (res && res.success) {
 						if (res.data.subtotal_html) $(".f-cart-total").html(res.data.subtotal_html);
@@ -1209,10 +1225,11 @@ jQuery(function ($) {
 			});
 		}, 300);
 
-		if (cartKey && !cartKey.startsWith("demo_") && furnivaData) {
+		if (cartKey && !String(cartKey).startsWith("demo_") && furnivaData) {
 			$.post(furnivaData.ajaxUrl, {
 				action: 'furniva_cart_remove_item',
-				cart_key: cartKey
+				cart_key: cartKey,
+				nonce: furnivaData.nonce
 			}).done(function (res) {
 				if (res && res.success) {
 					if (res.data.subtotal_html) $(".f-cart-total").html(res.data.subtotal_html);
@@ -1222,12 +1239,31 @@ jQuery(function ($) {
 		}
 	});
 
-	// 9. Cart: Remove selected
+	// 9. Cart: Remove selected (Real server-side WooCommerce batch removal)
 	$(document).on("click", "#axRemoveSelectedBtn", function () {
 		var $selected = $(".ax-item-checkbox:checked").closest(".ax-cart-card");
 		if (!$selected.length) {
 			showAxToast(furnivaData && furnivaData.language === 'vi' ? 'Chưa chọn sản phẩm nào' : 'No items selected');
 			return;
+		}
+
+		var keys = [];
+		$selected.each(function () {
+			var k = $(this).find(".ax-cart-action-remove").data("key") || $(this).data("key");
+			if (k && !String(k).startsWith("demo_")) keys.push(k);
+		});
+
+		if (keys.length && furnivaData) {
+			$.post(furnivaData.ajaxUrl, {
+				action: 'furniva_cart_remove_items',
+				cart_keys: keys,
+				nonce: furnivaData.nonce
+			}).done(function (res) {
+				if (res && res.success) {
+					if (res.data.subtotal_html) $(".f-cart-total").html(res.data.subtotal_html);
+					if (res.data.item_count !== undefined) $(".f-badge, .f-cart-count, .fv-cart-count, .ax-cart-badge").text(res.data.item_count);
+				}
+			});
 		}
 
 		$selected.addClass("is-removing");
@@ -1281,7 +1317,8 @@ jQuery(function ($) {
 		$btn.prop("disabled", true);
 		$.post(furnivaData ? furnivaData.ajaxUrl : "/wp-admin/admin-ajax.php", {
 			action: "furniva_wishlist_toggle",
-			product_id: pid
+			product_id: pid,
+			nonce: furnivaData ? furnivaData.nonce : ""
 		}, function (res) {
 			$btn.prop("disabled", false);
 			if (res && res.success) {
@@ -1307,7 +1344,8 @@ jQuery(function ($) {
 	// 13. Sync Wishlist Badges on YITH / Theme Wishlist Events
 	$(document.body).on("added_to_wishlist removed_from_wishlist", function () {
 		$.post(furnivaData ? furnivaData.ajaxUrl : "/wp-admin/admin-ajax.php", {
-			action: "furniva_get_wishlist_count"
+			action: "furniva_get_wishlist_count",
+			nonce: furnivaData ? furnivaData.nonce : ""
 		}, function (res) {
 			if (res && res.success) {
 				var count = res.data.count;
@@ -1446,41 +1484,13 @@ jQuery(function ($) {
 		}
 	});
 
-	// If customer is NOT logged in, gate all interactive store features
+	// Guest Checkout is fully open for Add-to-Cart, Buy Now, AR Cart, and Checkout;
+	// only account-bound Wishlist syncing prompts sign-in for unauthenticated visitors.
 	if (typeof furnivaData !== "undefined" && !furnivaData.isLoggedIn) {
 		var isVi = furnivaData.language === "vi";
 
-		// Intercept during capturing phase before any jQuery or WooCommerce handlers
 		document.addEventListener("click", function (e) {
 			var $target = $(e.target);
-
-			// A. Add to Cart triggers
-			var $addBtn = $target.closest(".add_to_cart_button, .single_add_to_cart_button, #axAddToCart, #axModalAddToCartBtn, .f-card-add, .f-sticky-add-btn, .ajax_add_to_cart, form.cart button[type='submit']");
-			if ($addBtn.length) {
-				e.preventDefault();
-				e.stopPropagation();
-				e.stopImmediatePropagation();
-				var msg = isVi 
-					? "Quý khách vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng, nhận mã ưu đãi WELCOME10 và kích hoạt gói bảo hành toàn diện 5 năm."
-					: "Please sign in or create an account to add items to your cart and unlock VIP member benefits.";
-				openAuthGateModal(msg, window.location.href);
-				return false;
-			}
-
-			// B. Buy Now button
-			var $buyBtn = $target.closest("#furniva-buy-now, .f-buy-now");
-			if ($buyBtn.length) {
-				e.preventDefault();
-				e.stopPropagation();
-				e.stopImmediatePropagation();
-				var msgBuy = isVi
-					? "Quý khách vui lòng đăng nhập để mua ngay sản phẩm và tiến hành thanh toán."
-					: "Please sign in to proceed with direct purchasing.";
-				openAuthGateModal(msgBuy, (furnivaData.checkoutUrl || "/checkout/"));
-				return false;
-			}
-
-			// C. Wishlist triggers
 			var $wlBtn = $target.closest(".ax-toggle-wishlist-btn, .ax-cart-action-wishlist, .yith-wcwl-add-button a, .add_to_wishlist, #axAddToWishlist, .ax-btn-wishlist, .yith-wcwl-add-to-wishlist-button");
 			if ($wlBtn.length) {
 				e.preventDefault();
@@ -1490,19 +1500,6 @@ jQuery(function ($) {
 					? "Quý khách vui lòng đăng nhập để lưu sản phẩm vào danh sách yêu thích và đồng bộ trên mọi thiết bị."
 					: "Please sign in to save this product to your personal wishlist.";
 				openAuthGateModal(msgWl, window.location.href);
-				return false;
-			}
-
-			// D. Mini-cart checkout & drawer triggers
-			var $checkoutBtn = $target.closest(".f-drawer-checkout, .f-drawer-footer a[href*='checkout'], a.checkout-button, .wc-block-cart__submit-button");
-			if ($checkoutBtn.length) {
-				e.preventDefault();
-				e.stopPropagation();
-				e.stopImmediatePropagation();
-				var msgCo = isVi
-					? "Quý khách vui lòng đăng nhập để thanh toán đơn hàng và áp dụng mã giảm giá thành viên."
-					: "Please sign in to proceed to checkout and apply member discounts.";
-				openAuthGateModal(msgCo, (furnivaData.checkoutUrl || "/checkout/"));
 				return false;
 			}
 		}, true);

@@ -34,7 +34,7 @@ print("  DeSpace 3D Studio Desktop — Core Engine Test Suite (TC-PY01 - TC-PY10
 print("=" * 72)
 
 passed = 0
-total = 12
+total = 13
 
 def check(name: str, condition: bool):
     global passed
@@ -194,6 +194,20 @@ arch_ok = (
 check(
     "TC-PY12: Bilingual VI/EN furniture archetype detection (shoe_cabinet, wardrobe, bookcase)",
     arch_ok
+)
+
+# TC-PY13: Cloud AI GLB Physical Dimension Calibration (unit cube -> exact WxDxH meters at Y=0)
+unit_glb = Path(e2e_res["glb_path"]).read_bytes()
+cal_glb, cal_verts, cal_faces = ReconstructionEngine._calibrate_glb_scale(unit_glb, 1.14, 0.33, 0.76)
+cal_json_len = struct.unpack_from("<I", cal_glb, 12)[0]
+cal_gltf = json.loads(cal_glb[20 : 20 + cal_json_len].decode("utf-8"))
+root_node = cal_gltf["nodes"][cal_gltf["scenes"][0]["nodes"][0]]
+check(
+    "TC-PY13: Cloud AI GLB scale calibration wraps DeSpace_PhysicalScaleRoot with valid 4-byte GLB padding",
+    cal_glb[:4] == b"glTF"
+    and cal_json_len % 4 == 0
+    and root_node.get("name") == "DeSpace_PhysicalScaleRoot"
+    and cal_verts > 0
 )
 
 print("=" * 72)

@@ -58,6 +58,8 @@ class DeSpaceAppWindow(tk.Tk):
         self.site_url_var = tk.StringVar(value=Config.SITE_URL)
         self.secret_key_var = tk.StringVar(value=Config.API_SECRET_KEY)
         self.local_port_var = tk.IntVar(value=Config.LOCAL_PORT)
+        self.fal_key_var = tk.StringVar(value=Config.FAL_API_KEY)
+        self.tripo_key_var = tk.StringVar(value=Config.TRIPO_API_KEY)
         self.excel_path_var = tk.StringVar(value="")
         self.excel_items: List[Dict[str, Any]] = []
 
@@ -1116,7 +1118,21 @@ class DeSpaceAppWindow(tk.Tk):
         tk.Entry(card, textvariable=self.secret_key_var, font=("Arial", 10), width=48, show="*").pack(anchor="w", pady=(0, 8))
 
         tk.Label(card, text="Cổng Lắng Nghe Cục Bộ (Local Webhook Port):", font=("Arial", 10, "bold"), bg="#FFFFFF").pack(anchor="w", pady=(8, 2))
-        tk.Entry(card, textvariable=self.local_port_var, font=("Arial", 10), width=16).pack(anchor="w", pady=(0, 16))
+        tk.Entry(card, textvariable=self.local_port_var, font=("Arial", 10), width=16).pack(anchor="w", pady=(0, 14))
+
+        tk.Label(
+            card,
+            text="Cloud AI Image-to-3D (Tùy chọn — Tự động dự phòng Parametric PBR + USDZ khi để trống)",
+            font=("Arial", 11, "bold"),
+            bg="#FFFFFF",
+            fg="#1C1917",
+        ).pack(anchor="w", pady=(6, 4))
+
+        tk.Label(card, text="Fal.ai API Key (Trellis Image-to-3D):", font=("Arial", 9.5, "bold"), bg="#FFFFFF").pack(anchor="w", pady=(4, 2))
+        tk.Entry(card, textvariable=self.fal_key_var, font=("Arial", 10), width=48, show="*").pack(anchor="w", pady=(0, 6))
+
+        tk.Label(card, text="Tripo3D v2 API Key:", font=("Arial", 9.5, "bold"), bg="#FFFFFF").pack(anchor="w", pady=(4, 2))
+        tk.Entry(card, textvariable=self.tripo_key_var, font=("Arial", 10), width=48, show="*").pack(anchor="w", pady=(0, 14))
 
         btn_row = tk.Frame(card, bg="#FFFFFF")
         btn_row.pack(fill="x", pady=10)
@@ -1149,11 +1165,13 @@ class DeSpaceAppWindow(tk.Tk):
     def _save_settings(self):
         new_url = self.site_url_var.get().strip().rstrip("/")
         new_key = self.secret_key_var.get().strip()
+        new_fal = self.fal_key_var.get().strip()
+        new_tripo = self.tripo_key_var.get().strip()
         try:
             new_port = int(self.local_port_var.get())
         except Exception:
             new_port = Config.LOCAL_PORT
-        Config.save_persisted_settings(new_url, new_key, new_port)
+        Config.save_persisted_settings(new_url, new_key, new_port, fal_api_key=new_fal, tripo_api_key=new_tripo)
         self.sync_client.site_url = Config.SITE_URL
         self.sync_client.api_base = f"{Config.SITE_URL}/wp-json/despace/v1/desktop-3d"
         self.sync_client.secret_key = Config.API_SECRET_KEY

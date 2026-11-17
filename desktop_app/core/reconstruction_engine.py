@@ -11,7 +11,10 @@ import io
 import os
 import json
 import math
+import time
+import uuid
 import zlib
+import base64
 import struct
 import urllib.request
 from pathlib import Path
@@ -61,17 +64,24 @@ class ReconstructionEngine:
         update_progress(35, "Đang trích xuất chất liệu thực tế và tổng hợp Texture Atlas PBR 1024px...")
         texture_bytes = self._synthesize_pbr_texture(loaded_images, name, archetype)
 
-        # 4. Parametric Architectural Geometry Construction
-        update_progress(60, f"Đang dựng lưới hình học 3D ({archetype}) theo kích thước thực...")
+        # 4. Parametric Architectural Geometry Construction & Optional Cloud AI 3D
         dim_w = max(0.10, float(dimensions.get("width") or 100.0) / 100.0)   # meters
         dim_d = max(0.10, float(dimensions.get("depth") or 80.0) / 100.0)
         dim_h = max(0.10, float(dimensions.get("height") or 75.0) / 100.0)
 
         positions, normals, uvs, indices = self._build_geometry(f"{category} {name}", dim_w, dim_d, dim_h)
+        engine_mode = "parametric_pbr_v3"
 
-        # 5. GLTF 2.0 Binary (.glb) Packaging
-        update_progress(78, "Đang đóng gói tệp nhị phân Khronos glTF 2.0 (.GLB) chuẩn WebXR...")
-        glb_bytes = self._pack_glb(positions, normals, uvs, indices, texture_bytes, name)
+        cloud_res = self._try_cloud_ai_3d(loaded_images, dim_w, dim_d, dim_h, update_progress)
+        if cloud_res is not None:
+            glb_bytes, vertex_count, face_count, engine_mode = cloud_res
+        else:
+            update_progress(60, f"Đang dựng lưới hình học 3D ({archetype}) theo kích thước thực...")
+            # 5. GLTF 2.0 Binary (.glb) Packaging
+            update_progress(78, "Đang đóng gói tệp nhị phân Khronos glTF 2.0 (.GLB) chuẩn WebXR...")
+            glb_bytes = self._pack_glb(positions, normals, uvs, indices, texture_bytes, name)
+            vertex_count = len(positions) // 3
+            face_count = len(indices) // 3
 
         safe_sku = "".join(c for c in sku if c.isalnum() or c in ("-", "_")).strip() or f"PROD-{product_id}"
         glb_filename = f"{safe_sku}.glb"
@@ -93,14 +103,12 @@ class ReconstructionEngine:
         thumb_path = self.output_dir / thumb_filename
         self._generate_thumbnail(loaded_images, thumb_path, name, dim_w * 100, dim_d * 100, dim_h * 100)
 
-        vertex_count = len(positions) // 3
-        face_count = len(indices) // 3
         file_size = len(glb_bytes)
         usdz_size = len(usdz_bytes)
 
         update_progress(
             100,
-            f"Đã hoàn thành 3D (.GLB {file_size // 1024}KB + .USDZ {usdz_size // 1024}KB, {vertex_count} vertices)"
+            f"Đã hoàn thành 3D [{engine_mode}] (.GLB {file_size // 1024}KB + .USDZ {usdz_size // 1024}KB, {vertex_count} vertices)"
         )
 
         return {
@@ -108,6 +116,7 @@ class ReconstructionEngine:
             "product_id": product_id,
             "sku": sku,
             "archetype": archetype,
+            "engine_mode": engine_mode,
             "glb_path": str(glb_path),
             "glb_filename": glb_filename,
             "usdz_path": str(usdz_path),
@@ -124,6 +133,238 @@ class ReconstructionEngine:
                 "unit": "meters",
             },
         }
+
+    # -------------------------------------------------------------------------
+    # Optional Cloud AI Image-to-3D (Fal.ai Trellis / Tripo3D v2) + Scale Calibration
+    # -------------------------------------------------------------------------
+    def _try_cloud_ai_3d(
+        self,
+        loaded_images: Dict[str, Image.Image],
+        dim_w: float,
+        dim_d: float,
+        dim_h: float,
+        update_progress: callable,
+    ) -> Optional[Tuple[bytes, int, int, str]]:
+        """
+        Attempt Cloud AI Image-to-3D reconstruction when FAL_API_KEY or TRIPO_API_KEY
+        is configured. Calibrates the returned mesh to exact (dim_w, dim_d, dim_h) meters
+        and grounds it at Y=0. Returns None to fall back to Parametric PBR v3.0 when
+        no key is set or when network/provider fails.
+        """
+        fal_key = (Config.FAL_API_KEY or "").strip()
+        tripo_key = (Config.TRIPO_API_KEY or "").strip()
+        if not fal_key and not tripo_key:
+            return None
+
+        primary_img = (
+            loaded_images.get("front")
+            or loaded_images.get("perspective")
+            or next(iter(loaded_images.values()), None)
+        )
+        if primary_img is None:
+            return None
+
+        buf = io.BytesIO()
+        rgb_preview = primary_img.convert("RGBA")
+        rgb_preview.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
+        rgb_preview.save(buf, format="PNG")
+        png_bytes = buf.getvalue()
+
+        # 1. Fal.ai Trellis Image-to-3D
+        if fal_key:
+            try:
+                update_progress(52, "Đang gửi ảnh lên Cloud AI (Fal.ai Trellis Image-to-3D)...")
+                data_uri = "data:image/png;base64," + base64.b64encode(png_bytes).decode("ascii")
+                payload = json.dumps(
+                    {
+                        "image_url": data_uri,
+                        "ss_guidance_strength": 7.5,
+                        "slat_guidance_strength": 3.0,
+                        "mesh_simplify": 0.95,
+                        "texture_size": 1024,
+                    }
+                ).encode("utf-8")
+                req = urllib.request.Request(
+                    "https://fal.run/fal-ai/trellis",
+                    data=payload,
+                    headers={
+                        "Authorization": f"Key {fal_key}",
+                        "Content-Type": "application/json",
+                        "User-Agent": "DeSpace-3D-Studio/3.1",
+                    },
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=120) as resp:
+                    res_json = json.loads(resp.read().decode("utf-8"))
+                mesh_url = (
+                    (res_json.get("model_mesh") or {}).get("url")
+                    or (res_json.get("mesh") or {}).get("url")
+                    or ""
+                )
+                if mesh_url:
+                    update_progress(72, "Đang tải lưới 3D từ Fal.ai & hiệu chuẩn kích thước thực 1:1...")
+                    with urllib.request.urlopen(mesh_url, timeout=60) as m_resp:
+                        raw_glb = m_resp.read()
+                    calibrated_glb, v_cnt, f_cnt = self._calibrate_glb_scale(raw_glb, dim_w, dim_d, dim_h)
+                    return calibrated_glb, v_cnt, f_cnt, "cloud_fal_trellis"
+            except Exception as exc:
+                update_progress(58, f"Cloud Fal.ai tạm gián đoạn ({exc}) — chuyển sang chế độ dự phòng...")
+
+        # 2. Tripo3D v2 Image-to-3D
+        if tripo_key:
+            try:
+                update_progress(55, "Đang tải ảnh lên Cloud AI (Tripo3D v2 Image-to-3D)...")
+                boundary = f"----DeSpaceTripo{uuid.uuid4().hex}"
+                mp_body = (
+                    f"--{boundary}\r\n"
+                    f'Content-Disposition: form-data; name="file"; filename="product.png"\r\n'
+                    f"Content-Type: image/png\r\n\r\n"
+                ).encode("utf-8") + png_bytes + f"\r\n--{boundary}--\r\n".encode("utf-8")
+
+                up_req = urllib.request.Request(
+                    "https://api.tripo3d.ai/v2/openapi/upload",
+                    data=mp_body,
+                    headers={
+                        "Authorization": f"Bearer {tripo_key}",
+                        "Content-Type": f"multipart/form-data; boundary={boundary}",
+                    },
+                    method="POST",
+                )
+                with urllib.request.urlopen(up_req, timeout=45) as up_resp:
+                    up_json = json.loads(up_resp.read().decode("utf-8"))
+                img_token = ((up_json.get("data") or {}).get("image_token")) or ""
+                if img_token:
+                    task_payload = json.dumps(
+                        {
+                            "type": "image_to_model",
+                            "file": {"type": "png", "file_token": img_token},
+                        }
+                    ).encode("utf-8")
+                    task_req = urllib.request.Request(
+                        "https://api.tripo3d.ai/v2/openapi/task",
+                        data=task_payload,
+                        headers={
+                            "Authorization": f"Bearer {tripo_key}",
+                            "Content-Type": "application/json",
+                        },
+                        method="POST",
+                    )
+                    with urllib.request.urlopen(task_req, timeout=30) as t_resp:
+                        t_json = json.loads(t_resp.read().decode("utf-8"))
+                    task_id = ((t_json.get("data") or {}).get("task_id")) or ""
+                    for _ in range(40):
+                        if not task_id:
+                            break
+                        time.sleep(3)
+                        poll_req = urllib.request.Request(
+                            f"https://api.tripo3d.ai/v2/openapi/task/{task_id}",
+                            headers={"Authorization": f"Bearer {tripo_key}"},
+                            method="GET",
+                        )
+                        with urllib.request.urlopen(poll_req, timeout=20) as p_resp:
+                            p_data = (json.loads(p_resp.read().decode("utf-8")).get("data")) or {}
+                        status = p_data.get("status", "")
+                        if status == "success":
+                            out_info = p_data.get("output") or {}
+                            glb_url = out_info.get("pbr_model") or out_info.get("model") or ""
+                            if glb_url:
+                                with urllib.request.urlopen(glb_url, timeout=60) as g_resp:
+                                    raw_glb = g_resp.read()
+                                calibrated_glb, v_cnt, f_cnt = self._calibrate_glb_scale(raw_glb, dim_w, dim_d, dim_h)
+                                return calibrated_glb, v_cnt, f_cnt, "cloud_tripo3d"
+                            break
+                        if status in ("failed", "cancelled", "banned", "expired"):
+                            break
+            except Exception as exc:
+                update_progress(59, f"Cloud Tripo3D tạm gián đoạn ({exc}) — chuyển sang Parametric PBR...")
+
+        return None
+
+    @staticmethod
+    def _calibrate_glb_scale(
+        raw_glb: bytes,
+        target_w: float,
+        target_d: float,
+        target_h: float,
+    ) -> Tuple[bytes, int, int]:
+        """
+        Rescale a unit-normalized glTF 2.0 binary (.glb) from Cloud AI so its world-space
+        bounding box matches exact physical meters (target_w x target_h x target_d) and rests at Y=0.
+        """
+        if len(raw_glb) < 28 or raw_glb[:4] != b"glTF":
+            return raw_glb, 0, 0
+
+        json_len, json_type = struct.unpack_from("<I4s", raw_glb, 12)
+        if json_type != b"JSON":
+            return raw_glb, 0, 0
+
+        gltf = json.loads(raw_glb[20 : 20 + json_len].decode("utf-8"))
+        rest_chunks = raw_glb[20 + json_len :]
+
+        accessors = gltf.get("accessors") or []
+        meshes = gltf.get("meshes") or []
+        min_bounds = [float("inf"), float("inf"), float("inf")]
+        max_bounds = [float("-inf"), float("-inf"), float("-inf")]
+        total_verts = 0
+        total_faces = 0
+
+        for mesh in meshes:
+            for prim in mesh.get("primitives") or []:
+                attrs = prim.get("attributes") or {}
+                pos_idx = attrs.get("POSITION")
+                if pos_idx is not None and 0 <= pos_idx < len(accessors):
+                    acc = accessors[pos_idx]
+                    total_verts += int(acc.get("count") or 0)
+                    a_min = acc.get("min")
+                    a_max = acc.get("max")
+                    if isinstance(a_min, list) and isinstance(a_max, list) and len(a_min) == 3 and len(a_max) == 3:
+                        for axis in range(3):
+                            min_bounds[axis] = min(min_bounds[axis], float(a_min[axis]))
+                            max_bounds[axis] = max(max_bounds[axis], float(a_max[axis]))
+                idx_acc = prim.get("indices")
+                if idx_acc is not None and 0 <= idx_acc < len(accessors):
+                    total_faces += int(accessors[idx_acc].get("count") or 0) // 3
+
+        if all(math.isfinite(v) for v in min_bounds + max_bounds):
+            span_x = max(1e-4, max_bounds[0] - min_bounds[0])
+            span_y = max(1e-4, max_bounds[1] - min_bounds[1])
+            span_z = max(1e-4, max_bounds[2] - min_bounds[2])
+            sx = round(target_w / span_x, 6)
+            sy = round(target_h / span_y, 6)
+            sz = round(target_d / span_z, 6)
+            cx = -0.5 * (min_bounds[0] + max_bounds[0]) * sx
+            cy = -min_bounds[1] * sy  # Ground bottom cleanly at Y = 0
+            cz = -0.5 * (min_bounds[2] + max_bounds[2]) * sz
+
+            nodes = gltf.setdefault("nodes", [])
+            scenes = gltf.get("scenes") or []
+            scene_idx = int(gltf.get("scene") or 0)
+            if scenes and 0 <= scene_idx < len(scenes):
+                old_roots = list(scenes[scene_idx].get("nodes") or [])
+                if old_roots:
+                    cal_node_idx = len(nodes)
+                    nodes.append(
+                        {
+                            "name": "DeSpace_PhysicalScaleRoot",
+                            "children": old_roots,
+                            "scale": [sx, sy, sz],
+                            "translation": [round(cx, 6), round(cy, 6), round(cz, 6)],
+                        }
+                    )
+                    scenes[scene_idx]["nodes"] = [cal_node_idx]
+
+        new_json = json.dumps(gltf, separators=(",", ":")).encode("utf-8")
+        pad = (4 - (len(new_json) % 4)) % 4
+        if pad:
+            new_json += b" " * pad
+        total_len = 12 + 8 + len(new_json) + len(rest_chunks)
+        out_glb = (
+            struct.pack("<4sII", b"glTF", 2, total_len)
+            + struct.pack("<I4s", len(new_json), b"JSON")
+            + new_json
+            + rest_chunks
+        )
+        return out_glb, total_verts, total_faces
 
     # -------------------------------------------------------------------------
     # Archetype Resolution (Bilingual VI / EN)

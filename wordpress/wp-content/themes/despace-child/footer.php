@@ -20,23 +20,6 @@ if ( function_exists( 'yith_wcwl_count_all_products' ) ) {
 }
 $footer_categories = get_terms( array( 'taxonomy' => 'product_cat', 'hide_empty' => true, 'parent' => 0, 'number' => 5 ) );
 if ( is_wp_error( $footer_categories ) ) $footer_categories = array();
-$chat_products = function_exists( 'wc_get_products' ) ? wc_get_products( array(
-	'status'  => 'publish',
-	'limit'   => 30,
-	'orderby' => 'popularity',
-	'order'   => 'DESC',
-) ) : array();
-$chat_catalogue = array();
-foreach ( $chat_products as $chat_product ) {
-	$chat_terms = get_the_terms( $chat_product->get_id(), 'product_cat' );
-	$chat_catalogue[] = array(
-		'name'       => wp_strip_all_tags( $chat_product->get_name() ),
-		'price'      => html_entity_decode( wp_strip_all_tags( $chat_product->get_price_html() ), ENT_QUOTES, get_bloginfo( 'charset' ) ),
-		'url'        => get_permalink( $chat_product->get_id() ),
-		'image'      => wp_get_attachment_image_url( $chat_product->get_image_id(), 'woocommerce_thumbnail' ),
-		'categories' => ( $chat_terms && ! is_wp_error( $chat_terms ) ) ? array_map( 'sanitize_title', wp_list_pluck( $chat_terms, 'slug' ) ) : array(),
-	);
-}
 ?>
 <?php if ( ! is_front_page() ) : ?></main><?php else : ?></main><?php endif; ?>
 
@@ -261,8 +244,7 @@ foreach ( $chat_products as $chat_product ) {
 	</button>
 </nav>
 
-<script type="application/json" id="despace-chat-catalogue"><?php echo wp_json_encode( $chat_catalogue, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT ); ?></script>
-<script type="application/json" id="axgnud-chat-catalogue"><?php echo wp_json_encode( $chat_catalogue, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT ); ?></script>
+<script type="application/json" id="despace-chat-catalogue">[]</script>
 
 <!-- Bottom-Right Floating AI Assistant & Contact Dock -->
 <div class="ax-chat-dock" id="ax-chat-dock">
@@ -285,22 +267,22 @@ foreach ( $chat_products as $chat_product ) {
 		<header class="ax-chat-panel__head">
 			<img class="ax-chat-panel__avatar" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/despace-mark.png' ); ?>" alt="DeSpace AI Assistant" width="40" height="40" />
 			<div>
-				<h2 id="ax-chat-title"><?php echo esc_html( furniva_t( 'DeSpace AI Assistant', 'Trợ lý AI DeSpace' ) ); ?></h2>
-				<p><?php echo esc_html( furniva_t( 'Instant catalog styling & shopping guide', 'Tư vấn sản phẩm & phối không gian sống' ) ); ?></p>
+				<h2 id="ax-chat-title"><?php echo esc_html( furniva_t( 'DeSpace AI Concierge', 'Trợ lý Nội thất AI DeSpace' ) ); ?></h2>
+				<p><?php echo esc_html( furniva_t( '1:1 room-fit sizing, 3D/AR & catalog guide', 'Đo kích thước phòng 1:1, 3D/AR & tư vấn nội thất' ) ); ?></p>
 			</div>
 			<button class="ax-chat-close" type="button" aria-label="<?php echo esc_attr( furniva_t( 'Close chat', 'Đóng trò chuyện' ) ); ?>">×</button>
 		</header>
 		<div class="ax-chat-messages" id="ax-chat-messages" role="log" aria-live="polite">
 			<div class="ax-chat-message ax-chat-message--assistant">
-				<?php echo esc_html( furniva_t( 'Hello! I am DeSpace AI Assistant ✦. Tell me what room or furniture piece you are looking for, and I will recommend our best pieces.', 'Xin chào! Tôi là Trợ lý AI DeSpace ✦. Bạn đang tìm nội thất cho phòng khách, phòng ngủ hay phòng ăn? Tôi có thể gợi ý những mẫu thiết kế cao cấp phù hợp nhất cho không gian của bạn!' ) ); ?>
+				<?php echo esc_html( furniva_t( 'Hello! I am DeSpace AI Concierge ✦. Tell me your room space (e.g. "shoe cabinet width 120cm depth 35cm under 3M"), wood tone, or style — I will find pieces that fit and let you preview them in 1:1 3D & AR!', 'Xin chào! Mình là Trợ lý Nội thất AI DeSpace ✦. Hãy nhập kích thước góc phòng (VD: "tủ giày ngang 1m2 sâu 35cm dưới 3 triệu"), màu gỗ hoặc loại tủ — mình sẽ đo khớp và mở xem thử 3D/AR 1:1 ngay tại đây!' ) ); ?>
 			</div>
 		</div>
 		<div class="ax-chat-prompts">
-			<button type="button" data-chat-prompt="<?php echo esc_attr( furniva_t( 'sofa', 'sofa' ) ); ?>">Sofa & Ghế bành</button>
-			<button type="button" data-chat-prompt="<?php echo esc_attr( furniva_t( 'chair', 'ghế' ) ); ?>">Ghế tựa & Ghế ăn</button>
-			<button type="button" data-chat-prompt="<?php echo esc_attr( furniva_t( 'table', 'bàn' ) ); ?>">Bàn ăn & Bàn trà</button>
-			<button type="button" data-chat-prompt="<?php echo esc_attr( furniva_t( 'lighting', 'đèn' ) ); ?>">Đèn chiếu sáng</button>
-			<button type="button" data-chat-prompt="<?php echo esc_attr( furniva_t( 'bed', 'giường' ) ); ?>">Giường ngủ</button>
+			<button type="button" data-chat-prompt="<?php echo esc_attr( furniva_t( 'Shoe cabinet width 120cm depth 35cm under 3,000,000 VND', 'Tủ giày ngang 1m2 sâu 35cm dưới 3 triệu' ) ); ?>"><?php echo esc_html( furniva_t( 'Shoe cabinet ≤120×35cm', 'Tủ giày ≤1m2 × 35cm' ) ); ?></button>
+			<button type="button" data-chat-prompt="<?php echo esc_attr( furniva_t( 'Bookshelf under 3,500,000 VND', 'Kệ sách đẹp dưới 3 triệu 5' ) ); ?>"><?php echo esc_html( furniva_t( 'Bookshelves <3.5M', 'Kệ sách <3,5tr' ) ); ?></button>
+			<button type="button" data-chat-prompt="<?php echo esc_attr( furniva_t( 'Oak wardrobe', 'Tủ quần áo màu gỗ sồi' ) ); ?>"><?php echo esc_html( furniva_t( 'Oak wardrobes', 'Tủ áo gỗ sồi' ) ); ?></button>
+			<button type="button" data-chat-prompt="<?php echo esc_attr( furniva_t( 'Kitchen cabinet', 'Tủ bếp lưu trữ gọn gàng' ) ); ?>"><?php echo esc_html( furniva_t( 'Kitchen storage', 'Tủ bếp gọn' ) ); ?></button>
+			<button type="button" data-chat-prompt="<?php echo esc_attr( furniva_t( 'Shipping & VietQR payment policy', 'Chính sách giao hàng & thanh toán VietQR' ) ); ?>"><?php echo esc_html( furniva_t( 'Shipping & VietQR', 'Giao hàng & VietQR' ) ); ?></button>
 		</div>
 		<form class="ax-chat-form" id="ax-chat-form">
 			<label class="screen-reader-text" for="ax-chat-input"><?php echo esc_html( furniva_t( 'Ask the shopping assistant', 'Hỏi trợ lý mua sắm' ) ); ?></label>

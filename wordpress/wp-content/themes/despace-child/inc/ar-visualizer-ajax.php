@@ -148,15 +148,6 @@ add_action('wp_ajax_nopriv_ar_add_to_cart', 'ar_add_to_cart');
 function ar_add_to_cart() {
     check_ajax_referer('ar_security', 'nonce');
 
-    if ( ! is_user_logged_in() ) {
-        wp_send_json_error( array(
-            'require_login' => true,
-            'redirect'      => add_query_arg( 'action', 'login', wc_get_page_permalink( 'myaccount' ) ),
-            'message'       => function_exists( 'furniva_t' ) ? furniva_t( 'Please sign in to add products from 3D/AR to your cart.', 'Quý khách vui lòng đăng nhập để thêm sản phẩm từ không gian 3D/AR vào giỏ hàng.' ) : 'Please sign in to add products to your cart.'
-        ) );
-        return;
-    }
-
     $product_id = isset($_POST['product_id']) ? absint($_POST['product_id']) : 0;
     $quantity = isset($_POST['quantity']) ? absint($_POST['quantity']) : 1;
 
@@ -223,7 +214,7 @@ function ar_get_products() {
             $query->the_post();
             global $product;
 
-            $dimensions = $product->get_dimensions();
+            $dimensions = $product->get_dimensions(false);
 
             $products[] = array(
                 'id' => $product->get_id(),

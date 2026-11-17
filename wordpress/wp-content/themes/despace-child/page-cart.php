@@ -322,8 +322,8 @@ $progress_percent = $needs_shipping ? min(100, ($subtotal / $shipping_threshold)
 jQuery(function($) {
     var cartNonce = '<?php echo wp_create_nonce( 'furniva_cart' ); ?>';
 
-    // Quantity controls
-    $(document).on('click', '.ax-qty-minus', function() {
+    // Quantity controls (scoped to .ax-cart-item)
+    $(document).on('click', '.ax-cart-item .ax-qty-minus', function() {
         var $input = $(this).siblings('.ax-qty-input');
         var val = parseInt($input.val()) || 1;
         if (val > 1) {
@@ -331,7 +331,7 @@ jQuery(function($) {
         }
     });
 
-    $(document).on('click', '.ax-qty-plus', function() {
+    $(document).on('click', '.ax-cart-item .ax-qty-plus', function() {
         var $input = $(this).siblings('.ax-qty-input');
         var val = parseInt($input.val()) || 1;
         var max = parseInt($input.attr('max')) || 999;

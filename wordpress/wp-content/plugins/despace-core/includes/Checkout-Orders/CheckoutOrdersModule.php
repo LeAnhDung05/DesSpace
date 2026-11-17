@@ -20,6 +20,7 @@ use DeSpace\CheckoutOrders\Orders\GuestOrderTracker;
 use DeSpace\CheckoutOrders\Payment\BacsInstructions;
 use DeSpace\CheckoutOrders\Payment\PaymentMethodValidator;
 use DeSpace\CheckoutOrders\Payment\PaymentStatusGuard;
+use DeSpace\CheckoutOrders\Payment\VietQrPaymentExperience;
 use DeSpace\CheckoutOrders\Shipping\VietnamRegions;
 use DeSpace\CheckoutOrders\Shipping\ShippingNoticeHelper;
 
@@ -94,6 +95,7 @@ class CheckoutOrdersModule {
 			PaymentMethodValidator::class,
 			PaymentStatusGuard::class,
 			BacsInstructions::class,
+			VietQrPaymentExperience::class,
 			GuestOrderTracker::class,
 			AccountProfileHandler::class,
 			AccountAddressHandler::class,

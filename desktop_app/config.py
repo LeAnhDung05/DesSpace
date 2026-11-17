@@ -1,11 +1,13 @@
 """
-Configuration Module for DeSpace 3D Studio Desktop v3.0.
-Supports environment variables and persistent local settings.json.
+Configuration Module for DeSpace 3D Studio Desktop v3.1.
+Supports environment variables, Cloud AI Image-to-3D keys (Fal.ai / Tripo3D),
+and persistent local settings.json.
 """
 
 import os
 import json
 from pathlib import Path
+from typing import Optional
 
 BASE_DIR = Path(__file__).resolve().parent
 SETTINGS_FILE = BASE_DIR / "settings.json"
@@ -16,6 +18,10 @@ class Config:
     API_SECRET_KEY = os.environ.get("DESPACE_DESKTOP_KEY", "despace-desktop-studio-secret-2026")
     LOCAL_PORT = int(os.environ.get("DESPACE_LOCAL_PORT", 58300))
     POLL_INTERVAL = float(os.environ.get("DESPACE_POLL_INTERVAL", 3.0))
+
+    # Optional Cloud AI Image-to-3D API Keys (automatic Parametric PBR fallback when empty)
+    FAL_API_KEY = os.environ.get("FAL_KEY", os.environ.get("DESPACE_FAL_API_KEY", ""))
+    TRIPO_API_KEY = os.environ.get("TRIPO_API_KEY", os.environ.get("DESPACE_TRIPO_API_KEY", ""))
 
     OUTPUT_DIR = BASE_DIR / "output"
     TEMP_DIR = BASE_DIR / "temp"
@@ -42,14 +48,29 @@ class Config:
                     cls.API_SECRET_KEY = str(data["api_secret_key"])
                 if "DESPACE_LOCAL_PORT" not in os.environ and data.get("local_port"):
                     cls.LOCAL_PORT = int(data["local_port"])
+                if "FAL_KEY" not in os.environ and "DESPACE_FAL_API_KEY" not in os.environ and "fal_api_key" in data:
+                    cls.FAL_API_KEY = str(data.get("fal_api_key") or "")
+                if "TRIPO_API_KEY" not in os.environ and "DESPACE_TRIPO_API_KEY" not in os.environ and "tripo_api_key" in data:
+                    cls.TRIPO_API_KEY = str(data.get("tripo_api_key") or "")
             except Exception:
                 pass
 
     @classmethod
-    def save_persisted_settings(cls, site_url: str, api_secret_key: str, local_port: int):
+    def save_persisted_settings(
+        cls,
+        site_url: str,
+        api_secret_key: str,
+        local_port: int,
+        fal_api_key: Optional[str] = None,
+        tripo_api_key: Optional[str] = None,
+    ):
         cls.SITE_URL = site_url.rstrip("/")
         cls.API_SECRET_KEY = api_secret_key
         cls.LOCAL_PORT = int(local_port)
+        if fal_api_key is not None:
+            cls.FAL_API_KEY = fal_api_key.strip()
+        if tripo_api_key is not None:
+            cls.TRIPO_API_KEY = tripo_api_key.strip()
         try:
             SETTINGS_FILE.write_text(
                 json.dumps(
@@ -57,6 +78,8 @@ class Config:
                         "site_url": cls.SITE_URL,
                         "api_secret_key": cls.API_SECRET_KEY,
                         "local_port": cls.LOCAL_PORT,
+                        "fal_api_key": cls.FAL_API_KEY,
+                        "tripo_api_key": cls.TRIPO_API_KEY,
                     },
                     indent=2,
                 ),

@@ -62,7 +62,6 @@ function furniva_english_titles() {
 		232 => '5 Ways to Style a Walnut Coffee Table',
 		234 => 'Lighting Layers: How to Light a Living Room Properly',
 		236 => 'Bed Frame Sizes Explained: Queen vs King',
-		238 => 'Small Space, Big Style: Decorating Around a Statement Vase',
 		240 => 'Caring for Oak: A 5-Minute Monthly Routine',
 		// DeSpace 40 Core Luxury Products
 		467 => 'DeSpace Regal 6-Drawer Dresser - Sonoma Oak',
@@ -583,8 +582,9 @@ function furniva_language_switcher_html() {
 }
 
 /**
- * Currency Switcher for English Experience (USD)
- * When language is set to English, seamlessly convert VND to USD (Rate: 1 USD = 25,000 VND).
+ * Safe English Currency Reference Display (Ledger remains strictly VND)
+ * Never mutates woocommerce_currency or raw_woocommerce_price so WC_Order totals
+ * and payment gateways always settle accurately in VND without 25,000x corruption.
  */
 function despace_is_english_mode() {
 	if ( function_exists( 'furniva_current_language' ) ) {
@@ -597,38 +597,20 @@ function despace_is_english_mode() {
 	return ( 0 === strpos( $uri, '/en/' ) || '/en' === $uri );
 }
 
-add_filter( 'woocommerce_currency', function( $currency ) {
-	if ( despace_is_english_mode() ) {
-		return 'USD';
+add_filter( 'wc_price', function( $return, $price, $args, $unformatted_price ) {
+	if ( is_admin() || ! despace_is_english_mode() ) {
+		return $return;
 	}
-	return $currency;
-}, 99 );
-
-add_filter( 'woocommerce_currency_symbol', function( $symbol, $currency ) {
-	if ( 'USD' === $currency || despace_is_english_mode() ) {
-		return '$';
+	$raw_num = is_numeric( $unformatted_price ) ? (float) $unformatted_price : 0.0;
+	if ( $raw_num <= 0 ) {
+		return $return;
 	}
-	return $symbol;
-}, 99, 2 );
-
-add_filter( 'wc_price_args', function( $args ) {
-	if ( despace_is_english_mode() ) {
-		$args['currency']           = 'USD';
-		$args['decimal_separator']  = '.';
-		$args['thousand_separator'] = ',';
-		$args['decimals']           = 2;
-		$args['price_format']       = '%1$s%2$s';
+	$usd_approx = round( $raw_num / 25000, 0 );
+	if ( $usd_approx < 1 ) {
+		$usd_approx = round( $raw_num / 25000, 2 );
 	}
-	return $args;
-}, 99 );
-
-add_filter( 'raw_woocommerce_price', function( $price ) {
-	if ( despace_is_english_mode() && is_numeric( $price ) && $price > 1000 ) {
-		// Convert VND to USD with clean rounding (Rate: 25,000 VND / USD)
-		return round( (float) $price / 25000, 2 );
-	}
-	return $price;
-}, 99 );
+	return $return . ' <span class="despace-usd-ref" style="font-size:0.84em;opacity:0.75;font-weight:500;">(&approx; $' . esc_html( number_format( (float) $usd_approx, ( $usd_approx == (int) $usd_approx ? 0 : 2 ) ) ) . ')</span>';
+}, 99, 4 );
 
 /**
  * Permanently disable TranslatePress floating language switcher widget.

@@ -776,19 +776,42 @@ class VietnamRegions {
 	}
 
 	/**
-	 * Find matching commune code inside a given province by Unicode name.
+	 * Strip leading commune/ward/special-zone administrative prefix for flexible user input matching.
+	 *
+	 * @param string $normalized Lowercase normalized commune name.
+	 * @return string
+	 */
+	private static function strip_commune_prefix( string $normalized ): string {
+		$stripped = preg_replace( '/^(?:phường|xã|thị trấn|đặc khu|p\.|x\.|tt\.)\s+/u', '', $normalized );
+		return is_string( $stripped ) ? trim( $stripped ) : $normalized;
+	}
+
+	/**
+	 * Find matching commune code inside a given province by Unicode name (supports both full and short names).
 	 *
 	 * @param string $province_code Province code.
 	 * @param string $name          Commune name.
 	 * @return string
 	 */
 	private static function find_commune_code_by_name( string $province_code, string $name ): string {
-		$needle = self::normalize_compare( $name );
-		foreach ( self::get_communes( $province_code ) as $code => $commune ) {
+		$needle       = self::normalize_compare( $name );
+		$needle_short = self::strip_commune_prefix( $needle );
+		$communes     = self::get_communes( $province_code );
+
+		foreach ( $communes as $code => $commune ) {
 			if ( self::normalize_compare( $commune['name'] ) === $needle ) {
 				return (string) $code;
 			}
 		}
+
+		if ( '' !== $needle_short ) {
+			foreach ( $communes as $code => $commune ) {
+				if ( self::strip_commune_prefix( self::normalize_compare( $commune['name'] ) ) === $needle_short ) {
+					return (string) $code;
+				}
+			}
+		}
+
 		return '';
 	}
 
