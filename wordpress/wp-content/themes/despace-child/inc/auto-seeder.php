@@ -17,6 +17,7 @@ class DeSpace_Auto_Seeder {
 	public static function init() {
 		add_action( 'admin_notices', array( __CLASS__, 'render_admin_notice' ) );
 		add_action( 'wp_footer', array( __CLASS__, 'render_frontend_banner' ) );
+		add_action( 'admin_bar_menu', array( __CLASS__, 'add_admin_bar_sync_button' ), 90 );
 		add_action( 'admin_post_despace_run_auto_sync', array( __CLASS__, 'handle_auto_sync' ) );
 	}
 
@@ -28,11 +29,30 @@ class DeSpace_Auto_Seeder {
 			return false;
 		}
 
-		// Check if products count is 0
+		// Check if products count is less than 10
 		$product_count = wp_count_posts( 'product' );
 		$published = isset( $product_count->publish ) ? intval( $product_count->publish ) : 0;
 
-		return ( $published === 0 || isset( $_GET['despace_sync_prompt'] ) );
+		return ( $published < 10 || isset( $_GET['despace_sync_prompt'] ) );
+	}
+
+	/**
+	 * Render 1-click button on top admin bar.
+	 */
+	public static function add_admin_bar_sync_button( $admin_bar ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		$sync_url = wp_nonce_url( admin_url( 'admin-post.php?action=despace_run_auto_sync' ), 'despace_auto_sync_nonce' );
+		$admin_bar->add_node( array(
+			'id'    => 'despace-sync-db-btn',
+			'title' => '<span style="background: #2563eb; color: #ffffff; padding: 2px 10px; border-radius: 4px; font-weight: 700; font-size: 12px; display: inline-block;">⚡ Đồng bộ Data DeSpace</span>',
+			'href'  => $sync_url,
+			'meta'  => array(
+				'title'   => 'Nạp 40 sản phẩm và cấu hình DeSpace tự động',
+				'onclick' => "return confirm('Bạn có chắc muốn đồng bộ 40 sản phẩm chuẩn và database DeSpace vào trang này?');",
+			),
+		) );
 	}
 
 	/**
