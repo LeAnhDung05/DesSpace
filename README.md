@@ -102,7 +102,7 @@ Hệ thống đã được đóng gói và cấu hình chạy trên Docker:
 ### 4.2. Tài khoản kiểm thử
 | Vai trò | Tên đăng nhập | Mật khẩu | Quyền hạn chính |
 |---|---|---|---|
-| **Administrator** | `admin` | *(Cấu hình trong .env)* | Toàn quyền quản trị hệ thống, plugins, cài đặt |
+| **Administrator** | `admin` | `Admin@2026` *(hoặc trong .env)* | Toàn quyền quản trị hệ thống, plugins, cài đặt |
 | **DeSpace Staff** | `staff` | `StaffPass123!` | Quản lý mô hình 3D, kiểm toán kho, xem báo cáo |
 | **Customer** | `customer` | `CustomerPass123!` | Đặt hàng, theo dõi đơn, lưu danh sách yêu thích |
 
