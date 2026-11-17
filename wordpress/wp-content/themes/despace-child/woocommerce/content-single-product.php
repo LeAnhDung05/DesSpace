@@ -92,13 +92,13 @@ if ( ! empty( $finish_attr_val ) ) {
             <div class="ax-gallery-wrap">
                 <?php if ( $percent ) : ?>
                     <span class="ax-badge-designer">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                        DESIGNER PICK
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        <?php echo esc_html( furniva_t( 'STUDIO CURATED', 'TUYỂN CHỌN STUDIO' ) ); ?>
                     </span>
                 <?php else : ?>
                     <span class="ax-badge-designer">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                        <?php echo esc_html( furniva_t( 'FEATURED', 'NỔI BẬT' ) ); ?>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        <?php echo esc_html( furniva_t( 'SIGNATURE PIECE', 'THIẾT KẾ ĐIỂM NHẤN' ) ); ?>
                     </span>
                 <?php endif; ?>
 
@@ -217,35 +217,46 @@ if ( ! empty( $finish_attr_val ) ) {
 
                 <div class="ax-divider"></div>
 
-                <!-- Single Product Finish Display (No dots swatches) -->
+                <!-- Architectural Specification Panel (Dimensions, Finish & Stock) -->
                 <?php
                 $single_finish = '';
                 $color_terms = wc_get_product_terms( $id, 'pa_color', array( 'fields' => 'names' ) );
                 if ( ! empty( $color_terms ) && ! is_wp_error( $color_terms ) ) {
                     $single_finish = furniva_term_label( $color_terms[0], 'pa_color' );
                 }
-                if ( $single_finish ) : ?>
-                <div class="ax-finish-badge-row" style="margin-bottom: 18px; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
-                    <span class="ax-var-label" style="font-size: 0.8rem; font-weight: 600; letter-spacing: 0.05em; color: #71717a; text-transform: uppercase;"><?php echo esc_html( furniva_t( 'Finish:', 'Màu hoàn thiện:' ) ); ?></span>
-                    <strong class="ax-finish-val" style="color: #18181b; font-weight: 600;"><?php echo esc_html( $single_finish ); ?></strong>
-                </div>
-                <?php endif; ?>
-
-                <!-- Availability -->
-                <div class="ax-availability">
-                    <strong><?php echo esc_html( furniva_t( 'Availability:', 'Tình trạng:' ) ); ?></strong>
-                    <span class="ax-stock-status">
-                        <span class="ax-stock-dot"></span>
-                        <?php
-                        if ( $product->is_in_stock() ) {
-                            $stock = $product->get_stock_quantity();
-                            $stock_text = $stock ? "({$stock} " . esc_html( furniva_t( 'units', 'sản phẩm' ) ) . ")" : '';
-                            echo '<span class="ax-stock-in">' . esc_html( furniva_t( 'In stock', 'Còn hàng' ) ) . '</span> ' . $stock_text;
-                        } else {
-                            echo '<span class="ax-stock-out">' . esc_html( furniva_t( 'Out of stock', 'Hết hàng' ) ) . '</span>';
-                        }
-                        ?>
-                    </span>
+                $spec_dims = $product->get_dimensions( false );
+                $spec_dim_label = ( ! empty( $spec_dims['length'] ) && ! empty( $spec_dims['width'] ) && ! empty( $spec_dims['height'] ) )
+                    ? sprintf( '%s × %s × %s cm', $spec_dims['length'], $spec_dims['width'], $spec_dims['height'] )
+                    : '';
+                ?>
+                <div class="ax-spec-panel">
+                    <?php if ( $spec_dim_label ) : ?>
+                    <div class="ax-spec-row">
+                        <span class="ax-spec-label"><?php echo esc_html( furniva_t( 'Dimensions (W × D × H)', 'Kích thước (R × S × C)' ) ); ?></span>
+                        <strong class="ax-spec-val"><?php echo esc_html( $spec_dim_label ); ?></strong>
+                    </div>
+                    <?php endif; ?>
+                    <?php if ( $single_finish ) : ?>
+                    <div class="ax-spec-row">
+                        <span class="ax-spec-label"><?php echo esc_html( furniva_t( 'Wood & Finish', 'Bề mặt hoàn thiện' ) ); ?></span>
+                        <strong class="ax-spec-val"><?php echo esc_html( $single_finish ); ?></strong>
+                    </div>
+                    <?php endif; ?>
+                    <div class="ax-spec-row">
+                        <span class="ax-spec-label"><?php echo esc_html( furniva_t( 'Availability', 'Tình trạng kho' ) ); ?></span>
+                        <span class="ax-stock-status">
+                            <span class="ax-stock-dot"></span>
+                            <?php
+                            if ( $product->is_in_stock() ) {
+                                $stock = $product->get_stock_quantity();
+                                $stock_text = $stock ? "({$stock} " . esc_html( furniva_t( 'pieces ready', 'sản phẩm sẵn giao' ) ) . ")" : '';
+                                echo '<span class="ax-stock-in">' . esc_html( furniva_t( 'In stock', 'Còn hàng' ) ) . '</span> ' . $stock_text;
+                            } else {
+                                echo '<span class="ax-stock-out">' . esc_html( furniva_t( 'Out of stock', 'Tạm hết hàng' ) ) . '</span>';
+                            }
+                            ?>
+                        </span>
+                    </div>
                 </div>
 
                 <!-- Add to Cart Form -->
@@ -272,9 +283,9 @@ if ( ! empty( $finish_attr_val ) ) {
                     $regular_price_clean = $product->is_on_sale() ? wc_price( $product->get_regular_price() ) : '';
                     $has_model = ! empty( $model_info['glb_url'] );
                 ?>
-                <div class="ax-3d-ar-actions-group" style="display:flex; gap:10px; margin: 16px 0 20px; flex-wrap:wrap;">
+                <div class="ax-3d-ar-actions-group">
                     <!-- Nút 1: Xem Mô hình 3D 360° -->
-                    <button type="button" class="ar-product-btn ax-open-3d-btn" id="axView3DModelBtn"
+                    <button type="button" class="ar-product-btn ax-3d-btn-secondary ax-open-3d-btn" id="axView3DModelBtn"
                         data-product-id="<?php echo esc_attr( $product->get_id() ); ?>"
                         data-product-name="<?php echo esc_attr( $product->get_name() ); ?>"
                         data-product-price="<?php echo esc_attr( wp_strip_all_tags( $price_clean ) ); ?>"
@@ -288,9 +299,8 @@ if ( ! empty( $finish_attr_val ) ) {
                         data-ar-enabled="<?php echo ( $has_model && $model_info['ar_enabled'] ) ? 'yes' : 'no'; ?>"
                         data-glb-url="<?php echo esc_url( $model_info['glb_url'] ); ?>"
                         data-usdz-url="<?php echo esc_url( $model_info['usdz_url'] ); ?>"
-                        data-initial-tab="3d"
-                        style="flex: 1 1 200px; justify-content: center; background: #FAF7F2; color: #1C1917; border: 1.5px solid #D5C9BC;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        data-initial-tab="3d">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
                             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
                             <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
                             <line x1="12" y1="22.08" x2="12" y2="12"/>
@@ -299,7 +309,7 @@ if ( ! empty( $finish_attr_val ) ) {
                     </button>
 
                     <!-- Nút 2: Xem Trong Phòng Bạn (AR Thực tế qua Camera) -->
-                    <button type="button" class="ar-product-btn ax-open-ar-btn" id="arViewInRoomBtn"
+                    <button type="button" class="ar-product-btn ax-3d-btn-accent ax-open-ar-btn" id="arViewInRoomBtn"
                         data-product-id="<?php echo esc_attr( $product->get_id() ); ?>"
                         data-product-name="<?php echo esc_attr( $product->get_name() ); ?>"
                         data-product-price="<?php echo esc_attr( wp_strip_all_tags( $price_clean ) ); ?>"
@@ -313,13 +323,12 @@ if ( ! empty( $finish_attr_val ) ) {
                         data-ar-enabled="<?php echo ( $has_model && $model_info['ar_enabled'] ) ? 'yes' : 'no'; ?>"
                         data-glb-url="<?php echo esc_url( $model_info['glb_url'] ); ?>"
                         data-usdz-url="<?php echo esc_url( $model_info['usdz_url'] ); ?>"
-                        data-initial-tab="ar"
-                        style="flex: 1 1 200px; justify-content: center; background: #1C1917; color: #FAF7F2; border: 1.5px solid #1C1917;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        data-initial-tab="ar">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
                             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                             <circle cx="12" cy="13" r="4"/>
                         </svg>
-                        <span><?php echo esc_html( furniva_t( 'View in Your Room (AR)', 'Xem Trong Phòng Bạn (AR)' ) ); ?></span>
+                        <span><?php echo esc_html( furniva_t( 'Place in Your Room (AR)', 'Đặt Thử Vào Phòng (AR)' ) ); ?></span>
                     </button>
                 </div>
                 <?php endif; ?>
@@ -361,8 +370,8 @@ if ( ! empty( $finish_attr_val ) ) {
                             </svg>
                         </div>
                         <div>
-                            <strong><?php echo esc_html( furniva_t( 'Free delivery over $500', 'Miễn phí giao hàng từ $500' ) ); ?></strong>
-                            <span><?php echo esc_html( furniva_t( 'Nationwide delivery', 'Giao hàng toàn quốc' ) ); ?></span>
+                            <strong><?php echo esc_html( furniva_t( 'Free delivery (≥5M ₫)', 'Miễn phí giao (≥5Tr)' ) ); ?></strong>
+                            <span><?php echo esc_html( furniva_t( 'Nationwide setup', 'Lắp đặt tận nơi toàn quốc' ) ); ?></span>
                         </div>
                     </div>
                     <div class="ax-trust-item">
@@ -429,8 +438,8 @@ if ( ! empty( $finish_attr_val ) ) {
 
                 <div class="ax-tab-panel" id="ax-tab-shipping">
                     <div class="ax-tab-inner">
-                        <h3><?php echo esc_html( furniva_t( 'Shipping Information', 'Thông tin vận chuyển' ) ); ?></h3>
-                        <p><?php echo esc_html( furniva_t( 'We offer complimentary delivery on all orders over $500. Standard delivery takes 3-5 business days. Express delivery is available at an additional cost.', 'Chúng tôi cung cấp giao hàng miễn phí cho đơn hàng trên $500. Giao hàng tiêu chuẩn mất 3-5 ngày làm việc. Giao hàng nhanh có sẵn với phí bổ sung.' ) ); ?></p>
+                        <h3><?php echo esc_html( furniva_t( 'Shipping & White-Glove Installation', 'Vận chuyển & Lắp đặt tận phòng' ) ); ?></h3>
+                        <p><?php echo esc_html( furniva_t( 'DeSpace provides complimentary insured delivery and white-glove setup on all orders from 5,000,000 ₫ across 34 provinces/cities. Standard delivery takes 2–5 business days.', 'DeSpace miễn phí vận chuyển có bảo hiểm và lắp đặt tận phòng cho đơn hàng từ 5.000.000 ₫ trên toàn bộ 34 tỉnh/thành. Thời gian giao tiêu chuẩn từ 2–5 ngày làm việc.' ) ); ?></p>
                         <h3><?php echo esc_html( furniva_t( 'Return Policy', 'Chính sách đổi trả' ) ); ?></h3>
                         <p><?php echo esc_html( furniva_t( 'If you are not completely satisfied with your purchase, you may return it within 30 days for a full refund. Items must be unused and in original packaging.', 'Nếu bạn không hoàn toàn hài lòng với sản phẩm, bạn có thể trả lại trong vòng 30 ngày để được hoàn tiền đầy đủ. Sản phẩm phải chưa qua sử dụng và còn nguyên bao bì.' ) ); ?></p>
                     </div>

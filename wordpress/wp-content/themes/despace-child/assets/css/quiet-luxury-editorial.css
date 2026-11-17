@@ -1,0 +1,952 @@
+/* ==========================================================================
+   DeSpace Quiet Luxury Editorial Design System (BoConcept · Zara Home · Kinfolk)
+   --------------------------------------------------------------------------
+   Unified aesthetic layer across Homepage, Shop/Category Archives, Product Cards,
+   Single Product Editorial Page, 3D & AR Studio Modal, Cart/Checkout & Footer.
+   ========================================================================== */
+
+:root {
+	/* Tier 1 & 2: Quiet Luxury Nordic Alabaster & Smoked Walnut Tokens */
+	--despace-bg: #FAF8F5;
+	--despace-linen: #F2EFE9;
+	--despace-travertine: #EAE4DA;
+	--despace-surface: #FFFFFF;
+	--despace-text: #1E1C1A;
+	--despace-muted: #686056;
+	--despace-subtle: #857D73;
+	--despace-accent: #845D3B;
+	--despace-accent-deep: #69482B;
+	--despace-border: #E6E0D6;
+	--despace-border-strong: #CFC6B9;
+	--despace-sale: #9E473B;
+	--despace-sage: #5E715B;
+
+	/* Harmonize legacy theme variables */
+	--furniva-bg: var(--despace-bg);
+	--furniva-surface: var(--despace-surface);
+	--furniva-text: var(--despace-text);
+	--furniva-muted: var(--despace-muted);
+	--furniva-accent: var(--despace-accent);
+	--furniva-border: var(--despace-border);
+	--f-bg: var(--despace-bg);
+	--f-bg-alt: var(--despace-linen);
+	--f-ink: var(--despace-text);
+	--f-muted: var(--despace-muted);
+	--f-border: var(--despace-border);
+
+	/* Disciplined 2-Axis Editorial Typography */
+	--f-font: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	--f-font-editorial: "Cormorant Garamond", "Newsreader", Georgia, serif;
+	--f-font-heading: "Cormorant Garamond", "Newsreader", Georgia, serif;
+
+	/* Architectural Radii (Crisp Scandinavian proportions, never bubbly) */
+	--radius-input: 6px;
+	--radius-btn: 6px;
+	--radius-card: 8px;
+	--radius-img: 10px;
+	--radius-modal: 16px;
+}
+
+body.despace-site,
+.furniva {
+	background-color: var(--despace-bg);
+	color: var(--despace-text);
+	font-family: var(--f-font);
+	line-height: 1.65;
+	--fv-ivory: #FAF8F5;
+	--fv-ivory-tint: #FDFCFA;
+	--fv-ivory-deep: #F2EFE9;
+	--fv-walnut: #1E1C1A;
+	--fv-walnut-dark: #141311;
+	--fv-terracotta: #845D3B;
+	--fv-charcoal: #1E1C1A;
+	--fv-charcoal-soft: #3D3935;
+	--fv-warm-grey: #686056;
+	--fv-line: #E6E0D6;
+	--fv-line-strong: #CFC6B9;
+	--fv-section-space: clamp(3.5rem, 6vw, 5.25rem);
+}
+
+/* ==========================================================================
+   1. Calm Editorial Announcement Bar & Alabaster Glass Header
+   ========================================================================== */
+.fv-announcement {
+	position: relative;
+	overflow: hidden !important;
+	max-inline-size: 100vw;
+	background: #1E1C1A !important;
+	color: #EDE7DD !important;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+	min-block-size: 2.15rem;
+}
+
+.fv-announcement__viewport {
+	position: relative;
+	overflow: hidden !important;
+	width: 100%;
+	max-inline-size: 100%;
+	display: flex;
+	align-items: center;
+	padding-inline-end: 2.5rem;
+}
+
+.fv-announcement__item {
+	font-family: var(--f-font);
+	font-size: 0.72rem !important;
+	font-weight: 400 !important;
+	letter-spacing: 0.1em !important;
+	color: #EDE7DD !important;
+}
+
+.fv-announcement__separator {
+	color: #B99B7B !important;
+	opacity: 0.75;
+}
+
+.fv-announcement.is-paused .fv-announcement__track {
+	animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.fv-announcement__track {
+		animation-play-state: paused !important;
+	}
+}
+
+.fv-announcement__pause {
+	position: absolute;
+	inset-inline-end: 0.5rem;
+	top: 50%;
+	transform: translateY(-50%);
+	z-index: 4;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-inline-size: 1.65rem;
+	min-block-size: 1.65rem;
+	padding: 0 0.35rem;
+	border: 1px solid rgba(237, 231, 221, 0.24);
+	border-radius: 4px;
+	background: rgba(30, 28, 26, 0.88);
+	color: #EDE7DD;
+	font-size: 0.62rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.fv-announcement__pause:hover:not(:disabled) {
+	border-color: #EDE7DD;
+	background: #2E2A27;
+}
+
+/* Remove heavy tan radial/woodgrain header background -> Translucent Nordic Alabaster */
+.fv-header {
+	background-color: rgba(250, 248, 245, 0.94) !important;
+	background-image: none !important;
+	backdrop-filter: blur(18px);
+	-webkit-backdrop-filter: blur(18px);
+	border-bottom: 1px solid var(--despace-border) !important;
+	box-shadow: 0 4px 24px rgba(30, 28, 26, 0.03) !important;
+}
+
+.fv-header__bar {
+	min-block-size: 4.5rem;
+}
+
+.fv-primary-nav a {
+	font-size: 0.84rem !important;
+	font-weight: 500 !important;
+	letter-spacing: 0.04em;
+	color: var(--despace-text) !important;
+	padding-block: 0.35rem;
+	position: relative;
+}
+
+.fv-primary-nav a::after {
+	content: "";
+	position: absolute;
+	inset-inline: 0;
+	bottom: 0;
+	height: 1px;
+	background: var(--despace-text);
+	transform: scaleX(0);
+	transform-origin: left center;
+	transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fv-primary-nav a:hover::after,
+.fv-primary-nav a[aria-current="page"]::after {
+	transform: scaleX(1);
+}
+
+/* Refined Category Subnavigation Row */
+.fv-header__subnav {
+	background: rgba(242, 239, 233, 0.65) !important;
+	border-top: 1px solid rgba(30, 28, 26, 0.05) !important;
+	border-bottom: none !important;
+}
+
+.fv-subnav-link {
+	font-size: 0.8rem !important;
+	font-weight: 500 !important;
+	color: var(--despace-muted) !important;
+	letter-spacing: 0.02em;
+}
+
+.fv-subnav-link:hover,
+.fv-subnav-link.is-active {
+	color: var(--despace-text) !important;
+}
+
+/* Replace candy-peach Special Offers badge with understated Walnut Editorial Tag */
+.fv-subnav-link--highlight .fv-subnav-badge {
+	background: transparent !important;
+	color: var(--despace-accent) !important;
+	border: 1px solid rgba(132, 93, 59, 0.35) !important;
+	border-radius: 999px !important;
+	padding: 0.22rem 0.7rem !important;
+	font-size: 0.72rem !important;
+	font-weight: 600 !important;
+	letter-spacing: 0.06em;
+	box-shadow: none !important;
+}
+
+.fv-subnav-link--highlight:hover .fv-subnav-badge {
+	background: var(--despace-text) !important;
+	border-color: var(--despace-text) !important;
+	color: var(--despace-bg) !important;
+}
+
+/* ==========================================================================
+   2. Editorial Typography & Section Hierarchy (Homepage & Global)
+   ========================================================================== */
+.fv-eyebrow,
+.f-shop-eyebrow,
+.f-shop-cat-kicker,
+.fv-bento-eyebrow {
+	font-family: var(--f-font) !important;
+	font-size: 0.6875rem !important;
+	font-weight: 600 !important;
+	letter-spacing: 0.18em !important;
+	color: var(--despace-accent) !important;
+	text-transform: uppercase;
+}
+
+.furniva h1,
+.furniva h2,
+.f-shop-title,
+.fv-bento-title,
+.ax-product-name,
+.ax-related-title {
+	font-family: var(--f-font-editorial) !important;
+	font-weight: 400 !important;
+	color: var(--despace-text) !important;
+	letter-spacing: -0.01em !important;
+	line-height: 1.14 !important;
+	text-wrap: balance;
+}
+
+.fv-section-heading h2,
+.fv-lookbook__header h2,
+.fv-trust-copy h2,
+.fv-closing h2 {
+	font-size: clamp(1.85rem, 1.4rem + 1.6vw, 2.75rem) !important;
+}
+
+.fv-section-heading p,
+.fv-lookbook__header p,
+.f-shop-lede {
+	color: var(--despace-muted) !important;
+	font-size: 0.95rem !important;
+	line-height: 1.7 !important;
+	max-inline-size: 58ch;
+	text-wrap: pretty;
+}
+
+.fv-home .fv-concierge__search input {
+	font-size: max(1rem, 1em) !important;
+}
+
+/* Restored Homepage Editorial Hero Stage */
+.fv-featured-hero {
+	padding-top: 1.25rem !important;
+	background: var(--despace-bg) !important;
+}
+
+.fv-featured-hero__grid {
+	gap: 1.15rem !important;
+}
+
+.fv-featured-hero__stage,
+.fv-featured-hero__aside a {
+	border-radius: var(--radius-img) !important;
+	overflow: hidden;
+	position: relative;
+}
+
+.fv-featured-hero__stage {
+	min-block-size: clamp(25rem, 36vw, 35rem);
+	height: auto !important;
+}
+
+.fv-featured-hero__stage img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: center 55% !important;
+	transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fv-featured-hero__stage a:hover img,
+.fv-featured-hero__aside a:hover img {
+	transform: scale(1.025);
+}
+
+.fv-home-hero-scrim {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	background: linear-gradient(
+		180deg,
+		rgba(20, 18, 16, 0.04) 0%,
+		rgba(20, 18, 16, 0.22) 48%,
+		rgba(20, 18, 16, 0.72) 100%
+	);
+	pointer-events: none;
+}
+
+.fv-home-hero-copy {
+	position: absolute !important;
+	z-index: 2 !important;
+	inset-inline-start: clamp(1.75rem, 4vw, 3.5rem) !important;
+	inset-inline-end: 1.75rem !important;
+	bottom: clamp(1.75rem, 3.8vw, 3rem) !important;
+	display: flex !important;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.65rem !important;
+	max-inline-size: 36rem !important;
+	color: #FAF8F5 !important;
+	text-shadow: none !important;
+}
+
+.fv-home-hero-copy .fv-eyebrow {
+	color: #E8D9C5 !important;
+	letter-spacing: 0.2em !important;
+}
+
+.fv-home-hero-copy .fv-home-hero-title {
+	font-family: var(--f-font-editorial) !important;
+	font-size: clamp(2.15rem, 1.55rem + 2.3vw, 3.75rem) !important;
+	font-weight: 400 !important;
+	line-height: 1.06 !important;
+	letter-spacing: -0.015em !important;
+	color: #FFFFFF !important;
+	margin: 0 !important;
+	text-shadow: 0 2px 18px rgba(0, 0, 0, 0.28) !important;
+}
+
+.fv-home-hero-copy .fv-home-hero-sub {
+	margin: 0 !important;
+	font-family: var(--f-font) !important;
+	font-size: 0.94rem !important;
+	line-height: 1.55 !important;
+	color: rgba(250, 248, 245, 0.9) !important;
+	max-inline-size: 44ch;
+}
+
+.fv-home-hero-copy .fv-home-hero-cta {
+	margin-top: 0.45rem;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.55rem;
+	min-block-size: 2.75rem;
+	padding: 0.65rem 1.4rem !important;
+	border-radius: 999px !important;
+	background: rgba(250, 248, 245, 0.95) !important;
+	color: #1E1C1A !important;
+	font-size: 0.8125rem !important;
+	font-weight: 600 !important;
+	letter-spacing: 0.04em;
+	backdrop-filter: blur(8px);
+	transition: background-color 0.25s ease, color 0.25s ease, transform 0.25s ease;
+}
+
+.fv-featured-hero__stage a:hover .fv-home-hero-cta {
+	background: #1E1C1A !important;
+	color: #FAF8F5 !important;
+}
+
+/* Promise Grid: Serene Architectural Linen Cards */
+.fv-promise {
+	padding-block: clamp(2.5rem, 4.5vw, 3.75rem) !important;
+}
+
+.fv-promise__item {
+	background: var(--despace-surface) !important;
+	border: 1px solid var(--despace-border) !important;
+	border-radius: var(--radius-card) !important;
+	padding: 1.6rem 1.25rem !important;
+	transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.fv-promise__item:hover {
+	border-color: var(--despace-border-strong) !important;
+	box-shadow: 0 8px 24px rgba(30, 28, 26, 0.04);
+}
+
+/* Replace dark-purple Diwali Banner -> Warm Travertine Editorial Invitation */
+.fv-diwali-banner {
+	background: var(--despace-linen) !important;
+	background-image: none !important;
+	border: 1px solid var(--despace-border-strong) !important;
+	border-radius: 12px !important;
+	padding: clamp(1.35rem, 2.5vw, 2rem) clamp(1.5rem, 3vw, 2.75rem) !important;
+	color: var(--despace-text) !important;
+	box-shadow: none !important;
+}
+
+.fv-diwali-banner__lamp {
+	background: var(--despace-surface) !important;
+	border: 1px solid var(--despace-border) !important;
+	color: var(--despace-accent) !important;
+}
+
+.fv-diwali-banner__copy p {
+	color: var(--despace-accent) !important;
+	font-size: 0.6875rem !important;
+	font-weight: 600 !important;
+	letter-spacing: 0.18em !important;
+	text-transform: uppercase;
+}
+
+.fv-diwali-banner__copy h2 {
+	font-family: var(--f-font-editorial) !important;
+	font-size: clamp(1.45rem, 1.2rem + 1vw, 2rem) !important;
+	font-weight: 400 !important;
+	color: var(--despace-text) !important;
+}
+
+.fv-diwali-banner__copy span {
+	color: var(--despace-muted) !important;
+	font-size: 0.875rem !important;
+}
+
+.fv-diwali-banner__button {
+	background: var(--despace-text) !important;
+	color: var(--despace-bg) !important;
+	border: 1px solid var(--despace-text) !important;
+	border-radius: 999px !important;
+	min-block-size: 2.75rem;
+	padding: 0.65rem 1.45rem !important;
+	font-size: 0.8125rem !important;
+	font-weight: 500 !important;
+	letter-spacing: 0.04em;
+}
+
+.fv-diwali-banner__button:hover:not(:disabled) {
+	background: var(--despace-accent) !important;
+	border-color: var(--despace-accent) !important;
+}
+
+/* Bento Edit Section: Replace Cursive Caveat Signature with Refined Italic Editorial Serif */
+.fv-bento-header {
+	background-color: var(--despace-linen) !important;
+	border: 1px solid var(--despace-border) !important;
+	border-radius: 12px !important;
+	box-shadow: none !important;
+}
+
+.fv-bento-signature {
+	font-family: var(--f-font-editorial) !important;
+	font-style: italic;
+	font-weight: 400;
+	font-size: 1.75rem !important;
+	color: var(--despace-accent) !important;
+	transform: none !important;
+	letter-spacing: -0.01em;
+}
+
+.fv-bento-card {
+	border-radius: 10px !important;
+}
+
+/* ==========================================================================
+   3. Quiet Luxury Product Cards (Shop, Category, Best Sellers, Related)
+   ========================================================================== */
+.f-products,
+ul.products {
+	gap: clamp(1.25rem, 2.2vw, 1.85rem) clamp(1rem, 1.8vw, 1.5rem) !important;
+}
+
+.f-card {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.f-card-media {
+	aspect-ratio: 4 / 4.35 !important;
+	border-radius: var(--radius-card) !important;
+	background: var(--despace-linen) !important;
+	border: 1px solid rgba(30, 28, 26, 0.04) !important;
+}
+
+.f-card-media img {
+	transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease !important;
+}
+
+.f-card:hover .f-card-media img {
+	transform: scale(1.035) !important;
+}
+
+/* Monochrome Alabaster Badges (Eliminate 5 competing rainbow colors) */
+.f-badge-custom,
+.f-badge-new,
+.f-badge-best-seller,
+.f-badge-featured,
+.f-badge-popular {
+	background: rgba(250, 248, 245, 0.94) !important;
+	color: var(--despace-text) !important;
+	border: 1px solid rgba(30, 28, 26, 0.1) !important;
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	font-size: 0.625rem !important;
+	font-weight: 600 !important;
+	letter-spacing: 0.12em !important;
+	padding: 0.28rem 0.65rem !important;
+	border-radius: 4px !important;
+	box-shadow: 0 2px 8px rgba(30, 28, 26, 0.06) !important;
+}
+
+.f-badge-sale {
+	background: var(--despace-sale) !important;
+	color: #FAF8F5 !important;
+	border: 1px solid transparent !important;
+	font-size: 0.625rem !important;
+	font-weight: 600 !important;
+	letter-spacing: 0.08em !important;
+	padding: 0.28rem 0.6rem !important;
+	border-radius: 4px !important;
+	box-shadow: none !important;
+}
+
+/* Refined 3D Pill & Wishlist Heart on Card */
+.f-card-3d-btn {
+	min-block-size: 1.75rem !important;
+	height: auto !important;
+	padding: 0.25rem 0.6rem !important;
+	border-radius: 999px !important;
+	background: rgba(30, 28, 26, 0.82) !important;
+	color: #FAF8F5 !important;
+	border: 1px solid rgba(255, 255, 255, 0.18) !important;
+	font-size: 0.65rem !important;
+	font-weight: 600 !important;
+	letter-spacing: 0.08em !important;
+}
+
+.f-card-3d-btn:hover:not(:disabled) {
+	background: var(--despace-accent) !important;
+	border-color: var(--despace-accent) !important;
+}
+
+/* Card Typography & Proportions */
+.f-card-body {
+	padding: 0.85rem 0.15rem 0 !important;
+	gap: 0.25rem;
+}
+
+.f-card-meta-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin-bottom: 0.15rem;
+}
+
+.f-card-cat {
+	font-size: 0.64rem !important;
+	font-weight: 600 !important;
+	letter-spacing: 0.13em !important;
+	color: var(--despace-subtle) !important;
+	margin: 0 !important;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.f-card-dims {
+	font-size: 0.65rem;
+	color: var(--despace-muted);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+.f-card-title {
+	font-family: var(--f-font) !important;
+	font-size: 0.9375rem !important;
+	font-weight: 500 !important;
+	line-height: 1.42 !important;
+	letter-spacing: -0.005em !important;
+	margin: 0 0 0.25rem !important;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	min-block-size: 2.65em;
+}
+
+.f-card-title a {
+	color: var(--despace-text) !important;
+}
+
+.f-card-title a:hover {
+	color: var(--despace-accent) !important;
+}
+
+.f-card-rating {
+	margin-bottom: 0.2rem !important;
+}
+
+.f-card-rating .f-stars {
+	color: #B6895B !important;
+	font-size: 0.72rem !important;
+}
+
+.f-card-price {
+	font-family: var(--f-font) !important;
+	font-size: 0.95rem !important;
+	font-weight: 600 !important;
+	font-variant-numeric: tabular-nums;
+	color: var(--despace-text) !important;
+	margin-bottom: 0.65rem !important;
+}
+
+.f-card-price del {
+	font-size: 0.8125rem !important;
+	color: var(--despace-subtle) !important;
+	font-weight: 400 !important;
+}
+
+/* Quiet-Luxury Ghost-to-Espresso Add-to-Cart Button (Serene grid at rest, decisive on hover) */
+.f-card-add {
+	min-block-size: 2.5rem !important;
+	height: auto !important;
+	padding: 0.5rem 0.9rem !important;
+	border-radius: var(--radius-btn) !important;
+	background: var(--despace-surface) !important;
+	color: var(--despace-text) !important;
+	border: 1px solid var(--despace-border-strong) !important;
+	font-size: 0.8rem !important;
+	font-weight: 500 !important;
+	letter-spacing: 0.02em;
+	transition: background-color 0.22s ease, color 0.22s ease, border-color 0.22s ease !important;
+}
+
+.f-card-add:hover:not(.is-disabled),
+.f-card-add:focus-visible:not(.is-disabled) {
+	background: var(--despace-text) !important;
+	color: #FAF8F5 !important;
+	border-color: var(--despace-text) !important;
+}
+
+/* ==========================================================================
+   4. Shop Hero, Category Strip & Filter Sidebar Refinements
+   ========================================================================== */
+.f-shop-hero {
+	background: var(--despace-bg) !important;
+	opacity: 1 !important;
+	transform: none !important;
+}
+
+.f-shop-title {
+	font-size: clamp(2.15rem, 1.6rem + 2vw, 3.35rem) !important;
+}
+
+.f-shop-hero-media {
+	border-radius: var(--radius-img) !important;
+}
+
+.f-hero-trust-card {
+	background: rgba(250, 248, 245, 0.95) !important;
+	backdrop-filter: blur(14px);
+	-webkit-backdrop-filter: blur(14px);
+	border: 1px solid var(--despace-border) !important;
+	border-radius: 10px !important;
+	box-shadow: 0 12px 32px rgba(30, 28, 26, 0.08) !important;
+}
+
+.f-shop-cat-link {
+	border-radius: var(--radius-card) !important;
+	border-color: var(--despace-border) !important;
+	background: var(--despace-surface) !important;
+}
+
+.f-shop-cat-item.is-active .f-shop-cat-link,
+.f-shop-cat-link:hover {
+	border-color: var(--despace-text) !important;
+}
+
+.f-filter-sidebar {
+	background: var(--despace-surface) !important;
+	border: 1px solid var(--despace-border) !important;
+	border-radius: 10px !important;
+}
+
+/* ==========================================================================
+   5. Single Product Page — Architectural Gallery & Specification Panel
+   ========================================================================== */
+.ax-product-page {
+	background: var(--despace-bg) !important;
+}
+
+.ax-product-grid {
+	grid-template-columns: 1.08fr 0.92fr !important;
+	gap: clamp(2rem, 4.5vw, 4.25rem) !important;
+}
+
+.ax-gallery-main {
+	border-radius: var(--radius-img) !important;
+	background: var(--despace-linen) !important;
+	box-shadow: none !important;
+	border: 1px solid rgba(30, 28, 26, 0.05);
+}
+
+.ax-badge-designer {
+	background: rgba(250, 248, 245, 0.94) !important;
+	color: var(--despace-text) !important;
+	border: 1px solid rgba(30, 28, 26, 0.1);
+	border-radius: 4px !important;
+	padding: 0.38rem 0.75rem !important;
+	font-size: 0.65rem !important;
+	font-weight: 600 !important;
+	letter-spacing: 0.14em !important;
+	box-shadow: none !important;
+}
+
+/* Compact 5-column thumbnail strip so 8 images stay sleek */
+.ax-gallery-thumbs {
+	grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+	gap: 0.55rem !important;
+	margin-top: 0.65rem !important;
+}
+
+.ax-thumb-item {
+	border-radius: 6px !important;
+	border-width: 1.5px !important;
+}
+
+.ax-product-name {
+	font-size: clamp(1.85rem, 1.45rem + 1.5vw, 2.55rem) !important;
+	margin-bottom: 0.75rem !important;
+}
+
+.ax-product-price {
+	font-family: var(--f-font) !important;
+	font-size: clamp(1.5rem, 1.25rem + 0.9vw, 1.95rem) !important;
+	font-weight: 600 !important;
+	font-variant-numeric: tabular-nums;
+	color: var(--despace-text) !important;
+	margin-bottom: 1rem !important;
+}
+
+.ax-product-desc {
+	font-size: 0.9375rem !important;
+	line-height: 1.72 !important;
+	color: var(--despace-muted) !important;
+	max-inline-size: 60ch;
+	text-wrap: pretty;
+}
+
+/* Structured Architectural Specification Panel */
+.ax-spec-panel {
+	background: var(--despace-linen);
+	border: 1px solid var(--despace-border);
+	border-radius: var(--radius-card);
+	padding: 0.25rem 1rem;
+	margin: 1.15rem 0 1.35rem;
+}
+
+.ax-spec-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.65rem 0;
+	font-size: 0.85rem;
+}
+
+.ax-spec-row:not(:last-child) {
+	border-bottom: 1px solid rgba(30, 28, 26, 0.07);
+}
+
+.ax-spec-label {
+	color: var(--despace-muted);
+	font-size: 0.75rem;
+	font-weight: 500;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.ax-spec-val {
+	color: var(--despace-text);
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	text-align: end;
+}
+
+/* Unified 3D/AR & Purchase Action Buttons */
+.ax-3d-ar-actions-group {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.65rem;
+	margin: 0 0 0.85rem;
+}
+
+@media (max-width: 520px) {
+	.ax-3d-ar-actions-group {
+		grid-template-columns: 1fr;
+	}
+}
+
+.ax-3d-ar-actions-group .ar-product-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	min-block-size: 2.95rem;
+	padding: 0.65rem 1rem;
+	border-radius: var(--radius-btn) !important;
+	font-size: 0.825rem !important;
+	font-weight: 600 !important;
+	letter-spacing: 0.02em;
+	cursor: pointer;
+	transition: background-color 0.22s ease, color 0.22s ease, border-color 0.22s ease, transform 0.2s ease;
+}
+
+.ax-3d-ar-actions-group .ax-3d-btn-secondary {
+	background: var(--despace-surface);
+	color: var(--despace-text);
+	border: 1px solid var(--despace-border-strong);
+}
+
+.ax-3d-ar-actions-group .ax-3d-btn-secondary:hover:not(:disabled) {
+	border-color: var(--despace-text);
+	background: var(--despace-linen);
+}
+
+.ax-3d-ar-actions-group .ax-3d-btn-accent {
+	background: var(--despace-accent);
+	color: #FAF8F5;
+	border: 1px solid var(--despace-accent);
+}
+
+.ax-3d-ar-actions-group .ax-3d-btn-accent:hover:not(:disabled) {
+	background: var(--despace-accent-deep);
+	border-color: var(--despace-accent-deep);
+}
+
+.ax-qty-stepper,
+.ax-btn {
+	border-radius: var(--radius-btn) !important;
+}
+
+.ax-qty-stepper {
+	border: 1px solid var(--despace-border-strong) !important;
+}
+
+.ax-btn-primary {
+	background: var(--despace-text) !important;
+	border-color: var(--despace-text) !important;
+	color: #FAF8F5 !important;
+}
+
+.ax-btn-primary:hover:not(:disabled) {
+	background: #332F2B !important;
+	border-color: #332F2B !important;
+}
+
+.ax-btn-wishlist {
+	border: 1px solid var(--despace-border-strong) !important;
+}
+
+/* Editorial Underline Product Tabs */
+.ax-tabs-nav {
+	border-bottom: 1px solid var(--despace-border) !important;
+	gap: 2rem !important;
+}
+
+.ax-tab-btn {
+	background: transparent !important;
+	border: none !important;
+	border-bottom: 2px solid transparent !important;
+	border-radius: 0 !important;
+	padding: 0.85rem 0.15rem !important;
+	font-size: 0.875rem !important;
+	font-weight: 500 !important;
+	letter-spacing: 0.04em;
+	color: var(--despace-muted) !important;
+}
+
+.ax-tab-btn.active,
+.ax-tab-btn:hover {
+	color: var(--despace-text) !important;
+	border-bottom-color: var(--despace-text) !important;
+}
+
+/* ==========================================================================
+   6. 3D & AR Studio Modal + Floating Concierge Dock + Forced Colors Support
+   ========================================================================== */
+.ax-room-modal-dialog {
+	background-color: var(--despace-bg) !important;
+	border: 1px solid var(--despace-border) !important;
+	border-radius: var(--radius-modal) !important;
+}
+
+.ax-room-modal-header {
+	background: var(--despace-surface) !important;
+	border-bottom: 1px solid var(--despace-border) !important;
+}
+
+.ax-room-modal-title {
+	font-family: var(--f-font-editorial) !important;
+	font-weight: 500 !important;
+	font-size: 1.55rem !important;
+}
+
+#ax3DViewportWrapper {
+	background: radial-gradient(circle at 50% 42%, #FFFFFF 0%, #EFEAE2 100%) !important;
+	border: 1px solid var(--despace-border) !important;
+	border-radius: 12px !important;
+}
+
+/* Calm Floating Concierge & Contact Dock */
+.ax-chat-toggle {
+	box-shadow: 0 8px 24px rgba(30, 28, 26, 0.14) !important;
+	border: 1px solid var(--despace-border) !important;
+}
+
+.fv-trust-bar {
+	background: var(--despace-linen) !important;
+	border-top: 1px solid var(--despace-border) !important;
+	border-bottom: 1px solid var(--despace-border) !important;
+}
+
+.fv-footer {
+	background: #F4F0E8 !important;
+}
+
+@media (forced-colors: active) {
+	.fv-header,
+	.f-badge-custom,
+	.ax-badge-designer,
+	.f-hero-trust-card,
+	.fv-home-hero-cta {
+		border: 1px solid CanvasText !important;
+		background: Canvas !important;
+		color: CanvasText !important;
+	}
+}

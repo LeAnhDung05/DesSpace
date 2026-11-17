@@ -42,9 +42,9 @@ $announcements = array(
 		'url'     => home_url( '/shop/' ),
 	),
 	array(
-		'text'    => furniva_t( 'Complimentary delivery on orders over $500', 'Miễn phí giao hàng toàn quốc cho đơn từ $500' ),
+		'text'    => furniva_t( 'Complimentary nationwide delivery on orders from 5,000,000 ₫', 'Miễn phí giao hàng & lắp đặt toàn quốc cho đơn từ 5.000.000 ₫' ),
 		'title'   => furniva_t( 'Complimentary Insured Delivery & Assembly', 'Miễn phí giao hàng & lắp đặt tận nơi' ),
-		'content' => furniva_t( 'DeSpace offers 100% complimentary nationwide delivery and white-glove setup on all orders over $500 (or 12,000,000 VND).', 'DeSpace miễn phí 100% chi phí vận chuyển toàn quốc và hỗ trợ lắp đặt chuyên nghiệp đối với mọi đơn hàng từ $500 (hoặc 12.000.000 VNĐ).' ),
+		'content' => furniva_t( 'DeSpace offers 100% complimentary nationwide delivery and white-glove setup on all orders from 5,000,000 ₫.', 'DeSpace miễn phí 100% chi phí vận chuyển toàn quốc và hỗ trợ lắp đặt chuyên nghiệp đối với mọi đơn hàng từ 5.000.000 ₫.' ),
 		'action'  => furniva_t( 'Explore Collection', 'Khám phá bộ sưu tập' ),
 		'url'     => home_url( '/shop/' ),
 	),
@@ -99,6 +99,12 @@ $announcements = array(
 					<?php endforeach; ?>
 				</div>
 			</div>
+			<button type="button" class="fv-announcement__pause" id="fv-announcement-pause"
+				data-label-pause="<?php echo esc_attr( furniva_t( 'Pause announcements', 'Tạm dừng dòng thông báo' ) ); ?>"
+				data-label-play="<?php echo esc_attr( furniva_t( 'Play announcements', 'Tiếp tục dòng thông báo' ) ); ?>"
+				aria-label="<?php echo esc_attr( furniva_t( 'Pause announcements', 'Tạm dừng dòng thông báo' ) ); ?>">
+				<span aria-hidden="true">❚❚</span>
+			</button>
 		</div>
 	</div>
 	<div class="fv-header__bar fv-wrap">

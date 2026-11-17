@@ -310,7 +310,7 @@ jQuery(function ($) {
 				'<span class="f-active-tag-group">' + capGroup + ':</span> ' +
 				'<span class="f-active-tag-val">' + label + '</span>' +
 				'<span class="f-active-tag-x">&times;</span>' +
-			'</button>');
+				'</button>');
 		});
 
 		var min = $("#f-price-min").val(), max = $("#f-price-max").val();
@@ -321,7 +321,7 @@ jQuery(function ($) {
 				'<span class="f-active-tag-group">' + escapeHtml(furnivaData.strings.priceLabel) + ':</span> ' +
 				'<span class="f-active-tag-val">' + priceLabel + '</span>' +
 				'<span class="f-active-tag-x">&times;</span>' +
-			'</button>');
+				'</button>');
 		}
 
 		if (count > 0) {
@@ -337,7 +337,7 @@ jQuery(function ($) {
 
 	function applyGridCols(cols) {
 		cols = (cols == "3") ? "3" : "4";
-		try { localStorage.setItem("furniva_grid_cols", cols); } catch (e) {}
+		try { localStorage.setItem("furniva_grid_cols", cols); } catch (e) { }
 		$(".f-grid-btn").each(function () {
 			$(this).toggleClass("is-active", $(this).data("cols") == cols);
 		});
@@ -365,7 +365,7 @@ jQuery(function ($) {
 		$results.addClass("is-busy");
 
 		var currentCols = "4";
-		try { currentCols = localStorage.getItem("furniva_grid_cols") || "4"; } catch (e) {}
+		try { currentCols = localStorage.getItem("furniva_grid_cols") || "4"; } catch (e) { }
 
 		if (!append) {
 			var colClass = (currentCols == "3") ? "columns-3" : "columns-4";
@@ -497,7 +497,7 @@ jQuery(function ($) {
 		try {
 			var savedCols = localStorage.getItem("furniva_grid_cols");
 			if (savedCols) applyGridCols(savedCols);
-		} catch (e) {}
+		} catch (e) { }
 	}
 
 	/* ---------------------------------------------------------------- filter toggle (mobile off-canvas) */
@@ -684,7 +684,7 @@ jQuery(function ($) {
 					if (variation.display_regular_price && variation.display_regular_price > variation.display_price) {
 						var diff = (variation.display_regular_price - variation.display_price).toFixed(2);
 						if (priceHtml.indexOf("f-save-tag") === -1) {
-						priceHtml += ' <span class="f-save-tag">' + furnivaData.strings.save + ' $' + diff + "</span>";
+							priceHtml += ' <span class="f-save-tag">' + furnivaData.strings.save + ' $' + diff + "</span>";
 						}
 					}
 
@@ -1483,6 +1483,20 @@ jQuery(function ($) {
 			closeAuthGateModal();
 		}
 	});
+
+	// WCAG 2.2.2 Accessible Pause / Play toggle for announcement bar
+	var announceBar = document.querySelector(".fv-announcement");
+	var announcePauseBtn = document.getElementById("fv-announcement-pause");
+	if (announceBar && announcePauseBtn) {
+		announcePauseBtn.addEventListener("click", function () {
+			var paused = announceBar.classList.toggle("is-paused");
+			var pauseLbl = announcePauseBtn.getAttribute("data-label-pause") || "Pause announcements";
+			var playLbl = announcePauseBtn.getAttribute("data-label-play") || "Play announcements";
+			announcePauseBtn.setAttribute("aria-label", paused ? playLbl : pauseLbl);
+			var glyph = announcePauseBtn.querySelector("span");
+			if (glyph) glyph.textContent = paused ? "▶" : "❚❚";
+		});
+	}
 
 	// Guest Checkout is fully open for Add-to-Cart, Buy Now, AR Cart, and Checkout;
 	// only account-bound Wishlist syncing prompts sign-in for unauthenticated visitors.

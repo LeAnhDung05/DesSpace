@@ -107,7 +107,7 @@ if ( function_exists( 'wc_get_orders' ) ) {
 			<div class="ax-voucher-card">
 				<div class="ax-voucher-info">
 					<h4 class="ax-voucher-value"><?php echo esc_html( furniva_t( 'COMPLIMENTARY SHIPPING', 'MIỄN PHÍ VẬN CHUYỂN' ) ); ?></h4>
-					<p class="ax-voucher-desc"><?php echo esc_html( furniva_t( 'Free white-glove delivery on orders over $500', 'Miễn phí giao hàng & lắp đặt tận nơi cho đơn từ $500' ) ); ?></p>
+					<p class="ax-voucher-desc"><?php echo esc_html( furniva_t( 'Free white-glove delivery on orders from 5,000,000 ₫', 'Miễn phí giao hàng & lắp đặt tận nơi cho đơn từ 5.000.000 ₫' ) ); ?></p>
 					<div class="ax-voucher-code-wrap">
 						<span class="ax-voucher-code">FREESHIP500</span>
 					</div>
