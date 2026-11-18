@@ -2305,3 +2305,15 @@
     gap: 5px !important;
   }
 }
+
+.ax-3d-info-pill {
+  max-width: min(300px, calc(100% - 530px));
+}
+.ax-3d-info-pill .ax-pill-row {
+  min-width: 0;
+}
+.ax-3d-info-pill .ax-pill-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

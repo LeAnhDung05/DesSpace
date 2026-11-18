@@ -441,16 +441,17 @@ class ReconstructionEngine:
         self, img: Optional[Image.Image], fallback: Tuple[int, int, int]
     ) -> Tuple[int, int, int]:
         """
-        Sample central region of product photo while ignoring bright white/cream studio backdrops.
+        Sample central furniture body pixels while ignoring studio backdrops and highlights
+        to match authentic wood/lacquer color without copying 2D scene clutter.
         """
         if img is None:
             return fallback
         try:
             small = img.convert("RGBA").resize((64, 64), Image.Resampling.BILINEAR)
             pixels = []
-            # Focus on central 60% crop where the furniture body sits
-            for y in range(12, 52):
-                for x in range(12, 52):
+            # Focus tightly on lower-middle torso where the cabinet facade sits (avoiding wall art/decor above)
+            for y in range(24, 48):
+                for x in range(14, 50):
                     r, g, b, a = small.getpixel((x, y))
                     if a < 128:
                         continue
@@ -462,60 +463,82 @@ class ReconstructionEngine:
                         continue
                     pixels.append((r, g, b))
             if len(pixels) >= 20:
-                avg_r = sum(p[0] for p in pixels) // len(pixels)
-                avg_g = sum(p[1] for p in pixels) // len(pixels)
-                avg_b = sum(p[2] for p in pixels) // len(pixels)
+                pixels_sorted_r = sorted(p[0] for p in pixels)
+                pixels_sorted_g = sorted(p[1] for p in pixels)
+                pixels_sorted_b = sorted(p[2] for p in pixels)
+                mid = len(pixels) // 2
+                # Blend median and mean for stable natural timber color
+                avg_r = (pixels_sorted_r[mid] + sum(p[0] for p in pixels) // len(pixels)) // 2
+                avg_g = (pixels_sorted_g[mid] + sum(p[1] for p in pixels) // len(pixels)) // 2
+                avg_b = (pixels_sorted_b[mid] + sum(p[2] for p in pixels) // len(pixels)) // 2
                 return (avg_r, avg_g, avg_b)
         except Exception:
             pass
         return fallback
 
-    def _crop_foreground_subject(self, img: Image.Image, target_size: int) -> Image.Image:
-        """
-        Crop the central furniture body away from outer studio walls, floors, and wall art
-        so UV mapping wraps clean timber/fabric texture onto 3D surfaces.
-        """
-        rgb = img.convert("RGB")
-        w, h = rgb.size
-        left = int(w * 0.22)
-        right = int(w * 0.78)
-        top = int(h * 0.30)
-        bottom = int(h * 0.80)
-        if right - left > 32 and bottom - top > 32:
-            cropped = rgb.crop((left, top, right, bottom))
-        else:
-            cropped = rgb
-        enhanced = ImageEnhance.Contrast(cropped).enhance(1.04)
-        return enhanced.resize((target_size, target_size), Image.Resampling.LANCZOS).convert("RGBA")
+    def _fill_wood_grain_rect(
+        self,
+        atlas: Image.Image,
+        box: Tuple[int, int, int, int],
+        base_rgb: Tuple[int, int, int],
+        vertical: bool = False,
+        grain_amp: float = 8.5,
+        phase: float = 0.0,
+    ):
+        """Render clean, high-resolution procedural wood/linen PBR micro-grain inside a UV quadrant."""
+        x0, y0, x1, y1 = box
+        draw = ImageDraw.Draw(atlas)
+        br, bg, bb = base_rgb
+        span = (x1 - x0) if vertical else (y1 - y0)
+        for i in range(span):
+            wave = (
+                math.sin((i + phase) * 0.14) * (grain_amp * 0.55)
+                + math.cos((i + phase) * 0.041) * (grain_amp * 0.35)
+                + math.sin((i + phase) * 0.37) * (grain_amp * 0.18)
+            )
+            r = max(18, min(244, int(br + wave)))
+            g = max(16, min(240, int(bg + wave * 0.90)))
+            b = max(14, min(236, int(bb + wave * 0.80)))
+            if vertical:
+                draw.line([(x0 + i, y0), (x0 + i, y1 - 1)], fill=(r, g, b, 255))
+            else:
+                draw.line([(x0, y0 + i), (x1 - 1, y0 + i)], fill=(r, g, b, 255))
 
     # -------------------------------------------------------------------------
-    # PBR Texture Atlas Synthesis (4 Quadrants + Dedicated Metal/Leg Swatch)
+    # PBR Texture Atlas Synthesis (Clean Procedural Wood + True Photo Color Palette)
     # -------------------------------------------------------------------------
     def _synthesize_pbr_texture(
         self, loaded_images: Dict[str, Image.Image], name: str, category: str
     ) -> bytes:
         """
-        Synthesize a 1024x1024 BaseColor PBR texture atlas:
-        - Top-Left (0.0..0.5, 0.0..0.5): Primary Front Material / Door Facade
-        - Top-Right (0.5..1.0, 0.0..0.5): Back / Cushion / Secondary Wood Grain
-        - Bottom-Left (0.0..0.5, 0.5..1.0): Side Panel Material
-        - Bottom-Right (0.5..0.85, 0.5..0.85): Top Surface Material
-        - Accent Corner (0.86..1.0, 0.86..1.0): Brushed Dark Bronze / Matte Black Hardware & Legs
+        Synthesize a pure, artifact-free 1024x1024 BaseColor PBR texture atlas calibrated
+        from the product's real photo palette + finish keywords (zero background photo ghosting):
+        - Top-Left (0..0.5, 0..0.5): Primary Front Door / Drawer Grain
+        - Top-Right (0.5..1.0, 0..0.5): Clean Deep Backboard Veneer Grain
+        - Bottom-Left (0..0.5, 0.5..1.0): Side Panel Vertical Grain
+        - Bottom-Right (0.5..0.85, 0.5..0.85): Top Board Horizontal Grain
+        - Interior Swatch (0.55..0.71, 0.85..1.0): Clean Warm Interior Cavity / Shelf Grain
+        - Slat Swatch (0.72..0.85, 0.85..1.0): Dark Louver Shadow Timber
+        - Metal Swatch (0.85..1.0, 0.85..1.0): Brushed Dark Bronze / Matte Black Hardware & Legs
         """
         size = Config.DEFAULT_TEXTURE_SIZE
         cat = category.lower()
 
-        # Default architectural finish color by category/name
-        default_rgb = (118, 82, 54)  # Warm Columbia Walnut
+        # Default architectural finish palette by product title/category
+        default_rgb = (128, 88, 58)  # Warm Columbia Walnut
         name_lower = name.lower()
-        if any(k in name_lower for k in ["sồi", "oak", "natural", "tự nhiên", "be", "kem"]):
-            default_rgb = (188, 154, 114)
+        if any(k in name_lower for k in ["wenge", "nâu trầm", "espresso"]):
+            default_rgb = (78, 54, 40)
+        elif any(k in name_lower for k in ["sồi", "oak", "natural", "tự nhiên", "rustic", "linear"]):
+            default_rgb = (182, 146, 108)
         elif any(k in name_lower for k in ["xám", "slate", "grey", "gray", "ghi"]):
-            default_rgb = (112, 110, 108)
-        elif any(k in name_lower for k in ["trắng", "white", "ivory"]):
-            default_rgb = (226, 221, 212)
-        elif any(k in name_lower for k in ["đen", "black", "espresso", "charcoal"]):
-            default_rgb = (48, 43, 40)
+            default_rgb = (118, 116, 114)
+        elif any(k in name_lower for k in ["trắng", "white", "ivory"]) and not any(k in name_lower for k in ["sồi", "oak"]):
+            default_rgb = (224, 219, 210)
+        elif any(k in name_lower for k in ["đen", "black", "charcoal"]):
+            default_rgb = (52, 47, 44)
+        elif any(k in name_lower for k in ["anh đào", "cherry"]):
+            default_rgb = (156, 94, 64)
         elif "sofa" in cat:
             default_rgb = (168, 154, 138)
         elif "chair" in cat:
@@ -524,63 +547,42 @@ class ReconstructionEngine:
             default_rgb = (176, 164, 148)
 
         primary_photo = loaded_images.get("front") or loaded_images.get("perspective")
-        dom_r, dom_g, dom_b = self._extract_dominant_color(primary_photo, default_rgb)
+        sampled_rgb = self._extract_dominant_color(primary_photo, default_rgb)
+        # Anchor palette between extracted product color and clean finish base so hues stay rich & consistent
+        dom_r = int(sampled_rgb[0] * 0.55 + default_rgb[0] * 0.45)
+        dom_g = int(sampled_rgb[1] * 0.55 + default_rgb[1] * 0.45)
+        dom_b = int(sampled_rgb[2] * 0.55 + default_rgb[2] * 0.45)
+        front_rgb = (dom_r, dom_g, dom_b)
+        # If two-tone white accent explicitly named with wood (e.g. "Gỗ sồi Sonoma & Trắng"), brighten front facade slightly
+        if any(k in name_lower for k in ["trắng", "white"]) and any(k in name_lower for k in ["sồi", "oak"]):
+            front_rgb = (min(232, dom_r + 22), min(228, dom_g + 20), min(222, dom_b + 18))
 
         atlas = Image.new("RGBA", (size, size), (dom_r, dom_g, dom_b, 255))
         draw = ImageDraw.Draw(atlas)
-
-        # Synthesize realistic procedural wood/fabric micro-grain across the entire base
-        for y in range(size):
-            wave = math.sin(y * 0.09) * 6.0 + math.cos(y * 0.023) * 4.0
-            r = max(18, min(245, int(dom_r + wave)))
-            g = max(16, min(242, int(dom_g + wave * 0.88)))
-            b = max(14, min(238, int(dom_b + wave * 0.76)))
-            draw.line([(0, y), (size, y)], fill=(r, g, b, 255))
-
         q = size // 2
-        # Blend available angle photos softly (45% photo detail + 55% clean grain) to avoid harsh white borders
-        front_img = loaded_images.get("front") or loaded_images.get("perspective")
-        if front_img:
-            subj = self._crop_foreground_subject(front_img, q)
-            base_q = atlas.crop((0, 0, q, q))
-            blended_front = Image.blend(base_q, subj, alpha=0.28)
-            atlas.paste(blended_front, (0, 0))
 
-        back_img = loaded_images.get("back") or loaded_images.get("perspective")
-        if back_img:
-            subj_b = self._crop_foreground_subject(back_img, q)
-            base_q = atlas.crop((q, 0, size, q))
-            atlas.paste(Image.blend(base_q, subj_b, alpha=0.22), (q, 0))
-
-        side_img = loaded_images.get("side")
-        if side_img:
-            subj_s = self._crop_foreground_subject(side_img, q)
-            base_q = atlas.crop((0, q, q, size))
-            atlas.paste(Image.blend(base_q, subj_s, alpha=0.26), (0, q))
-
-        top_img = loaded_images.get("top")
-        if top_img:
-            subj_t = self._crop_foreground_subject(top_img, q)
-            base_q = atlas.crop((q, q, size, size))
-            atlas.paste(Image.blend(base_q, subj_t, alpha=0.24), (q, q))
+        # 1. Clean Procedural Wood Grain across all 4 structural quadrants (zero 2D photo artifacts!)
+        self._fill_wood_grain_rect(atlas, (0, 0, q, q), front_rgb, vertical=True, grain_amp=7.5, phase=0.0)
+        back_rgb = (max(24, int(dom_r * 0.78)), max(20, int(dom_g * 0.76)), max(18, int(dom_b * 0.73)))
+        self._fill_wood_grain_rect(atlas, (q, 0, size, q), back_rgb, vertical=False, grain_amp=5.0, phase=19.0)
+        side_rgb = (max(24, int(dom_r * 0.94)), max(20, int(dom_g * 0.93)), max(18, int(dom_b * 0.92)))
+        self._fill_wood_grain_rect(atlas, (0, q, q, size), side_rgb, vertical=True, grain_amp=7.0, phase=37.0)
+        top_rgb = (min(242, int(dom_r * 1.03)), min(238, int(dom_g * 1.03)), min(234, int(dom_b * 1.02)))
+        self._fill_wood_grain_rect(atlas, (q, q, int(size * 0.85), int(size * 0.85)), top_rgb, vertical=False, grain_amp=6.5, phase=53.0)
 
         # Dedicated Accent Swatch at (0.85..1.0, 0.85..1.0) -> Dark Espresso / Matte Black Metal
         acc_start = int(size * 0.85)
-        draw.rectangle([acc_start, acc_start, size, size], fill=(34, 30, 28, 255))
+        draw.rectangle([acc_start, acc_start, size, size], fill=(32, 28, 26, 255))
         # Subtle dark wood / louver slat swatch at (0.72..0.85, 0.85..1.0)
         slat_start = int(size * 0.72)
         draw.rectangle(
             [slat_start, acc_start, acc_start - 1, size],
-            fill=(max(16, int(dom_r * 0.42)), max(14, int(dom_g * 0.40)), max(12, int(dom_b * 0.38)), 255),
+            fill=(max(18, int(dom_r * 0.45)), max(15, int(dom_g * 0.43)), max(13, int(dom_b * 0.41)), 255),
         )
-        # Warm Interior Cavity / Shelf Wood Swatch at (0.55..0.71, 0.85..1.0)
+        # Warm Clean Interior Cavity / Shelf Grain Swatch at (0.55..0.71, 0.85..1.0)
         int_start = int(size * 0.55)
-        int_r = max(24, int(dom_r * 0.74))
-        int_g = max(20, int(dom_g * 0.72))
-        int_b = max(18, int(dom_b * 0.68))
-        draw.rectangle([int_start, acc_start, slat_start - 1, size], fill=(int_r, int_g, int_b, 255))
-        for gy in range(acc_start, size, 4):
-            draw.line([(int_start, gy), (slat_start - 1, gy)], fill=(max(18, int_r - 8), max(16, int_g - 7), max(14, int_b - 6), 255))
+        int_rgb = (max(26, int(dom_r * 0.84)), max(22, int(dom_g * 0.82)), max(20, int(dom_b * 0.80)))
+        self._fill_wood_grain_rect(atlas, (int_start, acc_start, slat_start - 1, size), int_rgb, vertical=False, grain_amp=4.5, phase=71.0)
 
         out_buf = io.BytesIO()
         atlas.save(out_buf, format="PNG", optimize=True)
