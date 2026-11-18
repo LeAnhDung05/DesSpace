@@ -45,12 +45,16 @@ Tài liệu này giải thích lý do vì sao khi bạn mới kéo code về má
 
 ---
 
-## 4. CÁCH 3: IMPORT BẰNG FILE CSV (CHUẨN WOOCOMMERCE)
-1. Đăng nhập vào trang quản trị: `http://localhost:10016/wp-admin/`.
-2. Vào menu: **Sản phẩm (Products) → Nhập (Import)**.
-3. Chọn file: `database/despace_products_40.csv` (hoặc `wp-content/themes/despace-child/inc/data/despace_products_40.csv`).
-4. Bấm **Tiếp tục → Chạy trình nhập dữ liệu**.
-5. Sau 20 giây toàn bộ 40 sản phẩm sẽ được tạo đầy đủ.
+## 4. LƯU Ý: KHÔNG NHẬP CSV HIỆN TẠI BẰNG WOOCommerce IMPORTER
+
+Không dùng **Sản phẩm → Nhập** với `database/despace_products_40.csv` ở trạng thái hiện tại. File có 40 dòng dữ liệu nhưng thiếu dòng tiêu đề theo định dạng WooCommerce. Importer coi dòng sản phẩm đầu tiên là tiêu đề, bỏ qua dòng đó và tạo 39 sản phẩm rỗng có tên `Product`, không có SKU.
+
+File CSV cũng chỉ chứa đường dẫn tham chiếu ảnh; nó không chứa các tệp ảnh. Vì vậy nhập CSV không khôi phục ảnh nếu thư mục `wp-content/uploads` chưa được đồng bộ.
+
+- Database mẫu `database/despace_seed_data.sql` đã có 40 sản phẩm với SKU `AXG-STR-001` đến `AXG-STR-040`. Không nhập CSV vào database đã có các sản phẩm này.
+- SQL seed là bản dump database có lệnh xóa/tạo bảng; chỉ nhập vào database mới hoặc database đã được sao lưu và được phép thay thế.
+- Để có ảnh và mô hình 3D, cần nhận gói `uploads` từ leader rồi đồng bộ vào đúng site (LocalWP hoặc Docker). Hai môi trường lưu uploads riêng.
+- Nếu cần nhập CSV vào một site trống, trước tiên phải tạo CSV có tiêu đề WooCommerce chuẩn và kiểm tra cột Images; không dùng file hiện tại cho thao tác đó.
 
 ---
 

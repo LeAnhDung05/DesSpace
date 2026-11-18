@@ -119,8 +119,8 @@ $announcements = array(
 			<a <?php echo is_front_page() ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php echo esc_html( furniva_t( 'Home', 'Trang chủ' ) ); ?></a>
 			<a <?php echo ( is_shop() || is_product_taxonomy() ) ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( $shop_url ); ?>"><?php echo esc_html( furniva_t( 'Shop', 'Cửa hàng' ) ); ?></a>
 			<a <?php echo is_home() || is_singular( 'post' ) ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( $blog_url ); ?>"><?php echo esc_html( furniva_t( 'Journal', 'Tạp chí' ) ); ?></a>
-			<a <?php echo is_page( 'about' ) ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( home_url( '/about/' ) ); ?>"><?php echo esc_html( furniva_t( 'About', 'Giới thiệu' ) ); ?></a>
-			<a <?php echo is_page( 'contact' ) ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( home_url( '/contact/' ) ); ?>"><?php echo esc_html( furniva_t( 'Contact', 'Liên hệ' ) ); ?></a>
+			<a <?php echo ( is_page( 'about' ) || is_page( 've-despace' ) ) ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( home_url( '/ve-despace/' ) ); ?>"><?php echo esc_html( furniva_t( 'About', 'Giới thiệu' ) ); ?></a>
+			<a <?php echo ( is_page( 'contact' ) || is_page( 'lien-he' ) ) ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( home_url( '/lien-he/' ) ); ?>"><?php echo esc_html( furniva_t( 'Contact', 'Liên hệ' ) ); ?></a>
 		</nav>
 
 		<div class="fv-header__actions">

@@ -308,7 +308,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<footer class="ax-room-modal-footer">
 			<div class="ax-modal-product-summary">
 				<div class="ax-modal-product-thumb">
-					<img id="axModalProductThumb" src="" alt="Thumbnail" />
+					<img id="axModalProductThumb" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Thumbnail" />
 				</div>
 				<div class="ax-modal-product-meta">
 					<h3 id="axModalProductName" class="ax-modal-prod-title">Product Name</h3>

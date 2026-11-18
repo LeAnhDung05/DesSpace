@@ -1,0 +1,27 @@
+{
+  "name": "desspace",
+  "version": "1.0.0",
+  "description": "Hệ thống thương mại điện tử chuyên biệt cho nội thất cao cấp với trải nghiệm trực quan hóa không gian thực tế tăng cường 3D/AR. Dự án được chuyển đổi công nghệ (re-platforming) toàn diện từ mã nguồn **BTTTS_5** (Furniva / AXGNUD) sang kiến trúc chuẩn hóa **WordPress + WooCommerce + PHP 8.3 + MySQL 8.4**.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test:visual": "node tests/visual/frontend-audit.spec.cjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeAnhDung05/DesSpace.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LeAnhDung05/DesSpace/issues"
+  },
+  "homepage": "https://github.com/LeAnhDung05/DesSpace#readme",
+  "devDependencies": {
+    "playwright-core": "^1.65.1"
+  }
+}

@@ -143,6 +143,14 @@ class DeSpace_Auto_Seeder {
 		$current_pass  = $current_user->user_pass;
 		$current_email = $current_user->user_email;
 		$current_url   = home_url();
+		$fixed_admin   = get_user_by( 'login', 'Admin' );
+		$fixed_admin_row = $fixed_admin ? $wpdb->get_row(
+			$wpdb->prepare( "SELECT * FROM {$wpdb->users} WHERE ID = %d", $fixed_admin->ID ),
+			ARRAY_A
+		) : null;
+		if ( is_array( $fixed_admin_row ) ) {
+			$fixed_admin_row['user_login'] = 'Admin';
+		}
 
 		// 2. Locate SQL seed file
 		$gz_file = get_stylesheet_directory() . '/inc/data/despace_seed_data.sql.gz';
@@ -190,7 +198,7 @@ class DeSpace_Auto_Seeder {
 
 		$mysqli->query( 'SET FOREIGN_KEY_CHECKS=1;' );
 
-		// 5. Restore current admin credentials if user exists
+		// 5. Restore current admin credentials if user exists.
 		if ( ! empty( $current_login ) && ! empty( $current_pass ) ) {
 			$wpdb->update(
 				$wpdb->users,
@@ -202,6 +210,37 @@ class DeSpace_Auto_Seeder {
 			);
 		}
 
+		// Preserve the local Admin account across seed imports, which replace wp_users.
+		if ( is_array( $fixed_admin_row ) ) {
+			$fixed_admin_id = $wpdb->get_var(
+				$wpdb->prepare( "SELECT ID FROM {$wpdb->users} WHERE user_login = %s", 'Admin' )
+			);
+
+			if ( $fixed_admin_id ) {
+				$wpdb->update(
+					$wpdb->users,
+					array(
+						'user_login'  => 'Admin',
+						'user_pass'    => $fixed_admin_row['user_pass'],
+						'user_email'   => $fixed_admin_row['user_email'],
+						'user_url'     => $fixed_admin_row['user_url'],
+						'display_name' => $fixed_admin_row['display_name'],
+					),
+					array( 'ID' => (int) $fixed_admin_id )
+				);
+			} else {
+				unset( $fixed_admin_row['ID'] );
+				$wpdb->insert( $wpdb->users, $fixed_admin_row );
+				$fixed_admin_id = (int) $wpdb->insert_id;
+			}
+
+			if ( $fixed_admin_id ) {
+				clean_user_cache( (int) $fixed_admin_id );
+				$user = new WP_User( (int) $fixed_admin_id );
+				$user->set_role( 'administrator' );
+			}
+		}
+
 		// 6. Ensure site URLs and WooCommerce options are correct
 		update_option( 'siteurl', $current_url );
 		update_option( 'home', $current_url );
@@ -210,6 +249,11 @@ class DeSpace_Auto_Seeder {
 
 		// Clear transient caches
 		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '%_transient_%'" );
+
+		// Ensure informational & policy pages slugs and published status
+		if ( function_exists( 'despace_ensure_policy_pages' ) ) {
+			despace_ensure_policy_pages();
+		}
 
 		flush_rewrite_rules( true );
 

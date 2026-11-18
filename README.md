@@ -92,17 +92,29 @@ replatform_bttts5_despace/
 
 ## 4. KHỞI CHẠY VÀ VẬN HÀNH THỬ NGHIỆM (LOCAL DOCKER)
 
-Hệ thống đã được đóng gói và cấu hình chạy trên Docker:
+Khởi chạy môi trường local bằng Docker Desktop theo hướng dẫn tại [`docs/LOCAL_DOCKER_SETUP.md`](docs/LOCAL_DOCKER_SETUP.md). Tóm tắt:
+
+```powershell
+Copy-Item .env.example .env
+docker compose up -d
+```
+
+Lần chạy đầu tiên cần chỉnh mật khẩu MySQL trong `.env`. File SQL mẫu chỉ được nạp vào database Docker mới, chưa có dữ liệu.
+
+Repo không lưu WooCommerce. Theo tài liệu kiểm kê, cài phiên bản 11.1.2 sau khi database sẵn sàng:
+
+```powershell
+docker compose run --rm wpcli plugin install woocommerce --version=11.1.2 --activate --path=/var/www/html
+```
 
 ### 4.1. Các dịch vụ đang chạy
-- **Frontend / CMS:** `http://localhost:8090/` (Container `despace-wordpress-1`, PHP 8.3 Apache).
-- **Cơ sở dữ liệu:** MySQL 8.4 Community Edition (`despace-db-1`, port 3306 nội bộ).
-- **Mailbox thử nghiệm:** `http://localhost:8026/` (Mailpit).
+- **Frontend / CMS:** `http://localhost:8090/` (WordPress 7.1.4, PHP 8.3 Apache).
+- **Cơ sở dữ liệu:** MySQL 8.4.13 (chỉ truy cập nội bộ qua mạng Docker).
 
 ### 4.2. Tài khoản kiểm thử
 | Vai trò | Tên đăng nhập | Mật khẩu | Quyền hạn chính |
 |---|---|---|---|
-| **Administrator** | `admin` | *(Cấu hình trong .env)* | Toàn quyền quản trị hệ thống, plugins, cài đặt |
+| **Administrator** | `admin` | *(Tài khoản có trong database mẫu; biến `.env` không đặt lại mật khẩu user đã import)* | Toàn quyền quản trị hệ thống, plugins, cài đặt |
 | **DeSpace Staff** | `staff` | `StaffPass123!` | Quản lý mô hình 3D, kiểm toán kho, xem báo cáo |
 | **Customer** | `customer` | `CustomerPass123!` | Đặt hàng, theo dõi đơn, lưu danh sách yêu thích |
 

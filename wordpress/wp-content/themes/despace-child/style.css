@@ -6993,7 +6993,7 @@ body.furniva-site {
 	body.furniva-site .fv-header .fv-menu-button { display: none !important; }
 }
 @media (max-width: 1023.98px) {
-	body.furniva-site .fv-header .fv-menu-button { display: inline-grid !important; width: 36px !important; height: 36px !important; flex: 0 0 36px; }
+	body.furniva-site .fv-header .fv-menu-button { display: inline-grid !important; width: 44px !important; height: 44px !important; min-width: 44px !important; min-height: 44px !important; flex: 0 0 44px; }
 }
 
 .fv-header__actions .f-cart-btn {
@@ -7096,7 +7096,7 @@ body.furniva-site {
 	body.furniva-site .fv-header__bar { min-height: 70px; padding-top: 0; align-items: center; }
 	.fv-header .fv-header__brand-block { flex-direction: row; align-items: center; gap: 9px; }
 	.fv-header__logo { width: auto; }
-	.fv-header .fv-menu-button { display: inline-grid; width: 36px; height: 36px; }
+	.fv-header .fv-menu-button { display: inline-grid; width: 44px; height: 44px; min-width: 44px; min-height: 44px; }
 	.fv-primary-nav,
 	.fv-desktop-icon,
 	.fv-sale-mark,
@@ -8744,6 +8744,84 @@ button.single_add_to_cart_button:active {
 	.fv-header__subnav-inner,
 	.fv-header__subnav-cats {
 		overflow: visible !important;
+	}
+}
+
+/* BUG-03 Fix: Smooth scaling for Category Subnav on Laptop (1024px to 1279.98px) */
+@media (min-width: 1024px) and (max-width: 1279.98px) {
+	.fv-header__subnav-inner {
+		padding-left: 12px !important;
+		padding-right: 12px !important;
+	}
+	.fv-header__subnav-cats {
+		gap: 6px !important;
+	}
+	.fv-subnav-link {
+		font-size: 11px !important;
+		padding: 2px 4px !important;
+		white-space: nowrap !important;
+	}
+	.fv-subnav-link--all span {
+		font-size: 11px !important;
+	}
+	.fv-subnav-caret {
+		display: none !important;
+	}
+	.fv-subnav-badge {
+		font-size: 10px !important;
+		padding: 2px 6px !important;
+	}
+	/* Ensure mega dropdowns on right side stay within viewport */
+	.fv-subnav-item:nth-child(n+3) .fv-subnav-mega,
+	.fv-subnav-item:nth-last-of-type(-n+4) .fv-subnav-mega {
+		left: auto !important;
+		right: 0 !important;
+	}
+}
+
+/* Ensure mega menu never exceeds viewport on any device */
+.fv-subnav-mega {
+	max-width: min(580px, calc(100vw - 32px)) !important;
+	box-sizing: border-box !important;
+}
+
+/* BUG-05 & BUG-06 Fix: Mobile navigation enhancements & duplicate language switcher removal */
+@media (max-width: 1023.98px) {
+	.f-mobile-nav .f-mobile-language {
+		display: none !important;
+	}
+	.f-mobile-nav {
+		padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
+	}
+	/* Lock body scrolling when mobile menu is open */
+	body.is-menu-open {
+		overflow: hidden !important;
+	}
+	/* Animate burger icon to X when active */
+	#furniva-burger svg line,
+	#furniva-burger svg path {
+		transform-box: view-box;
+		transform-origin: 12px 12px;
+		transition: transform 0.22s ease, opacity 0.15s ease;
+	}
+	#furniva-burger.is-active svg line:nth-child(1),
+	#furniva-burger.is-active svg path:nth-child(1) {
+		transform: rotate(45deg) translateY(6px);
+	}
+	#furniva-burger.is-active svg line:nth-child(2),
+	#furniva-burger.is-active svg path:nth-child(2) {
+		opacity: 0;
+	}
+	#furniva-burger.is-active svg line:nth-child(3),
+	#furniva-burger.is-active svg path:nth-child(3) {
+		transform: rotate(-45deg) translateY(-6px);
+	}
+
+	/* Dock fix on Mobile & Tablet: Hide floating dock on cart page to avoid overlapping action buttons, prices, or checkout button */
+	body.woocommerce-cart .ax-chat-dock,
+	body.page-template-page-cart .ax-chat-dock,
+	body:has(.ax-cart-page) .ax-chat-dock {
+		display: none !important;
 	}
 }
 

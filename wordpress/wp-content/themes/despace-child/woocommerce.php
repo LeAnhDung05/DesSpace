@@ -274,8 +274,8 @@ if ( is_singular( 'product' ) ) {
 				<h2 id="f-shop-guide-title"><?php echo esc_html( furniva_t( 'A thoughtful choice starts with a few details.', 'Một lựa chọn phù hợp bắt đầu từ vài chi tiết nhỏ.' ) ); ?></h2>
 				<p><?php echo esc_html( furniva_t( 'A little planning helps each piece feel as if it was made for your home.', 'Một chút chuẩn bị giúp món đồ mới hòa hợp tự nhiên với ngôi nhà của bạn.' ) ); ?></p>
 				<div class="f-shop-guide-links">
-					<a href="<?php echo esc_url( home_url( '/shipping-returns/' ) ); ?>"><?php echo esc_html( furniva_t( 'Shipping & Returns', 'Giao hàng & Đổi trả' ) ); ?><span aria-hidden="true">↗</span></a>
-					<a href="<?php echo esc_url( home_url( '/faqs/' ) ); ?>"><?php echo esc_html( furniva_t( 'Visit FAQs', 'Xem câu hỏi thường gặp' ) ); ?><span aria-hidden="true">↗</span></a>
+					<a href="<?php echo esc_url( home_url( '/chinh-sach-giao-hang/' ) ); ?>"><?php echo esc_html( furniva_t( 'Shipping & Delivery', 'Chính sách giao hàng' ) ); ?><span aria-hidden="true">↗</span></a>
+					<a href="<?php echo esc_url( home_url( '/cau-hoi-thuong-gap/' ) ); ?>"><?php echo esc_html( furniva_t( 'Visit FAQs', 'Xem câu hỏi thường gặp' ) ); ?><span aria-hidden="true">↗</span></a>
 				</div>
 			</div>
 			<div class="f-shop-guide-questions">

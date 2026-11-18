@@ -254,6 +254,20 @@ function despace_filter_sidebar() {
 				</div>
 			</details>
 
+			<!-- 3D / AR Feature -->
+			<details class="f-filter-group" data-filter-name="has_3d">
+				<summary>
+					<span><?php echo esc_html( furniva_t( '3D & AR VIEW', 'TÍNH NĂNG 3D/AR' ) ); ?></span>
+				</summary>
+				<div class="f-filter-body">
+					<label class="f-filter-check">
+						<input type="checkbox" name="has_3d" value="yes" data-name="<?php echo esc_attr( furniva_t( '3D/AR Available', 'Xem được 3D/AR' ) ); ?>" />
+						<span><?php echo esc_html( furniva_t( '3D / AR Available', 'Xem được 3D/AR' ) ); ?></span>
+						<span class="f-count">(35)</span>
+					</label>
+				</div>
+			</details>
+
 			<div class="f-filter-foot">
 				<button type="button" class="f-filter-apply" id="furniva-filter-apply"><?php echo esc_html( furniva_t( 'Apply', 'Áp dụng' ) ); ?></button>
 				<button type="button" class="f-filter-clear" id="furniva-filter-clear"><?php echo esc_html( furniva_t( 'Clear All', 'Xóa tất cả' ) ); ?></button>

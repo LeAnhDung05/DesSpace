@@ -40,8 +40,35 @@ jQuery(function ($) {
 	/* ---------------------------------------------------------------- mobile nav */
 	$("#furniva-burger").on("click", function () {
 		var $menu = $("#furniva-mobile-nav");
-		$menu.toggleClass("open");
-		$(this).attr("aria-expanded", $menu.hasClass("open") ? "true" : "false");
+		var isOpen = $menu.hasClass("open");
+		$menu.toggleClass("open", !isOpen);
+		$(this).attr("aria-expanded", !isOpen ? "true" : "false").toggleClass("is-active", !isOpen);
+		$("body").toggleClass("is-menu-open", !isOpen);
+	});
+
+	// Close mobile nav on escape key, outside click, or link click
+	$(document).on("keydown", function (e) {
+		if (e.key === "Escape" && $("#furniva-mobile-nav").hasClass("open")) {
+			$("#furniva-mobile-nav").removeClass("open");
+			$("#furniva-burger").attr("aria-expanded", "false").removeClass("is-active");
+			$("body").removeClass("is-menu-open");
+		}
+	});
+
+	$(document).on("click", function (e) {
+		if ($("#furniva-mobile-nav").hasClass("open")) {
+			if (!$(e.target).closest("#furniva-mobile-nav, #furniva-burger").length) {
+				$("#furniva-mobile-nav").removeClass("open");
+				$("#furniva-burger").attr("aria-expanded", "false").removeClass("is-active");
+				$("body").removeClass("is-menu-open");
+			}
+		}
+	});
+
+	$("#furniva-mobile-nav a").on("click", function () {
+		$("#furniva-mobile-nav").removeClass("open");
+		$("#furniva-burger").attr("aria-expanded", "false").removeClass("is-active");
+		$("body").removeClass("is-menu-open");
 	});
 
 	/* ---------------------------------------------- homepage lookbook + FAQ */
@@ -202,11 +229,115 @@ jQuery(function ($) {
 		toast(furnivaData.strings.newsletterSuccess);
 	});
 
-	/* ---------------------------------------------------------------- contact form (demo) */
-	$(document).on("submit", "#furniva-contact-form", function (e) {
+	/* ---------------------------------------------------------------- DeSpace Contact Form (AJAX + Validation) */
+	$(document).on("submit", "#despace-contact-form, #furniva-contact-form, .f-contact-form-ajax", function (e) {
 		e.preventDefault();
-		var s = furnivaData.strings;
-		$(this).replaceWith('<div class="f-contact-success" role="status"><span>' + s.contactPreview + '</span><h3>' + s.contactThanks + '</h3><p>' + s.contactNotSent + '</p></div>');
+		var $form = $(this);
+		var $btn = $form.find('button[type="submit"]');
+		var $status = $form.find("#despace-contact-status");
+		if (!$status.length) {
+			$status = $('<div class="ds-contact-status" role="status" aria-live="polite" style="margin-top:12px;padding:12px 16px;border-radius:6px;font-size:13px;line-height:1.6;"></div>');
+			$form.append($status);
+		}
+
+		// Client validation
+		var name = $.trim($form.find('input[name="contact_name"]').val() || "");
+		var phone = $.trim($form.find('input[name="contact_phone"]').val() || "");
+		var email = $.trim($form.find('input[name="contact_email"]').val() || "");
+		var message = $.trim($form.find('textarea[name="contact_message"]').val() || "");
+
+		if (name.length < 2) {
+			$status.css({ display: "block", background: "#fdf2f2", color: "#991b1b", border: "1px solid #f87171" })
+				.text("Vui lòng nhập họ và tên (tối thiểu 2 ký tự).");
+			$form.find('input[name="contact_name"]').focus();
+			return;
+		}
+
+		var digits = phone.replace(/\D/g, "");
+		if (digits.length < 9 || digits.length > 12) {
+			$status.css({ display: "block", background: "#fdf2f2", color: "#991b1b", border: "1px solid #f87171" })
+				.text("Vui lòng nhập số điện thoại hợp lệ (9 – 11 chữ số).");
+			$form.find('input[name="contact_phone"]').focus();
+			return;
+		}
+
+		if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+			$status.css({ display: "block", background: "#fdf2f2", color: "#991b1b", border: "1px solid #f87171" })
+				.text("Địa chỉ email không đúng định dạng.");
+			$form.find('input[name="contact_email"]').focus();
+			return;
+		}
+
+		if (message.length < 3) {
+			$status.css({ display: "block", background: "#fdf2f2", color: "#991b1b", border: "1px solid #f87171" })
+				.text("Vui lòng nhập lời nhắn hoặc ghi chú yêu cầu tư vấn.");
+			$form.find('textarea[name="contact_message"]').focus();
+			return;
+		}
+
+		// Prepare FormData
+		var formData = new FormData(this);
+		if (!formData.get("action")) {
+			formData.append("action", "despace_contact_submit");
+		}
+		if (!formData.get("nonce") && window.despaceData && despaceData.contactNonce) {
+			formData.append("nonce", despaceData.contactNonce);
+		}
+
+		$btn.prop("disabled", true).addClass("is-loading");
+		var originalBtnText = $btn.find(".btn-text").length ? $btn.find(".btn-text").text() : $btn.text();
+		if ($btn.find(".btn-text").length) {
+			$btn.find(".btn-text").text("Đang gửi thông tin…");
+		} else {
+			$btn.text("Đang gửi thông tin…");
+		}
+
+		$status.css({ display: "block", background: "#f3f4f6", color: "#374151", border: "1px solid #d1d5db" })
+			.text("Đang gửi thông tin yêu cầu tư vấn…");
+
+		var ajaxUrl = (window.despaceData && despaceData.ajaxUrl) || (window.furnivaData && furnivaData.ajaxUrl) || "/wp-admin/admin-ajax.php";
+
+		$.ajax({
+			url: ajaxUrl,
+			type: "POST",
+			data: formData,
+			processData: false,
+			contentType: false,
+			dataType: "json",
+			success: function (res) {
+				$btn.prop("disabled", false).removeClass("is-loading");
+				if ($btn.find(".btn-text").length) {
+					$btn.find(".btn-text").text(originalBtnText);
+				} else {
+					$btn.text(originalBtnText);
+				}
+
+				if (res && res.success) {
+					$status.css({ display: "block", background: "#ecfdf5", color: "#065f46", border: "1px solid #6ee7b7" })
+						.html("<strong>✦ " + (res.data && res.data.message ? res.data.message : "Đăng ký thành công!") + "</strong>");
+					$form[0].reset();
+				} else {
+					var errMsg = (res && res.data && res.data.message) ? res.data.message : "Đã có lỗi xảy ra. Vui lòng thử lại sau.";
+					$status.css({ display: "block", background: "#fdf2f2", color: "#991b1b", border: "1px solid #f87171" })
+						.text(errMsg);
+				}
+			},
+			error: function (xhr) {
+				$btn.prop("disabled", false).removeClass("is-loading");
+				if ($btn.find(".btn-text").length) {
+					$btn.find(".btn-text").text(originalBtnText);
+				} else {
+					$btn.text(originalBtnText);
+				}
+
+				var err = "Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối mạng hoặc liên hệ qua hotline.";
+				if (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+					err = xhr.responseJSON.data.message;
+				}
+				$status.css({ display: "block", background: "#fdf2f2", color: "#991b1b", border: "1px solid #f87171" })
+					.text(err);
+			}
+		});
 	});
 
 	/* ---------------------------------------------------------------- quantity stepper (single product) */
@@ -275,7 +406,11 @@ jQuery(function ($) {
 
 		$("#furniva-filter-form input[type=checkbox]:checked").each(function () {
 			var name = $(this).attr("name");
-			if (f[name]) f[name].push($(this).val());
+			if (name === "has_3d") {
+				f.has_3d = $(this).val();
+			} else if (f[name]) {
+				f[name].push($(this).val());
+			}
 		});
 		var min = $("#f-price-min").val(), max = $("#f-price-max").val();
 		if (min !== "" && !isNaN(min)) f.price_min = min;
@@ -283,6 +418,10 @@ jQuery(function ($) {
 
 		var $ordering = $("select.orderby").first();
 		if ($ordering.length) f.orderby = $ordering.val();
+
+		var urlParams = new URLSearchParams(window.location.search);
+		var searchKw = urlParams.get("s") || urlParams.get("q");
+		if (searchKw) f.s = searchKw;
 
 		return f;
 	}
@@ -319,6 +458,18 @@ jQuery(function ($) {
 			tags.push('<button type="button" class="f-active-tag" data-filter-type="price">' +
 				'<span class="f-active-tag-group">' + escapeHtml(furnivaData.strings.priceLabel) + ':</span> ' +
 				'<span class="f-active-tag-val">' + priceLabel + '</span>' +
+				'<span class="f-active-tag-x">&times;</span>' +
+			'</button>');
+		}
+
+		var urlParams = new URLSearchParams(window.location.search);
+		var searchKw = urlParams.get("s") || urlParams.get("q");
+		if (searchKw) {
+			count++;
+			var searchLabel = escapeHtml(searchKw);
+			tags.push('<button type="button" class="f-active-tag" data-filter-type="search">' +
+				'<span class="f-active-tag-group">' + escapeHtml(furnivaData.strings.searchLabel || "Tìm kiếm") + ':</span> ' +
+				'<span class="f-active-tag-val">"' + searchLabel + '"</span>' +
 				'<span class="f-active-tag-x">&times;</span>' +
 			'</button>');
 		}
@@ -403,6 +554,8 @@ jQuery(function ($) {
 			$.each(collectFilters(), function (k, v) {
 				if (typeof v === "object" && v.length) params[k] = v.join(",");
 				else if (k.indexOf("price") === 0) params[k] = v;
+				else if (k === "has_3d" && v) params[k] = v;
+				else if (k === "s" && v) params[k] = v;
 			});
 			var qs = $.param(params);
 			var targetUrl = window.location.pathname + (qs ? "?" + qs : "");
@@ -425,6 +578,12 @@ jQuery(function ($) {
 		var type = $(this).data("filter-type");
 		if (type === "price") {
 			$("#f-price-min, #f-price-max").val("");
+		} else if (type === "search") {
+			var qs = new URLSearchParams(window.location.search);
+			qs.delete("s");
+			qs.delete("q");
+			var newUrl = window.location.pathname + (qs.toString() ? "?" + qs.toString() : "");
+			history.replaceState({ furnivaFilter: true }, "", newUrl);
 		} else {
 			var name = $(this).data("name"), val = $(this).data("val");
 			$('#furniva-filter-form input[name="' + name + '"][value="' + val + '"]').prop("checked", false);
@@ -444,6 +603,13 @@ jQuery(function ($) {
 	$(document).on("click", "#furniva-filter-clear, #furniva-filter-clear-top, #furniva-clear-all-tags, #furniva-no-results-reset", function () {
 		$("#furniva-filter-form input[type=checkbox]").prop("checked", false);
 		$("#f-price-min, #f-price-max").val("");
+		var qs = new URLSearchParams(window.location.search);
+		if (qs.has("s") || qs.has("q")) {
+			qs.delete("s");
+			qs.delete("q");
+			var newUrl = window.location.pathname + (qs.toString() ? "?" + qs.toString() : "");
+			history.replaceState({ furnivaFilter: true }, "", newUrl);
+		}
 		runFilter(false);
 	});
 
@@ -473,6 +639,9 @@ jQuery(function ($) {
 				});
 			}
 		});
+		if (qs.get("has_3d")) {
+			$('#furniva-filter-form input[name="has_3d"]').prop("checked", true);
+		}
 		if (qs.get("price_min")) $("#f-price-min").val(qs.get("price_min"));
 		if (qs.get("price_max")) $("#f-price-max").val(qs.get("price_max"));
 	}

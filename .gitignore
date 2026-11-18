@@ -38,6 +38,7 @@ wordpress/wp-content/themes/*
 # Whitelist project seed data
 !database/
 !database/*
+database/backup_*
 
 
 # Dependencies and IDE / OS files
@@ -49,3 +50,5 @@ Thumbs.db
 *.log
 .idea/
 .vscode/
+scratch/
+DesSpace/

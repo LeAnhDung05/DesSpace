@@ -18,9 +18,11 @@ require_once get_stylesheet_directory() . '/inc/admin-3d-manager.php';
 require_once get_stylesheet_directory() . '/inc/despace-bilingual-products.php';
 require_once get_stylesheet_directory() . '/inc/despace-customer-auth.php';
 require_once get_stylesheet_directory() . '/inc/auto-seeder.php';
+require_once get_stylesheet_directory() . '/inc/contact-form.php';
 
 // ---------------------------------------------------------------- setup
 function furniva_setup() {
+	add_theme_support( 'title-tag' );
 	add_theme_support( 'woocommerce', array(
 		'product_grid' => array( 'default_columns' => 4, 'min_columns' => 2, 'max_columns' => 4 ),
 	) );
@@ -35,20 +37,98 @@ function furniva_setup() {
 }
 add_action( 'after_setup_theme', 'furniva_setup' );
 
+// ---------------------------------------------------------------- SEO & Meta tags
+add_action( 'wp_head', function() {
+	$desc = '';
+	if ( is_front_page() ) {
+		$desc = 'DeSpace — Thương hiệu nội thất cao cấp phong cách Scandinavian & Quiet Luxury. Trải nghiệm trực quan 3D/AR đặt sản phẩm trong phòng với tỷ lệ thực tế.';
+	} elseif ( is_page() ) {
+		$slug = get_post_field( 'post_name', get_the_ID() );
+		$descriptions = array(
+			've-despace'                 => 'Về DeSpace — Khởi nguồn từ 2016, xưởng thiết kế và chế tác nội thất cao cấp đạt chuẩn FSC, OEKO-TEX kết hợp công nghệ 3D/AR tiên phong.',
+			'lien-he'                    => 'Liên hệ DeSpace — Showroom trải nghiệm 3D/AR tại Gia Lâm, Hà Nội. Hotline 0332 174 590, tư vấn trực tiếp 1-1 cùng Giám đốc thiết kế.',
+			'cau-hoi-thuong-gap'         => 'Giải đáp các câu hỏi thường gặp về sản phẩm gỗ tự nhiên, công nghệ xem phòng 3D/AR, đặt hàng và bảo hành 5 năm tại DeSpace.',
+			'chinh-sach-giao-hang'       => 'Chính sách giao hàng toàn quốc & lắp đặt hoàn thiện tận nhà từ DeSpace. Miễn phí vận chuyển nội thành Hà Nội cho đơn từ 10 triệu đồng.',
+			'chinh-sach-doi-tra-bao-hanh'=> 'Chính sách bảo hành kết cấu 5 năm & 1 đổi 1 trong vòng 30 ngày cho mọi sản phẩm nội thất chính hãng tại DeSpace.',
+			'chinh-sach-bao-mat'         => 'Chính sách bảo mật quyền riêng tư của DeSpace — Bảo vệ dữ liệu cá nhân khách hàng, cam kết an toàn giao dịch trực tuyến.',
+			'dieu-khoan-mua-ban'         => 'Điều khoản mua bán và sử dụng dịch vụ tại DeSpace — Minh bạch quyền lợi và trách nhiệm giữa khách hàng và thương hiệu.',
+		);
+		if ( isset( $descriptions[ $slug ] ) ) {
+			$desc = $descriptions[ $slug ];
+		}
+	} elseif ( is_singular( 'product' ) ) {
+		$product = wc_get_product( get_the_ID() );
+		if ( $product ) {
+			$short = wp_strip_all_tags( $product->get_short_description() );
+			$desc = $short ? $short : ( $product->get_name() . ' — Nội thất cao cấp DeSpace bảo hành kết cấu 5 năm, hỗ trợ trải nghiệm 3D/AR.' );
+		}
+	}
+
+	if ( $desc ) {
+		echo '<meta name="description" content="' . esc_attr( $desc ) . '" />' . "\n";
+	}
+}, 1 );
+
+// ---------------------------------------------------------------- canonical alias redirects
+add_action( 'template_redirect', function() {
+	$uri = $_SERVER['REQUEST_URI'] ?? '';
+	$path = trim( (string) wp_parse_url( $uri, PHP_URL_PATH ), '/' );
+
+	// Check if path has /en/ prefix
+	$is_en = false;
+	if ( 0 === strpos( $path, 'en/' ) || 'en' === $path ) {
+		$is_en = true;
+		$path = substr( $path, 3 ); // remove 'en/'
+	}
+
+	$aliases = array(
+		'about'            => 've-despace',
+		'contact'          => 'lien-he',
+		'faq'              => 'cau-hoi-thuong-gap',
+		'faqs'             => 'cau-hoi-thuong-gap',
+		'shipping-returns' => 'chinh-sach-giao-hang',
+		'giao-hang-doi-tra' => 'chinh-sach-giao-hang',
+		'refund_returns'   => 'chinh-sach-doi-tra-bao-hanh',
+		'doi-tra-bao-hanh' => 'chinh-sach-doi-tra-bao-hanh',
+		'privacy-policy'   => 'chinh-sach-bao-mat',
+		'terms'            => 'dieu-khoan-mua-ban',
+	);
+
+	if ( isset( $aliases[ $path ] ) ) {
+		$target_slug = $aliases[ $path ];
+		$target_url = home_url( ( $is_en ? '/en/' : '/' ) . $target_slug . '/' );
+		wp_safe_redirect( $target_url, 301 );
+		exit;
+	}
+} );
+
 // ---------------------------------------------------------------- rewrite rules
 add_action( 'init', function() {
 	add_rewrite_rule( '^shop/?$', 'index.php?post_type=product', 'top' );
 	add_rewrite_rule( '^shop/page/([0-9]{1,})/?$', 'index.php?post_type=product&paged=$matches[1]', 'top' );
 	add_rewrite_rule( '^cua-hang/?$', 'index.php?post_type=product', 'top' );
 	add_rewrite_rule( '^cua-hang/page/([0-9]{1,})/?$', 'index.php?post_type=product&paged=$matches[1]', 'top' );
+	add_rewrite_rule( '^en/?$', 'index.php', 'top' );
+	add_rewrite_rule( '^en/(.+)/?$', 'index.php?pagename=$matches[1]', 'top' );
 	add_rewrite_rule( '^about/?$', 'index.php?pagename=ve-despace', 'top' );
 	add_rewrite_rule( '^contact/?$', 'index.php?pagename=lien-he', 'top' );
+	add_rewrite_rule( '^faqs?/?$', 'index.php?pagename=cau-hoi-thuong-gap', 'top' );
+	add_rewrite_rule( '^shipping-returns/?$', 'index.php?pagename=chinh-sach-giao-hang', 'top' );
+	add_rewrite_rule( '^giao-hang-doi-tra/?$', 'index.php?pagename=chinh-sach-giao-hang', 'top' );
+	add_rewrite_rule( '^refund_returns/?$', 'index.php?pagename=chinh-sach-doi-tra-bao-hanh', 'top' );
+	add_rewrite_rule( '^doi-tra-bao-hanh/?$', 'index.php?pagename=chinh-sach-doi-tra-bao-hanh', 'top' );
+	add_rewrite_rule( '^privacy-policy/?$', 'index.php?pagename=chinh-sach-bao-mat', 'top' );
+	add_rewrite_rule( '^terms/?$', 'index.php?pagename=dieu-khoan-mua-ban', 'top' );
 } );
 
 // ---------------------------------------------------------------- assets
 function furniva_assets() {
-	wp_enqueue_style( 'astra', get_template_directory_uri() . '/style.css', array(), null );
-	wp_enqueue_style( 'furniva', get_stylesheet_uri(), array( 'astra' ), FURNIVA_VER );
+	$deps = array();
+	if ( file_exists( get_template_directory() . '/style.css' ) ) {
+		wp_enqueue_style( 'astra', get_template_directory_uri() . '/style.css', array(), null );
+		$deps[] = 'astra';
+	}
+	wp_enqueue_style( 'furniva', get_stylesheet_uri(), $deps, FURNIVA_VER );
 	wp_enqueue_style( 'furniva-fonts', 'https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&family=Playfair+Display:ital,wght@0,400..700;1,400..700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap', array(), null );
 
 	// Animations CSS
@@ -296,6 +376,7 @@ function furniva_assets() {
 		'shopUrl'     => get_permalink( wc_get_page_id( 'shop' ) ),
 		'language'    => despace_current_language(),
 		'nonce'       => wp_create_nonce( 'furniva_filter' ),
+		'contactNonce'=> wp_create_nonce( 'despace_contact_nonce' ),
 		'baseCat'     => $base_cat,
 		'isLoggedIn'  => is_user_logged_in(),
 		'loginUrl'    => wc_get_page_permalink( 'myaccount' ),
@@ -326,8 +407,12 @@ function furniva_assets() {
 				'color' => furniva_t( 'Color', 'Màu sắc' ),
 				'size' => furniva_t( 'Size', 'Kích thước' ),
 				'availability' => furniva_t( 'Availability', 'Tình trạng' ),
+				'has_3d' => furniva_t( 'Feature', 'Tính năng' ),
 				'price' => furniva_t( 'Price', 'Giá' ),
+				'search' => furniva_t( 'Search', 'Tìm kiếm' ),
 			),
+			'searchLabel'       => furniva_t( 'Search', 'Tìm kiếm' ),
+			'has3dLabel'        => furniva_t( '3D/AR Available', 'Xem được 3D/AR' ),
 			'priceRange'        => furniva_t( '$%1$s – $%2$s', '$%1$s – $%2$s' ),
 			'itemRemoved'       => furniva_t( 'Item removed from cart.', 'Đã xóa sản phẩm khỏi giỏ hàng.' ),
 			'addedToCart'       => furniva_t( 'Added {product} to your cart! 🛍️', 'Đã thêm {product} vào giỏ hàng! 🛍️' ),
@@ -421,7 +506,7 @@ function despace_svg( $name ) {
 		'refresh'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/></svg>',
 		'shield'   => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>',
 		'plus'     => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
-		'burger'   => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>',
+		'burger'   => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>',
 		'facebook' => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>',
 		'instagram'=> '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><line x1="17.5" y1="6.5" x2="17.5" y2="6.5" stroke-linecap="round" stroke-width="3"/></svg>',
 		'youtube'  => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M22.5 6.4a3 3 0 0 0-2.1-2.1C18.5 3.8 12 3.8 12 3.8s-6.5 0-8.4.5A3 3 0 0 0 1.5 6.4 31 31 0 0 0 1 12a31 31 0 0 0 .5 5.6 3 3 0 0 0 2.1 2.1c1.9.5 8.4.5 8.4.5s6.5 0 8.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 23 12a31 31 0 0 0-.5-5.6zM9.8 15.4V8.6L15.9 12z"/></svg>',
@@ -535,6 +620,17 @@ function furniva_ajax_filter() {
 	if ( in_array( 'instock', $availability, true ) ) {
 		$meta_query[] = array( 'key' => '_stock_status', 'value' => 'instock' );
 	}
+
+	// 3D / AR feature filter
+	if ( ! empty( $_POST['has_3d'] ) ) {
+		$meta_query[] = array(
+			'key'     => '_despace_glb_attachment_id',
+			'value'   => 0,
+			'compare' => '>',
+			'type'    => 'NUMERIC',
+		);
+	}
+
 	$orderby = sanitize_text_field( $_POST['orderby'] ?? 'menu_order' );
 
 	$query_args = array(
@@ -544,6 +640,31 @@ function furniva_ajax_filter() {
 		'paged'          => $paged,
 		'tax_query'      => $tax_query,
 	);
+
+	// Search keyword filter (by product name or SKU)
+	$search_term = sanitize_text_field( $_POST['s'] ?? $_POST['q'] ?? '' );
+	if ( ! empty( $search_term ) ) {
+		global $wpdb;
+		$sku_product_ids = $wpdb->get_col( $wpdb->prepare(
+			"SELECT DISTINCT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_sku' AND meta_value LIKE %s",
+			'%' . $wpdb->esc_like( $search_term ) . '%'
+		) );
+
+		$title_query = new WP_Query( array(
+			'post_type'      => 'product',
+			'post_status'    => 'publish',
+			'posts_per_page' => 200,
+			'fields'         => 'ids',
+			's'              => $search_term,
+		) );
+
+		$matched_ids = array_map( 'intval', array_unique( array_merge( (array) $sku_product_ids, (array) $title_query->posts ) ) );
+		if ( ! empty( $matched_ids ) ) {
+			$query_args['post__in'] = $matched_ids;
+		} else {
+			$query_args['post__in'] = array( 0 ); // force empty result
+		}
+	}
 
 	switch ( $orderby ) {
 		case 'price-desc':

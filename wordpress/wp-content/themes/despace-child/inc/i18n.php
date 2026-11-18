@@ -23,6 +23,11 @@ function despace_current_language() {
 		return $TRP_LANGUAGE;
 	}
 
+	$uri = $_SERVER['REQUEST_URI'] ?? '';
+	if ( 0 === strpos( $uri, '/en/' ) || '/en' === $uri ) {
+		return 'en_US';
+	}
+
 	$locale = function_exists( 'determine_locale' ) ? determine_locale() : get_locale();
 	if ( in_array( $locale, $allowed, true ) ) {
 		return $locale;
@@ -50,6 +55,8 @@ function furniva_english_titles() {
 		5 => 'Shop', 6 => 'Cart', 7 => 'Checkout', 8 => 'My account', 208 => 'Home', 209 => 'Blog',
 		210 => 'About us', 211 => 'Contact', 212 => 'Shipping & Returns', 213 => 'FAQs', 247 => 'Wishlist',
 		10 => 'Home', 11 => 'About DeSpace', 12 => 'Contact DeSpace',
+		13 => 'Shipping & Assembly Policy', 9 => 'Returns & Warranty Policy',
+		14 => 'Frequently Asked Questions', 15 => 'Privacy Policy', 16 => 'Terms of Sale & Service',
 		230 => 'How to Choose the Right Lounge Chair for Your Living Room',
 		232 => '5 Ways to Style a Walnut Coffee Table',
 		234 => 'Lighting Layers: How to Light a Living Room Properly',
@@ -529,8 +536,8 @@ function despace_language_switcher_html() {
 	$uri  = $_SERVER['REQUEST_URI'] ?? '/';
 	$current_url = esc_url_raw( ( is_ssl() ? 'https://' : 'http://' ) . $host . $uri );
 
-	$vi_url = home_url( '/' );
-	$en_url = home_url( '/en/' );
+	$vi_url = '';
+	$en_url = '';
 
 	if ( class_exists( 'TRP_Translate_Press' ) ) {
 		$trp           = TRP_Translate_Press::get_trp_instance();
@@ -542,7 +549,7 @@ function despace_language_switcher_html() {
 	}
 
 	// Fallback if TRP didn't produce distinct URLs
-	if ( $vi_url === $en_url || empty( $en_url ) ) {
+	if ( empty( $vi_url ) || empty( $en_url ) || $vi_url === $en_url ) {
 		$path = wp_parse_url( $current_url, PHP_URL_PATH ) ?: '/';
 		$query = wp_parse_url( $current_url, PHP_URL_QUERY );
 		$qs = $query ? '?' . $query : '';
@@ -641,6 +648,19 @@ add_filter( 'option_trp_settings', function( $settings ) {
 	}
 	return $settings;
 }, 999 );
+
+/**
+ * Prevent WordPress canonical redirect from stripping /en/ prefix when TranslatePress is inactive.
+ */
+add_filter( 'redirect_canonical', function( $redirect_url, $requested_url ) {
+	if ( ! class_exists( 'TRP_Translate_Press' ) ) {
+		$path = wp_parse_url( $requested_url, PHP_URL_PATH ) ?: '';
+		if ( 0 === strpos( $path, '/en/' ) || '/en' === $path ) {
+			return false;
+		}
+	}
+	return $redirect_url;
+}, 10, 2 );
 
 
 

@@ -113,9 +113,10 @@ foreach ( $chat_products as $chat_product ) {
 
 		<div class="fv-footer__column">
 			<h2><?php echo esc_html( furniva_t( 'Customer care', 'Chăm sóc khách hàng' ) ); ?></h2>
-			<a href="<?php echo esc_url( home_url( '/shipping-returns/' ) ); ?>"><?php echo esc_html( furniva_t( 'Shipping & returns', 'Giao hàng & đổi trả' ) ); ?></a>
-			<a href="<?php echo esc_url( home_url( '/faqs/' ) ); ?>"><?php echo esc_html( furniva_t( 'FAQs', 'Giải đáp' ) ); ?></a>
-			<a href="<?php echo esc_url( home_url( '/contact/' ) ); ?>"><?php echo esc_html( furniva_t( 'Contact', 'Liên hệ' ) ); ?></a>
+			<a href="<?php echo esc_url( home_url( '/chinh-sach-giao-hang/' ) ); ?>"><?php echo esc_html( furniva_t( 'Shipping policy', 'Chính sách giao hàng' ) ); ?></a>
+			<a href="<?php echo esc_url( home_url( '/chinh-sach-doi-tra-bao-hanh/' ) ); ?>"><?php echo esc_html( furniva_t( 'Returns & warranty', 'Đổi trả & bảo hành' ) ); ?></a>
+			<a href="<?php echo esc_url( home_url( '/cau-hoi-thuong-gap/' ) ); ?>"><?php echo esc_html( furniva_t( 'FAQs', 'Câu hỏi thường gặp' ) ); ?></a>
+			<a href="<?php echo esc_url( home_url( '/lien-he/' ) ); ?>"><?php echo esc_html( furniva_t( 'Contact', 'Liên hệ' ) ); ?></a>
 			<a href="<?php echo esc_url( $account_url ); ?>"><?php echo esc_html( furniva_t( 'My account', 'Tài khoản' ) ); ?></a>
 		</div>
 
@@ -181,7 +182,13 @@ foreach ( $chat_products as $chat_product ) {
 	</div>
 
 	<div class="fv-wrap fv-footer__legal">
-		<span>© <?php echo esc_html( gmdate( 'Y' ) ); ?> DeSpace — <?php echo esc_html( furniva_t( 'All rights reserved.', 'Bảo lưu mọi quyền.' ) ); ?></span>
+		<div class="fv-footer__legal-text">
+			<span>© <?php echo esc_html( gmdate( 'Y' ) ); ?> DeSpace — <?php echo esc_html( furniva_t( 'All rights reserved.', 'Bảo lưu mọi quyền.' ) ); ?></span>
+			<span class="fv-legal-sep" aria-hidden="true">·</span>
+			<a href="<?php echo esc_url( home_url( '/chinh-sach-bao-mat/' ) ); ?>"><?php echo esc_html( furniva_t( 'Privacy Policy', 'Chính sách bảo mật' ) ); ?></a>
+			<span class="fv-legal-sep" aria-hidden="true">·</span>
+			<a href="<?php echo esc_url( home_url( '/dieu-khoan-mua-ban/' ) ); ?>"><?php echo esc_html( furniva_t( 'Terms of Sale', 'Điều khoản mua bán' ) ); ?></a>
+		</div>
 		<div class="f-payments" aria-label="<?php echo esc_attr( furniva_t( 'Available payment methods', 'Phương thức thanh toán' ) ); ?>">
 			<!-- Official VISA Badge -->
 			<span class="f-payment f-payment--visa" role="img" aria-label="VISA" title="VISA Card">
