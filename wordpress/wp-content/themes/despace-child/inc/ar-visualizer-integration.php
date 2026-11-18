@@ -67,6 +67,20 @@ function ax_get_product_3d_info( $product_id ) {
 		$usdz_url = '';
 	}
 
+	// Append local filemtime cache-buster so browsers never load stale cached single-mesh GLB/USDZ
+	$uploads = wp_get_upload_dir();
+	if ( ! empty( $uploads['baseurl'] ) && ! empty( $uploads['basedir'] ) ) {
+		foreach ( array( 'glb_url', 'usdz_url' ) as $url_var ) {
+			if ( ! empty( $$url_var ) && false === strpos( $$url_var, '?' ) && 0 === strpos( $$url_var, $uploads['baseurl'] ) ) {
+				$rel  = substr( $$url_var, strlen( $uploads['baseurl'] ) );
+				$disk = wp_normalize_path( $uploads['basedir'] . $rel );
+				if ( file_exists( $disk ) ) {
+					$$url_var = add_query_arg( 'v', (string) filemtime( $disk ), $$url_var );
+				}
+			}
+		}
+	}
+
 	$product = wc_get_product( $product_id );
 	$dims = $product ? $product->get_dimensions( false ) : array();
 	$width  = ( $row && $row->width > 0 ) ? floatval( $row->width ) : ( ! empty( $dims['length'] ) ? floatval( $dims['length'] ) : floatval( get_post_meta( $product_id, '_length', true ) ) );

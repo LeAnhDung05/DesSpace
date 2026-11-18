@@ -25,8 +25,13 @@
 }
 
 @keyframes axBackdropFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* Modal Dialog Window */
@@ -51,6 +56,7 @@
     opacity: 0;
     transform: scale(0.96) translateY(12px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -255,9 +261,11 @@
 .ax-room-stage-bg.tone-warm {
   filter: sepia(0.2) saturate(1.15) brightness(1.02);
 }
+
 .ax-room-stage-bg.tone-natural {
   filter: none;
 }
+
 .ax-room-stage-bg.tone-moody {
   filter: contrast(1.1) brightness(0.88) hue-rotate(-6deg);
 }
@@ -475,8 +483,15 @@
 }
 
 @keyframes axHintPulse {
-  0%, 100% { opacity: 0.95; }
-  50% { opacity: 0.7; }
+
+  0%,
+  100% {
+    opacity: 0.95;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
 }
 
 /* 3D Model Stage */
@@ -853,6 +868,7 @@
   .ax-room-stage-viewport {
     height: 380px;
   }
+
   .ax-room-controls-bar {
     justify-content: center;
   }
@@ -862,38 +878,48 @@
   .ax-room-modal {
     padding: 8px;
   }
+
   .ax-room-modal-dialog {
     max-height: 98vh;
     border-radius: 18px;
   }
+
   .ax-room-modal-header {
     padding: 14px 16px;
   }
+
   .ax-room-modal-title {
     font-size: 18px;
   }
+
   .ax-room-modal-body {
     padding: 14px 16px;
   }
+
   .ax-room-stage-viewport {
     height: 290px;
   }
+
   .ax-product-cutout {
     max-width: 180px;
     max-height: 180px;
   }
+
   .ax-room-controls-bar {
     padding: 12px;
     gap: 12px;
   }
+
   .ax-room-modal-footer {
     padding: 14px 16px;
     flex-direction: column;
     align-items: stretch;
   }
+
   .ax-modal-actions {
     justify-content: space-between;
   }
+
   .ax-btn-modal-cart {
     flex: 1;
     justify-content: center;
@@ -917,8 +943,15 @@
 }
 
 @keyframes axTabFadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* 3D Viewport Wrapper */
@@ -1042,6 +1075,7 @@
   .ax-3d-part-hint {
     display: none !important;
   }
+
   .ax-3d-part-pills {
     bottom: 10px;
     width: calc(100% - 16px);
@@ -1051,6 +1085,7 @@
     gap: 5px;
     padding: 0;
   }
+
   .ax-part-chip {
     min-height: 30px;
     padding: 4px 9px;
@@ -1072,7 +1107,6 @@
   position: absolute;
   top: 16px;
   left: 16px;
-  max-width: min(360px, calc(100% - 480px));
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -1090,13 +1124,6 @@
   gap: 8px;
   font-size: 13px;
   color: #1C1917;
-  min-width: 0;
-}
-
-.ax-pill-row strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .ax-pill-dot {
@@ -1223,7 +1250,9 @@
 }
 
 @keyframes axSpin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .ax-status-heading {
@@ -1550,8 +1579,8 @@
   transition: opacity 0.18s ease;
 }
 
-.ax-btn-copy-url[data-copied] + .ax-copy-tip,
-.ax-btn-copy-url[data-failed] + .ax-copy-tip {
+.ax-btn-copy-url[data-copied]+.ax-copy-tip,
+.ax-btn-copy-url[data-failed]+.ax-copy-tip {
   opacity: 1;
 }
 
@@ -1785,12 +1814,21 @@
 }
 
 @keyframes axLiveDotBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.45; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.45;
+  }
 }
 
 /* Form-factor adaptation & Typography polish */
-:root { --target-size: 24px; }
+:root {
+  --target-size: 24px;
+}
 
 .ax-room-modal h2,
 .ax-room-modal h3,
@@ -1824,20 +1862,24 @@
     gap: 10px;
     padding-top: 14px;
   }
+
   .ax-desktop-qr-layout {
     flex-direction: column;
     text-align: center;
     gap: 18px;
   }
+
   .ax-qr-checklist li {
     text-align: left;
   }
+
   .ax-3d-viewport-wrapper,
   .ax-live-cam-viewport {
     height: clamp(320px, 48vh, 420px);
     height: clamp(320px, 48dvh, 420px);
     min-height: 300px;
   }
+
   .ax-live-ar-object-wrap {
     width: 260px;
     height: 260px;
@@ -2221,6 +2263,7 @@
     margin-left: -110px;
     margin-top: -110px;
   }
+
   .ax-toolbar-btn span {
     font-size: 10.5px;
   }
@@ -2232,20 +2275,24 @@
   color: #FAF7F2;
   border-color: #2D2017;
 }
+
 .ax-toolbar-btn.ax-toolbar-btn-doors svg {
   stroke: #FAF7F2;
 }
+
 .ax-toolbar-btn.ax-toolbar-btn-doors:hover {
   background: #1C1917;
   color: #FFFFFF;
   border-color: #1C1917;
 }
+
 .ax-toolbar-btn.ax-toolbar-btn-doors.is-open,
 .ax-toolbar-btn.ax-toolbar-btn-doors.is-open:hover {
   background: #9A6745;
   color: #FFFFFF;
   border-color: #9A6745;
 }
+
 .ax-toolbar-btn.ax-toolbar-btn-doors.is-open svg {
   stroke: #FFFFFF;
 }

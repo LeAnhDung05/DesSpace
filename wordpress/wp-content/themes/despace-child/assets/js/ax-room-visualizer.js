@@ -6,7 +6,7 @@
  * - Google Scene Viewer / ARCore for Android (GLB)
  * - Standards-compliant ISO/IEC 18004 Reed-Solomon QR Code Generator
  */
-(function($) {
+(function ($) {
   'use strict';
 
   var currentProduct = {
@@ -72,14 +72,14 @@
 
   // Device Detection
   var Device = {
-    isIOS: function() {
+    isIOS: function () {
       return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     },
-    isAndroid: function() {
+    isAndroid: function () {
       return /Android/i.test(navigator.userAgent);
     },
-    isMobile: function() {
+    isMobile: function () {
       return Device.isIOS() || Device.isAndroid();
     }
   };
@@ -115,7 +115,7 @@
 
   function bindTriggers() {
     // Open 3D Viewer directly
-    $(document).on('click', '#axView3DModelBtn, .ax-open-3d-btn', function(e) {
+    $(document).on('click', '#axView3DModelBtn, .ax-open-3d-btn', function (e) {
       e.preventDefault();
       e.stopPropagation();
       extractProductData($(this));
@@ -125,7 +125,7 @@
     });
 
     // Open Real AR Camera directly
-    $(document).on('click', '#arViewInRoomBtn, .ax-open-ar-btn, .ax-open-room-modal', function(e) {
+    $(document).on('click', '#arViewInRoomBtn, .ax-open-ar-btn, .ax-open-room-modal', function (e) {
       e.preventDefault();
       e.stopPropagation();
       extractProductData($(this));
@@ -307,7 +307,14 @@
         import('https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js'),
         import('https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js'),
         import('https://esm.sh/three@0.160.0/examples/jsm/environments/RoomEnvironment.js')
-      ]).then(function(mods) {
+      ]).catch(function () {
+        return Promise.all([
+          import('https://cdn.jsdelivr.net/npm/three@0.160.0/+esm'),
+          import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js/+esm'),
+          import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js/+esm'),
+          import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/environments/RoomEnvironment.js/+esm')
+        ]);
+      }).then(function (mods) {
         interactive3D.deps = {
           THREE: mods[0],
           OrbitControls: mods[1].OrbitControls,
@@ -315,7 +322,7 @@
           RoomEnvironment: mods[3].RoomEnvironment
         };
         return interactive3D.deps;
-      }).catch(function(err) {
+      }).catch(function (err) {
         interactive3D.threePromise = null;
         console.warn('[DeSpace Interactive 3D] Fallback to <model-viewer>:', err);
         return null;
@@ -417,7 +424,7 @@
       bindInteractiveStagePointerEvents(renderer.domElement, THREE);
 
       if (typeof ResizeObserver !== 'undefined') {
-        interactive3D.resizeObserver = new ResizeObserver(function() {
+        interactive3D.resizeObserver = new ResizeObserver(function () {
           resizeInteractive3DStage();
         });
         interactive3D.resizeObserver.observe(container);
@@ -441,11 +448,11 @@
   function disposeInteractiveModel() {
     if (interactive3D.modelRoot && interactive3D.scene) {
       interactive3D.scene.remove(interactive3D.modelRoot);
-      interactive3D.modelRoot.traverse(function(obj) {
+      interactive3D.modelRoot.traverse(function (obj) {
         if (obj.geometry) obj.geometry.dispose();
         if (obj.material) {
           var mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-          mats.forEach(function(m) {
+          mats.forEach(function (m) {
             if (m.map) m.map.dispose();
             m.dispose();
           });
@@ -470,7 +477,7 @@
     if (interactive3D.hoveredPart === part) return;
 
     if (interactive3D.hoveredPart) {
-      interactive3D.hoveredPart.meshes.forEach(function(m) {
+      interactive3D.hoveredPart.meshes.forEach(function (m) {
         if (m.material && m.material.emissive) {
           m.material.emissive.setHex(0x000000);
           m.material.emissiveIntensity = 0;
@@ -481,7 +488,7 @@
     interactive3D.hoveredPart = part;
     var canvas = interactive3D.renderer && interactive3D.renderer.domElement;
     if (part) {
-      part.meshes.forEach(function(m) {
+      part.meshes.forEach(function (m) {
         if (m.material && m.material.emissive) {
           m.material.emissive.setHex(0x8c5b36);
           m.material.emissiveIntensity = 0.24;
@@ -498,15 +505,15 @@
   }
 
   function updatePartButtonsUI() {
-    var allOpen = interactive3D.parts.length > 0 && interactive3D.parts.every(function(pt) { return pt.isOpen; });
-    var anyOpen = interactive3D.parts.some(function(pt) { return pt.isOpen; });
+    var allOpen = interactive3D.parts.length > 0 && interactive3D.parts.every(function (pt) { return pt.isOpen; });
+    var anyOpen = interactive3D.parts.some(function (pt) { return pt.isOpen; });
 
     $('#axBtnToggleDoors')
       .toggleClass('is-open', anyOpen)
       .attr('aria-pressed', anyOpen ? 'true' : 'false');
     $('#axBtnToggleDoorsText').text(allOpen ? 'Đóng hết cửa' : (anyOpen ? 'Mở tất cả' : 'Mở hết cửa'));
 
-    interactive3D.parts.forEach(function(pt) {
+    interactive3D.parts.forEach(function (pt) {
       if (pt.chipEl) {
         pt.chipEl.classList.toggle('is-open', pt.isOpen);
         pt.chipEl.setAttribute('aria-pressed', pt.isOpen ? 'true' : 'false');
@@ -533,11 +540,11 @@
       pointerNDC.y = -((clientY - rect.top) / rect.height) * 2 + 1;
     }
 
-    domEl.addEventListener('pointerdown', function(e) {
+    domEl.addEventListener('pointerdown', function (e) {
       downPos = { x: e.clientX, y: e.clientY };
     });
 
-    domEl.addEventListener('pointermove', function(e) {
+    domEl.addEventListener('pointermove', function (e) {
       if (!interactive3D.active || !interactive3D.modelRoot) return;
       if (e.buttons !== 0) return;
       getNDC(e.clientX, e.clientY);
@@ -547,11 +554,11 @@
       setHoveredPart(hitPart);
     });
 
-    domEl.addEventListener('pointerleave', function() {
+    domEl.addEventListener('pointerleave', function () {
       setHoveredPart(null);
     });
 
-    domEl.addEventListener('pointerup', function(e) {
+    domEl.addEventListener('pointerup', function (e) {
       if (!interactive3D.active || !interactive3D.modelRoot || !downPos) return;
       var dist = Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y);
       downPos = null;
@@ -583,7 +590,7 @@
       interactive3D.lastTime = now;
       var alpha = 1 - Math.exp(-9.5 * dt);
 
-      interactive3D.parts.forEach(function(pt) {
+      interactive3D.parts.forEach(function (pt) {
         if (Math.abs(pt.progress - pt.target) < 0.0008) {
           pt.progress = pt.target;
         } else {
@@ -645,7 +652,7 @@
 
   function loadInteractive3DStage(glbUrl) {
     var token = ++interactive3D.loadToken;
-    loadThreeInteractiveDeps().then(function(deps) {
+    loadThreeInteractiveDeps().then(function (deps) {
       if (!deps || token !== interactive3D.loadToken) return;
       if (!ensureInteractiveRenderer(deps)) return;
 
@@ -653,7 +660,7 @@
       loader.setCrossOrigin('anonymous');
       loader.load(
         glbUrl,
-        function(gltf) {
+        function (gltf) {
           if (token !== interactive3D.loadToken) return;
           disposeInteractiveModel();
           interactive3D.parts = [];
@@ -662,7 +669,7 @@
           var root = gltf.scene;
           var discovered = [];
 
-          root.traverse(function(obj) {
+          root.traverse(function (obj) {
             if (obj.isMesh) {
               obj.castShadow = true;
               obj.receiveShadow = true;
@@ -670,7 +677,7 @@
             var desc = inferPartDescriptor(obj);
             if (desc) {
               var partMeshes = [];
-              obj.traverse(function(child) {
+              obj.traverse(function (child) {
                 if (child.isMesh && child.material) {
                   child.material = child.material.clone();
                   partMeshes.push(child);
@@ -732,13 +739,13 @@
 
           // Render synchronized 1-tap accessibility chips
           var $pills = $('#ax3DPartPills').empty();
-          discovered.forEach(function(pt, idx) {
+          discovered.forEach(function (pt, idx) {
             var btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'ax-part-chip';
             btn.setAttribute('aria-pressed', 'false');
             btn.textContent = pt.label || ('Phần ' + (idx + 1));
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
               toggleInteractivePart(pt);
             });
             pt.chipEl = btn;
@@ -759,7 +766,7 @@
           $('#ax3DLoadingOverlay').fadeOut(160);
         },
         undefined,
-        function() {
+        function () {
           resetInteractive3DUI();
         }
       );
@@ -876,7 +883,7 @@
       if (currentProduct.usdzUrl) {
         liveMv.setAttribute('ios-src', currentProduct.usdzUrl);
       }
-      var syncLiveAnimBtn = function() {
+      var syncLiveAnimBtn = function () {
         var anims = liveMv.availableAnimations || [];
         if (anims.length > 0) {
           liveMv.animationName = anims[0];
@@ -885,7 +892,7 @@
           $('#axLiveToggleDoorsBtn').show();
         }
       };
-      liveMv.removeEventListener('load', liveMv._despaceAnimLoad || function(){});
+      liveMv.removeEventListener('load', liveMv._despaceAnimLoad || function () { });
       liveMv._despaceAnimLoad = syncLiveAnimBtn;
       liveMv.addEventListener('load', syncLiveAnimBtn);
       if (liveMv.loaded) {
@@ -917,17 +924,17 @@
     };
 
     navigator.mediaDevices.getUserMedia(constraints)
-      .then(function(stream) {
+      .then(function (stream) {
         state.cameraStream = stream;
         state.usingFallbackRoom = false;
         $fallbackBg.hide();
         if (video) {
           video.srcObject = stream;
           video.style.display = 'block';
-          video.play().catch(function() {});
+          video.play().catch(function () { });
         }
       })
-      .catch(function(err) {
+      .catch(function (err) {
         console.warn('[DeSpace Live AR] Camera stream fallback to room backdrop:', err);
         enableFallbackRoomBackdrop();
       });
@@ -941,7 +948,7 @@
 
   function stopLiveCameraStream() {
     if (state.cameraStream) {
-      state.cameraStream.getTracks().forEach(function(track) {
+      state.cameraStream.getTracks().forEach(function (track) {
         track.stop();
       });
       state.cameraStream = null;
@@ -980,7 +987,7 @@
   function scheduleLiveTransformUpdate() {
     if (state.rafPending) return;
     state.rafPending = true;
-    requestAnimationFrame(function() {
+    requestAnimationFrame(function () {
       state.rafPending = false;
       var wrap = document.getElementById('axLiveArObjectWrap');
       if (wrap) {
@@ -1009,7 +1016,7 @@
 
   function bindLiveCameraAR() {
     // Open Live Camera AR from any trigger button
-    $(document).on('click', '.ax-trigger-live-cam', function(e) {
+    $(document).on('click', '.ax-trigger-live-cam', function (e) {
       e.preventDefault();
       if (state.activeTab !== 'ar') {
         switchTab('ar');
@@ -1018,23 +1025,23 @@
     });
 
     // Sub-mode switcher buttons
-    $('#axSubModeQrBtn').on('click', function(e) {
+    $('#axSubModeQrBtn').on('click', function (e) {
       e.preventDefault();
       switchArSubView('handoff');
     });
 
-    $('#axSubModeLiveCamBtn').on('click', function(e) {
+    $('#axSubModeLiveCamBtn').on('click', function (e) {
       e.preventDefault();
       switchArSubView('live-camera');
     });
 
     // Gesture mode toggle (Rotate 360° vs Move on Floor)
-    $('#axLiveModeRotateBtn').on('click', function(e) {
+    $('#axLiveModeRotateBtn').on('click', function (e) {
       e.preventDefault();
       setLiveGestureMode('rotate');
     });
 
-    $('#axLiveModeMoveBtn').on('click', function(e) {
+    $('#axLiveModeMoveBtn').on('click', function (e) {
       e.preventDefault();
       setLiveGestureMode('move');
     });
@@ -1042,7 +1049,7 @@
     // Dragging on floor in 'move' mode (pointer events for unified 60fps touch + mouse)
     var viewport = document.getElementById('axLiveCamViewport');
     if (viewport) {
-      viewport.addEventListener('pointerdown', function(e) {
+      viewport.addEventListener('pointerdown', function (e) {
         if (state.gestureMode !== 'move') return;
         if (e.target.closest('.despace-stage-mode-bar, .ax-live-ar-pill')) return;
         state.isDraggingLive = true;
@@ -1050,11 +1057,11 @@
         state.posStart = { x: state.livePos.x, y: state.livePos.y };
         $('#axLiveArObjectWrap').addClass('is-dragging');
         if (viewport.setPointerCapture) {
-          try { viewport.setPointerCapture(e.pointerId); } catch (err) {}
+          try { viewport.setPointerCapture(e.pointerId); } catch (err) { }
         }
       });
 
-      viewport.addEventListener('pointermove', function(e) {
+      viewport.addEventListener('pointermove', function (e) {
         if (!state.isDraggingLive) return;
         var dx = e.clientX - state.dragStart.x;
         var dy = e.clientY - state.dragStart.y;
@@ -1065,7 +1072,7 @@
         scheduleLiveTransformUpdate();
       });
 
-      var endDrag = function() {
+      var endDrag = function () {
         if (!state.isDraggingLive) return;
         state.isDraggingLive = false;
         $('#axLiveArObjectWrap').removeClass('is-dragging');
@@ -1074,7 +1081,7 @@
       viewport.addEventListener('pointercancel', endDrag);
 
       // 2-finger pinch-to-zoom on touch screens
-      viewport.addEventListener('touchstart', function(e) {
+      viewport.addEventListener('touchstart', function (e) {
         if (e.touches && e.touches.length === 2) {
           var dx = e.touches[0].clientX - e.touches[1].clientX;
           var dy = e.touches[0].clientY - e.touches[1].clientY;
@@ -1083,7 +1090,7 @@
         }
       }, { passive: true });
 
-      viewport.addEventListener('touchmove', function(e) {
+      viewport.addEventListener('touchmove', function (e) {
         if (e.touches && e.touches.length === 2 && state.pinchStartDist > 10) {
           var dx = e.touches[0].clientX - e.touches[1].clientX;
           var dy = e.touches[0].clientY - e.touches[1].clientY;
@@ -1096,31 +1103,31 @@
     }
 
     // Scale controls
-    $('#axLiveScaleSlider').on('input', function() {
+    $('#axLiveScaleSlider').on('input', function () {
       var val = parseInt($(this).val(), 10) || 100;
       state.liveScale = Math.max(0.5, Math.min(1.8, val / 100));
       scheduleLiveTransformUpdate();
     });
 
-    $('#axLiveScaleDownBtn').on('click', function(e) {
+    $('#axLiveScaleDownBtn').on('click', function (e) {
       e.preventDefault();
       state.liveScale = Math.max(0.5, state.liveScale - 0.1);
       scheduleLiveTransformUpdate();
     });
 
-    $('#axLiveScaleUpBtn').on('click', function(e) {
+    $('#axLiveScaleUpBtn').on('click', function (e) {
       e.preventDefault();
       state.liveScale = Math.min(1.8, state.liveScale + 0.1);
       scheduleLiveTransformUpdate();
     });
 
-    $('#axLiveResetTransformBtn').on('click', function(e) {
+    $('#axLiveResetTransformBtn').on('click', function (e) {
       e.preventDefault();
       resetLiveTransform();
     });
 
     // Lighting tone presets
-    $('.ax-live-tone-btn').on('click', function(e) {
+    $('.ax-live-tone-btn').on('click', function (e) {
       e.preventDefault();
       var $btn = $(this);
       var tone = $btn.data('tone') || 'natural';
@@ -1140,18 +1147,18 @@
     });
 
     // Flip camera (front / rear)
-    $('#axLiveFlipCamBtn').on('click', function(e) {
+    $('#axLiveFlipCamBtn').on('click', function (e) {
       e.preventDefault();
       state.facingMode = (state.facingMode === 'environment') ? 'user' : 'environment';
       startLiveCameraAR();
     });
 
     // Custom room photo upload into Live 3D AR stage
-    $('#axLiveRoomPhotoInput').on('change', function(e) {
+    $('#axLiveRoomPhotoInput').on('change', function (e) {
       var file = e.target.files && e.target.files[0];
       if (!file || !file.type.startsWith('image/')) return;
       var reader = new FileReader();
-      reader.onload = function(ev) {
+      reader.onload = function (ev) {
         stopLiveCameraStream();
         state.usingFallbackRoom = true;
         $('#axLiveArVideo').hide();
@@ -1161,7 +1168,7 @@
     });
 
     // Open/Close All Doors in Live Camera AR (<model-viewer> DeSpace_OpenAll animation)
-    $('#axLiveToggleDoorsBtn').on('click', function(e) {
+    $('#axLiveToggleDoorsBtn').on('click', function (e) {
       e.preventDefault();
       var liveMv = document.getElementById('axLiveArModelViewer');
       if (!liveMv) return;
@@ -1178,7 +1185,7 @@
     });
 
     // Snapshot capture (composite live video/room + 3D WebGL model-viewer)
-    $('#axLiveSnapshotBtn').on('click', function(e) {
+    $('#axLiveSnapshotBtn').on('click', function (e) {
       e.preventDefault();
       captureLiveArSnapshot();
     });
@@ -1239,9 +1246,9 @@
     if (liveMv && typeof liveMv.toDataURL === 'function') {
       try {
         var mvDataUrl = liveMv.toDataURL('image/png');
-        await new Promise(function(resolve) {
+        await new Promise(function (resolve) {
           var mvImg = new Image();
-          mvImg.onload = function() {
+          mvImg.onload = function () {
             ctx.drawImage(mvImg, centerX - mvSize / 2, centerY - mvSize / 2, mvSize, mvSize);
             resolve();
           };
@@ -1355,9 +1362,9 @@
 
     var V_TABLE = [
       null,
-      [1,  26,  7, 1, []],
-      [2,  44, 10, 1, [6, 18]],
-      [3,  70, 15, 1, [6, 22]],
+      [1, 26, 7, 1, []],
+      [2, 44, 10, 1, [6, 18]],
+      [3, 70, 15, 1, [6, 22]],
       [4, 100, 20, 1, [6, 26]],
       [5, 134, 26, 1, [6, 30]],
       [6, 172, 18, 2, [6, 34]],
@@ -1496,8 +1503,8 @@
           var r = row + dr, c = col + dc;
           if (r < 0 || r >= size || c < 0 || c >= size) continue;
           var dark = (dr >= 0 && dr <= 6 && (dc === 0 || dc === 6)) ||
-                     (dc >= 0 && dc <= 6 && (dr === 0 || dr === 6)) ||
-                     (dr >= 2 && dr <= 4 && dc >= 2 && dc <= 4);
+            (dc >= 0 && dc <= 6 && (dr === 0 || dr === 6)) ||
+            (dr >= 2 && dr <= 4 && dc >= 2 && dc <= 4);
           setFunc(r, c, dark);
         }
       }
@@ -1590,48 +1597,48 @@
   }
 
   function bindModalControls() {
-    $('#axRoomModalClose, #axRoomModalBackdrop').on('click', function(e) {
+    $('#axRoomModalClose, #axRoomModalBackdrop').on('click', function (e) {
       e.preventDefault();
       closeModal();
     });
 
-    $(document).on('keydown', function(e) {
+    $(document).on('keydown', function (e) {
       if (e.key === 'Escape' && $('#ax-room-visualizer-modal').is(':visible')) {
         closeModal();
       }
     });
 
-    $('#axBtnRetryLoad3D').on('click', function() {
+    $('#axBtnRetryLoad3D').on('click', function () {
       setupModelViewer();
     });
   }
 
   function bindTabControls() {
-    $('#axTabBtn3D').on('click', function(e) {
+    $('#axTabBtn3D').on('click', function (e) {
       e.preventDefault();
       switchTab('3d');
     });
 
-    $('#axTabBtnAR').on('click', function(e) {
+    $('#axTabBtnAR').on('click', function (e) {
       e.preventDefault();
       switchTab('ar');
     });
   }
 
   function bind3DToolbar() {
-    $('#axBtnToggleDoors').on('click', function(e) {
+    $('#axBtnToggleDoors').on('click', function (e) {
       e.preventDefault();
       if (!interactive3D.parts.length) return;
-      var allOpen = interactive3D.parts.every(function(pt) { return pt.isOpen; });
+      var allOpen = interactive3D.parts.every(function (pt) { return pt.isOpen; });
       var targetOpen = !allOpen;
-      interactive3D.parts.forEach(function(pt, idx) {
-        setTimeout(function() {
+      interactive3D.parts.forEach(function (pt, idx) {
+        setTimeout(function () {
           toggleInteractivePart(pt, targetOpen);
         }, idx * 55);
       });
     });
 
-    $('#axBtnAutoRotate').on('click', function(e) {
+    $('#axBtnAutoRotate').on('click', function (e) {
       e.preventDefault();
       var mv = document.getElementById('axMainModelViewer');
       state.autoRotate = !state.autoRotate;
@@ -1644,7 +1651,7 @@
       $(this).toggleClass('is-active', state.autoRotate);
     });
 
-    $('#axBtnResetCamera').on('click', function(e) {
+    $('#axBtnResetCamera').on('click', function (e) {
       e.preventDefault();
       var mv = document.getElementById('axMainModelViewer');
       if (mv) {
@@ -1663,7 +1670,7 @@
 
   function bindARActions() {
     // QR Network Mode Switcher (Cloud HTTPS vs Local LAN IP)
-    $(document).on('click', '.ax-qr-net-btn', function(e) {
+    $(document).on('click', '.ax-qr-net-btn', function (e) {
       e.preventDefault();
       var mode = $(this).data('net-mode') || 'tunnel';
       state.qrNetMode = mode;
@@ -1673,7 +1680,7 @@
     });
 
     // Android AR launch
-    $('#axAndroidArBtn').on('click', function(e) {
+    $('#axAndroidArBtn').on('click', function (e) {
       e.preventDefault();
       var mv = document.getElementById('axMainModelViewer');
 
@@ -1721,8 +1728,8 @@
     if ($textSpan.length) {
       $textSpan.text(ok ? '✓ Đã sao chép!' : 'Sao chép Link AR');
     }
-    requestAnimationFrame(function() { tip.textContent = message; });
-    copyTimers.set(button, setTimeout(function() {
+    requestAnimationFrame(function () { tip.textContent = message; });
+    copyTimers.set(button, setTimeout(function () {
       button.removeAttribute('data-copied');
       button.removeAttribute('data-failed');
       tip.textContent = '';
@@ -1748,14 +1755,14 @@
   }
 
   function bindCopyButton() {
-    document.addEventListener('command', function(event) {
+    document.addEventListener('command', function (event) {
       if (event.command && event.command.indexOf('--copy') === 0) {
         performCopy(event.source, event.target);
       }
     }, true);
 
     if (!('CommandEvent' in window)) {
-      document.addEventListener('click', function(event) {
+      document.addEventListener('click', function (event) {
         var button = event.target.closest('button[command^="--copy"]');
         if (!button) return;
         var target = document.getElementById(button.getAttribute('commandfor'));
@@ -1765,21 +1772,21 @@
   }
 
   function bindAddToCart() {
-    $('#axModalQtyMinus').on('click', function(e) {
+    $('#axModalQtyMinus').on('click', function (e) {
       e.preventDefault();
       var $inp = $('#axModalQtyInput');
       var val = parseInt($inp.val(), 10) || 1;
       if (val > 1) $inp.val(val - 1);
     });
 
-    $('#axModalQtyPlus').on('click', function(e) {
+    $('#axModalQtyPlus').on('click', function (e) {
       e.preventDefault();
       var $inp = $('#axModalQtyInput');
       var val = parseInt($inp.val(), 10) || 1;
       if (val < 99) $inp.val(val + 1);
     });
 
-    $('#axModalAddToCartBtn').on('click', function(e) {
+    $('#axModalAddToCartBtn').on('click', function (e) {
       e.preventDefault();
       var $btn = $(this);
       if ($btn.hasClass('loading')) return;
@@ -1799,7 +1806,7 @@
           quantity: qty
         },
         dataType: 'json',
-        success: function(response) {
+        success: function (response) {
           if (response && response.error) {
             $btn.removeClass('loading');
             $('#axModalCartBtnText').text(originalText);
@@ -1813,12 +1820,12 @@
           if (response && response.fragments) {
             $(document.body).trigger('added_to_cart', [response.fragments, response.cart_hash, $btn]);
           }
-          setTimeout(function() {
+          setTimeout(function () {
             $btn.removeClass('added');
             $('#axModalCartBtnText').text(originalText);
           }, 3000);
         },
-        error: function() {
+        error: function () {
           var $singleForm = $('form.cart');
           if ($singleForm.length) {
             $singleForm.find('input[name="quantity"]').val(qty);
@@ -1839,14 +1846,14 @@
       if (Device.isMobile()) {
         state.arSubView = 'live-camera';
       }
-      setTimeout(function() {
+      setTimeout(function () {
         var $btn = $('#arViewInRoomBtn').first();
         if ($btn.length) {
           $btn.trigger('click');
         }
       }, 300);
     } else if (urlParams.get('open_3d') === '1' || window.location.hash === '#3d') {
-      setTimeout(function() {
+      setTimeout(function () {
         var $btn = $('#axView3DModelBtn').first();
         if ($btn.length) {
           $btn.trigger('click');
@@ -1855,7 +1862,7 @@
     }
   }
 
-  $(document).ready(function() {
+  $(document).ready(function () {
     init();
   });
 

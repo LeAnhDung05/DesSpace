@@ -298,11 +298,26 @@ class Product3DModule {
 			return content_url( ltrim( str_replace( '/wp-content', '', $raw ), '/' ) );
 		};
 
+		$append_mtime_version = static function( string $url ): string {
+			if ( '' === $url || false !== strpos( $url, '?' ) ) {
+				return $url;
+			}
+			$uploads = wp_get_upload_dir();
+			if ( ! empty( $uploads['baseurl'] ) && ! empty( $uploads['basedir'] ) && 0 === strpos( $url, $uploads['baseurl'] ) ) {
+				$rel  = substr( $url, strlen( $uploads['baseurl'] ) );
+				$disk = wp_normalize_path( $uploads['basedir'] . $rel );
+				if ( file_exists( $disk ) ) {
+					return add_query_arg( 'v', (string) filemtime( $disk ), $url );
+				}
+			}
+			return $url;
+		};
+
 		if ( $row && ! empty( $row['glb_url'] ) ) {
 			return array(
 				'has_3d'     => true,
-				'glb_url'    => $resolve_asset_url( (string) $row['glb_url'] ),
-				'usdz_url'   => ! empty( $row['usdz_url'] ) ? $resolve_asset_url( (string) $row['usdz_url'] ) : '',
+				'glb_url'    => $append_mtime_version( $resolve_asset_url( (string) $row['glb_url'] ) ),
+				'usdz_url'   => ! empty( $row['usdz_url'] ) ? $append_mtime_version( $resolve_asset_url( (string) $row['usdz_url'] ) ) : '',
 				'thumbnail'  => ! empty( $row['thumbnail_url'] ) ? $resolve_asset_url( (string) $row['thumbnail_url'] ) : '',
 				'ar_enabled' => (bool) ( $row['ar_enabled'] ?? 1 ),
 				'width'      => $row['width'] ?? 0,
