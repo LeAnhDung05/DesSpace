@@ -35,12 +35,52 @@ function furniva_setup() {
 }
 add_action( 'after_setup_theme', 'furniva_setup' );
 
-// ---------------------------------------------------------------- rewrite rules
+// ---------------------------------------------------------------- rewrite rules & safe WC page URLs
+/**
+ * Return a published WooCommerce page permalink or a safe canonical fallback URL
+ * so trashed/unlinked WooCommerce page IDs never resolve to `/?page_id=N` and trigger
+ * WordPress 404 permalink guessing into a random single product page.
+ */
+function despace_safe_wc_page_url( string $page_key, string $fallback_path = '/cua-hang/' ): string {
+	$page_id = function_exists( 'wc_get_page_id' ) ? (int) wc_get_page_id( $page_key ) : 0;
+	if ( $page_id > 0 && 'publish' === get_post_status( $page_id ) ) {
+		$link = get_permalink( $page_id );
+		if ( is_string( $link ) && '' !== $link && false === strpos( $link, '?page_id=' ) ) {
+			return $link;
+		}
+	}
+	return home_url( $fallback_path );
+}
+
+add_filter( 'woocommerce_get_shop_page_permalink', function( $url ) {
+	if ( ! is_string( $url ) || '' === $url || false !== strpos( $url, '?page_id=' ) ) {
+		return home_url( '/cua-hang/' );
+	}
+	return $url;
+} );
+
+// Intercept legacy trashed shop page query `/?page_id=5` cleanly before redirect_guess_404_permalink()
+add_action( 'template_redirect', function() {
+	if ( is_404() && isset( $_GET['page_id'] ) ) {
+		$req_id = absint( wp_unslash( $_GET['page_id'] ) );
+		$shop_id = function_exists( 'wc_get_page_id' ) ? (int) wc_get_page_id( 'shop' ) : 0;
+		if ( $req_id > 0 && ( $req_id === $shop_id || 5 === $req_id ) ) {
+			wp_safe_redirect( home_url( '/cua-hang/' ), 301 );
+			exit;
+		}
+	}
+}, 1 );
+
 add_action( 'init', function() {
 	add_rewrite_rule( '^shop/?$', 'index.php?post_type=product', 'top' );
 	add_rewrite_rule( '^shop/page/([0-9]{1,})/?$', 'index.php?post_type=product&paged=$matches[1]', 'top' );
 	add_rewrite_rule( '^cua-hang/?$', 'index.php?post_type=product', 'top' );
 	add_rewrite_rule( '^cua-hang/page/([0-9]{1,})/?$', 'index.php?post_type=product&paged=$matches[1]', 'top' );
+	add_rewrite_rule( '^cart/?$', 'index.php?pagename=gio-hang', 'top' );
+	add_rewrite_rule( '^checkout/?$', 'index.php?pagename=thanh-toan', 'top' );
+	add_rewrite_rule( '^my-account/?$', 'index.php?pagename=tai-khoan', 'top' );
+	add_rewrite_rule( '^shipping-returns/?$', 'index.php?pagename=giao-hang-doi-tra', 'top' );
+	add_rewrite_rule( '^faqs/?$', 'index.php?pagename=cau-hoi-thuong-gap', 'top' );
 	add_rewrite_rule( '^about/?$', 'index.php?pagename=ve-despace', 'top' );
 	add_rewrite_rule( '^contact/?$', 'index.php?pagename=lien-he', 'top' );
 } );
@@ -311,15 +351,15 @@ function furniva_assets() {
 	$despace_js_data = array(
 		'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
 		'restUrl'     => esc_url_raw( rest_url( 'despace/v1' ) ),
-		'checkoutUrl' => wc_get_checkout_url(),
-		'cartUrl'     => wc_get_cart_url(),
-		'shopUrl'     => get_permalink( wc_get_page_id( 'shop' ) ),
+		'checkoutUrl' => despace_safe_wc_page_url( 'checkout', '/thanh-toan/' ),
+		'cartUrl'     => despace_safe_wc_page_url( 'cart', '/gio-hang/' ),
+		'shopUrl'     => despace_safe_wc_page_url( 'shop', '/cua-hang/' ),
 		'language'    => despace_current_language(),
 		'nonce'       => wp_create_nonce( 'furniva_filter' ),
 		'baseCat'     => $base_cat,
 		'isLoggedIn'  => is_user_logged_in(),
-		'loginUrl'    => wc_get_page_permalink( 'myaccount' ),
-		'registerUrl' => add_query_arg( 'action', 'register', wc_get_page_permalink( 'myaccount' ) ),
+		'loginUrl'    => despace_safe_wc_page_url( 'myaccount', '/tai-khoan/' ),
+		'registerUrl' => add_query_arg( 'action', 'register', despace_safe_wc_page_url( 'myaccount', '/tai-khoan/' ) ),
 		'strings'     => array(
 			'newsletterSuccess' => despace_t( 'Subscribed! Use code WELCOME10 for 10% off.', 'Đăng ký thành công! Dùng mã WELCOME10 để giảm 10%.' ),
 			'contactPreview'    => despace_t( 'Preview form', 'Biểu mẫu xem trước' ),

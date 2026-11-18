@@ -5,11 +5,17 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 $shop_id = wc_get_page_id( 'shop' );
-$shop_url = $shop_id > 0 ? get_permalink( $shop_id ) : home_url( '/shop/' );
+$shop_url = function_exists( 'despace_safe_wc_page_url' ) ? despace_safe_wc_page_url( 'shop', '/cua-hang/' ) : ( ( $shop_id > 0 && 'publish' === get_post_status( $shop_id ) ) ? get_permalink( $shop_id ) : home_url( '/cua-hang/' ) );
 $blog_id = (int) get_option( 'page_for_posts' );
-$blog_url = $blog_id ? get_permalink( $blog_id ) : home_url( '/blog/' );
-$account_url = furniva_wc_active() ? get_permalink( wc_get_page_id( 'myaccount' ) ) : home_url( '/my-account/' );
-$wishlist_url = function_exists( 'YITH_WCWL' ) ? YITH_WCWL()->get_wishlist_url() : home_url( '/wishlist/' );
+$blog_url = ( $blog_id > 0 && 'publish' === get_post_status( $blog_id ) ) ? get_permalink( $blog_id ) : home_url( '/blog/' );
+$account_url = function_exists( 'despace_safe_wc_page_url' ) ? despace_safe_wc_page_url( 'myaccount', '/tai-khoan/' ) : home_url( '/tai-khoan/' );
+$wishlist_url = home_url( '/wishlist/' );
+if ( function_exists( 'YITH_WCWL' ) ) {
+	$wl_raw = YITH_WCWL()->get_wishlist_url();
+	if ( is_string( $wl_raw ) && '' !== $wl_raw && false === strpos( $wl_raw, '?page_id=' ) ) {
+		$wishlist_url = $wl_raw;
+	}
+}
 $wishlist_count = 0;
 if ( function_exists( 'yith_wcwl_count_all_products' ) ) {
 	$wishlist_count = yith_wcwl_count_all_products();
