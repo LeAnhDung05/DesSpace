@@ -6,10 +6,41 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 get_header();
 
-furniva_page_head( furniva_t( 'The Journal', 'Tạp chí' ), furniva_t( 'Blog', 'Bài viết' ) );
+$blog_page_id = (int) get_option( 'page_for_posts' );
+$journal_url  = $blog_page_id ? get_permalink( $blog_page_id ) : home_url( '/blog/' );
+$active_cat   = is_category() ? get_queried_object() : null;
+$active_tag   = is_tag() ? get_queried_object() : null;
+$search_q     = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
+
+if ( $active_cat ) {
+	furniva_page_head( furniva_term_label( $active_cat->name, 'category' ), furniva_t( 'The Journal', 'Tạp chí' ) );
+} elseif ( $active_tag ) {
+	furniva_page_head( '#' . $active_tag->name, furniva_t( 'The Journal', 'Tạp chí' ) );
+} else {
+	furniva_page_head( furniva_t( 'The Journal', 'Tạp chí' ), furniva_t( 'Blog', 'Bài viết' ) );
+}
+
+$blog_intro = $active_cat && ! empty( $active_cat->description )
+	? $active_cat->description
+	: furniva_t( 'Thoughtful ideas on proportion, sustainable craft and 3D/AR spatial planning for a calmer home.', 'Những bài viết chuyên sâu về tỷ lệ không gian, vật liệu bền vững và ứng dụng 3D/AR trong thiết kế tổ ấm hiện đại.' );
+
+$all_cats = get_categories( array( 'hide_empty' => true, 'orderby' => 'count', 'order' => 'DESC' ) );
 ?>
 <div class="f-blog-intro f-wrap">
-	<p><?php echo esc_html( furniva_t( 'Thoughtful ideas for furnishing a calmer, more considered home.', 'Những ý tưởng chọn nội thất để tạo nên một không gian sống an yên và có chủ đích.' ) ); ?></p>
+	<p><?php echo esc_html( $blog_intro ); ?></p>
+	<?php if ( ! empty( $all_cats ) ) : ?>
+		<nav class="f-blog-filterbar" aria-label="<?php echo esc_attr( furniva_t( 'Journal categories', 'Danh mục tạp chí' ) ); ?>">
+			<a class="f-blog-pill <?php echo ( ! $active_cat && ! $active_tag ) ? 'is-active' : ''; ?>" href="<?php echo esc_url( $journal_url ); ?>">
+				<?php echo esc_html( furniva_t( 'All stories', 'Tất cả bài viết' ) ); ?>
+			</a>
+			<?php foreach ( $all_cats as $cat_item ) : ?>
+				<a class="f-blog-pill <?php echo ( $active_cat && (int) $active_cat->term_id === (int) $cat_item->term_id ) ? 'is-active' : ''; ?>" href="<?php echo esc_url( get_category_link( $cat_item ) ); ?>">
+					<?php echo esc_html( furniva_term_label( $cat_item->name, 'category' ) ); ?>
+					<span class="f-blog-pill-count"><?php echo (int) $cat_item->count; ?></span>
+				</a>
+			<?php endforeach; ?>
+		</nav>
+	<?php endif; ?>
 </div>
 <div class="f-wrap f-blog-wrap">
 	<div class="f-blog-layout">
@@ -18,17 +49,30 @@ furniva_page_head( furniva_t( 'The Journal', 'Tạp chí' ), furniva_t( 'Blog', 
 			$paged = isset( $_GET['journal_page'] )
 				? max( 1, absint( wp_unslash( $_GET['journal_page'] ) ) )
 				: max( 1, get_query_var( 'paged' ) ?: get_query_var( 'page' ) );
-			$blog  = new WP_Query( array(
+			$query_args = array(
 				'post_type'      => 'post',
 				'post_status'    => 'publish',
-				'posts_per_page' => 5,
+				'posts_per_page' => 7,
 				'paged'          => $paged,
-			) );
+			);
+			if ( $active_cat ) {
+				$query_args['cat'] = (int) $active_cat->term_id;
+			}
+			if ( $active_tag ) {
+				$query_args['tag_id'] = (int) $active_tag->term_id;
+			}
+			if ( '' !== $search_q ) {
+				$query_args['s'] = $search_q;
+			}
+			$blog  = new WP_Query( $query_args );
 			$first = true;
 			if ( $blog->have_posts() ) :
 				while ( $blog->have_posts() ) :
 					$blog->the_post();
-					$cats = get_the_category();
+					$cats      = get_the_category();
+					$raw_words = preg_split( '/\s+/u', trim( wp_strip_all_tags( get_post_field( 'post_content', get_the_ID() ) ) ) );
+					$read_mins = max( 2, (int) ceil( ( is_array( $raw_words ) ? count( $raw_words ) : 240 ) / 180 ) );
+					$read_text = sprintf( furniva_t( '%d min read', '%d phút đọc' ), $read_mins );
 					if ( $first && $paged <= 1 ) :
 						?>
 						<a class="f-featured-post" href="<?php the_permalink(); ?>">
@@ -37,10 +81,10 @@ furniva_page_head( furniva_t( 'The Journal', 'Tạp chí' ), furniva_t( 'Blog', 
 								<div class="f-post-meta">
 								<?php if ( $cats ) : ?><span class="f-post-cat"><?php echo esc_html( furniva_term_label( $cats[0]->name, 'category' ) ); ?></span><?php endif; ?>
 									<span><?php echo esc_html( get_the_date() ); ?></span>
-									<span><?php echo esc_html( get_the_author() ); ?></span>
+									<span><?php echo esc_html( $read_text ); ?></span>
 								</div>
 								<h2><?php the_title(); ?></h2>
-								<p><?php echo esc_html( furniva_post_excerpt( get_the_ID(), 30 ) ); ?></p>
+								<p><?php echo esc_html( furniva_post_excerpt( get_the_ID(), 32 ) ); ?></p>
 								<span class="f-readmore"><?php echo esc_html( furniva_t( 'Read article', 'Đọc bài viết' ) ); ?> →</span>
 							</div>
 						</a>
@@ -54,11 +98,11 @@ furniva_page_head( furniva_t( 'The Journal', 'Tạp chí' ), furniva_t( 'Blog', 
 						<div class="f-post-meta">
 						<?php if ( $cats ) : ?><span class="f-post-cat"><?php echo esc_html( furniva_term_label( $cats[0]->name, 'category' ) ); ?></span><?php endif; ?>
 							<span><?php echo esc_html( get_the_date() ); ?></span>
-							<span><?php echo esc_html( get_the_author() ); ?></span>
+							<span><?php echo esc_html( $read_text ); ?></span>
 						</div>
 						<h2><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h2>
 						<p><?php echo esc_html( furniva_post_excerpt( get_the_ID(), 26 ) ); ?></p>
-						<a class="f-readmore" href="<?php the_permalink(); ?>"><?php echo esc_html( furniva_t( 'Read more', 'Đọc tiếp' ) ); ?></a>
+						<a class="f-readmore" href="<?php the_permalink(); ?>"><?php echo esc_html( furniva_t( 'Read more', 'Đọc tiếp' ) ); ?> →</a>
 					</article>
 					<?php
 				endwhile;
