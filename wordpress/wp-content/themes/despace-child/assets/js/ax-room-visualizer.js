@@ -43,7 +43,28 @@
     posStart: { x: 0, y: 0 },
     pinchStartDist: 0,
     pinchStartScale: 1.0,
-    rafPending: false
+    rafPending: false,
+    liveDoorsOpen: false
+  };
+
+  var interactive3D = {
+    threePromise: null,
+    deps: null,
+    renderer: null,
+    scene: null,
+    camera: null,
+    controls: null,
+    modelRoot: null,
+    parts: [],
+    partMap: new Map(),
+    hoveredPart: null,
+    active: false,
+    loadToken: 0,
+    rafId: 0,
+    resizeObserver: null,
+    defaultCamPos: null,
+    defaultTarget: null,
+    lastTime: 0
   };
 
   var copyTimers = new WeakMap();
@@ -215,6 +236,7 @@
 
   function closeModal() {
     stopLiveCameraStream();
+    stopInteractive3DLoop();
     var $modal = $('#ax-room-visualizer-modal');
     $modal.fadeOut(180).attr('aria-hidden', 'true');
     $('body').css('overflow', '');
@@ -236,6 +258,7 @@
     $loading.hide();
     $error.hide();
     $unsupported.hide();
+    resetInteractive3DUI();
 
     if (!currentProduct.has3D || !currentProduct.glbUrl) {
       mv.removeAttribute('src');
@@ -261,6 +284,7 @@
     }
 
     mv.autoRotate = state.autoRotate;
+    loadInteractive3DStage(currentProduct.glbUrl);
   }
 
   function onModelLoad() {
@@ -268,6 +292,478 @@
     $('#ax3DLoadingOverlay').fadeOut(180);
     $('#ax3DErrorOverlay').hide();
     $('#ax3DNotConfiguredOverlay').hide();
+  }
+
+  // =========================================================================
+  // INTERACTIVE ARTICULATED 3D CONTROLLER (Three.js Raycast Doors & Drawers)
+  // =========================================================================
+  function loadThreeInteractiveDeps() {
+    if (interactive3D.deps) {
+      return Promise.resolve(interactive3D.deps);
+    }
+    if (!interactive3D.threePromise) {
+      interactive3D.threePromise = Promise.all([
+        import('https://esm.sh/three@0.160.0'),
+        import('https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js'),
+        import('https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js'),
+        import('https://esm.sh/three@0.160.0/examples/jsm/environments/RoomEnvironment.js')
+      ]).then(function(mods) {
+        interactive3D.deps = {
+          THREE: mods[0],
+          OrbitControls: mods[1].OrbitControls,
+          GLTFLoader: mods[2].GLTFLoader,
+          RoomEnvironment: mods[3].RoomEnvironment
+        };
+        return interactive3D.deps;
+      }).catch(function(err) {
+        interactive3D.threePromise = null;
+        console.warn('[DeSpace Interactive 3D] Fallback to <model-viewer>:', err);
+        return null;
+      });
+    }
+    return interactive3D.threePromise;
+  }
+
+  function resetInteractive3DUI() {
+    interactive3D.active = false;
+    interactive3D.parts = [];
+    interactive3D.partMap = new Map();
+    interactive3D.hoveredPart = null;
+    stopInteractive3DLoop();
+
+    $('#axInteractive3DStage').hide();
+    $('#axBtnToggleDoors').hide().removeClass('is-open').attr('aria-pressed', 'false');
+    $('#axBtnToggleDoorsText').text('Mở hết cửa');
+    $('#ax3DPartHint').hide().text('');
+    $('#ax3DPartPills').hide().empty();
+
+    var mv = document.getElementById('axMainModelViewer');
+    if (mv) {
+      mv.style.visibility = '';
+    }
+  }
+
+  function stopInteractive3DLoop() {
+    if (interactive3D.rafId) {
+      cancelAnimationFrame(interactive3D.rafId);
+      interactive3D.rafId = 0;
+    }
+  }
+
+  function ensureInteractiveRenderer(deps) {
+    var container = document.getElementById('axInteractive3DStage');
+    if (!container) return false;
+    var THREE = deps.THREE;
+
+    if (!interactive3D.renderer) {
+      var w = Math.max(container.clientWidth || 720, 320);
+      var h = Math.max(container.clientHeight || 480, 320);
+
+      var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(w, h);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.05;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      container.innerHTML = '';
+      container.appendChild(renderer.domElement);
+
+      var scene = new THREE.Scene();
+      var pmrem = new THREE.PMREMGenerator(renderer);
+      scene.environment = pmrem.fromScene(new deps.RoomEnvironment(), 0.04).texture;
+      pmrem.dispose();
+
+      var hemi = new THREE.HemisphereLight(0xfffaf2, 0xd8cfc4, 0.55);
+      scene.add(hemi);
+
+      var keyLight = new THREE.DirectionalLight(0xfff9ef, 1.35);
+      keyLight.position.set(2.4, 3.8, 3.2);
+      keyLight.castShadow = true;
+      keyLight.shadow.mapSize.width = 1024;
+      keyLight.shadow.mapSize.height = 1024;
+      keyLight.shadow.bias = -0.0005;
+      scene.add(keyLight);
+
+      var fillLight = new THREE.DirectionalLight(0xf6eee4, 0.55);
+      fillLight.position.set(-2.5, 2.0, -1.8);
+      scene.add(fillLight);
+
+      var shadowPlane = new THREE.Mesh(
+        new THREE.PlaneGeometry(8, 8),
+        new THREE.ShadowMaterial({ opacity: 0.16 })
+      );
+      shadowPlane.rotation.x = -Math.PI / 2;
+      shadowPlane.position.y = -0.001;
+      shadowPlane.receiveShadow = true;
+      scene.add(shadowPlane);
+
+      var camera = new THREE.PerspectiveCamera(34, w / h, 0.05, 50);
+      var controls = new deps.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.07;
+      controls.minPolarAngle = 0.18;
+      controls.maxPolarAngle = Math.PI * 0.49;
+      controls.autoRotate = state.autoRotate;
+      controls.autoRotateSpeed = 1.25;
+
+      interactive3D.renderer = renderer;
+      interactive3D.scene = scene;
+      interactive3D.camera = camera;
+      interactive3D.controls = controls;
+
+      bindInteractiveStagePointerEvents(renderer.domElement, THREE);
+
+      if (typeof ResizeObserver !== 'undefined') {
+        interactive3D.resizeObserver = new ResizeObserver(function() {
+          resizeInteractive3DStage();
+        });
+        interactive3D.resizeObserver.observe(container);
+      }
+    }
+    return true;
+  }
+
+  function resizeInteractive3DStage() {
+    if (!interactive3D.renderer || !interactive3D.camera) return;
+    var container = document.getElementById('axInteractive3DStage');
+    if (!container) return;
+    var w = container.clientWidth;
+    var h = container.clientHeight;
+    if (w < 10 || h < 10) return;
+    interactive3D.camera.aspect = w / h;
+    interactive3D.camera.updateProjectionMatrix();
+    interactive3D.renderer.setSize(w, h);
+  }
+
+  function disposeInteractiveModel() {
+    if (interactive3D.modelRoot && interactive3D.scene) {
+      interactive3D.scene.remove(interactive3D.modelRoot);
+      interactive3D.modelRoot.traverse(function(obj) {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          var mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+          mats.forEach(function(m) {
+            if (m.map) m.map.dispose();
+            m.dispose();
+          });
+        }
+      });
+      interactive3D.modelRoot = null;
+    }
+  }
+
+  function findInteractivePartFromObject(obj) {
+    var cur = obj;
+    while (cur) {
+      if (interactive3D.partMap.has(cur)) {
+        return interactive3D.partMap.get(cur);
+      }
+      cur = cur.parent;
+    }
+    return null;
+  }
+
+  function setHoveredPart(part) {
+    if (interactive3D.hoveredPart === part) return;
+
+    if (interactive3D.hoveredPart) {
+      interactive3D.hoveredPart.meshes.forEach(function(m) {
+        if (m.material && m.material.emissive) {
+          m.material.emissive.setHex(0x000000);
+          m.material.emissiveIntensity = 0;
+        }
+      });
+    }
+
+    interactive3D.hoveredPart = part;
+    var canvas = interactive3D.renderer && interactive3D.renderer.domElement;
+    if (part) {
+      part.meshes.forEach(function(m) {
+        if (m.material && m.material.emissive) {
+          m.material.emissive.setHex(0x8c5b36);
+          m.material.emissiveIntensity = 0.24;
+        }
+      });
+      if (canvas) canvas.style.cursor = 'pointer';
+      $('#ax3DPartHint').text('👆 Nhấn để ' + (part.isOpen ? 'đóng ' : 'mở ') + part.label);
+    } else {
+      if (canvas) canvas.style.cursor = 'grab';
+      if (interactive3D.parts.length) {
+        $('#ax3DPartHint').text('👆 Chạm trực tiếp vào cánh tủ hoặc ngăn kéo để đóng / mở');
+      }
+    }
+  }
+
+  function updatePartButtonsUI() {
+    var allOpen = interactive3D.parts.length > 0 && interactive3D.parts.every(function(pt) { return pt.isOpen; });
+    var anyOpen = interactive3D.parts.some(function(pt) { return pt.isOpen; });
+
+    $('#axBtnToggleDoors')
+      .toggleClass('is-open', anyOpen)
+      .attr('aria-pressed', anyOpen ? 'true' : 'false');
+    $('#axBtnToggleDoorsText').text(allOpen ? 'Đóng hết cửa' : (anyOpen ? 'Mở tất cả' : 'Mở hết cửa'));
+
+    interactive3D.parts.forEach(function(pt) {
+      if (pt.chipEl) {
+        pt.chipEl.classList.toggle('is-open', pt.isOpen);
+        pt.chipEl.setAttribute('aria-pressed', pt.isOpen ? 'true' : 'false');
+      }
+    });
+  }
+
+  function toggleInteractivePart(part, forceOpen) {
+    if (!part) return;
+    part.isOpen = (typeof forceOpen === 'boolean') ? forceOpen : !part.isOpen;
+    part.target = part.isOpen ? 1 : 0;
+    $('#ax3DPartHint').text((part.isOpen ? '🔓 Đang mở ' : '🔒 Đã đóng ') + part.label + ' — chạm lại để ' + (part.isOpen ? 'đóng' : 'mở'));
+    updatePartButtonsUI();
+  }
+
+  function bindInteractiveStagePointerEvents(domEl, THREE) {
+    var raycaster = new THREE.Raycaster();
+    var pointerNDC = new THREE.Vector2();
+    var downPos = null;
+
+    function getNDC(clientX, clientY) {
+      var rect = domEl.getBoundingClientRect();
+      pointerNDC.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      pointerNDC.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+    }
+
+    domEl.addEventListener('pointerdown', function(e) {
+      downPos = { x: e.clientX, y: e.clientY };
+    });
+
+    domEl.addEventListener('pointermove', function(e) {
+      if (!interactive3D.active || !interactive3D.modelRoot) return;
+      if (e.buttons !== 0) return;
+      getNDC(e.clientX, e.clientY);
+      raycaster.setFromCamera(pointerNDC, interactive3D.camera);
+      var hits = raycaster.intersectObject(interactive3D.modelRoot, true);
+      var hitPart = hits.length ? findInteractivePartFromObject(hits[0].object) : null;
+      setHoveredPart(hitPart);
+    });
+
+    domEl.addEventListener('pointerleave', function() {
+      setHoveredPart(null);
+    });
+
+    domEl.addEventListener('pointerup', function(e) {
+      if (!interactive3D.active || !interactive3D.modelRoot || !downPos) return;
+      var dist = Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y);
+      downPos = null;
+      // Ignore orbit drag gestures (> 7px pointer travel)
+      if (dist > 7) return;
+
+      getNDC(e.clientX, e.clientY);
+      raycaster.setFromCamera(pointerNDC, interactive3D.camera);
+      var hits = raycaster.intersectObject(interactive3D.modelRoot, true);
+      if (!hits.length) return;
+
+      var hitPart = findInteractivePartFromObject(hits[0].object);
+      if (hitPart) {
+        toggleInteractivePart(hitPart);
+      }
+    });
+  }
+
+  function startInteractive3DLoop() {
+    if (interactive3D.rafId || !interactive3D.active) return;
+    interactive3D.lastTime = performance.now();
+
+    function tick(now) {
+      if (!interactive3D.active) {
+        interactive3D.rafId = 0;
+        return;
+      }
+      var dt = Math.min(0.05, Math.max(0.001, (now - interactive3D.lastTime) / 1000));
+      interactive3D.lastTime = now;
+      var alpha = 1 - Math.exp(-9.5 * dt);
+
+      interactive3D.parts.forEach(function(pt) {
+        if (Math.abs(pt.progress - pt.target) < 0.0008) {
+          pt.progress = pt.target;
+        } else {
+          pt.progress += (pt.target - pt.progress) * alpha;
+        }
+        var t = pt.progress;
+        if (pt.type === 'hinge_door') {
+          pt.node.rotation.y = pt.baseRotY + pt.openValue * t;
+        } else if (pt.axis === 'x') {
+          pt.node.position.x = pt.basePos.x + pt.openValue * t;
+        } else if (pt.axis === 'y') {
+          pt.node.position.y = pt.basePos.y + pt.openValue * t;
+        } else {
+          pt.node.position.z = pt.basePos.z + pt.openValue * t;
+        }
+      });
+
+      if (interactive3D.controls) {
+        interactive3D.controls.autoRotate = state.autoRotate && !interactive3D.hoveredPart;
+        interactive3D.controls.update();
+      }
+      if (interactive3D.renderer && interactive3D.scene && interactive3D.camera) {
+        interactive3D.renderer.render(interactive3D.scene, interactive3D.camera);
+      }
+      interactive3D.rafId = requestAnimationFrame(tick);
+    }
+
+    interactive3D.rafId = requestAnimationFrame(tick);
+  }
+
+  function inferPartDescriptor(node) {
+    var extra = (node.userData && node.userData.despaceInteractive) ? node.userData : null;
+    if (extra) {
+      return {
+        type: extra.type || 'hinge_door',
+        label: extra.label || node.name,
+        axis: extra.axis || 'y',
+        openValue: typeof extra.openValue === 'number' ? extra.openValue : (extra.type === 'drawer' ? 0.22 : -1.62)
+      };
+    }
+    var n = (node.name || '').toUpperCase();
+    if (/^(DESPACE_DOOR_HINGE_L|DOOR_HINGE_L|DOOR_L)/.test(n)) {
+      return { type: 'hinge_door', label: 'Cánh trái', axis: 'y', openValue: -1.62 };
+    }
+    if (/^(DESPACE_DOOR_HINGE_R|DOOR_HINGE_R|DOOR_R)/.test(n)) {
+      return { type: 'hinge_door', label: 'Cánh phải', axis: 'y', openValue: 1.62 };
+    }
+    if (/^(DESPACE_DOOR_SLIDE|SLIDE_DOOR)/.test(n)) {
+      return { type: 'slide_door', label: 'Cánh lùa', axis: 'x', openValue: 0.42 };
+    }
+    if (/^(DESPACE_DRAWER|DRAWER)/.test(n)) {
+      return { type: 'drawer', label: 'Ngăn kéo', axis: 'z', openValue: 0.22 };
+    }
+    if (/^(DOOR)/.test(n)) {
+      return { type: 'hinge_door', label: 'Cánh tủ', axis: 'y', openValue: -1.62 };
+    }
+    return null;
+  }
+
+  function loadInteractive3DStage(glbUrl) {
+    var token = ++interactive3D.loadToken;
+    loadThreeInteractiveDeps().then(function(deps) {
+      if (!deps || token !== interactive3D.loadToken) return;
+      if (!ensureInteractiveRenderer(deps)) return;
+
+      var loader = new deps.GLTFLoader();
+      loader.setCrossOrigin('anonymous');
+      loader.load(
+        glbUrl,
+        function(gltf) {
+          if (token !== interactive3D.loadToken) return;
+          disposeInteractiveModel();
+          interactive3D.parts = [];
+          interactive3D.partMap = new Map();
+
+          var root = gltf.scene;
+          var discovered = [];
+
+          root.traverse(function(obj) {
+            if (obj.isMesh) {
+              obj.castShadow = true;
+              obj.receiveShadow = true;
+            }
+            var desc = inferPartDescriptor(obj);
+            if (desc) {
+              var partMeshes = [];
+              obj.traverse(function(child) {
+                if (child.isMesh && child.material) {
+                  child.material = child.material.clone();
+                  partMeshes.push(child);
+                }
+              });
+              var partObj = {
+                node: obj,
+                label: desc.label,
+                type: desc.type,
+                axis: desc.axis,
+                openValue: desc.openValue,
+                basePos: obj.position.clone(),
+                baseRotY: obj.rotation.y,
+                isOpen: false,
+                progress: 0,
+                target: 0,
+                meshes: partMeshes,
+                chipEl: null
+              };
+              discovered.push(partObj);
+              interactive3D.partMap.set(obj, partObj);
+            }
+          });
+
+          // Zero interactive nodes -> keep pure <model-viewer> active
+          if (!discovered.length) {
+            resetInteractive3DUI();
+            return;
+          }
+
+          interactive3D.parts = discovered;
+          interactive3D.modelRoot = root;
+          interactive3D.scene.add(root);
+
+          // Fit camera framing cleanly to exact product bounding box on BOTH landscape & portrait viewports
+          var THREE = deps.THREE;
+          var box = new THREE.Box3().setFromObject(root);
+          var size = box.getSize(new THREE.Vector3());
+          var center = box.getCenter(new THREE.Vector3());
+          var maxDim = Math.max(size.x, size.y, size.z, 0.3);
+          var fovRad = (interactive3D.camera.fov * Math.PI) / 180;
+          var aspect = Math.max(0.45, interactive3D.camera.aspect || 1.0);
+          var vertDist = (Math.max(size.y, size.z) / (2 * Math.tan(fovRad / 2))) * 1.95;
+          var horizFovRad = 2 * Math.atan(Math.tan(fovRad / 2) * aspect);
+          var horizDist = ((size.x * 1.18) / (2 * Math.tan(horizFovRad / 2))) * 1.38;
+          var camDist = Math.max(vertDist, horizDist, maxDim * 1.45);
+
+          interactive3D.defaultTarget = center.clone();
+          interactive3D.defaultCamPos = new THREE.Vector3(
+            center.x + camDist * 0.28,
+            center.y + size.y * 0.24,
+            center.z + camDist * 0.96
+          );
+          interactive3D.camera.position.copy(interactive3D.defaultCamPos);
+          interactive3D.controls.target.copy(interactive3D.defaultTarget);
+          interactive3D.controls.minDistance = maxDim * 0.75;
+          interactive3D.controls.maxDistance = camDist * 2.5;
+          interactive3D.controls.update();
+
+          // Render synchronized 1-tap accessibility chips
+          var $pills = $('#ax3DPartPills').empty();
+          discovered.forEach(function(pt, idx) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'ax-part-chip';
+            btn.setAttribute('aria-pressed', 'false');
+            btn.textContent = pt.label || ('Phần ' + (idx + 1));
+            btn.addEventListener('click', function() {
+              toggleInteractivePart(pt);
+            });
+            pt.chipEl = btn;
+            $pills.append(btn);
+          });
+
+          interactive3D.active = true;
+          var mv = document.getElementById('axMainModelViewer');
+          if (mv) {
+            mv.style.visibility = 'hidden';
+          }
+          $('#axInteractive3DStage').show();
+          $('#axBtnToggleDoors').show();
+          $('#ax3DPartPills').show();
+          $('#ax3DPartHint').text('👆 Chạm trực tiếp vào cánh tủ hoặc ngăn kéo để đóng / mở').show();
+          resizeInteractive3DStage();
+          startInteractive3DLoop();
+          $('#ax3DLoadingOverlay').fadeOut(160);
+        },
+        undefined,
+        function() {
+          resetInteractive3DUI();
+        }
+      );
+    });
   }
 
   function onModelError(err) {
@@ -287,8 +783,14 @@
       stopLiveCameraStream();
       $('#axTabPaneAR').hide().removeClass('ax-tab-active');
       $('#axTabPane3D').show().addClass('ax-tab-active');
-      $('#axModalHeaderSubtitle').text('Quan sát chi tiết mô hình 3D 360° với tỷ lệ kích thước thực tế');
+      $('#axModalHeaderSubtitle').text('Quan sát chi tiết mô hình 3D 360° — chạm trực tiếp từng cánh cửa hoặc ngăn kéo để đóng/mở');
+      if (interactive3D.parts.length) {
+        interactive3D.active = true;
+        resizeInteractive3DStage();
+        startInteractive3DLoop();
+      }
     } else {
+      stopInteractive3DLoop();
       $('#axTabPane3D').hide().removeClass('ax-tab-active');
       $('#axTabPaneAR').show().addClass('ax-tab-active');
       $('#axModalHeaderSubtitle').text('Khởi chạy Camera để đưa đúng mô hình 3D vào phòng của bạn với tỷ lệ 1:1 mượt mà');
@@ -363,6 +865,9 @@
   // =========================================================================
   function startLiveCameraAR() {
     var liveMv = document.getElementById('axLiveArModelViewer');
+    state.liveDoorsOpen = false;
+    $('#axLiveToggleDoorsBtn').hide().removeClass('active').attr('aria-pressed', 'false').find('span').text('🚪 Mở Tủ');
+
     if (liveMv && currentProduct.glbUrl) {
       if (liveMv.getAttribute('src') !== currentProduct.glbUrl) {
         liveMv.src = currentProduct.glbUrl;
@@ -370,6 +875,21 @@
       }
       if (currentProduct.usdzUrl) {
         liveMv.setAttribute('ios-src', currentProduct.usdzUrl);
+      }
+      var syncLiveAnimBtn = function() {
+        var anims = liveMv.availableAnimations || [];
+        if (anims.length > 0) {
+          liveMv.animationName = anims[0];
+          liveMv.pause();
+          liveMv.currentTime = 0;
+          $('#axLiveToggleDoorsBtn').show();
+        }
+      };
+      liveMv.removeEventListener('load', liveMv._despaceAnimLoad || function(){});
+      liveMv._despaceAnimLoad = syncLiveAnimBtn;
+      liveMv.addEventListener('load', syncLiveAnimBtn);
+      if (liveMv.loaded) {
+        syncLiveAnimBtn();
       }
     }
 
@@ -638,6 +1158,23 @@
         $('#axLiveArFallbackRoom').attr('src', ev.target.result).show();
       };
       reader.readAsDataURL(file);
+    });
+
+    // Open/Close All Doors in Live Camera AR (<model-viewer> DeSpace_OpenAll animation)
+    $('#axLiveToggleDoorsBtn').on('click', function(e) {
+      e.preventDefault();
+      var liveMv = document.getElementById('axLiveArModelViewer');
+      if (!liveMv) return;
+      var anims = liveMv.availableAnimations || [];
+      if (!anims.length) return;
+      liveMv.animationName = anims[0];
+      state.liveDoorsOpen = !state.liveDoorsOpen;
+      liveMv.timeScale = state.liveDoorsOpen ? 1 : -1;
+      if (typeof liveMv.play === 'function') {
+        liveMv.play({ repetitions: 1 });
+      }
+      $(this).toggleClass('active', state.liveDoorsOpen).attr('aria-pressed', state.liveDoorsOpen ? 'true' : 'false');
+      $(this).find('span').text(state.liveDoorsOpen ? '🔒 Đóng Tủ' : '🚪 Mở Tủ');
     });
 
     // Snapshot capture (composite live video/room + 3D WebGL model-viewer)
@@ -1082,22 +1619,44 @@
   }
 
   function bind3DToolbar() {
+    $('#axBtnToggleDoors').on('click', function(e) {
+      e.preventDefault();
+      if (!interactive3D.parts.length) return;
+      var allOpen = interactive3D.parts.every(function(pt) { return pt.isOpen; });
+      var targetOpen = !allOpen;
+      interactive3D.parts.forEach(function(pt, idx) {
+        setTimeout(function() {
+          toggleInteractivePart(pt, targetOpen);
+        }, idx * 55);
+      });
+    });
+
     $('#axBtnAutoRotate').on('click', function(e) {
       e.preventDefault();
       var mv = document.getElementById('axMainModelViewer');
-      if (!mv) return;
       state.autoRotate = !state.autoRotate;
-      mv.autoRotate = state.autoRotate;
+      if (mv) {
+        mv.autoRotate = state.autoRotate;
+      }
+      if (interactive3D.controls) {
+        interactive3D.controls.autoRotate = state.autoRotate;
+      }
       $(this).toggleClass('is-active', state.autoRotate);
     });
 
     $('#axBtnResetCamera').on('click', function(e) {
       e.preventDefault();
       var mv = document.getElementById('axMainModelViewer');
-      if (!mv) return;
-      mv.cameraOrbit = '0deg 75deg 105%';
-      if (typeof mv.jumpCameraToGoal === 'function') {
-        mv.jumpCameraToGoal();
+      if (mv) {
+        mv.cameraOrbit = '0deg 75deg 105%';
+        if (typeof mv.jumpCameraToGoal === 'function') {
+          mv.jumpCameraToGoal();
+        }
+      }
+      if (interactive3D.camera && interactive3D.controls && interactive3D.defaultCamPos && interactive3D.defaultTarget) {
+        interactive3D.camera.position.copy(interactive3D.defaultCamPos);
+        interactive3D.controls.target.copy(interactive3D.defaultTarget);
+        interactive3D.controls.update();
       }
     });
   }
@@ -1244,9 +1803,7 @@
           if (response && response.error) {
             $btn.removeClass('loading');
             $('#axModalCartBtnText').text(originalText);
-            if (typeof furnivaData !== 'undefined' && !furnivaData.isLoggedIn && furnivaData.loginUrl) {
-              window.location.href = furnivaData.loginUrl;
-            } else if (response.product_url) {
+            if (response.product_url) {
               window.location.href = response.product_url;
             }
             return;

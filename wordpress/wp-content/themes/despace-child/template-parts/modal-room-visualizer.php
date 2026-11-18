@@ -81,6 +81,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<button slot="ar-button" id="axHiddenMvArBtn" style="display:none;" aria-hidden="true"></button>
 					</model-viewer>
 
+					<!-- Articulated Interactive 3D Canvas (Three.js Raycast Click-to-Open Doors & Drawers) -->
+					<div id="axInteractive3DStage" class="ax-interactive-3d-stage" style="display:none;" aria-label="<?php echo esc_attr( furniva_t( 'Interactive 3D Furniture Canvas', 'Khung mô hình 3D tương tác đóng mở' ) ); ?>"></div>
+
+					<!-- Interactive Part Hover / Status Pill -->
+					<div class="ax-3d-part-hint" id="ax3DPartHint" role="status" aria-live="polite" style="display:none;"></div>
+
+					<!-- Accessible 1-Tap Part Chips (Synchronized with Direct 3D Click/Tap) -->
+					<div class="ax-3d-part-pills" id="ax3DPartPills" role="group" aria-label="<?php echo esc_attr( furniva_t( 'Interactive Doors and Drawers', 'Đóng mở từng bộ phận tủ' ) ); ?>" style="display:none;"></div>
+
 					<!-- Floating Dimension & Material Callout (Top Left) -->
 					<div class="ax-3d-info-pill" id="ax3DInfoPill">
 						<div class="ax-pill-row">
@@ -96,6 +105,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 					<!-- Floating Quick Controls (Top Right) -->
 					<div class="ax-3d-quick-toolbar">
+						<button type="button" class="ax-toolbar-btn ax-toolbar-btn-doors" id="axBtnToggleDoors" aria-pressed="false" style="display:none;" title="<?php echo esc_attr( furniva_t( 'Open or close all doors and drawers', 'Mở hoặc đóng toàn bộ cánh tủ và ngăn kéo' ) ); ?>">
+							<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+								<path d="M13 4h3a2 2 0 0 1 2 2v14"/>
+								<path d="M2 20h3"/><path d="M13 20h9"/>
+								<path d="M10 12v.01"/><path d="M13 4.562v16.157a1 1 0 0 1-1.242.97L5 20V5.562a2 2 0 0 1 1.515-1.94l4-1A2 2 0 0 1 13 4.561z"/>
+							</svg>
+							<span id="axBtnToggleDoorsText"><?php echo esc_html( furniva_t( 'Open Doors', 'Mở hết cửa' ) ); ?></span>
+						</button>
 						<button type="button" class="ax-toolbar-btn is-active" id="axBtnAutoRotate" title="<?php echo esc_attr( furniva_t( 'Toggle Auto Rotate', 'Tự động xoay' ) ); ?>">
 							<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
 								<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.85.99 6.57 2.6L21 8"/>
@@ -283,8 +300,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 								</div>
 							</div>
 
-							<!-- Camera Actions: Flip, Snapshot, Upload Room Photo -->
+							<!-- Camera Actions: Toggle Doors, Flip, Upload Room Photo, Snapshot -->
 							<div class="ax-control-group">
+								<button type="button" class="ax-pill-btn" id="axLiveToggleDoorsBtn" aria-pressed="false" style="display:none;" title="<?php echo esc_attr( furniva_t( 'Open / Close Cabinet Doors in AR', 'Mở / Đóng cánh tủ trong AR' ) ); ?>">
+									<span>🚪 Mở Tủ</span>
+								</button>
 								<button type="button" class="ax-pill-btn" id="axLiveFlipCamBtn" title="Đổi camera Trước / Sau">
 									<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
 										<path d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/>

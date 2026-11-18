@@ -506,6 +506,20 @@ function despace_get_product_3d_data( $product_id ) {
 		$usdz_url = home_url( '/' . ltrim( $usdz_url, '/' ) );
 	}
 
+	// Append local filemtime cache-buster so browsers never serve an outdated cached GLB/USDZ
+	$upload_dir = wp_get_upload_dir();
+	if ( ! empty( $upload_dir['baseurl'] ) && ! empty( $upload_dir['basedir'] ) ) {
+		foreach ( array( 'glb_url', 'usdz_url' ) as $u_var ) {
+			if ( ! empty( $$u_var ) && false === strpos( $$u_var, '?' ) && 0 === strpos( $$u_var, $upload_dir['baseurl'] ) ) {
+				$rel_path  = substr( $$u_var, strlen( $upload_dir['baseurl'] ) );
+				$disk_file = wp_normalize_path( $upload_dir['basedir'] . $rel_path );
+				if ( file_exists( $disk_file ) ) {
+					$$u_var = add_query_arg( 'v', (string) filemtime( $disk_file ), $$u_var );
+				}
+			}
+		}
+	}
+
 	$image_url = wp_get_attachment_image_url( $product->get_image_id(), 'full' );
 	if ( ! $image_url ) {
 		$image_url = wc_placeholder_img_src( 'full' );

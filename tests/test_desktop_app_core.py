@@ -34,7 +34,7 @@ print("  DeSpace 3D Studio Desktop — Core Engine Test Suite (TC-PY01 - TC-PY10
 print("=" * 72)
 
 passed = 0
-total = 13
+total = 15
 
 def check(name: str, condition: bool):
     global passed
@@ -208,6 +208,48 @@ check(
     and cal_json_len % 4 == 0
     and root_node.get("name") == "DeSpace_PhysicalScaleRoot"
     and cal_verts > 0
+)
+
+# TC-PY14: Articulated Hollow Interior + Hinged Doors & Sliding Drawers GLB
+art_res = engine.reconstruct(
+    product_id=89,
+    sku="DESPACE-ARTICULATED-CABINET",
+    name="Tủ giày 3 cánh kèm ngăn kéo DeSpace Slate",
+    category="shoe-racks-storage",
+    dimensions={"width": 114, "depth": 34, "height": 88},
+    angles={},
+)
+art_glb = Path(art_res["glb_path"]).read_bytes()
+art_jlen = struct.unpack_from("<I", art_glb, 12)[0]
+art_gltf = json.loads(art_glb[20 : 20 + art_jlen].decode("utf-8"))
+art_nodes = art_gltf.get("nodes", [])
+interactive_nodes = [nd for nd in art_nodes if (nd.get("extras") or {}).get("despaceInteractive")]
+hinge_doors = [nd for nd in interactive_nodes if nd["extras"].get("type") == "hinge_door"]
+drawers = [nd for nd in interactive_nodes if nd["extras"].get("type") == "drawer"]
+has_openall_anim = any(a.get("name") == "DeSpace_OpenAll" for a in art_gltf.get("animations", []))
+check(
+    "TC-PY14: Articulated cabinet GLB builds hollow carcass + 3 hinged doors + 2 drawers + DeSpace_OpenAll animation",
+    len(hinge_doors) == 3 and len(drawers) == 2 and has_openall_anim and art_res.get("interactive_parts") == 5
+)
+
+# TC-PY15: Barn Door + 4 Drawers Sideboard Articulation
+barn_res = engine.reconstruct(
+    product_id=90,
+    sku="DESPACE-BARN-TEST",
+    name="Tủ Sideboard 4 ngăn kéo kèm cánh lùa Barn Door DeSpace Avenbury",
+    category="chest-of-drawers-sideboards",
+    dimensions={"width": 102, "depth": 40, "height": 85},
+    angles={},
+)
+barn_glb = Path(barn_res["glb_path"]).read_bytes()
+barn_jlen = struct.unpack_from("<I", barn_glb, 12)[0]
+barn_gltf = json.loads(barn_glb[20 : 20 + barn_jlen].decode("utf-8"))
+barn_interactive = [nd for nd in barn_gltf.get("nodes", []) if (nd.get("extras") or {}).get("despaceInteractive")]
+slide_doors = [nd for nd in barn_interactive if nd["extras"].get("type") == "slide_door"]
+barn_drawers = [nd for nd in barn_interactive if nd["extras"].get("type") == "drawer"]
+check(
+    "TC-PY15: Sideboard Barn Door routes to chest_of_drawers with 1 sliding barn door + 4 stacked drawers",
+    len(slide_doors) == 1 and len(barn_drawers) == 4 and barn_res.get("interactive_parts") == 5
 )
 
 print("=" * 72)

@@ -945,6 +945,119 @@
   --progress-mask: transparent;
 }
 
+.ax-interactive-3d-stage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 4;
+  touch-action: pan-y;
+}
+
+.ax-interactive-3d-stage canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  outline: none;
+}
+
+.ax-3d-part-hint {
+  position: absolute;
+  top: 76px;
+  left: 16px;
+  max-width: min(360px, calc(100% - 32px));
+  padding: 6px 12px;
+  background: rgba(28, 25, 23, 0.84);
+  color: #FAF7F2;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 500;
+  z-index: 10;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+}
+
+.ax-3d-part-pills {
+  position: absolute;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  max-width: calc(100% - 28px);
+  padding: 4px 8px;
+  z-index: 10;
+}
+
+.ax-part-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  min-height: 28px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #DCD2C5;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #2D2017;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(28, 25, 23, 0.08);
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.ax-part-chip:hover {
+  border-color: #9A6745;
+  background: #FFFDF9;
+}
+
+.ax-part-chip.is-open,
+.ax-part-chip[aria-pressed="true"] {
+  background: #9A6745;
+  border-color: #9A6745;
+  color: #FFFFFF;
+}
+
+.ax-part-chip:focus-visible,
+.ax-toolbar-btn:focus-visible {
+  outline: 2px solid #9A6745;
+  outline-offset: 2px;
+}
+
+.ax-toolbar-btn-doors.is-open {
+  background: #9A6745;
+  border-color: #9A6745;
+  color: #FFFFFF;
+}
+
+.ax-toolbar-btn-doors.is-open svg {
+  stroke: #FFFFFF;
+}
+
+@media (max-width: 767.98px) {
+  .ax-3d-part-hint {
+    display: none !important;
+  }
+  .ax-3d-part-pills {
+    bottom: 10px;
+    width: calc(100% - 16px);
+    max-width: calc(100% - 16px);
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+    padding: 0;
+  }
+  .ax-part-chip {
+    min-height: 30px;
+    padding: 4px 9px;
+    font-size: 10.5px;
+  }
+}
+
 .ax-main-model-viewer::part(default-progress-bar) {
   height: 2px;
   background-color: #9A6745;
@@ -959,6 +1072,7 @@
   position: absolute;
   top: 16px;
   left: 16px;
+  max-width: min(360px, calc(100% - 480px));
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -976,6 +1090,13 @@
   gap: 8px;
   font-size: 13px;
   color: #1C1917;
+  min-width: 0;
+}
+
+.ax-pill-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ax-pill-dot {
@@ -2102,5 +2223,38 @@
   }
   .ax-toolbar-btn span {
     font-size: 10.5px;
+  }
+}
+
+/* Override cascade: ensure interactive Doors button keeps crisp high-contrast state & mobile toolbar wraps neatly */
+.ax-toolbar-btn.ax-toolbar-btn-doors {
+  background: #2D2017;
+  color: #FAF7F2;
+  border-color: #2D2017;
+}
+.ax-toolbar-btn.ax-toolbar-btn-doors svg {
+  stroke: #FAF7F2;
+}
+.ax-toolbar-btn.ax-toolbar-btn-doors:hover {
+  background: #1C1917;
+  color: #FFFFFF;
+  border-color: #1C1917;
+}
+.ax-toolbar-btn.ax-toolbar-btn-doors.is-open,
+.ax-toolbar-btn.ax-toolbar-btn-doors.is-open:hover {
+  background: #9A6745;
+  color: #FFFFFF;
+  border-color: #9A6745;
+}
+.ax-toolbar-btn.ax-toolbar-btn-doors.is-open svg {
+  stroke: #FFFFFF;
+}
+
+@media (max-width: 768px) {
+  .ax-3d-quick-toolbar {
+    flex-wrap: wrap !important;
+    width: calc(100% - 16px) !important;
+    justify-content: center !important;
+    gap: 5px !important;
   }
 }
