@@ -84,10 +84,19 @@ class DeSpaceCatalog {
       this.updateUrl();
     }
 
-    // Render loading indicator
+    // Render luxury skeleton grid instead of dimming stale DOM
     if (this.container) {
-      this.container.style.opacity = '0.5';
-      this.container.style.pointerEvents = 'none';
+      this.container.setAttribute('aria-busy', 'true');
+      if (window.DeSpaceSkeleton) {
+        this.container.innerHTML = window.DeSpaceSkeleton.renderProductGrid({
+          count: 8,
+          cols: 4,
+          restMode: true,
+        });
+      } else {
+        this.container.style.opacity = '0.5';
+        this.container.style.pointerEvents = 'none';
+      }
     }
 
     try {
@@ -115,12 +124,16 @@ class DeSpaceCatalog {
       const json = await response.json();
       if (json.success && json.data) {
         this.renderItems(json.data.items, json.data.pagination);
+        if (window.DeSpaceSkeleton && this.container) {
+          window.DeSpaceSkeleton.hydrateMedia(this.container);
+        }
       }
     } catch (err) {
       console.error('[DeSpace Catalog] Filter error:', err);
     } finally {
       this.isLoading = false;
       if (this.container) {
+        this.container.setAttribute('aria-busy', 'false');
         this.container.style.opacity = '1';
         this.container.style.pointerEvents = 'auto';
       }

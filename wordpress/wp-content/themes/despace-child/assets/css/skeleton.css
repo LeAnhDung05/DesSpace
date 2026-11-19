@@ -1,0 +1,885 @@
+/* ==========================================================================
+   DeSpace Luxury Editorial Skeleton Screen System
+   - Warm alabaster & travertine stone palette matching DeSpace brand tokens
+   - Compositor-only GPU shimmer (transform: translateX on ::after)
+   - Accessible: opts in to shimmer via prefers-reduced-motion: no-preference,
+     preserves visibility in forced-colors mode, uses CSS containment to
+     prevent page-wide reflows and layout shift (zero CLS).
+   ========================================================================== */
+
+:root {
+	--ds-sk-surface: #faf8f4;
+	--ds-sk-base: #eee9e1;
+	--ds-sk-base-deep: #e5ddd2;
+	--ds-sk-highlight: rgba(255, 253, 249, 0.82);
+	--ds-sk-border: rgba(154, 103, 69, 0.11);
+	--ds-sk-accent: #9a6745;
+	--ds-sk-accent-soft: rgba(154, 103, 69, 0.16);
+	--ds-sk-radius-sm: 6px;
+	--ds-sk-radius-md: 12px;
+	--ds-sk-radius-lg: 18px;
+	--ds-sk-radius-pill: 999px;
+}
+
+/* --------------------------------------------------------------------------
+   1. Core Compositor-Only Shimmer Primitive (.ds-sk-bone)
+   -------------------------------------------------------------------------- */
+@keyframes ds-sk-sweep {
+	0% {
+		transform: translateX(-100%);
+	}
+	100% {
+		transform: translateX(100%);
+	}
+}
+
+@keyframes ds-sk-fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.ds-sk-bone {
+	position: relative;
+	display: block;
+	overflow: hidden;
+	background-color: var(--ds-sk-base);
+	border-radius: var(--ds-sk-radius-sm);
+	contain: paint;
+}
+
+.ds-sk-bone--deep {
+	background-color: var(--ds-sk-base-deep);
+}
+
+.ds-sk-bone--pill {
+	border-radius: var(--ds-sk-radius-pill);
+}
+
+.ds-sk-bone--circle {
+	border-radius: 50%;
+}
+
+.ds-sk-bone--md {
+	border-radius: var(--ds-sk-radius-md);
+}
+
+/* Default to static stone surface; opt into shimmer sweep only when motion is preferred */
+@media (prefers-reduced-motion: no-preference) {
+	.ds-sk-bone::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		transform: translateX(-100%);
+		background: linear-gradient(
+			90deg,
+			transparent 0%,
+			var(--ds-sk-highlight) 50%,
+			transparent 100%
+		);
+		animation: ds-sk-sweep 1.55s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+		animation-delay: var(--ds-sk-delay, 0ms);
+		pointer-events: none;
+	}
+
+	.ds-sk-reveal {
+		animation: ds-sk-fade-in 0.28s ease-out both;
+	}
+}
+
+/* Forced colors / High Contrast safety */
+@media (forced-colors: active) {
+	.ds-sk-bone {
+		border: 1px solid GrayText;
+	}
+	.ds-sk-bone::after {
+		display: none;
+	}
+}
+
+/* --------------------------------------------------------------------------
+   2. Progressive Media / Image Skeleton (Zero CLS)
+   -------------------------------------------------------------------------- */
+.ds-media-loading {
+	position: relative;
+	overflow: hidden;
+	background-color: var(--ds-sk-base) !important;
+}
+
+.ds-media-loading > img,
+.ds-media-loading > a > img,
+.ds-media-loading > picture > img {
+	opacity: 0;
+	transition: opacity 0.32s ease-out;
+}
+
+.ds-media-loaded > img,
+.ds-media-loaded > a > img,
+.ds-media-loaded > picture > img {
+	opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.ds-media-loading::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		z-index: 2;
+		transform: translateX(-100%);
+		background: linear-gradient(
+			90deg,
+			transparent 0%,
+			var(--ds-sk-highlight) 50%,
+			transparent 100%
+		);
+		animation: ds-sk-sweep 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+		pointer-events: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ds-media-loading > img,
+	.ds-media-loading > a > img,
+	.ds-media-loading > picture > img {
+		transition: opacity 0.12s linear;
+	}
+}
+
+/* --------------------------------------------------------------------------
+   3. Product Card Skeleton (Matches woocommerce/content-product.php 1:1)
+   -------------------------------------------------------------------------- */
+.f-skeleton-grid,
+.ds-sk-product-grid {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.ds-sk-card,
+.ds-sk-card.f-skeleton-card {
+	list-style: none;
+	background: var(--f-bg-card, #ffffff);
+	border: 1px solid var(--ds-sk-border);
+	border-radius: var(--f-radius-card, 16px);
+	padding: 0;
+	gap: 0;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	contain: layout style paint;
+	--ds-sk-delay: calc(var(--ds-sk-i, 0) * 65ms);
+}
+
+.ds-sk-card__media {
+	position: relative;
+	width: 100%;
+	aspect-ratio: 1 / 1.05;
+	background: var(--ds-sk-surface);
+	overflow: hidden;
+}
+
+.ds-sk-card__img {
+	width: 100%;
+	height: 100%;
+	border-radius: 0;
+}
+
+.ds-sk-card__badge {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	width: 64px;
+	height: 22px;
+	z-index: 2;
+}
+
+.ds-sk-card__actions {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	z-index: 2;
+}
+
+.ds-sk-card__action-dot {
+	width: 34px;
+	height: 34px;
+}
+
+.ds-sk-card__body {
+	padding: 16px 16px 18px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	flex: 1;
+}
+
+.ds-sk-card__cat {
+	width: 38%;
+	height: 11px;
+}
+
+.ds-sk-card__title {
+	width: 86%;
+	height: 16px;
+}
+
+.ds-sk-card__title-sub {
+	width: 58%;
+	height: 15px;
+	margin-top: -3px;
+}
+
+.ds-sk-card__rating {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 2px;
+}
+
+.ds-sk-card__stars {
+	width: 78px;
+	height: 12px;
+}
+
+.ds-sk-card__reviews {
+	width: 26px;
+	height: 12px;
+}
+
+.ds-sk-card__price {
+	width: 48%;
+	height: 20px;
+	margin-top: 2px;
+}
+
+.ds-sk-card__cta {
+	width: 100%;
+	height: 40px;
+	margin-top: auto;
+	border-radius: var(--ds-sk-radius-pill);
+}
+
+/* REST Catalog grid compatibility (.ds-product-grid) */
+.ds-product-grid--skeleton {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 22px;
+}
+
+@media (max-width: 1100px) {
+	.ds-product-grid--skeleton {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 767px) {
+	.ds-product-grid--skeleton {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 14px;
+	}
+	.ds-sk-card__body {
+		padding: 12px;
+		gap: 8px;
+	}
+	.ds-sk-card__cta {
+		height: 36px;
+	}
+}
+
+/* --------------------------------------------------------------------------
+   4. Mini-Cart Off-Canvas Drawer Skeleton
+   -------------------------------------------------------------------------- */
+.ds-sk-drawer {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 420px;
+	background: var(--f-bg-card, #ffffff);
+	contain: layout style paint;
+}
+
+.ds-sk-drawer__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 20px 24px;
+	border-bottom: 1px solid var(--ds-sk-border);
+}
+
+.ds-sk-drawer__heading {
+	width: 148px;
+	height: 20px;
+}
+
+.ds-sk-drawer__close {
+	width: 32px;
+	height: 32px;
+}
+
+.ds-sk-drawer__freeship {
+	padding: 14px 24px;
+	background: var(--ds-sk-surface);
+	border-bottom: 1px solid var(--ds-sk-border);
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.ds-sk-drawer__freeship-text {
+	width: 76%;
+	height: 12px;
+}
+
+.ds-sk-drawer__freeship-bar {
+	width: 100%;
+	height: 6px;
+}
+
+.ds-sk-drawer__list {
+	flex: 1;
+	padding: 18px 24px;
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+}
+
+.ds-sk-drawer__item {
+	display: grid;
+	grid-template-columns: 72px minmax(0, 1fr);
+	gap: 14px;
+	padding-bottom: 16px;
+	border-bottom: 1px solid rgba(25, 24, 22, 0.06);
+	contain: layout style paint;
+	--ds-sk-delay: calc(var(--ds-sk-i, 0) * 90ms);
+}
+
+.ds-sk-drawer__thumb {
+	width: 72px;
+	height: 72px;
+	border-radius: 10px;
+}
+
+.ds-sk-drawer__info {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.ds-sk-drawer__title {
+	width: 82%;
+	height: 14px;
+}
+
+.ds-sk-drawer__price {
+	width: 44%;
+	height: 13px;
+}
+
+.ds-sk-drawer__qty {
+	width: 88px;
+	height: 28px;
+	margin-top: 2px;
+}
+
+.ds-sk-drawer__footer {
+	padding: 18px 24px 24px;
+	border-top: 1px solid var(--ds-sk-border);
+	background: var(--ds-sk-surface);
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.ds-sk-drawer__subtotal {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.ds-sk-drawer__sub-label {
+	width: 76px;
+	height: 15px;
+}
+
+.ds-sk-drawer__sub-val {
+	width: 112px;
+	height: 18px;
+}
+
+.ds-sk-drawer__btn {
+	width: 100%;
+	height: 44px;
+}
+
+/* --------------------------------------------------------------------------
+   5. AI Interior Design Concierge Response Skeleton
+   -------------------------------------------------------------------------- */
+.ds-sk-chat {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	width: 100%;
+	min-width: 240px;
+	contain: layout style paint;
+}
+
+.ds-sk-chat__status {
+	font-size: 12px;
+	font-weight: 500;
+	color: #7c563a;
+	letter-spacing: 0.01em;
+	display: flex;
+	align-items: center;
+	gap: 7px;
+}
+
+.ds-sk-chat__lines {
+	display: flex;
+	flex-direction: column;
+	gap: 7px;
+}
+
+.ds-sk-chat__line {
+	height: 11px;
+}
+
+.ds-sk-chat__line--1 { width: 96%; }
+.ds-sk-chat__line--2 { width: 84%; --ds-sk-delay: 80ms; }
+.ds-sk-chat__line--3 { width: 62%; --ds-sk-delay: 160ms; }
+
+.ds-sk-chat__cards {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-top: 4px;
+}
+
+.ds-sk-chat__card {
+	display: grid;
+	grid-template-columns: 48px minmax(0, 1fr);
+	gap: 10px;
+	padding: 9px;
+	border-radius: 11px;
+	background: rgba(255, 255, 255, 0.75);
+	border: 1px solid var(--ds-sk-border);
+	--ds-sk-delay: calc(var(--ds-sk-i, 0) * 100ms);
+}
+
+.ds-sk-chat__thumb {
+	width: 48px;
+	height: 48px;
+	border-radius: 8px;
+}
+
+.ds-sk-chat__meta {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	justify-content: center;
+}
+
+.ds-sk-chat__name {
+	width: 85%;
+	height: 12px;
+}
+
+.ds-sk-chat__sub {
+	width: 58%;
+	height: 10px;
+}
+
+.ds-sk-chat__pill {
+	width: 116px;
+	height: 22px;
+	margin-top: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   6. Architectural 3D & AR Studio Viewport Skeleton + Native <progress>
+   -------------------------------------------------------------------------- */
+.ds-sk-3d-stage,
+.ax-status-overlay.ds-sk-3d-stage {
+	position: absolute;
+	inset: 0;
+	z-index: 30;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+	box-sizing: border-box;
+	background:
+		radial-gradient(circle at 50% 45%, rgba(255, 252, 247, 0.96) 0%, #f5efe6 62%, #ece3d7 100%);
+	contain: layout style paint;
+}
+
+.ds-sk-3d-stage__top-left {
+	position: absolute;
+	top: 18px;
+	left: 18px;
+	width: 220px;
+	padding: 12px 14px;
+	border-radius: 14px;
+	background: rgba(255, 255, 255, 0.78);
+	border: 1px solid var(--ds-sk-border);
+	display: flex;
+	flex-direction: column;
+	gap: 7px;
+}
+
+.ds-sk-3d-stage__top-right {
+	position: absolute;
+	top: 18px;
+	right: 18px;
+	display: flex;
+	gap: 8px;
+}
+
+.ds-sk-3d-stage__chip {
+	width: 88px;
+	height: 32px;
+}
+
+.ds-sk-3d-stage__center {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+	max-width: 320px;
+}
+
+.ds-sk-3d-pedestal {
+	position: relative;
+	width: 168px;
+	height: 136px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.ds-sk-3d-cube {
+	width: 124px;
+	height: 92px;
+	border-radius: 14px;
+	border: 1.5px dashed rgba(154, 103, 69, 0.32);
+	background: rgba(238, 233, 225, 0.75);
+	box-shadow: 0 22px 32px -18px rgba(45, 34, 26, 0.25);
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 6px;
+	padding: 10px;
+	box-sizing: border-box;
+}
+
+.ds-sk-3d-cube__panel {
+	width: 100%;
+	height: 100%;
+	border-radius: 6px;
+}
+
+.ds-sk-3d-floor-shadow {
+	position: absolute;
+	bottom: 4px;
+	width: 142px;
+	height: 14px;
+	border-radius: 50%;
+	background: radial-gradient(ellipse at center, rgba(45, 34, 26, 0.16) 0%, transparent 72%);
+}
+
+.ds-sk-3d-stage__bottom {
+	position: absolute;
+	bottom: 18px;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 260px;
+	height: 30px;
+	background: rgba(255, 255, 255, 0.75);
+	border: 1px solid var(--ds-sk-border);
+	border-radius: var(--ds-sk-radius-pill);
+	padding: 8px 16px;
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.ds-sk-3d-stage__bottom-line {
+	width: 100%;
+	height: 10px;
+}
+
+/* Accessible indeterminate <progress> styled cleanly (spinner / progress guidance) */
+progress.ds-sk-progress {
+	appearance: none;
+	-webkit-appearance: none;
+	width: 160px;
+	height: 4px;
+	border: 0;
+	border-radius: var(--ds-sk-radius-pill);
+	overflow: hidden;
+	background: var(--ds-sk-accent-soft);
+	position: relative;
+}
+
+progress.ds-sk-progress::-webkit-progress-bar {
+	background: var(--ds-sk-accent-soft);
+	border-radius: var(--ds-sk-radius-pill);
+}
+
+progress.ds-sk-progress::-webkit-progress-value {
+	background: var(--ds-sk-accent);
+	border-radius: var(--ds-sk-radius-pill);
+}
+
+progress.ds-sk-progress::-moz-progress-bar {
+	background: var(--ds-sk-accent);
+	border-radius: var(--ds-sk-radius-pill);
+}
+
+@keyframes ds-sk-indeterminate-bar {
+	0% {
+		transform: translateX(-100%) scaleX(0.4);
+	}
+	50% {
+		transform: translateX(30%) scaleX(0.65);
+	}
+	100% {
+		transform: translateX(130%) scaleX(0.4);
+	}
+}
+
+progress.ds-sk-progress:indeterminate::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(90deg, transparent, var(--ds-sk-accent), transparent);
+	transform-origin: left center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	progress.ds-sk-progress:indeterminate::after {
+		animation: ds-sk-indeterminate-bar 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	progress.ds-sk-progress:indeterminate::after {
+		animation: ds-sk-indeterminate-bar 8s linear infinite;
+	}
+}
+
+@media (forced-colors: active) {
+	progress.ds-sk-progress {
+		forced-color-adjust: none;
+		background: Canvas;
+		border: 1px solid CanvasText;
+	}
+	progress.ds-sk-progress:indeterminate::after {
+		background: CanvasText;
+	}
+}
+
+.ds-sk-3d-caption {
+	margin: 0;
+	font-size: 13.5px;
+	font-weight: 500;
+	color: #5c493b;
+	letter-spacing: 0.01em;
+}
+
+@media (max-width: 640px) {
+	.ds-sk-3d-stage__top-left,
+	.ds-sk-3d-stage__top-right,
+	.ds-sk-3d-stage__bottom {
+		display: none;
+	}
+}
+
+/* --------------------------------------------------------------------------
+   7. Top Navigation Progress Bar + Route-Aware Transition Skeleton Overlay
+   -------------------------------------------------------------------------- */
+.ds-nav-progress {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 3px;
+	z-index: 99999;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.2s ease;
+	background: transparent;
+}
+
+.ds-nav-progress__bar {
+	height: 100%;
+	width: 100%;
+	background: linear-gradient(90deg, #9a6745 0%, #c89d76 55%, #6e452b 100%);
+	transform-origin: left center;
+	transform: scaleX(0);
+	transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ds-nav-progress.is-active {
+	opacity: 1;
+}
+
+.ds-nav-progress.is-active .ds-nav-progress__bar {
+	transform: scaleX(0.76);
+}
+
+.ds-route-skeleton {
+	position: fixed;
+	inset: 0;
+	top: 76px;
+	z-index: 9998;
+	background: rgba(250, 249, 246, 0.97);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	overflow: hidden;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.22s ease;
+	contain: layout style paint;
+}
+
+.ds-route-skeleton.is-visible {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.ds-route-skeleton__wrap {
+	max-width: 1340px;
+	margin: 0 auto;
+	padding: 36px 28px;
+}
+
+/* Route archetype: Shop grid */
+.ds-route-sk-shop__head {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 28px;
+	gap: 16px;
+}
+
+.ds-route-sk-shop__layout {
+	display: grid;
+	grid-template-columns: 260px minmax(0, 1fr);
+	gap: 28px;
+}
+
+.ds-route-sk-sidebar {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+}
+
+.ds-route-sk-grid {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 20px;
+}
+
+/* Route archetype: Single Product */
+.ds-route-sk-pdp {
+	display: grid;
+	grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+	gap: 44px;
+	align-items: start;
+}
+
+.ds-route-sk-pdp__gallery {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.ds-route-sk-pdp__main {
+	width: 100%;
+	aspect-ratio: 1 / 1;
+	border-radius: var(--ds-sk-radius-lg);
+}
+
+.ds-route-sk-pdp__thumbs {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 12px;
+}
+
+.ds-route-sk-pdp__thumb {
+	width: 100%;
+	aspect-ratio: 1 / 1;
+	border-radius: var(--ds-sk-radius-md);
+}
+
+.ds-route-sk-pdp__info {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding-top: 8px;
+}
+
+/* Route archetype: Journal / Editorial */
+.ds-route-sk-journal__feat {
+	display: grid;
+	grid-template-columns: 1.25fr 1fr;
+	gap: 28px;
+	margin-bottom: 32px;
+}
+
+.ds-route-sk-journal__grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 24px;
+}
+
+@media (max-width: 1024px) {
+	.ds-route-sk-shop__layout {
+		grid-template-columns: 1fr;
+	}
+	.ds-route-sk-sidebar {
+		display: none;
+	}
+	.ds-route-sk-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.ds-route-sk-pdp,
+	.ds-route-sk-journal__feat {
+		grid-template-columns: 1fr;
+		gap: 24px;
+	}
+	.ds-route-sk-journal__grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 640px) {
+	.ds-route-skeleton__wrap {
+		padding: 20px 16px;
+	}
+	.ds-route-sk-journal__grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Accessible visually-hidden live status region */
+.ds-sk-sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}

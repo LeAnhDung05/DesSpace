@@ -652,10 +652,9 @@ select:focus-visible {
     transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Skeleton Shimmer */
+/* Skeleton Shimmer (scoped away from generic .loading buttons; primary engine in skeleton.css) */
 .f-product-card-skeleton,
-.skeleton,
-.loading {
+.skeleton {
     background: linear-gradient(
         90deg,
         #f4f0eb 0%,

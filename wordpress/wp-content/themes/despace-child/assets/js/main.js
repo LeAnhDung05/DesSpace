@@ -362,30 +362,51 @@ jQuery(function ($) {
 		if (append) data.paged = currentPage;
 
 		updateActiveFilterTags();
-		$results.addClass("is-busy");
+		$results.addClass("is-busy").attr("aria-busy", "true");
 
 		var currentCols = "4";
 		try { currentCols = localStorage.getItem("furniva_grid_cols") || "4"; } catch (e) { }
 
+		var skCols = (currentCols == "3") ? "3" : "4";
+		var colClass = (skCols === "3") ? "columns-3" : "columns-4";
+
 		if (!append) {
-			var colClass = (currentCols == "3") ? "columns-3" : "columns-4";
-			var skHtml = '<ul class="f-products ' + colClass + ' f-skeleton-grid">';
-			for (var i = 0; i < 8; i++) {
-				skHtml += '<li class="f-skeleton-card">' +
-					'<div class="f-sk-media f-shimmer"></div>' +
-					'<div class="f-sk-body">' +
-					'<div class="f-sk-cat f-shimmer"></div>' +
-					'<div class="f-sk-title f-shimmer"></div>' +
-					'<div class="f-sk-price f-shimmer"></div>' +
-					'</div></li>';
-			}
-			skHtml += '</ul>';
+			var skHtml = window.DeSpaceSkeleton
+				? window.DeSpaceSkeleton.renderProductGrid({ count: 8, cols: skCols })
+				: '<ul class="f-products ' + colClass + ' f-skeleton-grid"></ul>';
 			$results.html(skHtml);
+		} else {
+			var $existingList = $results.find("ul.f-products").first();
+			if ($existingList.length && window.DeSpaceSkeleton) {
+				$existingList.append(window.DeSpaceSkeleton.renderProductItems(4, "ds-sk-append-item"));
+			}
+			$("#furniva-load-more").prop("disabled", true);
 		}
 
 		$.post(furnivaData.ajaxUrl, $.param(data)).done(function (res) {
-			if (!res || !res.success) return;
-			if (!append) $results.html(res.data.grid);
+			if (!res || !res.success) {
+				$results.find(".ds-sk-append-item").remove();
+				return;
+			}
+			if (!append) {
+				$results.html(res.data.grid);
+				$results.find(".f-products").addClass("ds-sk-reveal");
+			} else {
+				var $existing = $results.find("ul.f-products").first();
+				$existing.find(".ds-sk-append-item").remove();
+				var $incomingItems = $(res.data.grid).find("> li");
+				if ($existing.length && $incomingItems.length) {
+					$incomingItems.addClass("ds-sk-reveal");
+					$existing.append($incomingItems);
+				} else {
+					$results.html(res.data.grid);
+				}
+			}
+			if (window.DeSpaceSkeleton) {
+				window.DeSpaceSkeleton.hydrateMedia($results[0]);
+				if (res.data.text) window.DeSpaceSkeleton.announce(res.data.text);
+			}
+			$("#furniva-load-more").parent().remove();
 			$("#furniva-load-more").remove();
 			if (res.data.more && res.data.next) {
 				currentPage = res.data.next - 1;
@@ -414,9 +435,12 @@ jQuery(function ($) {
 					history.replaceState({ furnivaFilter: true }, "", targetUrl);
 				}
 			}
+		}).fail(function () {
+			$results.find(".ds-sk-append-item").remove();
+			$("#furniva-load-more").prop("disabled", false);
 		}).always(function () {
 			fetching = false;
-			$results.removeClass("is-busy");
+			$results.removeClass("is-busy").attr("aria-busy", "false");
 		});
 	}
 
@@ -760,13 +784,27 @@ jQuery(function ($) {
 	}
 
 	function refreshCartDrawer(openAfter) {
+		var prevHtml = $drawerContent.html();
+		$drawerContent.attr("aria-busy", "true");
+		if (window.DeSpaceSkeleton) {
+			var existingItems = $drawerContent.find(".f-drawer-item").length;
+			$drawerContent.html(window.DeSpaceSkeleton.renderCartDrawer(Math.min(4, Math.max(2, existingItems || 3))));
+		}
+		if (openAfter) openCartDrawer();
+
 		$.post(furnivaData.ajaxUrl, { action: "furniva_get_cart_drawer", nonce: furnivaData.nonce, language: furnivaData.language }).done(function (res) {
 			if (res && res.success) {
-				$drawerContent.html(res.data.html);
+				$drawerContent.html(res.data.html).addClass("ds-sk-reveal");
+				if (window.DeSpaceSkeleton) window.DeSpaceSkeleton.hydrateMedia($drawerContent[0]);
 				if (res.data.count !== undefined) $(".f-badge, .f-cart-count, .fv-cart-count, .ax-cart-badge").text(res.data.count);
 				if (res.data.total !== undefined) $(".f-cart-total").html(res.data.total);
-				if (openAfter) openCartDrawer();
+			} else if (prevHtml) {
+				$drawerContent.html(prevHtml);
 			}
+		}).fail(function () {
+			if (prevHtml) $drawerContent.html(prevHtml);
+		}).always(function () {
+			$drawerContent.attr("aria-busy", "false");
 		});
 	}
 

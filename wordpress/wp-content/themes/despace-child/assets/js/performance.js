@@ -149,32 +149,13 @@
     }
 
     /* ============================================================
-       7. Skeleton Loading Enhancement
+       7. Skeleton Loading Enhancement (Delegated to assets/js/skeleton.js)
        ============================================================ */
 
-    function showSkeletons() {
-        const gridContainers = document.querySelectorAll(
-            '.f-products, ' +
-            '.woocommerce ul.products, ' +
-            '.ax-related-grid'
-        );
-
-        gridContainers.forEach(container => {
-            if (!container.querySelector('.skeleton-container')) {
-                const skeletonCount = container.dataset.columns || 4;
-                const skeletonHTML = Array.from({length: skeletonCount}, () =>
-                    `<div class="f-product-card-skeleton">
-                        <div class="skeleton-image"></div>
-                        <div class="skeleton-text"></div>
-                        <div class="skeleton-text short"></div>
-                    </div>`
-                ).join('');
-
-                container.insertAdjacentHTML('beforebegin',
-                    `<div class="skeleton-container" style="display:none;">${skeletonHTML}</div>`
-                );
-            }
-        });
+    function hydrateSkeletonMedia() {
+        if (window.DeSpaceSkeleton && typeof window.DeSpaceSkeleton.hydrateMedia === 'function') {
+            window.DeSpaceSkeleton.hydrateMedia(document);
+        }
     }
 
     /* ============================================================

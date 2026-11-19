@@ -149,10 +149,32 @@ if ( ! defined( 'ABSPATH' ) ) {
 						</span>
 					</div>
 
-					<!-- Status: Loading Overlay -->
-					<div class="ax-status-overlay ax-overlay-loading" id="ax3DLoadingOverlay">
-						<div class="ax-spinner"></div>
-						<p class="ax-status-text"><?php echo esc_html( furniva_t( 'Loading 3D asset...', 'Đang tải mô hình 3D...' ) ); ?></p>
+					<!-- Status: Architectural 3D Skeleton Loading Overlay -->
+					<div class="ax-status-overlay ax-overlay-loading ds-sk-3d-stage" id="ax3DLoadingOverlay" role="status" aria-live="polite">
+						<div class="ds-sk-3d-stage__top-left" aria-hidden="true">
+							<span class="ds-sk-bone ds-sk-bone--pill" style="width:74%;height:13px;"></span>
+							<span class="ds-sk-bone ds-sk-bone--pill" style="width:52%;height:10px;--ds-sk-delay:90ms;"></span>
+						</div>
+						<div class="ds-sk-3d-stage__top-right" aria-hidden="true">
+							<span class="ds-sk-bone ds-sk-bone--pill ds-sk-3d-stage__chip"></span>
+							<span class="ds-sk-bone ds-sk-bone--pill ds-sk-3d-stage__chip" style="--ds-sk-delay:80ms;"></span>
+							<span class="ds-sk-bone ds-sk-bone--deep ds-sk-bone--pill ds-sk-3d-stage__chip" style="--ds-sk-delay:160ms;"></span>
+						</div>
+						<div class="ds-sk-3d-stage__center">
+							<div class="ds-sk-3d-pedestal" aria-hidden="true">
+								<div class="ds-sk-3d-cube">
+									<span class="ds-sk-bone ds-sk-3d-cube__panel"></span>
+									<span class="ds-sk-bone ds-sk-3d-cube__panel" style="--ds-sk-delay:90ms;"></span>
+									<span class="ds-sk-bone ds-sk-3d-cube__panel" style="--ds-sk-delay:180ms;"></span>
+								</div>
+								<span class="ds-sk-3d-floor-shadow"></span>
+							</div>
+							<progress class="ds-sk-progress" aria-label="<?php echo esc_attr( furniva_t( 'Loading 3D asset', 'Đang tải mô hình 3D' ) ); ?>"></progress>
+							<p class="ax-status-text ds-sk-3d-caption"><?php echo esc_html( furniva_t( 'Preparing 1:1 3D Studio model…', 'Đang dựng mô hình 3D tỷ lệ 1:1…' ) ); ?></p>
+						</div>
+						<div class="ds-sk-3d-stage__bottom" aria-hidden="true">
+							<span class="ds-sk-bone ds-sk-bone--pill ds-sk-3d-stage__bottom-line"></span>
+						</div>
 					</div>
 
 					<!-- Status: Error Overlay -->

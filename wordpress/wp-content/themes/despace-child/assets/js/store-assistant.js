@@ -38,9 +38,14 @@
 		bubble.className = "ax-chat-message ax-chat-message--assistant ax-chat-typing";
 		// Hide transient loading text from aria-live="polite" log so screen readers only announce final answer
 		bubble.setAttribute("aria-hidden", "true");
-		bubble.textContent = english
+		var statusLabel = english
 			? "✦ Measuring catalog dimensions & inventory…"
 			: "✦ Đang đo khớp kích thước & kiểm tra kho hàng…";
+		if (window.DeSpaceSkeleton && typeof window.DeSpaceSkeleton.renderChatReply === "function") {
+			bubble.innerHTML = window.DeSpaceSkeleton.renderChatReply(statusLabel);
+		} else {
+			bubble.textContent = statusLabel;
+		}
 		messages.appendChild(bubble);
 		messages.scrollTop = messages.scrollHeight;
 		return bubble;

@@ -115,6 +115,17 @@ function furniva_assets() {
 		);
 	}
 
+	// Unified Luxury Skeleton Screen CSS
+	$skeleton_css = get_stylesheet_directory() . '/assets/css/skeleton.css';
+	if ( file_exists( $skeleton_css ) ) {
+		wp_enqueue_style(
+			'despace-skeleton',
+			get_stylesheet_directory_uri() . '/assets/css/skeleton.css',
+			array( 'furniva' ),
+			filemtime( $skeleton_css )
+		);
+	}
+
 	// Accessibility CSS
 	$a11y_css = get_stylesheet_directory() . '/assets/css/accessibility.css';
 	if ( file_exists( $a11y_css ) ) {
@@ -284,8 +295,22 @@ function furniva_assets() {
 		wp_dequeue_style( 'photoswipe-default-skin' );
 	}
 
+	// Unified Luxury Skeleton Screen JS (loaded before main.js & store-assistant.js)
+	$skeleton_js_path = get_stylesheet_directory() . '/assets/js/skeleton.js';
+	$main_deps        = array( 'jquery', 'wc-add-to-cart' );
+	if ( file_exists( $skeleton_js_path ) ) {
+		wp_enqueue_script(
+			'despace-skeleton',
+			get_stylesheet_directory_uri() . '/assets/js/skeleton.js',
+			array(),
+			filemtime( $skeleton_js_path ),
+			true
+		);
+		$main_deps[] = 'despace-skeleton';
+	}
+
 	$main_js_path = get_stylesheet_directory() . '/assets/js/main.js';
-	wp_enqueue_script( 'furniva', get_stylesheet_directory_uri() . '/assets/js/main.js', array( 'jquery', 'wc-add-to-cart' ), file_exists( $main_js_path ) ? filemtime( $main_js_path ) : FURNIVA_VER, true );
+	wp_enqueue_script( 'furniva', get_stylesheet_directory_uri() . '/assets/js/main.js', $main_deps, file_exists( $main_js_path ) ? filemtime( $main_js_path ) : FURNIVA_VER, true );
 
 	// Animations JS (runs after DOM ready)
 	$animations_js = get_stylesheet_directory() . '/assets/js/animations.js';
