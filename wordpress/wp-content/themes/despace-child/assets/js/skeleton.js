@@ -248,18 +248,95 @@
 	var routeOverlayEl = null;
 	var routeTimer = null;
 
-	function classifyRoute(urlObj) {
-		var path = (urlObj.pathname || "/").toLowerCase();
-		if (/\/product\/[^/]+/.test(path) || /\/san-pham\/[^/]+/.test(path)) return "pdp";
-		if (/\/(shop|cua-hang|product-category|danh-muc-san-pham)/.test(path)) return "shop";
-		if (/\/(blog|tap-chi|category|tag)\b/.test(path)) return "journal";
-		return "shop";
+	function classifyRoute(urlObj, linkEl) {
+		if (linkEl && linkEl.getAttribute) {
+			var explicit = linkEl.getAttribute("data-skeleton-route");
+			if (explicit) return explicit;
+		}
+
+		// Strip optional TranslatePress language prefix (/en/, /vi/)
+		var rawPath = (urlObj.pathname || "/").toLowerCase();
+		var path = rawPath.replace(/^\/(en|vi)(?=\/|$)/, "") || "/";
+
+		// 1. Homepage (unless carrying search query)
+		if (path === "/" || path === "") {
+			if (urlObj.searchParams && urlObj.searchParams.has("s")) return "shop";
+			return "home";
+		}
+
+		// 2. Product detail page
+		if (/^\/(product|san-pham)\/[^/]+/.test(path)) return "pdp";
+
+		// 3. Shop, categories, tags, search
+		if (/^\/(shop|cua-hang|product-category|danh-muc-san-pham|product-tag)\b/.test(path)) return "shop";
+
+		// 4. Cart & Checkout
+		if (/^\/(cart|gio-hang)\b/.test(path)) return "cart";
+		if (/^\/(checkout|thanh-toan)\b/.test(path)) return "checkout";
+
+		// 5. Wishlist & Account
+		if (/^\/(wishlist|yeu-thich|danh-sach-yeu-thich)\b/.test(path)) return "wishlist";
+		if (/^\/(my-account|tai-khoan)\b/.test(path)) return "account";
+
+		// 6. About & Contact
+		if (/^\/(about|ve-despace|gioi-thieu)\b/.test(path)) return "about";
+		if (/^\/(contact|lien-he)\b/.test(path)) return "contact";
+
+		// 7. Journal index / archive
+		if (/^\/(blog|tap-chi|category|tag)\b/.test(path)) return "journal";
+
+		// 8. Policy / FAQ / Shipping pages
+		if (/^\/(faqs?|cau-hoi-thuong-gap|shipping-returns|giao-hang-doi-tra|privacy-policy|chinh-sach)\b/.test(path)) return "info";
+
+		// 9. Context-aware detection from clicked DOM element
+		if (linkEl && linkEl.closest) {
+			if (linkEl.closest(".f-card, .ds-card, .fv-mega-product-card, .ax-chat-product")) return "pdp";
+			if (linkEl.closest(".f-post-card, .f-featured-post, .fv-journal-card, .fv-home-journal, .f-blog-sidebar")) return "article";
+		}
+
+		// Single WordPress blog post (e.g. /chon-tu-giay-cho-can-ho-chung-cu/)
+		if (/^\/[a-z0-9-]+\/?$/.test(path)) return "article";
+
+		return "info";
 	}
 
 	function renderRouteSkeletonMarkup(type) {
+		if (type === "home") {
+			var chips = "";
+			for (var c = 0; c < 5; c++) {
+				chips += '<span class="ds-sk-bone ds-sk-bone--pill" style="width:148px;height:44px;flex:0 0 auto;--ds-sk-delay:' + (c * 55) + 'ms"></span>';
+			}
+			var promises = "";
+			for (var pr = 0; pr < 4; pr++) {
+				promises += '<span class="ds-sk-bone ds-sk-bone--md" style="height:82px;--ds-sk-delay:' + (pr * 60) + 'ms"></span>';
+			}
+			return (
+				'<div class="ds-route-skeleton__wrap">' +
+					'<div class="ds-route-sk-home__concierge">' +
+						'<div style="display:flex;flex-direction:column;gap:8px;flex:1">' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:160px;height:12px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:320px;max-width:90%;height:26px"></span>' +
+						'</div>' +
+						'<span class="ds-sk-bone ds-sk-bone--pill" style="width:360px;max-width:45%;height:46px"></span>' +
+					'</div>' +
+					'<div class="ds-route-sk-home__chips">' + chips + '</div>' +
+					'<div class="ds-route-sk-home__hero">' +
+						'<span class="ds-sk-bone ds-route-sk-home__stage"></span>' +
+						'<div class="ds-route-sk-home__aside">' +
+							'<span class="ds-sk-bone ds-route-sk-home__aside-card" style="--ds-sk-delay:90ms"></span>' +
+							'<span class="ds-sk-bone ds-route-sk-home__aside-card" style="--ds-sk-delay:160ms"></span>' +
+						'</div>' +
+					'</div>' +
+					'<div class="ds-route-sk-home__promise">' + promises + '</div>' +
+					'<ul class="ds-route-sk-grid">' + renderProductItems(4) + '</ul>' +
+				'</div>'
+			);
+		}
+
 		if (type === "pdp") {
 			return (
 				'<div class="ds-route-skeleton__wrap">' +
+					'<span class="ds-sk-bone ds-sk-bone--pill" style="width:240px;height:12px;margin-bottom:22px"></span>' +
 					'<div class="ds-route-sk-pdp">' +
 						'<div class="ds-route-sk-pdp__gallery">' +
 							'<span class="ds-sk-bone ds-route-sk-pdp__main"></span>' +
@@ -273,9 +350,18 @@
 						'<div class="ds-route-sk-pdp__info">' +
 							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:32%;height:13px"></span>' +
 							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:88%;height:32px"></span>' +
-							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:62%;height:26px"></span>' +
-							'<span class="ds-sk-bone ds-sk-bone--deep ds-sk-bone--pill" style="width:42%;height:28px;margin-top:6px"></span>' +
-							'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:76px;margin-top:8px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:62%;height:24px"></span>' +
+							'<div style="display:flex;gap:10px;align-items:center">' +
+								'<span class="ds-sk-bone ds-sk-bone--pill" style="width:94px;height:14px"></span>' +
+								'<span class="ds-sk-bone ds-sk-bone--pill" style="width:64px;height:14px"></span>' +
+							'</div>' +
+							'<span class="ds-sk-bone ds-sk-bone--deep ds-sk-bone--pill" style="width:42%;height:28px;margin-top:4px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:78px;margin-top:6px"></span>' +
+							'<div style="display:flex;gap:10px;margin-top:4px">' +
+								'<span class="ds-sk-bone ds-sk-bone--circle" style="width:34px;height:34px"></span>' +
+								'<span class="ds-sk-bone ds-sk-bone--circle" style="width:34px;height:34px;--ds-sk-delay:60ms"></span>' +
+								'<span class="ds-sk-bone ds-sk-bone--circle" style="width:34px;height:34px;--ds-sk-delay:120ms"></span>' +
+							'</div>' +
 							'<span class="ds-sk-bone ds-sk-bone--deep ds-sk-bone--pill" style="width:100%;height:48px;margin-top:10px"></span>' +
 							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:100%;height:46px"></span>' +
 						'</div>' +
@@ -285,6 +371,10 @@
 		}
 
 		if (type === "journal") {
+			var pills = "";
+			for (var j = 0; j < 5; j++) {
+				pills += '<span class="ds-sk-bone ds-sk-bone--pill" style="width:' + (92 + (j % 3) * 24) + 'px;height:34px;--ds-sk-delay:' + (j * 55) + 'ms"></span>';
+			}
 			var postCards = "";
 			for (var p = 0; p < 3; p++) {
 				postCards +=
@@ -299,6 +389,9 @@
 			}
 			return (
 				'<div class="ds-route-skeleton__wrap">' +
+					'<span class="ds-sk-bone ds-sk-bone--pill" style="width:110px;height:12px;margin-bottom:10px"></span>' +
+					'<span class="ds-sk-bone ds-sk-bone--pill" style="width:260px;height:34px;margin-bottom:16px"></span>' +
+					'<div class="ds-route-sk-journal__pills">' + pills + '</div>' +
 					'<div class="ds-route-sk-journal__feat">' +
 						'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;aspect-ratio:16/10"></span>' +
 						'<div style="display:flex;flex-direction:column;gap:14px;justify-content:center">' +
@@ -314,8 +407,227 @@
 			);
 		}
 
+		if (type === "article") {
+			return (
+				'<div class="ds-route-skeleton__wrap">' +
+					'<div class="ds-route-sk-article">' +
+						'<div class="ds-route-sk-article__head">' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:128px;height:24px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:84%;height:34px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:58%;height:28px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:220px;height:13px;margin-top:4px"></span>' +
+						'</div>' +
+						'<span class="ds-sk-bone ds-route-sk-article__cover"></span>' +
+						'<div class="ds-route-sk-article__prose">' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:100%;height:14px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:96%;height:14px;--ds-sk-delay:50ms"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:88%;height:14px;--ds-sk-delay:100ms"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:92%;height:14px;--ds-sk-delay:150ms;margin-top:10px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:74%;height:14px;--ds-sk-delay:200ms"></span>' +
+						'</div>' +
+					'</div>' +
+				'</div>'
+			);
+		}
+
+		if (type === "about") {
+			var stats = "";
+			for (var s = 0; s < 4; s++) {
+				stats +=
+					'<div class="ds-route-sk-about__stat" style="--ds-sk-delay:' + (s * 70) + 'ms">' +
+						'<span class="ds-sk-bone ds-sk-bone--deep ds-sk-bone--pill" style="width:54%;height:28px"></span>' +
+						'<span class="ds-sk-bone ds-sk-bone--pill" style="width:82%;height:13px"></span>' +
+					'</div>';
+			}
+			return (
+				'<div class="ds-route-skeleton__wrap">' +
+					'<div class="ds-route-sk-about__hero">' +
+						'<div style="display:flex;flex-direction:column;gap:14px">' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:140px;height:13px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:88%;height:36px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:68%;height:32px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:94%;height:14px;margin-top:6px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:86%;height:14px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:72%;height:14px"></span>' +
+						'</div>' +
+						'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;aspect-ratio:4/3"></span>' +
+					'</div>' +
+					'<div class="ds-route-sk-about__stats">' + stats + '</div>' +
+					'<div class="ds-route-sk-about__hero">' +
+						'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:220px"></span>' +
+						'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:220px;--ds-sk-delay:90ms"></span>' +
+					'</div>' +
+				'</div>'
+			);
+		}
+
+		if (type === "contact") {
+			return (
+				'<div class="ds-route-skeleton__wrap">' +
+					'<span class="ds-sk-bone ds-sk-bone--pill" style="width:120px;height:12px;margin-bottom:10px"></span>' +
+					'<span class="ds-sk-bone ds-sk-bone--pill" style="width:280px;height:34px;margin-bottom:26px"></span>' +
+					'<div class="ds-route-sk-contact">' +
+						'<div class="ds-route-sk-panel">' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:55%;height:22px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:68px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:68px;--ds-sk-delay:70ms"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:68px;--ds-sk-delay:140ms"></span>' +
+							'<div style="display:flex;gap:12px;margin-top:6px">' +
+								'<span class="ds-sk-bone ds-sk-bone--deep ds-sk-bone--pill" style="width:124px;height:40px"></span>' +
+								'<span class="ds-sk-bone ds-sk-bone--pill" style="width:124px;height:40px"></span>' +
+							'</div>' +
+						'</div>' +
+						'<div class="ds-route-sk-panel">' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:48%;height:22px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:46px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:46px;--ds-sk-delay:60ms"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:124px;--ds-sk-delay:120ms"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--deep ds-sk-bone--pill" style="width:180px;height:46px"></span>' +
+						'</div>' +
+					'</div>' +
+				'</div>'
+			);
+		}
+
+		if (type === "cart") {
+			var cartRows = "";
+			for (var r = 0; r < 3; r++) {
+				cartRows +=
+					'<div class="ds-route-sk-cart-row" style="--ds-sk-delay:' + (r * 75) + 'ms">' +
+						'<span class="ds-sk-bone ds-sk-bone--md" style="width:96px;height:96px"></span>' +
+						'<div style="display:flex;flex-direction:column;gap:10px">' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:76%;height:17px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:44%;height:13px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:108px;height:32px"></span>' +
+						'</div>' +
+						'<span class="ds-sk-bone ds-sk-bone--deep ds-sk-bone--pill" style="width:96px;height:20px"></span>' +
+					'</div>';
+			}
+			return (
+				'<div class="ds-route-skeleton__wrap">' +
+					'<span class="ds-sk-bone ds-sk-bone--pill" style="width:240px;height:32px;margin-bottom:18px"></span>' +
+					'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:56px;margin-bottom:24px"></span>' +
+					'<div class="ds-route-sk-split-order">' +
+						'<div style="display:flex;flex-direction:column;gap:14px">' + cartRows + '</div>' +
+						'<div class="ds-route-sk-panel">' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:52%;height:20px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:100%;height:14px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:100%;height:14px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:44px;margin-top:4px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--deep ds-sk-bone--pill" style="width:100%;height:48px;margin-top:8px"></span>' +
+						'</div>' +
+					'</div>' +
+				'</div>'
+			);
+		}
+
+		if (type === "checkout") {
+			return (
+				'<div class="ds-route-skeleton__wrap">' +
+					'<span class="ds-sk-bone ds-sk-bone--pill" style="width:220px;height:32px;margin-bottom:24px"></span>' +
+					'<div class="ds-route-sk-split-order">' +
+						'<div class="ds-route-sk-panel">' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:42%;height:20px"></span>' +
+							'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">' +
+								'<span class="ds-sk-bone ds-sk-bone--md" style="height:46px"></span>' +
+								'<span class="ds-sk-bone ds-sk-bone--md" style="height:46px;--ds-sk-delay:50ms"></span>' +
+							'</div>' +
+							'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:46px;--ds-sk-delay:90ms"></span>' +
+							'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">' +
+								'<span class="ds-sk-bone ds-sk-bone--md" style="height:46px;--ds-sk-delay:120ms"></span>' +
+								'<span class="ds-sk-bone ds-sk-bone--md" style="height:46px;--ds-sk-delay:150ms"></span>' +
+							'</div>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:38%;height:18px;margin-top:10px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:64px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:64px;--ds-sk-delay:80ms"></span>' +
+						'</div>' +
+						'<div class="ds-route-sk-panel">' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:54%;height:20px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:68px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:68px;--ds-sk-delay:70ms"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:100%;height:16px;margin-top:8px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--deep ds-sk-bone--pill" style="width:100%;height:50px;margin-top:8px"></span>' +
+						'</div>' +
+					'</div>' +
+				'</div>'
+			);
+		}
+
+		if (type === "wishlist") {
+			return (
+				'<div class="ds-route-skeleton__wrap">' +
+					'<div class="ds-route-sk-shop__head">' +
+						'<div style="display:flex;flex-direction:column;gap:8px">' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:130px;height:12px"></span>' +
+							'<span class="ds-sk-bone ds-sk-bone--pill" style="width:260px;height:32px"></span>' +
+						'</div>' +
+						'<span class="ds-sk-bone ds-sk-bone--pill" style="width:136px;height:40px"></span>' +
+					'</div>' +
+					'<ul class="ds-route-sk-wishlist-grid">' + renderProductItems(6) + '</ul>' +
+				'</div>'
+			);
+		}
+
+		if (type === "account") {
+			var navItems = "";
+			for (var n = 0; n < 5; n++) {
+				navItems += '<span class="ds-sk-bone ds-sk-bone--pill" style="width:100%;height:40px;--ds-sk-delay:' + (n * 50) + 'ms"></span>';
+			}
+			return (
+				'<div class="ds-route-skeleton__wrap">' +
+					'<div class="ds-route-sk-account">' +
+						'<div class="ds-route-sk-panel">' +
+							'<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">' +
+								'<span class="ds-sk-bone ds-sk-bone--circle" style="width:46px;height:46px;flex:0 0 auto"></span>' +
+								'<div style="flex:1;display:flex;flex-direction:column;gap:6px">' +
+									'<span class="ds-sk-bone ds-sk-bone--pill" style="width:76%;height:14px"></span>' +
+									'<span class="ds-sk-bone ds-sk-bone--pill" style="width:52%;height:11px"></span>' +
+								'</div>' +
+							'</div>' +
+							navItems +
+						'</div>' +
+						'<div>' +
+							'<div class="ds-route-sk-account__kpis">' +
+								'<span class="ds-sk-bone ds-sk-bone--md" style="height:96px"></span>' +
+								'<span class="ds-sk-bone ds-sk-bone--md" style="height:96px;--ds-sk-delay:70ms"></span>' +
+								'<span class="ds-sk-bone ds-sk-bone--md" style="height:96px;--ds-sk-delay:140ms"></span>' +
+							'</div>' +
+							'<div class="ds-route-sk-panel">' +
+								'<span class="ds-sk-bone ds-sk-bone--pill" style="width:36%;height:20px"></span>' +
+								'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:56px"></span>' +
+								'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:56px;--ds-sk-delay:60ms"></span>' +
+								'<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:56px;--ds-sk-delay:120ms"></span>' +
+							'</div>' +
+						'</div>' +
+					'</div>' +
+				'</div>'
+			);
+		}
+
+		if (type === "info") {
+			var rows = "";
+			for (var q = 0; q < 5; q++) {
+				rows += '<span class="ds-sk-bone ds-sk-bone--md" style="width:100%;height:62px;--ds-sk-delay:' + (q * 60) + 'ms"></span>';
+			}
+			return (
+				'<div class="ds-route-skeleton__wrap">' +
+					'<div class="ds-route-sk-info">' +
+						'<span class="ds-sk-bone ds-sk-bone--pill" style="width:130px;height:13px"></span>' +
+						'<span class="ds-sk-bone ds-sk-bone--pill" style="width:360px;max-width:85%;height:34px;margin-bottom:8px"></span>' +
+						rows +
+					'</div>' +
+				'</div>'
+			);
+		}
+
+		// Default: Shop / Category / Search grid
+		var shopCats = "";
+		for (var sc = 0; sc < 5; sc++) {
+			shopCats += '<span class="ds-sk-bone ds-sk-bone--md" style="height:64px;--ds-sk-delay:' + (sc * 50) + 'ms"></span>';
+		}
 		return (
 			'<div class="ds-route-skeleton__wrap">' +
+				'<div class="ds-route-sk-shop__cats">' + shopCats + '</div>' +
 				'<div class="ds-route-sk-shop__head">' +
 					'<span class="ds-sk-bone ds-sk-bone--pill" style="width:220px;height:28px"></span>' +
 					'<span class="ds-sk-bone ds-sk-bone--pill" style="width:160px;height:36px"></span>' +
@@ -413,12 +725,12 @@
 			ensureNavElements();
 			navProgressEl.classList.add("is-active");
 
-			// Only reveal full route skeleton overlay if navigation takes > 200ms (zero flash on instant loads)
-			var routeType = classifyRoute(urlObj);
+			// Reveal tailored destination-page skeleton after 85ms (zero flash on instant cached/bfcache restores)
+			var routeType = classifyRoute(urlObj, link);
 			if (routeTimer) window.clearTimeout(routeTimer);
 			routeTimer = window.setTimeout(function () {
 				triggerRoutePreview(routeType);
-			}, 200);
+			}, 85);
 		}, false);
 
 		// Restore cleanly when returning via browser Back/Forward Cache (bfcache)
@@ -467,6 +779,7 @@
 		renderChatReply: renderChatReply,
 		hydrateMedia: hydrateMedia,
 		announce: announce,
+		classifyRoute: classifyRoute,
 		previewRoute: triggerRoutePreview,
 		clearRoute: clearNavigationSkeleton
 	};

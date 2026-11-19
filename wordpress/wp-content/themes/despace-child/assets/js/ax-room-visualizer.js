@@ -111,7 +111,6 @@
     bindCopyButton();
     bindAddToCart();
     checkUrlParams();
-    ensureModelViewerLibrary();
   }
 
   function ensureModelViewerLibrary() {
@@ -125,10 +124,16 @@
   }
 
   function bindTriggers() {
+    // Warm up Google <model-viewer> only on user intent (hover/touch) instead of blocking initial page load
+    $(document).on('pointerenter touchstart focusin', '#axView3DModelBtn, .ax-open-3d-btn, #arViewInRoomBtn, .ax-open-ar-btn, .ax-open-room-modal', function () {
+      ensureModelViewerLibrary();
+    });
+
     // Open 3D Viewer directly
     $(document).on('click', '#axView3DModelBtn, .ax-open-3d-btn', function (e) {
       e.preventDefault();
       e.stopPropagation();
+      ensureModelViewerLibrary();
       extractProductData($(this));
       currentProduct.initialTab = '3d';
       openModal();
@@ -139,6 +144,7 @@
     $(document).on('click', '#arViewInRoomBtn, .ax-open-ar-btn, .ax-open-room-modal', function (e) {
       e.preventDefault();
       e.stopPropagation();
+      ensureModelViewerLibrary();
       extractProductData($(this));
       currentProduct.initialTab = 'ar';
       openModal();

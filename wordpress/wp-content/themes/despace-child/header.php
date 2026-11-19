@@ -31,6 +31,11 @@ $logo_id = get_theme_mod( 'custom_logo' );
 <head>
 <meta charset="<?php bloginfo( 'charset' ); ?>" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<?php if ( is_front_page() ) : ?>
+<link rel="preload" as="image" href="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/hero-scandinavian.jpg' ); ?>" fetchpriority="high" />
+<?php endif; ?>
 <link rel="icon" type="image/png" href="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/despace-favicon.png' ); ?>" />
 <link rel="apple-touch-icon" href="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/despace-app-icon.png' ); ?>" />
 <?php wp_head(); ?>

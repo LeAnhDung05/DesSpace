@@ -236,14 +236,15 @@ function furniva_assets() {
 	}
 
 	// DeSpace Architectural 3D & AR Studio CSS & JS
-	// Enqueue Google <model-viewer> eagerly on product/catalog pages; ax-room-visualizer.js lazy-loads it elsewhere on demand
-	if ( is_singular( 'product' ) || is_shop() || is_product_taxonomy() || is_front_page() || is_page( 'cua-hang' ) || is_page( 'shop' ) || is_page_template( 'templates/page-ar-visualizer.php' ) || is_page_template( 'page-ar-visualizer.php' ) ) {
+	// Google <model-viewer> (~350KB) is lazy-loaded on hover/click by ax-room-visualizer.js
+	// to avoid render-blocking <head> downloads on initial page loads (only eager on dedicated AR Visualizer page).
+	if ( is_page_template( 'templates/page-ar-visualizer.php' ) || is_page_template( 'page-ar-visualizer.php' ) ) {
 		wp_enqueue_script(
 			'google-model-viewer',
 			'https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js',
 			array(),
 			'3.5.0',
-			false
+			true
 		);
 	}
 
@@ -287,12 +288,21 @@ function furniva_assets() {
 		wp_enqueue_script( 'furniva-ax-room-visualizer' );
 	}
 
-	// Dequeue redundant / legacy styles to avoid waterfall latency and unwanted dns-prefetch
+	// Dequeue redundant / legacy styles & heavy product-only scripts on non-product pages
 	wp_dequeue_style( 'woocommerce_prettyPhoto_css' );
 	wp_dequeue_style( 'jquery-selectBox' );
 	if ( ! is_singular( 'product' ) ) {
 		wp_dequeue_style( 'photoswipe' );
 		wp_dequeue_style( 'photoswipe-default-skin' );
+		wp_dequeue_script( 'photoswipe' );
+		wp_dequeue_script( 'photoswipe-ui-default' );
+		wp_dequeue_script( 'zoom' );
+		wp_dequeue_script( 'wc-single-product' );
+	}
+	if ( ! is_singular( 'product' ) && ! is_shop() && ! is_product_taxonomy() && ! is_front_page() ) {
+		wp_dequeue_script( 'wc-add-to-cart-variation' );
+		wp_dequeue_script( 'yith-wcqv-frontend' );
+		wp_dequeue_style( 'yith-quick-view' );
 	}
 
 	// Unified Luxury Skeleton Screen JS (loaded before main.js & store-assistant.js)
@@ -430,10 +440,21 @@ function furniva_assets() {
 }
 add_action( 'wp_enqueue_scripts', 'furniva_assets' );
 
-// Load Google <model-viewer> as ESM module
+// Load Google <model-viewer> as ESM module & defer non-critical frontend theme scripts
 add_filter( 'script_loader_tag', function( $tag, $handle, $src ) {
 	if ( 'google-model-viewer' === $handle ) {
 		return '<script type="module" src="' . esc_url( $src ) . '"></script>' . "\n";
+	}
+	$defer_handles = array(
+		'furniva-animations',
+		'furniva-performance',
+		'furniva-a11y',
+		'furniva-bento-edit-js',
+		'despace-shopping-assistant',
+		'despace-skeleton',
+	);
+	if ( ! is_admin() && in_array( $handle, $defer_handles, true ) && false === strpos( $tag, ' defer' ) ) {
+		return str_replace( ' src=', ' defer src=', $tag );
 	}
 	return $tag;
 }, 10, 3 );
@@ -445,6 +466,16 @@ add_filter( 'script_loader_tag', function( $tag, $handle, $src ) {
 	return $tag;
 }, 10, 3 );
 
+// Disable WordPress emoji script & styles on storefront to trim critical rendering path
+add_action( 'init', function() {
+	if ( is_admin() ) return;
+	remove_action( 'wp_head', 'print_emoji_detection_script', 7 );
+	remove_action( 'wp_print_styles', 'print_emoji_styles' );
+	remove_filter( 'the_content_feed', 'wp_staticize_emoji' );
+	remove_filter( 'comment_text_rss', 'wp_staticize_emoji' );
+	remove_filter( 'wp_mail', 'wp_staticize_emoji_for_email' );
+} );
+
 function furniva_dequeue_unneeded_styles() {
 	wp_dequeue_style( 'woocommerce_prettyPhoto_css' );
 	wp_deregister_style( 'woocommerce_prettyPhoto_css' );
@@ -455,6 +486,15 @@ function furniva_dequeue_unneeded_styles() {
 		wp_deregister_style( 'photoswipe' );
 		wp_dequeue_style( 'photoswipe-default-skin' );
 		wp_deregister_style( 'photoswipe-default-skin' );
+		wp_dequeue_script( 'photoswipe' );
+		wp_dequeue_script( 'photoswipe-ui-default' );
+		wp_dequeue_script( 'zoom' );
+		wp_dequeue_script( 'wc-single-product' );
+	}
+	if ( ! is_singular( 'product' ) && ! is_shop() && ! is_product_taxonomy() && ! is_front_page() ) {
+		wp_dequeue_script( 'wc-add-to-cart-variation' );
+		wp_dequeue_script( 'yith-wcqv-frontend' );
+		wp_dequeue_style( 'yith-quick-view' );
 	}
 }
 add_action( 'wp_enqueue_scripts', 'furniva_dequeue_unneeded_styles', 999 );

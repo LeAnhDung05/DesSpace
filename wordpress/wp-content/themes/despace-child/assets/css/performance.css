@@ -678,3 +678,31 @@ a:not(.f-btn):not(.ax-btn):not(.button):not(.no-underline):not(.skip-link):not(.
     }
 }
 
+/* --------------------------------------------------
+   16. Off-Screen Rendering Optimization (content-visibility: auto)
+   Strictly scoped to heavy below-the-fold sections (never above-the-fold hero).
+   Paired with content-derived contain-intrinsic-size to prevent CLS/scrollbar jumps.
+   -------------------------------------------------- */
+.fv-home-collections,
+.fv-lookbook,
+.fv-home-new,
+.fv-bento-section,
+.fv-trust-section,
+.fv-home-journal,
+.fv-home-reviews,
+.fv-closing {
+    content-visibility: auto;
+    contain-intrinsic-size: auto none auto 560px;
+}
+
+.fv-footer {
+    content-visibility: auto;
+    contain-intrinsic-size: auto none auto 480px;
+}
+
+.f-blog-main .f-post-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto none auto 420px;
+}
+
+

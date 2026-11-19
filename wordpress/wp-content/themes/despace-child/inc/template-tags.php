@@ -455,12 +455,19 @@ add_action( 'save_post_product', function () {
 } );
 
 /**
- * Render category hover mega menu with hot recommended products.
+ * Render category hover mega menu with hot recommended products (transient-cached 1h).
  */
 function despace_category_mega_dropdown( $cat_slug ) {
 	if ( ! function_exists( 'wc_get_products' ) ) {
 		return '';
 	}
+	$lang      = function_exists( 'despace_current_language' ) ? despace_current_language() : 'vi';
+	$cache_key = 'despace_mega_v2_' . md5( $cat_slug . '_' . $lang );
+	$cached    = get_transient( $cache_key );
+	if ( false !== $cached && is_string( $cached ) ) {
+		return $cached;
+	}
+
 	$term = get_term_by( 'slug', $cat_slug, 'product_cat' );
 	if ( ! $term || is_wp_error( $term ) ) {
 		return '';
@@ -475,6 +482,7 @@ function despace_category_mega_dropdown( $cat_slug ) {
 	) );
 
 	if ( empty( $products ) ) {
+		set_transient( $cache_key, '', HOUR_IN_SECONDS );
 		return '';
 	}
 
@@ -504,9 +512,9 @@ function despace_category_mega_dropdown( $cat_slug ) {
 				$price_html = $product->get_price_html();
 				$is_badge   = ( 0 === $idx ) && ( $product->is_featured() || $product->get_total_sales() > 0 );
 			?>
-				<a class="fv-mega-product-card" href="<?php echo esc_url( get_permalink( $product_id ) ); ?>">
+				<a class="fv-mega-product-card" href="<?php echo esc_url( get_permalink( $product_id ) ); ?>" data-skeleton-route="pdp">
 					<div class="fv-mega-product-card__thumb">
-						<img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $title ); ?>" loading="lazy" />
+						<img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $title ); ?>" width="96" height="96" loading="lazy" fetchpriority="low" decoding="async" />
 						<?php if ( $is_badge ) : ?>
 							<span class="fv-mega-product-card__badge"><?php echo esc_html( furniva_t( 'Top Pick', 'Bán chạy' ) ); ?></span>
 						<?php endif; ?>
@@ -522,8 +530,21 @@ function despace_category_mega_dropdown( $cat_slug ) {
 		</div>
 	</div>
 	<?php
-	return ob_get_clean();
+	$html = ob_get_clean();
+	set_transient( $cache_key, $html, HOUR_IN_SECONDS );
+	return $html;
 }
+
+function despace_flush_mega_dropdown_cache() {
+	global $wpdb;
+	if ( isset( $wpdb->options ) ) {
+		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_despace_mega_v2_%' OR option_name LIKE '_transient_timeout_despace_mega_v2_%'" );
+	}
+}
+add_action( 'save_post_product', 'despace_flush_mega_dropdown_cache' );
+add_action( 'edited_product_cat', 'despace_flush_mega_dropdown_cache' );
+add_action( 'created_product_cat', 'despace_flush_mega_dropdown_cache' );
+add_action( 'delete_product_cat', 'despace_flush_mega_dropdown_cache' );
 
 function furniva_category_mega_dropdown( $cat_slug ) {
 	return despace_category_mega_dropdown( $cat_slug );
