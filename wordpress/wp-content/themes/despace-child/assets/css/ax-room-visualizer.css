@@ -1716,9 +1716,8 @@
 .ax-live-cam-viewport {
   position: relative;
   width: 100%;
-  height: 480px;
-  max-height: 55vh;
-  min-height: 360px;
+  height: clamp(420px, 60vh, 560px);
+  min-height: 380px;
   background: #141210;
   border-radius: 20px;
   overflow: hidden;
@@ -1753,41 +1752,73 @@
   transform-origin: bottom center;
   pointer-events: none;
   z-index: 2;
-  opacity: 0.55;
+  opacity: 0.42;
+  transition: opacity 0.25s ease;
 }
 
 .ax-live-ar-object-wrap {
   position: absolute;
   left: 50%;
-  top: 52%;
-  width: 360px;
-  height: 360px;
-  margin-left: -180px;
-  margin-top: -180px;
+  top: 50%;
+  width: 340px;
+  height: 340px;
+  margin-left: -170px;
+  margin-top: -170px;
   z-index: 10;
   will-change: transform;
   transform: translate3d(0, 0, 0) scale(1);
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
 }
 
 .ax-live-ar-object-wrap.is-move-mode {
   cursor: grab;
-  outline: 2px dashed rgba(250, 247, 242, 0.75);
-  outline-offset: -8px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.04);
+  pointer-events: auto;
 }
 
 .ax-live-ar-object-wrap.is-move-mode.is-dragging {
   cursor: grabbing;
-  outline-color: #9A6745;
+}
+
+/* Spatial AR Floor Reticle beneath furniture base */
+.ax-live-ar-floor-reticle {
+  position: absolute;
+  bottom: 34px;
+  width: 78%;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px dashed rgba(34, 197, 94, 0.85);
+  background: radial-gradient(ellipse at center, rgba(34, 197, 94, 0.20) 0%, rgba(34, 197, 94, 0.04) 65%, transparent 100%);
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.28);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.22s ease, border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
+}
+
+.ax-live-ar-object-wrap.is-floor-clear .ax-live-ar-floor-reticle {
+  opacity: 1;
+}
+
+.ax-live-ar-object-wrap.is-obstructed .ax-live-ar-floor-reticle {
+  opacity: 1;
+  border-style: solid;
+  border-color: rgba(239, 68, 68, 0.96);
+  background: radial-gradient(ellipse at center, rgba(239, 68, 68, 0.34) 0%, rgba(239, 68, 68, 0.08) 65%, transparent 100%);
+  box-shadow: 0 0 24px rgba(239, 68, 68, 0.55);
+  animation: axObstaclePulse 0.9s ease-in-out infinite;
+}
+
+@keyframes axObstaclePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.045); }
 }
 
 .ax-live-ar-floor-shadow {
   position: absolute;
-  bottom: 24px;
+  bottom: 40px;
   width: 68%;
   height: 28px;
   background: radial-gradient(ellipse at center, rgba(12, 9, 6, 0.62) 0%, rgba(12, 9, 6, 0.25) 48%, rgba(12, 9, 6, 0) 75%);
@@ -1805,12 +1836,76 @@
   --progress-bar-color: #9A6745;
   z-index: 2;
   outline: none;
+  transition: filter 0.22s ease;
+}
+
+.ax-live-ar-model-viewer.is-obstructed {
+  filter: sepia(0.85) hue-rotate(-48deg) saturate(4.3) brightness(0.95) drop-shadow(0 0 16px rgba(220, 38, 38, 0.55));
+}
+
+.ax-live-spatial-status {
+  position: absolute;
+  bottom: 46px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 22;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  max-width: calc(100% - 28px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #166534;
+  border: 1px solid rgba(22, 163, 74, 0.40);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.ax-live-spatial-status.is-obstructed {
+  background: rgba(254, 226, 226, 0.96);
+  color: #B91C1C;
+  border-color: rgba(220, 38, 38, 0.55);
+}
+
+.ax-live-spatial-status.is-scanning {
+  background: rgba(254, 243, 199, 0.92);
+  color: #92400E;
+  border-color: rgba(217, 119, 6, 0.4);
 }
 
 .ax-pill-dot-live {
   background: #16A34A;
   box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.25);
   animation: axLiveDotBlink 1.8s infinite;
+}
+
+.ax-pill-dot-live.is-obstructed {
+  background: #DC2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.32);
+}
+
+.ax-qr-net-status {
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #69645D;
+  text-align: center;
+  max-width: 210px;
+}
+
+.ax-qr-net-status.is-ok {
+  color: #15803D;
+}
+
+.ax-qr-net-status.is-warn {
+  color: #B45309;
 }
 
 @keyframes axLiveDotBlink {

@@ -214,8 +214,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 							<!-- Floor Perspective Grid Reticle -->
 							<div class="ax-live-ar-floor-grid" id="axLiveArFloorGrid"></div>
 
-							<!-- GPU-Accelerated Draggable & Scalable 3D Model Container -->
+							<!-- GPU-Accelerated Free-Roam Draggable & Scalable 3D Model Container -->
 							<div class="ax-live-ar-object-wrap" id="axLiveArObjectWrap">
+								<div class="ax-live-ar-floor-reticle" id="axLiveArFloorReticle" aria-hidden="true"></div>
 								<div class="ax-live-ar-floor-shadow" id="axLiveArFloorShadow"></div>
 								<model-viewer id="axLiveArModelViewer" class="ax-live-ar-model-viewer"
 									alt="DeSpace Live AR 3D Model"
@@ -234,7 +235,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 							<!-- Top-Left Live Status & Dimension Badge -->
 							<div class="ax-3d-info-pill ax-live-ar-pill">
 								<div class="ax-pill-row">
-									<span class="ax-pill-dot ax-pill-dot-live"></span>
+									<span class="ax-pill-dot ax-pill-dot-live" id="axLiveSpatialDot"></span>
 									<strong id="axLiveArInfoTitle">LIVE AR 3D STUDIO</strong>
 								</div>
 								<div class="ax-pill-meta">
@@ -242,6 +243,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 									<span class="ax-pill-sep">•</span>
 									<span id="axLiveArScaleReadout">100%</span>
 								</div>
+							</div>
+
+							<!-- Centered Live Floor & Obstacle Collision Alert HUD (Visible on Desktop & Mobile) -->
+							<div class="ax-live-spatial-status" id="axLiveSpatialStatus" role="status" aria-live="polite">
+								🔍 Đang quét mặt sàn...
 							</div>
 
 							<!-- Top-Right Gesture Mode Switcher (Rotate 360° vs Move on Floor) -->
@@ -300,8 +306,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 								</div>
 							</div>
 
-							<!-- Camera Actions: Toggle Doors, Flip, Upload Room Photo, Snapshot -->
+							<!-- Camera Actions: Auto-Floor, Spatial Obstacle Scan, Toggle Doors, Flip, Upload Room Photo, Snapshot -->
 							<div class="ax-control-group">
+								<button type="button" class="ax-pill-btn" id="axLiveAutoFloorBtn" title="<?php echo esc_attr( furniva_t( 'Detect room floor & snap model onto floor', 'Quét mặt sàn & đặt sản phẩm xuống sàn nhà' ) ); ?>">
+									<span>🎯 Đặt Xuống Sàn</span>
+								</button>
+								<button type="button" class="ax-pill-btn active" id="axLiveSpatialToggleBtn" aria-pressed="true" title="<?php echo esc_attr( furniva_t( 'Real-time terrain & obstacle collision warning', 'Bật/Tắt cảm biến nhận biết sàn & cảnh báo vật cản đỏ' ) ); ?>">
+									<span>🛡️ Quét Vật Cản</span>
+								</button>
 								<button type="button" class="ax-pill-btn" id="axLiveToggleDoorsBtn" aria-pressed="false" style="display:none;" title="<?php echo esc_attr( furniva_t( 'Open / Close Cabinet Doors in AR', 'Mở / Đóng cánh tủ trong AR' ) ); ?>">
 									<span>🚪 Mở Tủ</span>
 								</button>
@@ -464,6 +476,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 											📶 Cùng Wi-Fi (LAN)
 										</button>
 									</div>
+									<p class="ax-qr-net-status" id="axQrNetStatus" aria-live="polite"></p>
 								</div>
 
 								<div class="ax-qr-info">

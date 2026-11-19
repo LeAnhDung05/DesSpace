@@ -322,7 +322,7 @@ add_action( 'wp_footer', 'ar_add_footer_link' );
 
 function ar_add_footer_link() {
 	$net_file = WP_CONTENT_DIR . '/uploads/despace-network.json';
-	$lan_base = 'http://192.168.1.123:8090';
+	$lan_base = '';
 	$tunnel_base = '';
 	if ( file_exists( $net_file ) ) {
 		$raw = json_decode( (string) file_get_contents( $net_file ), true );
@@ -334,6 +334,15 @@ function ar_add_footer_link() {
 				$tunnel_base = esc_url_raw( $raw['tunnel_base_url'] );
 			}
 		}
+	}
+	$http_host = ! empty( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
+	if ( $http_host && false !== strpos( $http_host, 'trycloudflare.com' ) ) {
+		$tunnel_base = 'https://' . $http_host;
+	} elseif ( $http_host && preg_match( '/^(?:192\.168\.|10\.|172\.)/', $http_host ) && empty( $lan_base ) ) {
+		$lan_base = 'http://' . $http_host;
+	}
+	if ( empty( $lan_base ) ) {
+		$lan_base = home_url();
 	}
 	$net_config = array(
 		'lanBaseUrl'    => rtrim( $lan_base, '/' ),

@@ -44,7 +44,18 @@
     pinchStartDist: 0,
     pinchStartScale: 1.0,
     rafPending: false,
-    liveDoorsOpen: false
+    liveDoorsOpen: false,
+    // Spatial Terrain & Obstacle Detection state
+    spatialScanEnabled: true,
+    spatialTimer: null,
+    detectedFloorY: 0.78,
+    floorTopNorm: 0.48,
+    floorRGB: null,
+    floorEdgeBase: 14,
+    isObstructed: false,
+    obstructionCount: 0,
+    clearCount: 0,
+    autoSnapDone: false
   };
 
   var interactive3D = {
@@ -868,11 +879,286 @@
   }
 
   // =========================================================================
-  // LIVE 3D CAMERA AR STUDIO (60FPS WEBRTC + EXACT 3D GLB MODEL VIEWER)
+  // LIVE 3D CAMERA AR STUDIO + SPATIAL FLOOR & OBSTACLE DETECTION ENGINE
   // =========================================================================
+  var spatialAnalyzer = {
+    canvas: null,
+    ctx: null,
+    w: 160,
+    h: 90,
+    ensureCanvas: function () {
+      if (!this.canvas) {
+        this.canvas = document.createElement('canvas');
+        this.canvas.width = this.w;
+        this.canvas.height = this.h;
+        this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
+      }
+      return this.ctx;
+    },
+    captureFrame: function () {
+      var viewport = document.getElementById('axLiveCamViewport');
+      var video = document.getElementById('axLiveArVideo');
+      var fallbackImg = document.getElementById('axLiveArFallbackRoom');
+      var src = (!state.usingFallbackRoom && video && video.readyState >= 2 && video.videoWidth > 0) ? video : fallbackImg;
+      if (!viewport || !src) return null;
+      var srcW = src.videoWidth || src.naturalWidth || 0;
+      var srcH = src.videoHeight || src.naturalHeight || 0;
+      if (!srcW || !srcH) return null;
+      var vw = viewport.clientWidth || 960;
+      var vh = viewport.clientHeight || 540;
+      var scaleCover = Math.max(vw / srcW, vh / srcH);
+      var drawW = srcW * scaleCover;
+      var drawH = srcH * scaleCover;
+      var offX = (vw - drawW) / 2;
+      var offY = (vh - drawH) / 2;
+
+      var ctx = this.ensureCanvas();
+      var sx = this.w / vw;
+      var sy = this.h / vh;
+      try {
+        ctx.clearRect(0, 0, this.w, this.h);
+        ctx.drawImage(src, offX * sx, offY * sy, drawW * sx, drawH * sy);
+        return ctx.getImageData(0, 0, this.w, this.h);
+      } catch (e) {
+        return null;
+      }
+    },
+    scanFloorPlane: function (snapToFloor) {
+      var img = this.captureFrame();
+      var viewport = document.getElementById('axLiveCamViewport');
+      if (!img || !viewport) return false;
+      var d = img.data;
+      var w = this.w;
+      var h = this.h;
+
+      var rowStats = [];
+      for (var y = Math.floor(h * 0.45); y < h - 3; y++) {
+        var edgeSum = 0;
+        var sumR = 0, sumG = 0, sumB = 0;
+        var count = 0;
+        for (var x = Math.floor(w * 0.14); x < Math.floor(w * 0.86); x++) {
+          var i = (y * w + x) * 4;
+          var r = d[i], g = d[i + 1], b = d[i + 2];
+          var rR = d[i + 4], gR = d[i + 5], bR = d[i + 6];
+          var iDown = ((y + 1) * w + x) * 4;
+          var gx = Math.abs(r - rR) + Math.abs(g - gR) + Math.abs(b - bR);
+          var gy = Math.abs(r - d[iDown]) + Math.abs(g - d[iDown + 1]) + Math.abs(b - d[iDown + 2]);
+          edgeSum += (gx + gy) / 6;
+          sumR += r; sumG += g; sumB += b;
+          count++;
+        }
+        var meanR = sumR / Math.max(1, count);
+        var meanG = sumG / Math.max(1, count);
+        var meanB = sumB / Math.max(1, count);
+        var varSum = 0;
+        for (var x2 = Math.floor(w * 0.14); x2 < Math.floor(w * 0.86); x2++) {
+          var i2 = (y * w + x2) * 4;
+          varSum += Math.abs(d[i2] - meanR) + Math.abs(d[i2 + 1] - meanG) + Math.abs(d[i2 + 2] - meanB);
+        }
+        rowStats.push({
+          y: y,
+          edge: edgeSum / Math.max(1, count),
+          variance: (varSum / 3) / Math.max(1, count),
+          rgb: [meanR, meanG, meanB]
+        });
+      }
+
+      if (!rowStats.length) return false;
+      // Pick the smoothest, lowest-clutter contiguous horizontal band in the lower half as the room floor
+      var bestBand = rowStats[Math.floor(rowStats.length * 0.55)];
+      var bestScore = Infinity;
+      for (var k = 0; k < rowStats.length; k++) {
+        var st = rowStats[k];
+        var yBias = 1.0 - (st.y / h) * 0.35; // Favor genuine floor zone in lower camera half
+        var score = (st.edge * 1.4 + st.variance * 0.55) * yBias;
+        if (score < bestScore) {
+          bestScore = score;
+          bestBand = st;
+        }
+      }
+
+      state.floorRGB = bestBand.rgb;
+      state.floorEdgeBase = Math.max(8, Math.min(28, bestBand.edge));
+      state.floorTopNorm = Math.max(0.42, Math.min(0.64, (bestBand.y / h) - 0.16));
+      state.detectedFloorY = Math.max(0.64, Math.min(0.90, bestBand.y / h));
+
+      if (snapToFloor) {
+        // Find clearest X column along detected floor band (lowest edge + smallest color jump from floor)
+        var bestColX = 0.5;
+        var lowestColCost = Infinity;
+        var yBandStart = Math.max(1, Math.floor(state.detectedFloorY * h) - 6);
+        var yBandEnd = Math.min(h - 2, yBandStart + 10);
+        for (var cx = 0.24; cx <= 0.76; cx += 0.04) {
+          var colCost = 0;
+          var x0 = Math.max(1, Math.floor((cx - 0.11) * w));
+          var x1 = Math.min(w - 2, Math.floor((cx + 0.11) * w));
+          var nPx = 0;
+          for (var yy = yBandStart; yy <= yBandEnd; yy++) {
+            for (var xx = x0; xx <= x1; xx++) {
+              var idx = (yy * w + xx) * 4;
+              var gx = Math.abs(d[idx] - d[idx + 4]) + Math.abs(d[idx + 1] - d[idx + 5]) + Math.abs(d[idx + 2] - d[idx + 6]);
+              var cDiff = (Math.abs(d[idx] - state.floorRGB[0]) + Math.abs(d[idx + 1] - state.floorRGB[1]) + Math.abs(d[idx + 2] - state.floorRGB[2])) / 3;
+              colCost += gx * 0.45 + cDiff * 0.7;
+              nPx++;
+            }
+          }
+          var avgCol = colCost / Math.max(1, nPx);
+          if (avgCol < lowestColCost) {
+            lowestColCost = avgCol;
+            bestColX = cx;
+          }
+        }
+        var vw = viewport.clientWidth || 960;
+        var vh = viewport.clientHeight || 540;
+        var objHalfH = 140 * state.liveScale; // Approx visual foot offset from center of 340px viewer
+        state.livePos.x = (bestColX - 0.5) * vw;
+        state.livePos.y = Math.min(vh * 0.36, Math.max(-vh * 0.05, state.detectedFloorY * vh - (vh * 0.50) - objHalfH + 56));
+        scheduleLiveTransformUpdate();
+      }
+      return true;
+    },
+    evaluateFootprint: function () {
+      if (!state.spatialScanEnabled) {
+        updateSpatialUI(false, 'clear', 'Chế độ đặt tự do (Đã tắt cảm biến)');
+        return;
+      }
+      var img = this.captureFrame();
+      var viewport = document.getElementById('axLiveCamViewport');
+      if (!img || !viewport) return;
+
+      if (!state.floorRGB) {
+        this.scanFloorPlane(false);
+      }
+      var vw = viewport.clientWidth || 960;
+      var vh = viewport.clientHeight || 540;
+      var depthFactor = getDepthPerspectiveScale(vh);
+      var effScale = state.liveScale * depthFactor;
+
+      // Cabinet center & base floor-contact rectangle normalized [0..1]
+      var cxNorm = (vw * 0.5 + state.livePos.x) / vw;
+      var footYNorm = ((vh * 0.5 + state.livePos.y) + 125 * effScale) / vh;
+      var halfWNorm = Math.min(0.24, Math.max(0.08, (115 * effScale) / vw));
+
+      // Check 1: Raised off floor plane (hovering on upper wall / mid-air / ceiling)
+      if (footYNorm < state.floorTopNorm) {
+        applyObstacleDecision(true, 'off_floor');
+        return;
+      }
+
+      // Check 2: Analyze pixels across furniture base footprint + foreground body clearance
+      var d = img.data;
+      var w = this.w;
+      var h = this.h;
+      var x0 = Math.max(1, Math.floor((cxNorm - halfWNorm) * w));
+      var x1 = Math.min(w - 2, Math.floor((cxNorm + halfWNorm) * w));
+      var yBase = Math.max(2, Math.min(h - 2, Math.floor(footYNorm * h)));
+      var yTop = Math.max(1, yBase - Math.max(6, Math.floor(h * 0.14)));
+
+      var edgeAccum = 0;
+      var colorDistAccum = 0;
+      var highContrastPx = 0;
+      var n = 0;
+      var fR = state.floorRGB ? state.floorRGB[0] : 160;
+      var fG = state.floorRGB ? state.floorRGB[1] : 145;
+      var fB = state.floorRGB ? state.floorRGB[2] : 128;
+
+      for (var yy = yTop; yy <= yBase; yy++) {
+        for (var xx = x0; xx <= x1; xx++) {
+          var idx = (yy * w + xx) * 4;
+          var r = d[idx], g = d[idx + 1], b = d[idx + 2];
+          var gx = (Math.abs(r - d[idx + 4]) + Math.abs(g - d[idx + 5]) + Math.abs(b - d[idx + 6])) / 3;
+          var iDown = ((yy + 1) * w + xx) * 4;
+          var gy = (Math.abs(r - d[iDown]) + Math.abs(g - d[iDown + 1]) + Math.abs(b - d[iDown + 2])) / 3;
+          var gMag = gx + gy;
+          edgeAccum += gMag;
+          if (gMag > 26) highContrastPx++;
+
+          var cDiff = (Math.abs(r - fR) + Math.abs(g - fG) + Math.abs(b - fB)) / 3;
+          colorDistAccum += cDiff;
+          n++;
+        }
+      }
+
+      if (n < 8) {
+        applyObstacleDecision(true, 'off_bounds');
+        return;
+      }
+
+      var meanEdge = edgeAccum / n;
+      var meanColorDiff = colorDistAccum / n;
+      var clutterRatio = highContrastPx / n;
+
+      // Obstacle triggered when strong object edges OR significant surface contrast vs floor plane appear
+      var edgeThreshold = Math.max(24, state.floorEdgeBase * 1.95);
+      var obstructed = (meanEdge > edgeThreshold && clutterRatio > 0.16) || meanColorDiff > 44 || clutterRatio > 0.30;
+      applyObstacleDecision(obstructed, obstructed ? 'obstacle' : 'clear');
+    }
+  };
+
+  function getDepthPerspectiveScale(vh) {
+    if (!vh || vh <= 0) return 1.0;
+    var normY = Math.max(-0.5, Math.min(0.5, state.livePos.y / vh));
+    return Math.max(0.76, Math.min(1.24, 0.96 + normY * 0.42));
+  }
+
+  function applyObstacleDecision(obstructed, reason) {
+    if (obstructed) {
+      state.obstructionCount++;
+      state.clearCount = 0;
+      if (state.obstructionCount >= 2 || state.isDraggingLive) {
+        state.isObstructed = true;
+      }
+    } else {
+      state.clearCount++;
+      state.obstructionCount = 0;
+      if (state.clearCount >= 2 || state.isDraggingLive) {
+        state.isObstructed = false;
+      }
+    }
+    var msg = '✓ Mặt sàn trống — Đặt vừa vị trí này';
+    if (state.isObstructed) {
+      msg = (reason === 'off_floor')
+        ? '⚠ Đang ngoài mặt sàn — Kéo xuống nền nhà'
+        : '⚠ Gặp vật cản phía trước — Kéo ra khoảng sàn trống';
+    }
+    updateSpatialUI(state.isObstructed, reason, msg);
+  }
+
+  function updateSpatialUI(obstructed, reason, message) {
+    var $wrap = $('#axLiveArObjectWrap');
+    var $mv = $('#axLiveArModelViewer');
+    var $status = $('#axLiveSpatialStatus');
+    var $dot = $('#axLiveSpatialDot');
+
+    $wrap.toggleClass('is-obstructed', !!obstructed).toggleClass('is-floor-clear', !obstructed);
+    $mv.toggleClass('is-obstructed', !!obstructed);
+    $dot.toggleClass('is-obstructed', !!obstructed);
+    $status.removeClass('is-obstructed is-scanning').toggleClass('is-obstructed', !!obstructed).text(message);
+  }
+
+  function startSpatialLoop() {
+    stopSpatialLoop();
+    state.floorRGB = null;
+    state.obstructionCount = 0;
+    state.clearCount = 0;
+    state.spatialTimer = setInterval(function () {
+      if (state.activeTab === 'ar' && state.arSubView === 'live-camera') {
+        spatialAnalyzer.evaluateFootprint();
+      }
+    }, 130);
+  }
+
+  function stopSpatialLoop() {
+    if (state.spatialTimer) {
+      clearInterval(state.spatialTimer);
+      state.spatialTimer = null;
+    }
+  }
+
   function startLiveCameraAR() {
     var liveMv = document.getElementById('axLiveArModelViewer');
     state.liveDoorsOpen = false;
+    state.autoSnapDone = false;
     $('#axLiveToggleDoorsBtn').hide().removeClass('active').attr('aria-pressed', 'false').find('span').text('🚪 Mở Tủ');
 
     if (liveMv && currentProduct.glbUrl) {
@@ -902,12 +1188,15 @@
 
     resetLiveTransform();
     setLiveGestureMode('rotate');
+    $('#axLiveSpatialStatus').removeClass('is-obstructed').addClass('is-scanning').text('🔍 Đang nhận diện mặt sàn nhà...');
 
     var video = document.getElementById('axLiveArVideo');
     var $fallbackBg = $('#axLiveArFallbackRoom');
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       enableFallbackRoomBackdrop();
+      startSpatialLoop();
+      setTimeout(function () { spatialAnalyzer.scanFloorPlane(true); }, 350);
       return;
     }
 
@@ -932,11 +1221,24 @@
           video.srcObject = stream;
           video.style.display = 'block';
           video.play().catch(function () { });
+          video.onloadeddata = function () {
+            startSpatialLoop();
+            setTimeout(function () {
+              if (!state.autoSnapDone) {
+                state.autoSnapDone = true;
+                spatialAnalyzer.scanFloorPlane(true);
+              }
+            }, 650);
+          };
+        } else {
+          startSpatialLoop();
         }
       })
       .catch(function (err) {
         console.warn('[DeSpace Live AR] Camera stream fallback to room backdrop:', err);
         enableFallbackRoomBackdrop();
+        startSpatialLoop();
+        setTimeout(function () { spatialAnalyzer.scanFloorPlane(true); }, 350);
       });
   }
 
@@ -947,6 +1249,7 @@
   }
 
   function stopLiveCameraStream() {
+    stopSpatialLoop();
     if (state.cameraStream) {
       state.cameraStream.getTracks().forEach(function (track) {
         track.stop();
@@ -973,14 +1276,14 @@
         liveMv.style.pointerEvents = 'auto';
       }
       $wrap.removeClass('is-move-mode');
-      $('#axLiveArHint').text('Chế độ Xoay 3D 360°: Vuốt trực tiếp lên sản phẩm để xoay mọi góc độ • Cuộn/Chụm 2 ngón để thu phóng');
+      $('#axLiveArHint').text('Chế độ Xoay 3D: Vuốt lên tủ để xoay 360° • Kéo vùng trống hoặc giữ Shift để di chuyển tự do');
     } else {
       if (liveMv) {
         liveMv.removeAttribute('camera-controls');
         liveMv.style.pointerEvents = 'none';
       }
       $wrap.addClass('is-move-mode');
-      $('#axLiveArHint').text('Chế độ Di Chuyển: Kéo sản phẩm bằng 1 ngón tay / chuột để đặt vào vị trí mong muốn trong phòng');
+      $('#axLiveArHint').text('Di Chuyển Tự Do: Kéo mô hình khắp phòng — Tự động báo ĐỎ nếu chạm vật cản');
     }
   }
 
@@ -989,9 +1292,12 @@
     state.rafPending = true;
     requestAnimationFrame(function () {
       state.rafPending = false;
+      var viewport = document.getElementById('axLiveCamViewport');
+      var vh = viewport ? viewport.clientHeight : 540;
+      var effScale = state.liveScale * getDepthPerspectiveScale(vh);
       var wrap = document.getElementById('axLiveArObjectWrap');
       if (wrap) {
-        wrap.style.transform = 'translate3d(' + state.livePos.x.toFixed(1) + 'px, ' + state.livePos.y.toFixed(1) + 'px, 0) scale(' + state.liveScale.toFixed(3) + ')';
+        wrap.style.transform = 'translate3d(' + state.livePos.x.toFixed(1) + 'px, ' + state.livePos.y.toFixed(1) + 'px, 0) scale(' + effScale.toFixed(3) + ')';
       }
       var pct = Math.round(state.liveScale * 100) + '%';
       $('#axLiveScaleBadge').text(pct);
@@ -1046,12 +1352,13 @@
       setLiveGestureMode('move');
     });
 
-    // Dragging on floor in 'move' mode (pointer events for unified 60fps touch + mouse)
+    // Free-roam dragging across the ENTIRE viewport (works in Move mode AND anywhere outside model / with Shift in Rotate mode)
     var viewport = document.getElementById('axLiveCamViewport');
     if (viewport) {
       viewport.addEventListener('pointerdown', function (e) {
-        if (state.gestureMode !== 'move') return;
         if (e.target.closest('.despace-stage-mode-bar, .ax-live-ar-pill')) return;
+        var clickedModel = !!e.target.closest('#axLiveArModelViewer');
+        if (state.gestureMode === 'rotate' && clickedModel && !e.shiftKey) return;
         state.isDraggingLive = true;
         state.dragStart = { x: e.clientX, y: e.clientY };
         state.posStart = { x: state.livePos.x, y: state.livePos.y };
@@ -1065,17 +1372,19 @@
         if (!state.isDraggingLive) return;
         var dx = e.clientX - state.dragStart.x;
         var dy = e.clientY - state.dragStart.y;
-        var maxOffsetX = viewport.clientWidth * 0.42;
-        var maxOffsetY = viewport.clientHeight * 0.42;
+        var maxOffsetX = viewport.clientWidth * 0.56;
+        var maxOffsetY = viewport.clientHeight * 0.50;
         state.livePos.x = Math.max(-maxOffsetX, Math.min(maxOffsetX, state.posStart.x + dx));
         state.livePos.y = Math.max(-maxOffsetY, Math.min(maxOffsetY, state.posStart.y + dy));
         scheduleLiveTransformUpdate();
+        spatialAnalyzer.evaluateFootprint();
       });
 
       var endDrag = function () {
         if (!state.isDraggingLive) return;
         state.isDraggingLive = false;
         $('#axLiveArObjectWrap').removeClass('is-dragging');
+        spatialAnalyzer.evaluateFootprint();
       };
       viewport.addEventListener('pointerup', endDrag);
       viewport.addEventListener('pointercancel', endDrag);
@@ -1098,9 +1407,25 @@
           var ratio = dist / state.pinchStartDist;
           state.liveScale = Math.max(0.5, Math.min(1.8, state.pinchStartScale * ratio));
           scheduleLiveTransformUpdate();
+          spatialAnalyzer.evaluateFootprint();
         }
       }, { passive: true });
     }
+
+    // Re-scan room floor & snap furniture onto detected floor surface
+    $('#axLiveAutoFloorBtn').on('click', function (e) {
+      e.preventDefault();
+      spatialAnalyzer.scanFloorPlane(true);
+      spatialAnalyzer.evaluateFootprint();
+    });
+
+    // Toggle real-time obstacle scanning & red collision alert
+    $('#axLiveSpatialToggleBtn').on('click', function (e) {
+      e.preventDefault();
+      state.spatialScanEnabled = !state.spatialScanEnabled;
+      $(this).toggleClass('active', state.spatialScanEnabled).attr('aria-pressed', state.spatialScanEnabled ? 'true' : 'false');
+      spatialAnalyzer.evaluateFootprint();
+    });
 
     // Scale controls
     $('#axLiveScaleSlider').on('input', function () {
@@ -1315,6 +1640,8 @@
     if (!$container.length) return;
     $container.empty();
 
+    var net = window.DESPACE_AR_NETWORK || {};
+    var $status = $('#axQrNetStatus');
     var arMobileUrl = buildMobileArUrl();
     $('#axArDirectUrlInput').val(arMobileUrl);
 
@@ -1324,6 +1651,37 @@
     } catch (e) {
       console.error('[DeSpace QR] Encoder error:', e);
       $container.html('<div style="font-size:12px;color:#9A6745;padding:12px;text-align:center;">Vui lòng sao chép liên kết bên dưới để mở trên điện thoại</div>');
+    }
+
+    // Live health verification when using Cloudflare HTTPS tunnel; auto-fallback to LAN IP if tunnel is dead
+    if (state.qrNetMode === 'tunnel' && net.tunnelBaseUrl && typeof fetch === 'function') {
+      $status.removeClass('is-ok is-warn').text('Đang kiểm tra kết nối Tunnel HTTPS...');
+      var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 2500) : null;
+      fetch(net.tunnelBaseUrl.replace(/\/$/, '') + '/wp-json/despace/v1/desktop-3d/health', {
+        mode: 'cors',
+        signal: ctrl ? ctrl.signal : undefined
+      }).then(function (resp) {
+        if (timer) clearTimeout(timer);
+        if (resp && resp.ok) {
+          $status.removeClass('is-warn').addClass('is-ok').text('✓ Tunnel HTTPS sẵn sàng — Mở AR từ mọi mạng');
+        } else {
+          throw new Error('HTTP ' + (resp ? resp.status : 'error'));
+        }
+      }).catch(function () {
+        if (timer) clearTimeout(timer);
+        if (state.qrNetMode === 'tunnel' && net.lanBaseUrl) {
+          state.qrNetMode = 'lan';
+          $('.ax-qr-net-btn').removeClass('is-active');
+          $('#axQrNetLanBtn').addClass('is-active');
+          var lanUrl = buildMobileArUrl();
+          $('#axArDirectUrlInput').val(lanUrl);
+          try { $container.html(createSvgQRCode(lanUrl, 180)); } catch (err) { }
+          $status.removeClass('is-ok').addClass('is-warn').text('⚠ Tunnel tạm tắt — Đã tự chuyển sang Wi-Fi LAN');
+        }
+      });
+    } else if (net.lanBaseUrl) {
+      $status.removeClass('is-warn').addClass('is-ok').text('📶 Chế độ Wi-Fi nội bộ: điện thoại & máy tính dùng chung Wi-Fi');
     }
   }
 
@@ -1842,16 +2200,22 @@
   function checkUrlParams() {
     var urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('open_ar') === '1' || window.location.hash === '#ar') {
-      // On mobile when scanning QR code, open directly into Live 3D Camera or AR card
+      var prodId = urlParams.get('prod') || '';
       if (Device.isMobile()) {
         state.arSubView = 'live-camera';
       }
       setTimeout(function () {
         var $btn = $('#arViewInRoomBtn').first();
+        if (!$btn.length && prodId) {
+          $btn = $('.ax-open-ar-btn[data-product-id="' + prodId + '"], .ax-open-room-modal[data-product-id="' + prodId + '"]').first();
+        }
+        if (!$btn.length) {
+          $btn = $('.ax-open-ar-btn, .ax-open-room-modal').first();
+        }
         if ($btn.length) {
           $btn.trigger('click');
         }
-      }, 300);
+      }, 320);
     } else if (urlParams.get('open_3d') === '1' || window.location.hash === '#3d') {
       setTimeout(function () {
         var $btn = $('#axView3DModelBtn').first();
