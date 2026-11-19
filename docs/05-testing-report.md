@@ -175,3 +175,45 @@ Hệ thống cung cấp đầy đủ 2 tầng quản trị:
    - 5 KPI Cards trực quan: Sản phẩm, Đơn hàng, Nhật ký kiểm toán, Đánh giá khách hàng, Tech Stack.
    - 6 Phân hệ quản trị chuyên sâu: Quản lý 3D & AR, Nhật ký kiểm toán tồn kho (1,682 logs), Quản lý sản phẩm, Quản lý đơn hàng, Quản lý tạp chí & cẩm nang nội thất.
    - Trang Cấu hình Showroom & Chủ cửa hàng (`/wp-admin/admin.php?page=despace-showroom-info`): Cập nhật thông tin Showroom (Số 20 ngách 21 ngõ 367 Ngô Xuân Quảng, Gia Lâm, Hà Nội), Hotline (0332 174 590), Email (noithat@despace.vn) và chức danh Sáng lập & Giám đốc thiết kế.
+
+---
+
+## 8. HƯỚNG DẪN CÀI ĐẶT, TÀI KHOẢN THỬ NGHIỆM, TRIỂN KHAI VÀ GIỚI HẠN (M5 DELIVERABLES)
+
+### 8.1. Tài khoản kiểm thử chuẩn hóa (Test Accounts)
+| Vai trò | Tên đăng nhập | Mật khẩu | Quyền hạn chính (Capabilities) |
+|---|---|---|---|
+| **Administrator** | `admin` | *(Theo biến môi trường)* | Toàn quyền quản trị hệ thống (`manage_options`, `manage_woocommerce`). |
+| **DeSpace Staff** | `staff` | `StaffPass123!` | Quản lý mô hình 3D (`manage_despace_3d`), kiểm toán kho (`view_despace_inventory_logs`), xem báo cáo doanh thu (`view_despace_reports`). |
+| **Customer** | `customer` | `CustomerPass123!` | Đặt hàng COD/BACS, xem đơn hàng cá nhân, lưu yêu thích (Wishlist). |
+| **Guest** | *(Khách vãng lai)* | `None` | Duyệt catalog, tương tác 3D/AR, tra cứu đơn theo mã + email. |
+
+### 8.2. Hướng dẫn cài đặt nhanh môi trường thử nghiệm (Local / Docker)
+1. **Clone repository:**
+   ```bash
+   git clone https://github.com/LeAnhDung05/DesSpace.git
+   cd DesSpace
+   ```
+2. **Khôi phục cơ sở dữ liệu và dữ liệu mẫu:**
+   - Sử dụng file dump `despace_seed_data.sql` hoặc chạy công cụ nạp tự động qua web seeder.
+3. **Khôi phục tệp nhị phân Media & Mô hình 3D:**
+   - Đặt tệp `uploads.zip` vào thư mục gốc hoặc truy cập `wp-admin/admin.php?page=despace-hub&tab=assets` và bấm nút **"Giải nén & Nạp ảnh + 3D ngay"**.
+   - Bấm nút **"Tự động sửa đường dẫn link"** để đồng bộ URL media theo domain/cổng máy hiện tại.
+
+### 8.3. Quy trình Triển khai, Sao lưu & Rollback
+- Chi tiết quy trình vận hành máy chủ Ubuntu/Nginx có SSL/HTTPS, cấu hình SMTP gửi email giao dịch, quy trình backup database định kỳ và kịch bản Rollback khẩn cấp được tài liệu hóa đầy đủ tại [docs/DEPLOYMENT_ROLLBACK.md](DEPLOYMENT_ROLLBACK.md).
+
+### 8.4. Tóm tắt 12 Ca kiểm thử UAT Trọng tâm (TC-01 đến TC-12)
+- **M1 (3D/AR):** TC-01 (Tương tác xoay 360°/zoom 3D) và TC-02 (Kích hoạt AR trên Mobile iOS/Android) đều **PASS**.
+- **M2 (Catalog):** TC-03 (Responsive storefront chuẩn Figma) và TC-04 (Lọc đa tiêu chí AJAX qua Fetch API) đều **PASS**.
+- **M3 (Checkout/Orders):** TC-05 (Vòng đời giỏ hàng), TC-06 (Mã coupon), TC-07 (Thanh toán COD/BACS QR) và TC-08 (Chống rò rỉ dữ liệu IDOR) đều **PASS**.
+- **M4 (Inventory):** TC-09 (Nhật ký kho chống trùng lặp `event_key`) và TC-10 (Xử lý hoàn kho an toàn khi hủy đơn) đều **PASS**.
+- **M5 (Reports & RBAC):** TC-11 (Ma trận phân quyền RBAC & REST API) và TC-12 (Tính toán doanh thu HPOS `wc_get_orders()` loại trừ đơn treo/hủy) đều **PASS**.
+- *(Xem chi tiết tại [docs/QA_UAT_REPORT.md](QA_UAT_REPORT.md))*.
+
+### 8.5. Các giới hạn kỹ thuật đã biết của bản MVP (Known Limitations)
+1. **Cổng thanh toán tự động:** Hỗ trợ COD và BACS chuyển khoản thủ công có QR code Vietcombank; chưa tích hợp VNPay/MoMo/Stripe do cần pháp nhân doanh nghiệp.
+2. **Kích thước mô hình 3D:** Tối ưu hóa trong khoảng 8MB–15MB PBR; chưa tích hợp Exploded View đa tầng hoặc real-time color swap trên 1 GLB đơn nhất.
+3. **Quản lý kho:** Kho đơn điểm chuẩn WooCommerce; chưa hỗ trợ định tuyến kho đa chi nhánh theo bán kính địa lý.
+4. **Tra cứu khách vãng lai:** Bắt buộc nhập đồng thời Mã đơn hàng + Email để phòng chống IDOR; chưa tích hợp SMS OTP.
+5. **WebXR/AR Desktop:** AR chỉ kích hoạt trực tiếp trên thiết bị di động có ARCore / ARKit; Desktop fallback bằng mã QR Code thông minh để quét điện thoại.
