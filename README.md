@@ -121,26 +121,40 @@ Hệ thống đã được đóng gói và cấu hình chạy trên Docker:
 | `http://localhost:8090/wishlist/` | Danh sách sản phẩm yêu thích | **200 OK** |
 | `http://localhost:8090/blog/` | Tạp chí cẩm nang nội thất DeSpace Journal | **200 OK** |
 | `http://localhost:8090/wp-admin/admin.php?page=despace-hub` | DeSpace Admin Hub Dashboard | **200 OK** |
+| `http://localhost:8090/wp-admin/admin.php?page=despace-reports` | Bảng điều khiển Báo cáo Doanh thu & KPI M5 | **200 OK** |
 | `http://localhost:8090/wp-json/despace/v1/3d-models/46` | REST API lấy siêu dữ liệu & URL mô hình 3D | **200 OK** |
 | `http://localhost:8090/wp-json/despace/v1/products/filter?min_price=1000000` | REST API lọc sản phẩm theo khoảng giá | **200 OK** |
+| `http://localhost:8090/wp-json/despace/v1/dashboard/metrics` | REST API thống kê doanh thu hợp lệ, đơn hàng & Top 10 | **200 OK** |
 
 ---
 
 ## 6. KẾT QUẢ KIỂM THỬ TỰ ĐỘNG (AUTOMATED TEST MATRIX)
 
-Dự án sở hữu bộ test suite tự động với **325 / 325 test cases (100% PASS)**:
+Dự án sở hữu bộ test suite tự động với **345 / 345 test cases (100% PASS)**:
 1. `tests/test-rbac-matrix.php`: 30/30 PASS (RBAC, capabilities, HPOS declaration).
-2. `tests/test-inventory-matrix.php`: 28/28 PASS (T01–T28 stock lifecycle).
-3. `tests/test-inventory-integration-live.php`: 9/9 PASS (Live MySQL integration).
-4. `tests/test-m4-order-context-live.php`: 32/32 PASS (Cases A–U edge cases).
-5. `tests/test-m3-cart-unit.php`: 18/18 PASS.
-6. `tests/test-m3-checkout-unit.php`: 28/28 PASS.
-7. `tests/test-m3-payment-unit.php`: 33/33 PASS.
-8. `tests/test-m3-shipping-unit.php`: 18/18 PASS.
-9. `tests/test-m3-account-unit.php`: 27/27 PASS.
-10. `tests/test-m3-order-tracking-unit.php`: 28/28 PASS.
-11. `tests/test-m3-coupon-unit.php`: 17/17 PASS.
-12. `tests/test-m3-email-unit.php`: 16/16 PASS.
-13. `tests/test-m3-vietnam-regions-unit.php`: 12/12 PASS.
-14. `tests/test-m3-wc113-smoke.php`: 11/11 PASS.
-15. `docs/QA_UAT_REPORT.md` (TC-01 đến TC-12): 12/12 PASS.
+2. `tests/test-dashboard-matrix.php`: 20/20 PASS (M5 KPI Dashboard, HPOS wc_get_orders(), valid revenue, Top 10, X-WP-Nonce, ES6+ Fetch).
+3. `tests/test-inventory-matrix.php`: 28/28 PASS (T01–T28 stock lifecycle).
+4. `tests/test-inventory-integration-live.php`: 9/9 PASS (Live MySQL integration).
+5. `tests/test-m4-order-context-live.php`: 32/32 PASS (Cases A–U edge cases).
+6. `tests/test-m3-cart-unit.php`: 18/18 PASS.
+7. `tests/test-m3-checkout-unit.php`: 28/28 PASS.
+8. `tests/test-m3-payment-unit.php`: 33/33 PASS.
+9. `tests/test-m3-shipping-unit.php`: 18/18 PASS.
+10. `tests/test-m3-account-unit.php`: 27/27 PASS.
+11. `tests/test-m3-order-tracking-unit.php`: 28/28 PASS.
+12. `tests/test-m3-coupon-unit.php`: 17/17 PASS.
+13. `tests/test-m3-email-unit.php`: 16/16 PASS.
+14. `tests/test-m3-vietnam-regions-unit.php`: 12/12 PASS.
+15. `tests/test-m3-wc113-smoke.php`: 11/11 PASS.
+16. `docs/QA_UAT_REPORT.md` (TC-01 đến TC-12): 12/12 PASS.
+
+---
+
+## 7. CÁC GIỚI HẠN ĐÃ BIẾT CỦA BẢN MVP (KNOWN LIMITATIONS)
+
+Nhằm đảm bảo tính minh bạch khi chuyển giao và nghiệm thu đề tài, nhóm ghi nhận các giới hạn kỹ thuật được chấp nhận trong phạm vi MVP 6 tuần (chi tiết tại [QA_UAT_REPORT.md](docs/QA_UAT_REPORT.md)):
+1. **Cổng thanh toán tự động (Automated Payment Gateways):** Bản MVP hỗ trợ hoàn chỉnh 2 phương thức COD và Chuyển khoản ngân hàng thủ công (BACS kèm mã QR Vietcombank). Chưa tích hợp cổng tự động (VNPay/MoMo/Stripe) do yêu cầu pháp lý về giấy phép kinh doanh doanh nghiệp.
+2. **Kích thước và hiệu ứng mô hình 3D (3D Asset Constraints):** Tối ưu ở mức 8MB – 15MB với chất liệu PBR chuẩn. Chưa tích hợp hiệu ứng bung nổ cấu kiện (Exploded View) hoặc đổi màu vải bọc 3D real-time trên cùng một file GLB.
+3. **Quản lý kho đơn điểm (Single-Warehouse Inventory):** Quản lý xuất/nhập/tồn tập trung dựa trên hệ thống kho WooCommerce chuẩn, chưa hỗ trợ định tuyến kho đa chi nhánh theo vị trí địa lý.
+4. **Tra cứu đơn hàng khách vãng lai (Guest Order Lookup):** Khách vãng lai bắt buộc nhập chính xác cặp Mã đơn hàng + Email đặt hàng để chống IDOR; chưa tích hợp OTP qua SMS.
+5. **Chế độ AR trên Desktop:** Do webcam máy tính để bàn không có cảm biến con quay hồi chuyển và đo chiều sâu (LiDAR/ToF), chế độ AR kích hoạt trực tiếp trên thiết bị di động có ARCore / ARKit; trên Desktop hệ thống cung cấp mã QR Code thông minh để quét camera điện thoại mở nhanh.
