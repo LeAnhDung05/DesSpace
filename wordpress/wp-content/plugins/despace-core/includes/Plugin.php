@@ -67,7 +67,7 @@ class Plugin {
 		// 3. Initialize Core RBAC Module.
 		RoleManager::init();
 
-		// 4. Initialize Submodules if present (M1 - M4).
+		// 4. Initialize Submodules if present (M1 - M5 + Admin + REST).
 		self::init_submodules();
 	}
 
@@ -176,6 +176,11 @@ class Plugin {
 		// REST API Module.
 		if ( class_exists( 'DeSpace\\Rest\\RestApiModule' ) && method_exists( 'DeSpace\\Rest\\RestApiModule', 'init' ) ) {
 			\DeSpace\Rest\RestApiModule::init();
+		}
+
+		// Admin Hub Module.
+		if ( class_exists( 'DeSpace\\Admin\\AdminModule' ) && method_exists( 'DeSpace\\Admin\\AdminModule', 'init' ) ) {
+			\DeSpace\Admin\AdminModule::init();
 		}
 	}
 }
