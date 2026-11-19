@@ -43,40 +43,6 @@ foreach ( $gallery_ids as $gid ) {
 $finish_desc_meta = get_post_meta( $id, '_despace_finish_desc', true ) ?: get_post_meta( $id, '_axgnud_finish_desc', true );
 $color_hex_meta   = get_post_meta( $id, '_despace_color_hex', true ) ?: get_post_meta( $id, '_axgnud_color_hex', true );
 $custom_badge     = get_post_meta( $id, '_despace_badge', true ) ?: get_post_meta( $id, '_axgnud_badge', true );
-
-$attributes = $product->get_attributes();
-$swatches_data = array();
-
-// 1. Check custom attribute 'Finish' or 'finish'
-$finish_attr_val = $product->get_attribute( 'Finish' ) ?: $product->get_attribute( 'finish' );
-if ( ! empty( $finish_attr_val ) ) {
-    $finish_names = array_values( array_filter( array_map( 'trim', preg_split( '/\s*[,|]\s*/', $finish_attr_val ) ) ) );
-    $hex_list     = ! empty( $color_hex_meta ) ? array_values( array_filter( array_map( 'trim', preg_split( '/\s*[,|]\s*/', $color_hex_meta ) ) ) ) : array();
-    foreach ( $finish_names as $idx => $f_name ) {
-        $hex = isset( $hex_list[ $idx ] ) ? $hex_list[ $idx ] : ( function_exists( 'furniva_color_hex' ) ? furniva_color_hex( $f_name ) : '#a89f91' );
-        $swatches_data[] = array(
-            'slug' => sanitize_title( $f_name ),
-            'name' => $f_name,
-            'hex'  => $hex,
-            'desc' => $finish_desc_meta ?: sprintf( furniva_t( 'Premium %s finish.', 'Hoàn thiện màu %s cao cấp.' ), $f_name ),
-        );
-    }
-} elseif ( isset( $attributes['pa_color'] ) ) {
-    // 2. Fallback to pa_color taxonomy if present
-    $color_terms = wc_get_product_terms( $id, 'pa_color', array( 'fields' => 'all' ) );
-    if ( ! empty( $color_terms ) && ! is_wp_error( $color_terms ) ) {
-        $hex_list = ! empty( $color_hex_meta ) ? array_map( 'trim', explode( ',', $color_hex_meta ) ) : array();
-        foreach ( $color_terms as $idx => $term ) {
-            $hex = isset( $hex_list[ $idx ] ) ? $hex_list[ $idx ] : ( function_exists( 'furniva_color_hex' ) ? furniva_color_hex( $term->name ) : '#a89f91' );
-            $swatches_data[] = array(
-                'slug' => $term->slug,
-                'name' => $term->name,
-                'hex'  => $hex,
-                'desc' => $finish_desc_meta ?: sprintf( furniva_t( 'Premium %s finish.', 'Hoàn thiện màu %s cao cấp.' ), $term->name ),
-            );
-        }
-    }
-}
 ?>
 
 <?php
@@ -591,25 +557,6 @@ jQuery(function($) {
         var nextVal = val + 1;
         if (Number.isFinite(max) && max > 0) nextVal = Math.min(max, nextVal);
         $quantity.val(nextVal).trigger('change');
-    });
-
-    // Color swatches
-    $('.ax-color-swatch').on('click', function() {
-        $('.ax-color-swatch').removeClass('active');
-        $(this).addClass('active');
-        var color = $(this).data('color');
-        var name = $(this).attr('title');
-        var desc = $(this).data('desc');
-        $('#axSelectedColorName').text(name);
-        if (desc) {
-            $('#axSelectedColorDesc').text(desc);
-        }
-        // Apply to variation select
-        var termSlug = $(this).data('term-slug');
-        var $select = $('select[name="attribute_pa_color"]');
-        if ($select.length) {
-            $select.val(termSlug).trigger('change');
-        }
     });
 
     // Keep the editorial product summary in sync with WooCommerce variation data.

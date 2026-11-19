@@ -7,16 +7,16 @@
 if (typeof navigator !== 'undefined' && !navigator.xr) {
   try {
     navigator.xr = {
-      isSessionSupported: function() { return Promise.resolve(false); },
-      requestSession: function() { return Promise.reject(new Error('WebXR not available')); },
-      addEventListener: function() {},
-      removeEventListener: function() {}
+      isSessionSupported: function () { return Promise.resolve(false); },
+      requestSession: function () { return Promise.reject(new Error('WebXR not available')); },
+      addEventListener: function () { },
+      removeEventListener: function () { }
     };
-  } catch (e) {}
+  } catch (e) { }
 }
 
-// 1. Nạp thư viện Google <model-viewer> nếu chưa có
-if (typeof customElements !== 'undefined' && !customElements.get('model-viewer')) {
+// 1. Nạp thư viện Google <model-viewer> chỉ khi chạy file HTML tĩnh bên ngoài môi trường WordPress
+if (typeof customElements !== 'undefined' && !customElements.get('model-viewer') && !document.querySelector('script[src*="wp-content"]') && !document.querySelector('script[src*="wp-includes"]')) {
   var mvScript = document.createElement('script');
   mvScript.type = 'module';
   mvScript.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js';
@@ -57,13 +57,13 @@ async function createTransparentCutout(imgUrl) {
     return _cutoutCache[imgUrl];
   }
 
-  return new Promise(function(resolve) {
+  return new Promise(function (resolve) {
     var img = new Image();
     // Only set crossOrigin if URL is truly from an external domain
     if (typeof window !== 'undefined' && imgUrl.indexOf('http') === 0 && imgUrl.indexOf(window.location.host) === -1) {
       img.crossOrigin = 'anonymous';
     }
-    img.onload = function() {
+    img.onload = function () {
       try {
         var canvas = document.createElement('canvas');
         var ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -76,12 +76,12 @@ async function createTransparentCutout(imgUrl) {
         var visited = new Uint8Array(w * h);
 
         // Lấy mẫu màu nền ở viền ảnh
-        var getRGB = function(x, y) {
+        var getRGB = function (x, y) {
           var idx = (y * w + x) * 4;
           return [data[idx], data[idx + 1], data[idx + 2]];
         };
 
-        var colorDist = function(r1, g1, b1, r2, g2, b2) {
+        var colorDist = function (r1, g1, b1, r2, g2, b2) {
           return Math.sqrt(Math.pow(r1 - r2, 2) + Math.pow(g1 - g2, 2) + Math.pow(b1 - b2, 2));
         };
 
@@ -148,7 +148,7 @@ async function createTransparentCutout(imgUrl) {
         resolve(imgUrl);
       }
     };
-    img.onerror = function() {
+    img.onerror = function () {
       resolve(imgUrl);
     };
     img.src = imgUrl;
@@ -216,7 +216,7 @@ async function generateProceduralFurnitureGLB(productType, hexColor) {
 
     // 4 Chân đế gỗ
     var cabLegs = [[-0.51, -0.13], [0.51, -0.13], [-0.51, 0.13], [0.51, 0.13], [0, 0]];
-    cabLegs.forEach(function(coord) {
+    cabLegs.forEach(function (coord) {
       var leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.015, 0.08, 16), darkMetalMat);
       leg.position.set(coord[0], 0.04, coord[1]);
       group.add(leg);
@@ -234,7 +234,7 @@ async function generateProceduralFurnitureGLB(productType, hexColor) {
     group.add(base, back, armL, armR);
 
     var legs = [[-0.8, -0.32], [0.8, -0.32], [-0.8, 0.32], [0.8, 0.32]];
-    legs.forEach(function(coord) {
+    legs.forEach(function (coord) {
       var leg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.018, 0.16, 16), woodMat);
       leg.position.set(coord[0], 0.08, coord[1]);
       group.add(leg);
@@ -284,7 +284,7 @@ async function generateProceduralFurnitureGLB(productType, hexColor) {
       [-0.25, 0.22, 0.06, 0.06],
       [0.25, 0.22, -0.06, 0.06]
     ];
-    legCoords.forEach(function(c) {
+    legCoords.forEach(function (c) {
       var leg = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.013, 0.46, 20), mainMat);
       leg.position.set(c[0], 0.23, c[1]);
       leg.rotation.z = c[2];
@@ -293,7 +293,7 @@ async function generateProceduralFurnitureGLB(productType, hexColor) {
     });
 
     // 3 vòng cung lưng ghế uốn lượn đan chéo đặc trưng
-    var createBackArc = function(heightPeak, widthSpread, zOffset, tilt) {
+    var createBackArc = function (heightPeak, widthSpread, zOffset, tilt) {
       var curve = new THREE.CatmullRomCurve3([
         new THREE.Vector3(-0.27, 0.45, 0.15),
         new THREE.Vector3(-widthSpread, 0.64, -0.08 + zOffset),
@@ -318,17 +318,17 @@ async function generateProceduralFurnitureGLB(productType, hexColor) {
 
   scene.add(group);
 
-  return new Promise(function(resolve) {
+  return new Promise(function (resolve) {
     var exporter = new GLTFExporter();
     exporter.parse(
       scene,
-      function(gltfBuffer) {
+      function (gltfBuffer) {
         var blob = new Blob([gltfBuffer], { type: 'model/gltf-binary' });
         var blobUrl = URL.createObjectURL(blob);
         _blobCache[cacheKey] = blobUrl;
         resolve(blobUrl);
       },
-      function(error) {
+      function (error) {
         console.warn('[DeSpace 3D] GLTFExporter error:', error);
         resolve(null);
       },

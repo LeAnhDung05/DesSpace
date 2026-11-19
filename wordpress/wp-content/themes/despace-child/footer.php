@@ -5,11 +5,11 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 $shop_id = wc_get_page_id( 'shop' );
-$shop_url = $shop_id > 0 ? get_permalink( $shop_id ) : home_url( '/shop/' );
+$shop_url = furniva_url( $shop_id > 0 ? get_permalink( $shop_id ) : home_url( '/shop/' ) );
 $blog_id = (int) get_option( 'page_for_posts' );
-$blog_url = $blog_id ? get_permalink( $blog_id ) : home_url( '/blog/' );
-$account_url = furniva_wc_active() ? get_permalink( wc_get_page_id( 'myaccount' ) ) : home_url( '/my-account/' );
-$wishlist_url = function_exists( 'YITH_WCWL' ) ? YITH_WCWL()->get_wishlist_url() : home_url( '/wishlist/' );
+$blog_url = furniva_url( $blog_id ? get_permalink( $blog_id ) : home_url( '/blog/' ) );
+$account_url = furniva_url( furniva_wc_active() ? get_permalink( wc_get_page_id( 'myaccount' ) ) : home_url( '/my-account/' ) );
+$wishlist_url = furniva_url( function_exists( 'YITH_WCWL' ) ? YITH_WCWL()->get_wishlist_url() : home_url( '/wishlist/' ) );
 $wishlist_count = 0;
 if ( function_exists( 'yith_wcwl_count_all_products' ) ) {
 	$wishlist_count = yith_wcwl_count_all_products();
@@ -27,6 +27,8 @@ $chat_products = function_exists( 'wc_get_products' ) ? wc_get_products( array(
 	'order'   => 'DESC',
 ) ) : array();
 $chat_catalogue = array();
+$contact_info = function_exists( 'despace_get_contact_info' ) ? despace_get_contact_info() : array();
+$facebook_url = ! empty( $contact_info['facebook_url'] ) ? trim( $contact_info['facebook_url'] ) : '';
 foreach ( $chat_products as $chat_product ) {
 	$chat_terms = get_the_terms( $chat_product->get_id(), 'product_cat' );
 	$chat_catalogue[] = array(
@@ -57,8 +59,8 @@ foreach ( $chat_products as $chat_product ) {
 				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
 			</span>
 			<div class="fv-trust-content">
-				<strong><?php echo esc_html( furniva_t( 'Trusted Warranty', 'Bảo hành uy tín' ) ); ?></strong>
-				<span><?php echo esc_html( furniva_t( 'Up to 5-year official framework warranty', 'Cam kết chính hãng, hỗ trợ trọn đời' ) ); ?></span>
+				<strong><?php echo esc_html( furniva_t( 'Craftsmanship & Care', 'Chất lượng chế tác' ) ); ?></strong>
+				<span><?php echo esc_html( furniva_t( 'Project simulation: structural support mock model', 'Mô phỏng đồ án: Hỗ trợ kết cấu bền bỉ' ) ); ?></span>
 			</div>
 		</div>
 		<div class="fv-trust-item">
@@ -85,7 +87,7 @@ foreach ( $chat_products as $chat_product ) {
 <footer class="fv-footer">
 	<div class="fv-wrap fv-footer__grid">
 		<div class="fv-footer__brand">
-			<a class="fv-footer__brand-link" href="<?php echo esc_url( home_url( '/' ) ); ?>" aria-label="DeSpace — <?php echo esc_attr( furniva_t( 'Home', 'Trang chủ' ) ); ?>">
+			<a class="fv-footer__brand-link" href="<?php echo esc_url( furniva_url( '/' ) ); ?>" aria-label="DeSpace — <?php echo esc_attr( furniva_t( 'Home', 'Trang chủ' ) ); ?>">
 				<?php $logo_id = get_theme_mod( 'custom_logo' ); ?>
 				<?php if ( $logo_id ) : ?>
 					<?php echo wp_get_attachment_image( $logo_id, 'full', false, array( 'alt' => 'DeSpace' ) ); ?>
@@ -107,16 +109,16 @@ foreach ( $chat_products as $chat_product ) {
 		<div class="fv-footer__column">
 			<h2><?php echo esc_html( furniva_t( 'Categories', 'Danh mục' ) ); ?></h2>
 			<?php foreach ( $footer_categories as $category ) : if ( 'uncategorized' === $category->slug ) continue; ?>
-				<a href="<?php echo esc_url( get_term_link( $category ) ); ?>"><?php echo esc_html( furniva_term_label( $category->name, 'product_cat' ) ); ?></a>
+				<a href="<?php echo esc_url( furniva_url( get_term_link( $category ) ) ); ?>"><?php echo esc_html( furniva_term_label( $category->name, 'product_cat' ) ); ?></a>
 			<?php endforeach; ?>
 		</div>
 
 		<div class="fv-footer__column">
 			<h2><?php echo esc_html( furniva_t( 'Customer care', 'Chăm sóc khách hàng' ) ); ?></h2>
-			<a href="<?php echo esc_url( home_url( '/chinh-sach-giao-hang/' ) ); ?>"><?php echo esc_html( furniva_t( 'Shipping policy', 'Chính sách giao hàng' ) ); ?></a>
-			<a href="<?php echo esc_url( home_url( '/chinh-sach-doi-tra-bao-hanh/' ) ); ?>"><?php echo esc_html( furniva_t( 'Returns & warranty', 'Đổi trả & bảo hành' ) ); ?></a>
-			<a href="<?php echo esc_url( home_url( '/cau-hoi-thuong-gap/' ) ); ?>"><?php echo esc_html( furniva_t( 'FAQs', 'Câu hỏi thường gặp' ) ); ?></a>
-			<a href="<?php echo esc_url( home_url( '/lien-he/' ) ); ?>"><?php echo esc_html( furniva_t( 'Contact', 'Liên hệ' ) ); ?></a>
+			<a href="<?php echo esc_url( furniva_url( '/chinh-sach-giao-hang/' ) ); ?>"><?php echo esc_html( furniva_t( 'Shipping policy', 'Chính sách giao hàng' ) ); ?></a>
+			<a href="<?php echo esc_url( furniva_url( '/chinh-sach-doi-tra-bao-hanh/' ) ); ?>"><?php echo esc_html( furniva_t( 'Returns & warranty', 'Đổi trả & bảo hành' ) ); ?></a>
+			<a href="<?php echo esc_url( furniva_url( '/cau-hoi-thuong-gap/' ) ); ?>"><?php echo esc_html( furniva_t( 'FAQs', 'Câu hỏi thường gặp' ) ); ?></a>
+			<a href="<?php echo esc_url( furniva_url( '/lien-he/' ) ); ?>"><?php echo esc_html( furniva_t( 'Contact', 'Liên hệ' ) ); ?></a>
 			<a href="<?php echo esc_url( $account_url ); ?>"><?php echo esc_html( furniva_t( 'My account', 'Tài khoản' ) ); ?></a>
 		</div>
 
@@ -131,11 +133,11 @@ foreach ( $chat_products as $chat_product ) {
 					<span class="fv-footer__owner-title"><?php echo esc_html( furniva_t( 'Founder & Design Director', 'Sáng lập & Giám đốc thiết kế' ) ); ?></span>
 				</div>
 			</div>
-			<p class="fv-footer__owner-desc"><?php echo esc_html( furniva_t( 'Direct consultation for bespoke spaces & luxury interior craftsmanship.', 'Tư vấn trực tiếp không gian sống & hoàn thiện nội thất cao cấp.' ) ); ?></p>
+			<p class="fv-footer__owner-desc"><?php echo esc_html( furniva_t( 'Direct consultation for bespoke spaces & luxury interior craftsmanship (Course Project Simulation).', 'Tư vấn trực tiếp không gian sống & hoàn thiện nội thất cao cấp (Mô phỏng đồ án).' ) ); ?></p>
 			<ul class="fv-footer__owner-details">
 				<li>
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-					<span><strong><?php echo esc_html( furniva_t( 'Showroom:', 'Showroom:' ) ); ?></strong> số 20 ngách 21 ngõ 367, Phố ngô xuân quản, Xã Gia Lâm, Hà Nội</span>
+					<span><strong><?php echo esc_html( furniva_t( 'Showroom (Demo):', 'Showroom (Mô phỏng):' ) ); ?></strong> số 20 ngách 21 ngõ 367, Phố ngô xuân quản, Xã Gia Lâm, Hà Nội</span>
 				</li>
 				<li>
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
@@ -159,13 +161,15 @@ foreach ( $chat_products as $chat_product ) {
 					</svg>
 					<span>Zalo</span>
 				</a>
-				<a class="fv-owner-badge-link fv-owner-badge-link--facebook" href="https://www.facebook.com/Anhdungx05/" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr( furniva_t( 'Contact DeSpace on Facebook', 'Liên hệ DeSpace qua Facebook' ) ); ?>">
+				<?php if ( ! empty( $facebook_url ) ) : ?>
+				<a class="fv-owner-badge-link fv-owner-badge-link--facebook" href="<?php echo esc_url( $facebook_url ); ?>" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr( furniva_t( 'Contact DeSpace on Facebook', 'Liên hệ DeSpace qua Facebook' ) ); ?>">
 					<svg class="fv-social-svg" viewBox="0 0 48 48" width="18" height="18" fill="none" aria-hidden="true">
 						<circle cx="24" cy="24" r="24" fill="#1877F2"/>
 						<path d="M29.5 25.1l.8-5.3h-5.1v-3.4c0-1.5.7-2.9 3.1-2.9h2.4V9c-.4-.1-1.9-.3-3.7-.3-3.8 0-6.3 2.3-6.3 6.5v3.6h-4.7v5.3h4.7v12.8c.9.1 1.9.2 2.9.2s2-.1 2.9-.2V25.1h4.1z" fill="white"/>
 					</svg>
 					<span>Facebook</span>
 				</a>
+				<?php endif; ?>
 			</div>
 		</div>
 
@@ -183,11 +187,11 @@ foreach ( $chat_products as $chat_product ) {
 
 	<div class="fv-wrap fv-footer__legal">
 		<div class="fv-footer__legal-text">
-			<span>© <?php echo esc_html( gmdate( 'Y' ) ); ?> DeSpace — <?php echo esc_html( furniva_t( 'All rights reserved.', 'Bảo lưu mọi quyền.' ) ); ?></span>
+			<span>© <?php echo esc_html( gmdate( 'Y' ) ); ?> DeSpace — <?php echo esc_html( furniva_t( 'Course Project Simulation (For Educational Demo)', 'Website giả lập phục vụ đồ án môn học' ) ); ?></span>
 			<span class="fv-legal-sep" aria-hidden="true">·</span>
-			<a href="<?php echo esc_url( home_url( '/chinh-sach-bao-mat/' ) ); ?>"><?php echo esc_html( furniva_t( 'Privacy Policy', 'Chính sách bảo mật' ) ); ?></a>
+			<a href="<?php echo esc_url( furniva_url( '/chinh-sach-bao-mat/' ) ); ?>"><?php echo esc_html( furniva_t( 'Privacy Policy', 'Chính sách bảo mật' ) ); ?></a>
 			<span class="fv-legal-sep" aria-hidden="true">·</span>
-			<a href="<?php echo esc_url( home_url( '/dieu-khoan-mua-ban/' ) ); ?>"><?php echo esc_html( furniva_t( 'Terms of Sale', 'Điều khoản mua bán' ) ); ?></a>
+			<a href="<?php echo esc_url( furniva_url( '/dieu-khoan-mua-ban/' ) ); ?>"><?php echo esc_html( furniva_t( 'Terms of Sale', 'Điều khoản mua bán' ) ); ?></a>
 		</div>
 		<div class="f-payments" aria-label="<?php echo esc_attr( furniva_t( 'Available payment methods', 'Phương thức thanh toán' ) ); ?>">
 			<!-- Official VISA Badge -->
@@ -246,7 +250,7 @@ foreach ( $chat_products as $chat_product ) {
 </aside>
 
 <nav class="fv-mobile-shortcuts" aria-label="<?php echo esc_attr( furniva_t( 'Mobile navigation', 'Điều hướng di động' ) ); ?>">
-	<a class="<?php echo is_front_page() ? 'is-current' : ''; ?>" href="<?php echo esc_url( home_url( '/' ) ); ?>">
+	<a class="<?php echo is_front_page() ? 'is-current' : ''; ?>" href="<?php echo esc_url( furniva_url( '/' ) ); ?>">
 		<span class="fv-shortcut-icon"><?php echo furniva_svg( 'home' ); ?></span><span><?php echo esc_html( furniva_t( 'Home', 'Trang chủ' ) ); ?></span>
 	</a>
 	<a class="<?php echo is_shop() || is_product_taxonomy() ? 'is-current' : ''; ?>" href="<?php echo esc_url( $shop_url ); ?>">
@@ -281,12 +285,14 @@ foreach ( $chat_products as $chat_product ) {
 				<path fill="#2d2017" d="M19.49 24.272v-.45h1.347v6.322h-.77a.576.576 0 0 1-.577-.573v.001a3.27 3.27 0 0 1-1.938.632a3.284 3.284 0 0 1-3.284-3.282a3.284 3.284 0 0 1 3.284-3.282a3.27 3.27 0 0 1 1.937.632zM13.919 21.79v.205c0 .382-.051.694-.3 1.06l-.03.034a8 8 0 0 0-.242.285L9.024 28.8h4.895v.768a.576.576 0 0 1-.577.576H7v-.362c0-.444.11-.642.25-.848L11.858 23.23H7.192V21.79h6.727zm8.551 8.355a.48.48 0 0 1-.48-.48v-7.875h1.442v8.355h-1.442zM27.693 23.6c1.826 0 3.307 1.481 3.307 3.304c0 1.826-1.48 3.306-3.307 3.306c-1.826 0-3.306-1.48-3.306-3.306c0-1.824 1.48-3.304 3.306-3.304zm-10.141 5.253c1.068 0 1.933-.865 1.933-1.931c0-1.065-.865-1.93-1.933-1.93s-1.932.865-1.932 1.93c0 1.067.865 1.931 1.932 1.931zm10.141-.003c1.074 0 1.945-.87 1.945-1.945c0-1.073-.871-1.944-1.945-1.944c-1.075 0-1.945.871-1.945 1.944c0 1.075.87 1.945 1.945 1.945z"/>
 			</svg>
 		</a>
-		<a class="ax-chat-link ax-chat-link--facebook" href="https://www.facebook.com/Anhdungx05/" target="_blank" rel="noopener noreferrer" aria-label="Facebook: Anh Dũng" title="Facebook Anh Dũng">
+		<?php if ( ! empty( $facebook_url ) ) : ?>
+		<a class="ax-chat-link ax-chat-link--facebook" href="<?php echo esc_url( $facebook_url ); ?>" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr( furniva_t( 'Facebook: DeSpace', 'Facebook: DeSpace' ) ); ?>" title="<?php echo esc_attr( furniva_t( 'Facebook DeSpace', 'Facebook DeSpace' ) ); ?>">
 			<svg viewBox="0 0 48 48" width="24" height="24" fill="none" aria-hidden="true">
 				<circle cx="24" cy="24" r="23" fill="#2d2017"/>
 				<path d="M29.5 25.1l.8-5.3h-5.1v-3.4c0-1.5.7-2.9 3.1-2.9h2.4V9c-.4-.1-1.9-.3-3.7-.3-3.8 0-6.3 2.3-6.3 6.5v3.6h-4.7v5.3h4.7v12.8c.9.1 1.9.2 2.9.2s2-.1 2.9-.2V25.1h4.1z" fill="#c5a059"/>
 			</svg>
 		</a>
+		<?php endif; ?>
 	</div>
 	<section class="ax-chat-panel" id="ax-chat-panel" aria-labelledby="ax-chat-title" aria-hidden="true" hidden>
 		<header class="ax-chat-panel__head">

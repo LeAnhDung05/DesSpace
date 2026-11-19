@@ -88,8 +88,8 @@ if ( is_singular( 'product' ) ) {
 									<path d="m9 12 2 2 4-4"></path>
 								</svg>
 								<div class="f-trust-card-text">
-									<strong class="f-trust-card-val"><?php echo esc_html( furniva_t( '5 Yr', '5 năm' ) ); ?></strong>
-									<span class="f-trust-card-lbl"><?php echo esc_html( furniva_t( 'CRAFT WARRANTY', 'BẢO HÀNH CHẾ TÁC' ) ); ?></span>
+									<strong class="f-trust-card-val"><?php echo esc_html( furniva_t( 'QUALITY', 'CHẤT LƯỢNG' ) ); ?></strong>
+									<span class="f-trust-card-lbl"><?php echo esc_html( furniva_t( 'CRAFT WARRANTY (MOCK)', 'BẢO HÀNH CHẾ TÁC (ĐỒ ÁN)' ) ); ?></span>
 								</div>
 							</div>
 							<div class="f-trust-card-item">
@@ -100,8 +100,8 @@ if ( is_singular( 'product' ) ) {
 									<circle cx="18.5" cy="18.5" r="2.5"></circle>
 								</svg>
 								<div class="f-trust-card-text">
-									<strong class="f-trust-card-val"><?php echo esc_html( furniva_t( 'FREE DELIVERY', 'GIAO HÀNG MIỄN PHÍ' ) ); ?></strong>
-									<span class="f-trust-card-lbl"><?php echo esc_html( furniva_t( 'ON ORDERS OVER $500', 'CHO ĐƠN TRÊN $500' ) ); ?></span>
+									<strong class="f-trust-card-val"><?php echo esc_html( furniva_t( 'WHITE-GLOVE', 'CHU ĐÁO' ) ); ?></strong>
+									<span class="f-trust-card-lbl"><?php echo esc_html( furniva_t( 'DELIVERY & SETUP', 'GIAO HÀNG & BÀI TRÍ' ) ); ?></span>
 								</div>
 							</div>
 						</div>

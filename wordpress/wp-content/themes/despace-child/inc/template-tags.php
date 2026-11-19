@@ -122,6 +122,7 @@ function despace_filter_sidebar() {
 	$brands    = get_terms( array( 'taxonomy' => 'pa_brand', 'hide_empty' => true ) );
 	$colors    = get_terms( array( 'taxonomy' => 'pa_color', 'hide_empty' => true ) );
 	$sizes     = get_terms( array( 'taxonomy' => 'pa_size', 'hide_empty' => true ) );
+	$materials = get_terms( array( 'taxonomy' => 'pa_material', 'hide_empty' => true ) );
 
 	$price_range = despace_get_price_range_data();
 	?>
@@ -214,6 +215,27 @@ function despace_filter_sidebar() {
 							<span class="f-count">(<?php echo (int) $t->count; ?>)</span>
 						</label>
 					<?php endforeach; ?>
+				</div>
+			</details>
+			<?php endif; ?>
+
+			<!-- Material (Collapsed by default) -->
+			<?php if ( $materials && ! is_wp_error( $materials ) ) : ?>
+			<details class="f-filter-group" data-filter-name="material">
+				<summary>
+					<span><?php echo esc_html( furniva_t( 'MATERIAL', 'CHẤT LIỆU' ) ); ?></span>
+					<span class="f-group-meta"><?php echo count( $materials ); ?></span>
+				</summary>
+				<div class="f-filter-body">
+					<div class="f-filter-scroll-list" tabindex="0" role="region" aria-label="<?php echo esc_attr( furniva_t( 'Materials list', 'Danh sách chất liệu' ) ); ?>">
+						<?php foreach ( $materials as $t ) : ?>
+							<label class="f-filter-check">
+								<input type="checkbox" name="material" value="<?php echo esc_attr( $t->slug ); ?>" data-name="<?php echo esc_attr( furniva_term_label( $t->name, 'pa_material' ) ); ?>" />
+								<span><?php echo esc_html( furniva_term_label( $t->name, 'pa_material' ) ); ?></span>
+								<span class="f-count">(<?php echo (int) $t->count; ?>)</span>
+							</label>
+						<?php endforeach; ?>
+					</div>
 				</div>
 			</details>
 			<?php endif; ?>

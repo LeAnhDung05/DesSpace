@@ -47,9 +47,9 @@ add_action( 'wp_head', function() {
 		$descriptions = array(
 			've-despace'                 => 'Về DeSpace — Khởi nguồn từ 2016, xưởng thiết kế và chế tác nội thất cao cấp đạt chuẩn FSC, OEKO-TEX kết hợp công nghệ 3D/AR tiên phong.',
 			'lien-he'                    => 'Liên hệ DeSpace — Showroom trải nghiệm 3D/AR tại Gia Lâm, Hà Nội. Hotline 0332 174 590, tư vấn trực tiếp 1-1 cùng Giám đốc thiết kế.',
-			'cau-hoi-thuong-gap'         => 'Giải đáp các câu hỏi thường gặp về sản phẩm gỗ tự nhiên, công nghệ xem phòng 3D/AR, đặt hàng và bảo hành 5 năm tại DeSpace.',
-			'chinh-sach-giao-hang'       => 'Chính sách giao hàng toàn quốc & lắp đặt hoàn thiện tận nhà từ DeSpace. Miễn phí vận chuyển nội thành Hà Nội cho đơn từ 10 triệu đồng.',
-			'chinh-sach-doi-tra-bao-hanh'=> 'Chính sách bảo hành kết cấu 5 năm & 1 đổi 1 trong vòng 30 ngày cho mọi sản phẩm nội thất chính hãng tại DeSpace.',
+			'cau-hoi-thuong-gap'         => 'Giải đáp các câu hỏi thường gặp về sản phẩm gỗ tự nhiên, công nghệ xem phòng 3D/AR, đặt hàng và chính sách khách hàng tại DeSpace (Kịch bản đồ án).',
+			'chinh-sach-giao-hang'       => 'Chính sách giao hàng toàn quốc & lắp đặt hoàn thiện tận nhà từ DeSpace (Thông tin mô phỏng đồ án môn học).',
+			'chinh-sach-doi-tra-bao-hanh'=> 'Chính sách bảo hành và đổi trả sản phẩm nội thất DeSpace (Thông tin mô phỏng đồ án môn học).',
 			'chinh-sach-bao-mat'         => 'Chính sách bảo mật quyền riêng tư của DeSpace — Bảo vệ dữ liệu cá nhân khách hàng, cam kết an toàn giao dịch trực tuyến.',
 			'dieu-khoan-mua-ban'         => 'Điều khoản mua bán và sử dụng dịch vụ tại DeSpace — Minh bạch quyền lợi và trách nhiệm giữa khách hàng và thương hiệu.',
 		);
@@ -60,7 +60,7 @@ add_action( 'wp_head', function() {
 		$product = wc_get_product( get_the_ID() );
 		if ( $product ) {
 			$short = wp_strip_all_tags( $product->get_short_description() );
-			$desc = $short ? $short : ( $product->get_name() . ' — Nội thất cao cấp DeSpace bảo hành kết cấu 5 năm, hỗ trợ trải nghiệm 3D/AR.' );
+			$desc = $short ? $short : ( $product->get_name() . ' — Nội thất cao cấp DeSpace hỗ trợ trải nghiệm 3D/AR đặt phòng thực tế.' );
 		}
 	}
 
@@ -379,6 +379,7 @@ function furniva_assets() {
 		'contactNonce'=> wp_create_nonce( 'despace_contact_nonce' ),
 		'baseCat'     => $base_cat,
 		'isLoggedIn'  => is_user_logged_in(),
+		'guestCheckoutEnabled' => 'yes' === get_option( 'woocommerce_enable_guest_checkout' ),
 		'loginUrl'    => wc_get_page_permalink( 'myaccount' ),
 		'registerUrl' => add_query_arg( 'action', 'register', wc_get_page_permalink( 'myaccount' ) ),
 		'strings'     => array(
@@ -406,6 +407,7 @@ function furniva_assets() {
 				'brand' => furniva_t( 'Brand', 'Thương hiệu' ),
 				'color' => furniva_t( 'Color', 'Màu sắc' ),
 				'size' => furniva_t( 'Size', 'Kích thước' ),
+				'material' => furniva_t( 'Material', 'Chất liệu' ),
 				'availability' => furniva_t( 'Availability', 'Tình trạng' ),
 				'has_3d' => furniva_t( 'Feature', 'Tính năng' ),
 				'price' => furniva_t( 'Price', 'Giá' ),
@@ -607,8 +609,8 @@ function furniva_ajax_filter() {
 		$tax_query[] = array( 'taxonomy' => 'product_cat', 'field' => 'slug', 'terms' => $cats );
 	}
 
-	// Attributes (brand / color / size)
-	foreach ( array( 'brand' => 'pa_brand', 'color' => 'pa_color', 'size' => 'pa_size' ) as $key => $tax ) {
+	// Attributes (brand / color / size / material)
+	foreach ( array( 'brand' => 'pa_brand', 'color' => 'pa_color', 'size' => 'pa_size', 'material' => 'pa_material' ) as $key => $tax ) {
 		$terms = array_filter( array_map( 'sanitize_title', (array) ( $_POST[ $key ] ?? array() ) ) );
 		if ( $terms ) {
 			$tax_query[] = array( 'taxonomy' => $tax, 'field' => 'slug', 'terms' => $terms );
@@ -646,7 +648,10 @@ function furniva_ajax_filter() {
 	if ( ! empty( $search_term ) ) {
 		global $wpdb;
 		$sku_product_ids = $wpdb->get_col( $wpdb->prepare(
-			"SELECT DISTINCT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_sku' AND meta_value LIKE %s",
+			"SELECT DISTINCT CASE WHEN p.post_type = 'product_variation' THEN p.post_parent ELSE p.ID END AS product_id
+			FROM {$wpdb->postmeta} pm
+			INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+			WHERE pm.meta_key = '_sku' AND pm.meta_value LIKE %s",
 			'%' . $wpdb->esc_like( $search_term ) . '%'
 		) );
 
@@ -659,6 +664,7 @@ function furniva_ajax_filter() {
 		) );
 
 		$matched_ids = array_map( 'intval', array_unique( array_merge( (array) $sku_product_ids, (array) $title_query->posts ) ) );
+		$matched_ids = array_filter( $matched_ids, function( $id ) { return $id > 0; } );
 		if ( ! empty( $matched_ids ) ) {
 			$query_args['post__in'] = $matched_ids;
 		} else {
@@ -708,7 +714,12 @@ function furniva_ajax_filter() {
 		if ( empty( $sale_ids ) ) {
 			$sale_ids = array( 0 );
 		}
-		$query_args['post__in'] = $sale_ids;
+		if ( isset( $query_args['post__in'] ) ) {
+			$intersected = array_values( array_intersect( $query_args['post__in'], $sale_ids ) );
+			$query_args['post__in'] = ! empty( $intersected ) ? $intersected : array( 0 );
+		} else {
+			$query_args['post__in'] = $sale_ids;
+		}
 	}
 
 	// Price range

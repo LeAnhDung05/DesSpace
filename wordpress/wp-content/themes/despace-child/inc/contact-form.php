@@ -28,7 +28,7 @@ function despace_get_contact_info() {
 		'founder_title' => 'Sáng lập & Giám đốc thiết kế',
 		'founder_desc'  => 'Tư vấn trực tiếp không gian sống & hoàn thiện nội thất cao cấp',
 		'zalo_url'      => 'https://zalo.me/0332174590',
-		'facebook_url'  => 'https://www.facebook.com/Anhdungx05/',
+		'facebook_url'  => '',
 		'maps_url'      => 'https://maps.google.com/?q=số+20+ngách+21+ngõ+367+Phố+ngô+xuân+quản+Gia+Lâm+Hà+Nội',
 	);
 
@@ -44,7 +44,7 @@ function despace_ajax_contact_submit() {
 	$nonce = $_POST['nonce'] ?? '';
 	if ( ! wp_verify_nonce( $nonce, 'despace_contact_nonce' ) ) {
 		wp_send_json_error( array(
-			'message' => 'Phiên làm việc đã hết hạn. Vui lòng tải lại trang và thử lại.',
+			'message' => furniva_t( 'Your session has expired. Please refresh the page and try again.', 'Phiên làm việc đã hết hạn. Vui lòng tải lại trang và thử lại.' ),
 		), 403 );
 	}
 
@@ -53,7 +53,7 @@ function despace_ajax_contact_submit() {
 		// Bot detected: respond with generic success silently
 		wp_send_json_success( array(
 			'status'  => 'silent',
-			'message' => 'Yêu cầu của bạn đã được ghi nhận.',
+			'message' => furniva_t( 'Your inquiry has been received.', 'Yêu cầu của bạn đã được ghi nhận.' ),
 		) );
 	}
 
@@ -62,7 +62,7 @@ function despace_ajax_contact_submit() {
 	$rate_limit_key = 'despace_contact_rl_' . md5( $ip );
 	if ( get_transient( $rate_limit_key ) ) {
 		wp_send_json_error( array(
-			'message' => 'Bạn vừa gửi yêu cầu gần đây. Vui lòng đợi 1 phút trước khi gửi lại.',
+			'message' => furniva_t( 'You submitted an inquiry recently. Please wait a moment before sending another.', 'Bạn vừa gửi yêu cầu gần đây. Vui lòng đợi 1 phút trước khi gửi lại.' ),
 		), 429 );
 	}
 
@@ -78,20 +78,20 @@ function despace_ajax_contact_submit() {
 	$errors = array();
 
 	if ( mb_strlen( trim( $name ) ) < 2 ) {
-		$errors[] = 'Vui lòng nhập họ và tên (tối thiểu 2 ký tự).';
+		$errors[] = furniva_t( 'Please enter your full name (minimum 2 characters).', 'Vui lòng nhập họ và tên (tối thiểu 2 ký tự).' );
 	}
 
 	$digits = preg_replace( '/\D/', '', $phone );
 	if ( strlen( $digits ) < 9 || strlen( $digits ) > 12 ) {
-		$errors[] = 'Vui lòng nhập số điện thoại hợp lệ (9 – 11 chữ số).';
+		$errors[] = furniva_t( 'Please enter a valid phone number (9 to 11 digits).', 'Vui lòng nhập số điện thoại hợp lệ (9 – 11 chữ số).' );
 	}
 
 	if ( ! empty( $_POST['contact_email'] ) && ! is_email( $email ) ) {
-		$errors[] = 'Địa chỉ email không đúng định dạng.';
+		$errors[] = furniva_t( 'Invalid email address format.', 'Địa chỉ email không đúng định dạng.' );
 	}
 
 	if ( mb_strlen( trim( $message ) ) < 3 ) {
-		$errors[] = 'Vui lòng nhập lời nhắn hoặc ghi chú yêu cầu tư vấn.';
+		$errors[] = furniva_t( 'Please provide a message or details regarding your consultation request.', 'Vui lòng nhập lời nhắn hoặc ghi chú yêu cầu tư vấn.' );
 	}
 
 	if ( ! empty( $errors ) ) {
@@ -157,13 +157,19 @@ function despace_ajax_contact_submit() {
 	if ( $mail_sent ) {
 		wp_send_json_success( array(
 			'status'  => 'sent',
-			'message' => 'Cảm ơn bạn! Yêu cầu tư vấn đã được gửi thành công. Đội ngũ thiết kế DeSpace sẽ liên hệ với bạn trong vòng 24 giờ làm việc.',
+			'message' => furniva_t( 'Thank you! Your consultation request has been sent successfully. The DeSpace interior team will contact you within 24 working hours.', 'Cảm ơn bạn! Yêu cầu tư vấn đã được gửi thành công. Đội ngũ thiết kế DeSpace sẽ liên hệ với bạn trong vòng 24 giờ làm việc.' ),
 		) );
 	} else {
 		// Mail transport failed or not configured locally: inform customer clearly that inquiry is logged in the system
 		wp_send_json_success( array(
 			'status'  => 'recorded',
-			'message' => 'Cảm ơn bạn! Yêu cầu tư vấn của bạn đã được ghi nhận trên hệ thống DeSpace. Chuyên viên thiết kế sẽ chủ động liên hệ lại qua số điện thoại/Zalo (' . esc_html( $phone ) . ') trong thời gian sớm nhất.',
+			'message' => sprintf(
+				furniva_t(
+					'Thank you! Your consultation request has been recorded in the DeSpace system. Our design specialist will reach out to you via phone/Zalo (%s) as soon as possible.',
+					'Cảm ơn bạn! Yêu cầu tư vấn của bạn đã được ghi nhận trên hệ thống DeSpace. Chuyên viên thiết kế sẽ chủ động liên hệ lại qua số điện thoại/Zalo (%s) trong thời gian sớm nhất.'
+				),
+				esc_html( $phone )
+			),
 		) );
 	}
 }
@@ -384,11 +390,25 @@ add_action( 'woocommerce_review_order_before_submit', function() {
 }, 9 );
 
 /**
- * Ensure canonical slugs, titles, approved contents, and published status for informational & policy pages.
- * Stored safely in UTF-8 in inc/data/policy-pages-data.php within repo.
- * Called automatically after database synchronization or on theme setup to prevent 404s and content loss.
+ * Automatically mark policy and informational pages as customized by an administrator
+ * when saved in the WordPress admin editor.
  */
-function despace_ensure_policy_pages() {
+add_action( 'save_post_page', function( $post_id, $post, $update ) {
+	if ( ! $update || wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+		return;
+	}
+	if ( is_admin() && current_user_can( 'edit_page', $post_id ) ) {
+		update_post_meta( $post_id, '_despace_admin_edited', '1' );
+	}
+}, 10, 3 );
+
+/**
+ * Ensure canonical slugs and published status for informational & policy pages.
+ * Safe for administrator customizations: will NEVER overwrite post content if an admin has edited it in WordPress.
+ *
+ * @param bool $force_overwrite Optional. Set to true only if explicitly forcing a fresh factory restore. Default false.
+ */
+function despace_ensure_policy_pages( $force_overwrite = false ) {
 	global $wpdb;
 
 	$data_file = get_stylesheet_directory() . '/inc/data/policy-pages-data.php';
@@ -402,21 +422,51 @@ function despace_ensure_policy_pages() {
 	}
 
 	foreach ( $canonical_pages as $id => $data ) {
-		$row = $wpdb->get_row( $wpdb->prepare( "SELECT ID, post_name, post_status FROM {$wpdb->posts} WHERE ID = %d", $id ) );
-		if ( $row ) {
-			$wpdb->update(
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT ID, post_name, post_title, post_content, post_status FROM {$wpdb->posts} WHERE ID = %d", $id ) );
+		if ( ! $row ) {
+			// Page is completely missing from database: create it safely
+			$wpdb->insert(
 				$wpdb->posts,
 				array(
-					'post_name'    => $data['slug'],
+					'ID'           => $id,
 					'post_title'   => $data['title'],
+					'post_name'    => $data['slug'],
 					'post_content' => $data['content'],
 					'post_status'  => $data['status'],
 					'post_type'    => 'page',
-				),
-				array( 'ID' => $id )
+					'post_date'    => current_time( 'mysql' ),
+					'post_date_gmt'=> current_time( 'mysql', 1 ),
+					'comment_status' => 'closed',
+					'ping_status'  => 'closed',
+				)
 			);
 			clean_post_cache( $id );
+			continue;
 		}
+
+		$is_admin_edited = ( '1' === (string) get_post_meta( $id, '_despace_admin_edited', true ) );
+		$has_content     = ! empty( trim( (string) $row->post_content ) );
+		$has_mojibake    = ( false !== strpos( $row->post_content, 'ChÃ' ) || false !== strpos( $row->post_content, 'Ã¡' ) );
+
+		// Always ensure canonical slug, status = publish, and post_type = page
+		$update_data = array(
+			'post_name'   => $data['slug'],
+			'post_status' => $data['status'],
+			'post_type'   => 'page',
+		);
+
+		// Only restore template content if forcing, or if content is empty or corrupted by mojibake import
+		if ( ! $is_admin_edited && ( $force_overwrite || ! $has_content || $has_mojibake ) ) {
+			$update_data['post_title']   = $data['title'];
+			$update_data['post_content'] = $data['content'];
+		}
+
+		$wpdb->update(
+			$wpdb->posts,
+			$update_data,
+			array( 'ID' => $id )
+		);
+		clean_post_cache( $id );
 	}
 }
 

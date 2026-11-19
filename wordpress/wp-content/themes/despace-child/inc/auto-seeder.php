@@ -250,9 +250,9 @@ class DeSpace_Auto_Seeder {
 		// Clear transient caches
 		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '%_transient_%'" );
 
-		// Ensure informational & policy pages slugs and published status
+		// Ensure informational & policy pages slugs and published status (preserving admin edits)
 		if ( function_exists( 'despace_ensure_policy_pages' ) ) {
-			despace_ensure_policy_pages();
+			despace_ensure_policy_pages( false );
 		}
 
 		flush_rewrite_rules( true );

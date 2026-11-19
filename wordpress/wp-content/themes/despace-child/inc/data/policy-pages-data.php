@@ -20,6 +20,10 @@ return array(
             'content' => <<<'HTML'
 <!-- wp:html -->
 <div class="f-wrap ds-about-page-wrap">
+    <!-- Academic Simulation Disclaimer -->
+    <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:12px 18px;margin-bottom:28px;font-size:13px;color:#92400E;line-height:1.6;">
+        <strong>Thông báo đồ án DeSpace:</strong> Website này được xây dựng nhằm mục đích thực hành và báo cáo đồ án môn học. Các thông tin về lịch sử thành lập, chứng chỉ vật liệu và cam kết bảo hành mang tính chất mô phỏng kịch bản, không phải thực thể thương mại độc lập.
+    </div>
     <div class="f-about-grid">
         <div>
             <span class="f-kicker" style="color:#b8845a;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;font-size:12px;">Kể từ 2016</span>
@@ -86,6 +90,9 @@ HTML
                 <strong>DeSpace Sáng lập &amp; Giám đốc thiết kế</strong>
                 <span>Tư vấn trực tiếp không gian sống &amp; hoàn thiện nội thất cao cấp</span>
             </div>
+        </div>
+        <div style="background:rgba(255,251,235,0.15);border:1px solid rgba(253,230,138,0.3);border-radius:6px;padding:8px 14px;margin-top:14px;font-size:12px;color:#FAF7F2;line-height:1.5;">
+            * <em>Thông tin địa chỉ showroom, hotline và nhân sự đại diện dưới đây mang tính chất giả lập phục vụ kịch bản đồ án môn học DeSpace.</em>
         </div>
     </div>
 
@@ -245,6 +252,11 @@ HTML
         <p style="color:#69645D;font-size:14px;line-height:1.7;max-width:640px;margin:0 auto;">Tổng hợp các thắc mắc phổ biến nhất của khách hàng về quy cách chế tác gỗ, trải nghiệm 3D/AR, quy trình giao hàng và chính sách bảo hành tại DeSpace.</p>
     </div>
 
+    <!-- Academic Simulation Disclaimer -->
+    <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:12px 18px;margin-bottom:32px;font-size:13px;color:#92400E;line-height:1.6;">
+        <strong>Lưu ý kịch bản đồ án:</strong> Các giải đáp liên quan đến thời hạn bảo hành 5 năm, chính sách đổi trả 30 ngày và hạn mức miễn phí vận chuyển 10.000.000 VNĐ là nội dung giả lập phục vụ xây dựng quy trình thương mại điện tử cho đồ án DeSpace, đang chờ nhóm xét duyệt và chưa áp dụng thực tế.
+    </div>
+
     <!-- Group 1: Sản phẩm & Chất liệu -->
     <div class="ds-faq-group" style="margin-bottom:36px;">
         <h3 style="font-family:var(--f-font-editorial, serif);font-size:22px;color:#1C1917;border-bottom:2px solid #E7E0D7;padding-bottom:10px;margin-bottom:18px;">1. Sản Phẩm &amp; Chất Liệu Chế Tác</h3>
@@ -363,6 +375,11 @@ HTML
         <p style="color:#69645D;font-size:14px;line-height:1.7;">Tại DeSpace, trải nghiệm giao nhận không đơn thuần là vận chuyển hàng hóa, mà là sự đồng hành chỉn chu đưa từng món đồ tinh tuyển an tọa chuẩn xác trong không gian sống của bạn.</p>
     </div>
 
+    <!-- Academic Simulation Disclaimer -->
+    <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:14px 18px;margin-bottom:28px;font-size:13px;color:#92400E;line-height:1.6;">
+        <strong>Lưu ý mô phỏng đồ án:</strong> Chính sách vận chuyển và biểu phí giao hàng dưới đây được xây dựng dưới dạng kịch bản mẫu phục vụ đồ án DeSpace. Biểu phí thực tế và thỏa thuận đơn vị vận chuyển cồng kềnh đang trong giai đoạn khảo sát, chưa phải cam kết thương mại chính thức.
+    </div>
+
     <div style="display:grid;gap:28px;">
         <!-- Section 1 -->
         <section style="background:#FAF7F2;padding:28px;border-radius:8px;border:1px solid #E7E0D7;">
@@ -391,16 +408,16 @@ HTML
 
         <!-- Section 3 -->
         <section style="background:#FAF7F2;padding:28px;border-radius:8px;border:1px solid #E7E0D7;">
-            <h3 style="font-family:var(--f-font-editorial, serif);font-size:22px;color:#1C1917;margin:0 0 14px;">3. Biểu Phí Vận Chuyển &amp; Hỗ Trợ Đơn Hàng</h3>
-            <p style="font-size:14px;color:#69645D;line-height:1.75;margin-bottom:14px;">Chính sách hỗ trợ vận chuyển của DeSpace được áp dụng minh bạch như sau:</p>
+            <h3 style="font-family:var(--f-font-editorial, serif);font-size:22px;color:#1C1917;margin:0 0 14px;">3. Biểu Phí Vận Chuyển &amp; Hỗ Trợ Đơn Hàng (Kịch bản mô phỏng)</h3>
+            <p style="font-size:14px;color:#69645D;line-height:1.75;margin-bottom:14px;">Chính sách hỗ trợ vận chuyển mô phỏng của DeSpace được dự kiến như sau:</p>
             <ul style="padding-left:20px;color:#69645D;font-size:14px;line-height:1.75;margin:0 0 16px;">
-                <li><strong>Đơn hàng từ 10.000.000 VNĐ trở lên (hoặc từ $500):</strong> Miễn phí 100% chi phí vận chuyển và công lắp đặt hoàn thiện trong nội thành Hà Nội.</li>
-                <li><strong>Đơn hàng dưới 10.000.000 VNĐ hoặc đi các tỉnh khác:</strong> Áp dụng mức phí hỗ trợ dựa trên khoảng cách địa lý và biểu cước thực tế của đối tác vận tải cồng kềnh.</li>
+                <li><strong>Đơn hàng từ 10.000.000 VNĐ trở lên (hoặc từ $500) (Minh họa):</strong> Miễn phí chi phí vận chuyển và công lắp đặt hoàn thiện trong nội thành Hà Nội.</li>
+                <li><strong>Đơn hàng dưới 10.000.000 VNĐ hoặc đi các tỉnh khác (Minh họa):</strong> Áp dụng mức phí hỗ trợ dựa trên khoảng cách địa lý và biểu cước thực tế của đối tác vận tải cồng kềnh.</li>
             </ul>
 
-            <!-- Transparency notice for group confirmation -->
-            <div style="background:#FEF3C7;border-left:4px solid #D97706;padding:14px 18px;border-radius:4px;font-size:13px;color:#92400E;line-height:1.6;">
-                <strong>Ghi chú dự án [Cần nhóm xác nhận]:</strong> Biểu phí vận chuyển chi tiết theo từng km ngoại thành xa và phụ phí bốc xếp thang bộ chung cư không có thang máy chuyên dụng đang trong giai đoạn chuẩn hóa hợp đồng cùng đối tác logistics. Quý khách vui lòng liên hệ hotline <strong>0332 174 590</strong> để được nhân viên báo cước chính xác nhất cho địa chỉ của mình.
+            <!-- Course Project Simulation Note -->
+            <div style="background:#FAF7F2;border-left:4px solid #b8845a;padding:14px 18px;border-radius:4px;font-size:13px;color:#69645D;line-height:1.6;">
+                <strong>Lưu ý mô phỏng đồ án:</strong> Biểu phí vận chuyển chi tiết theo từng km ngoại thành xa và phụ phí bốc xếp cho các trường hợp đặc biệt được xây dựng dưới dạng kịch bản mô phỏng cho đồ án học tập. Trong kịch bản trải nghiệm, khách hàng liên hệ hotline <strong>0332 174 590</strong> hoặc Zalo để được tư vấn mức phí minh họa phù hợp.
             </div>
         </section>
 
@@ -431,6 +448,11 @@ HTML
         <span class="f-kicker" style="color:#b8845a;font-weight:700;letter-spacing:2px;text-transform:uppercase;font-size:11px;">CAM KẾT CHẤT LƯỢNG VƯỢT TRỘI</span>
         <h2 style="font-family:var(--f-font-editorial, serif);font-size:clamp(28px,3.5vw,38px);margin:8px 0 14px;">Chính Sách Đổi Trả 30 Ngày &amp; Bảo Hành 5 Năm</h2>
         <p style="color:#69645D;font-size:14px;line-height:1.7;">Mỗi sản phẩm nội thất DeSpace được sinh ra để đồng hành bền bỉ cùng tổ ấm của bạn. Chúng tôi cam kết bảo vệ quyền lợi chính đáng của khách hàng bằng chính sách hậu mãi chuyên nghiệp và dài lâu.</p>
+    </div>
+
+    <!-- Academic Simulation Disclaimer -->
+    <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:14px 18px;margin-bottom:28px;font-size:13px;color:#92400E;line-height:1.6;">
+        <strong>Lưu ý mô phỏng đồ án:</strong> Toàn bộ thời hạn bảo hành kết cấu 5 năm, bảo hành phụ kiện 1 – 2 năm và chính sách đổi mới 30 ngày được biên soạn nhằm minh họa cho kịch bản đồ án môn học DeSpace. Đây là nội dung giả lập quy trình nghiệp vụ và chưa phải cam kết pháp lý thương mại đã được doanh nghiệp ban hành.
     </div>
 
     <div style="display:grid;gap:28px;">
@@ -495,9 +517,9 @@ HTML
                 </div>
             </div>
 
-            <!-- Transparency notice for group confirmation -->
-            <div style="background:#FEF3C7;border-left:4px solid #D97706;padding:14px 18px;border-radius:4px;font-size:13px;color:#92400E;line-height:1.6;">
-                <strong>Ghi chú dự án [Cần nhóm xác nhận]:</strong> Quy định về chi phí vận chuyển phát sinh khi đổi sản phẩm do khách hàng thay đổi sở thích cá nhân (không phải do lỗi kỹ thuật) và quy định đổi trả áp dụng cho dòng sản phẩm đặt may đo theo kích thước riêng đang được ban điều hành hoàn thiện. Vui lòng liên hệ hotline để được hỗ trợ cụ thể theo từng trường hợp.
+            <!-- Course Project Simulation Note -->
+            <div style="background:#FAF7F2;border-left:4px solid #b8845a;padding:14px 18px;border-radius:4px;font-size:13px;color:#69645D;line-height:1.6;">
+                <strong>Lưu ý mô phỏng đồ án:</strong> Chính sách đổi trả và quy trình bảo hành được mô phỏng nhằm phục vụ hoàn thiện trải nghiệm người dùng trong đồ án DeSpace. Các trường hợp phát sinh thực tế sẽ được hỗ trợ trao đổi qua kênh liên hệ trực tiếp của nhóm tác giả.
             </div>
         </section>
     </div>
@@ -516,6 +538,11 @@ HTML
         <span class="f-kicker" style="color:#b8845a;font-weight:700;letter-spacing:2px;text-transform:uppercase;font-size:11px;">BẢO VỆ THÔNG TIN KHÁCH HÀNG</span>
         <h2 style="font-family:var(--f-font-editorial, serif);font-size:clamp(28px,3.5vw,38px);margin:8px 0 14px;">Chính Sách Bảo Mật Quyền Riêng Tư</h2>
         <p style="color:#69645D;font-size:14px;line-height:1.7;">DeSpace coi trọng quyền riêng tư và cam kết bảo vệ an toàn tuyệt đối các dữ liệu cá nhân của khách hàng khi truy cập và mua sắm trên nền tảng trực tuyến của chúng tôi.</p>
+    </div>
+
+    <!-- Academic Simulation Disclaimer -->
+    <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:14px 18px;margin-bottom:28px;font-size:13px;color:#92400E;line-height:1.6;">
+        <strong>Thông báo đồ án:</strong> Chính sách bảo mật này được biên soạn làm mẫu tài liệu cho đồ án môn học DeSpace, thể hiện quy trình tuân thủ bảo vệ dữ liệu cá nhân khách hàng trong thương mại điện tử.
     </div>
 
     <div style="display:grid;gap:28px;">
@@ -576,6 +603,11 @@ HTML
         <span class="f-kicker" style="color:#b8845a;font-weight:700;letter-spacing:2px;text-transform:uppercase;font-size:11px;">ĐIỀU KHOẢN VÀ ĐIỀU KIỆN</span>
         <h2 style="font-family:var(--f-font-editorial, serif);font-size:clamp(28px,3.5vw,38px);margin:8px 0 14px;">Điều Khoản Mua Bán &amp; Dịch Vụ DeSpace</h2>
         <p style="color:#69645D;font-size:14px;line-height:1.7;">Các điều khoản dưới đây quy định quyền lợi và trách nhiệm giữa khách hàng và thương hiệu nội thất DeSpace khi tiến hành đặt mua sản phẩm trên website hoặc ký kết đơn hàng tại showroom.</p>
+    </div>
+
+    <!-- Academic Simulation Disclaimer -->
+    <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:14px 18px;margin-bottom:28px;font-size:13px;color:#92400E;line-height:1.6;">
+        <strong>Lưu ý kịch bản đồ án:</strong> Bản điều khoản mua bán và dịch vụ này được biên soạn cho đồ án môn học DeSpace, mang tính chất mô phỏng quy trình giao kết và giải quyết khiếu nại, không có giá trị giao kết hợp đồng kinh tế thực tế trước pháp luật.
     </div>
 
     <div style="display:grid;gap:28px;">

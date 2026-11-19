@@ -8,7 +8,8 @@
     "test": "tests"
   },
   "scripts": {
-    "test:visual": "node tests/visual/frontend-audit.spec.cjs"
+    "test:visual": "node tests/visual/frontend-audit.spec.cjs",
+    "test:m2": "node tests/test-m2-variation-acceptance.cjs"
   },
   "repository": {
     "type": "git",

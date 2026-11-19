@@ -57,13 +57,16 @@
   }
 
   function ensureModelViewerLibrary() {
-    if (!state.modelViewerEnsured && typeof customElements !== 'undefined' && !customElements.get('model-viewer')) {
-      var script = document.createElement('script');
-      script.type = 'module';
-      script.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js';
-      document.head.appendChild(script);
+    if (state.modelViewerEnsured || (typeof customElements !== 'undefined' && customElements.get('model-viewer'))) return;
+    if (document.querySelector('script[src*="wp-content"]') || document.querySelector('script[src*="wp-includes"]')) {
       state.modelViewerEnsured = true;
+      return;
     }
+    var script = document.createElement('script');
+    script.type = 'module';
+    script.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js';
+    document.head.appendChild(script);
+    state.modelViewerEnsured = true;
   }
 
   function bindTriggers() {

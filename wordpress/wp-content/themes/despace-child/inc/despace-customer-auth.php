@@ -148,6 +148,9 @@ add_action( 'woocommerce_created_customer', 'despace_save_registration_fields', 
  * Redirects guests from /checkout/ to /my-account/?action=login&redirect_to=checkout.
  */
 function despace_require_login_for_checkout() {
+	if ( 'yes' === get_option( 'woocommerce_enable_guest_checkout' ) ) {
+		return;
+	}
 	if ( function_exists( 'is_checkout' ) && is_checkout() && ! is_user_logged_in() && ! is_order_received_page() ) {
 		wc_add_notice(
 			furniva_t(
@@ -178,6 +181,9 @@ add_action( 'template_redirect', 'despace_require_login_for_checkout' );
  * @return bool
  */
 function despace_require_login_for_add_to_cart( $passed, $product_id, $quantity ) {
+	if ( 'yes' === get_option( 'woocommerce_enable_guest_checkout' ) ) {
+		return $passed;
+	}
 	if ( ! is_user_logged_in() ) {
 		$login_url    = add_query_arg( 'action', 'login', wc_get_page_permalink( 'myaccount' ) );
 		$register_url = add_query_arg( 'action', 'register', wc_get_page_permalink( 'myaccount' ) );

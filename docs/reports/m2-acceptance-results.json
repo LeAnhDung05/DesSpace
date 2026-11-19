@@ -1,87 +1,52 @@
 {
-  "authConfigured": true,
+  "authConfigured": false,
+  "fixtureCreated": true,
   "step1_unselected_variation": {
     "pass": true,
+    "initialBtnDisabled": false,
     "feedbackText": "Vui lòng chọn đầy đủ các thuộc tính sản phẩm trước khi thêm vào giỏ hàng.",
-    "urlUnchanged": true,
-    "initialBtnState": {
-      "disabled": false,
-      "ariaDisabled": "false"
-    }
+    "urlUnchanged": true
   },
   "step2_select_variation_a": {
     "pass": true,
     "data": {
-      "priceHtml": "₫21.000.000 Original price was: ₫21.000.000. ₫18.500.000 Current price is: ₫18.500.000.",
-      "sku": "TEST-VAR-OAK-01",
-      "stockText": "3 in stock",
-      "isInStockClass": true,
-      "qtyMax": "3",
-      "qtyMin": "1",
-      "btnDisabled": false,
-      "imgSrc": "http://localhost:8090/wp-content/uploads/products-real/px-6444266-600x401.jpg"
+      "price": "₫21.000.000 \nOriginal price was: ₫21.000.000.\n₫18.500.000\nCurrent price is: ₫18.500.000.",
+      "sku": "M2-TEST-VAR-OAK",
+      "stock": "3 in stock",
+      "btnDisabled": false
     }
   },
   "step3_select_variation_b": {
     "pass": true,
     "data": {
-      "sku": "TEST-VAR-WENGE-02",
-      "stockText": "Out of stock",
-      "isOutOfStockClass": true,
-      "qtyDisabled": true,
-      "stepperHasDisabledClass": true,
-      "btnDisabled": true,
-      "feedbackText": "Tùy chọn đã chọn hiện đang hết hàng.",
-      "imgSrc": "http://localhost:8090/wp-content/uploads/products-real/px-90317-600x396.jpg"
+      "sku": "M2-TEST-VAR-WENGE",
+      "stock": "Out of stock",
+      "btnDisabled": true
     }
   },
   "step4_add_to_cart_variation": {
     "pass": true,
     "status": "PASS",
     "qtySelected": "2",
-    "cartResult": {
-      "totalItemsInCart": 2,
-      "hasMatchedItem": true,
-      "matchedItemText": " [TEST FIXTURE] Gháº¿ ThÆ° GiÃ£n DeSpace Lounge Chair - Gỗ sồi Modern Oak Màu sắc: Go-soi-modern-oak ₫18.500.000 − + ₫37",
-      "itemQty": 2
-    }
+    "drawerOpen": false
   },
   "step5_quantity_limits_and_validation": {
     "pass": true,
     "valNegative": "1",
     "valZero": "1",
-    "valDecimal": "2",
     "valExceed": "3"
   },
   "step6_add_simple_product_to_cart": {
     "pass": true,
-    "status": "PASS",
-    "simpleData": {
-      "sku": "AXG-STR-030",
-      "stockText": "Còn hàng (Còn 10 sản phẩm)",
-      "btnDisabled": false
-    },
-    "cartHasProduct": true
+    "status": "PASS"
   },
   "step7_simple_out_of_stock": {
     "pass": true,
-    "data": {
-      "stockText": "Hết hàng",
-      "isOutOfStockClass": true,
-      "qtyDisabled": true,
-      "stepperDisabled": true,
-      "btnDisabled": true
-    }
+    "btnDisabled": true
   },
   "step8_non_existent_product_404": {
     "pass": true,
-    "httpStatus": 404,
-    "pageContent": {
-      "has404Title": true,
-      "titleText": "Trang này không tồn tại.",
-      "hasSearchForm": true,
-      "hasNavigation": true
-    }
+    "httpStatus": 404
   },
   "step9_responsive_and_console_audit": {
     "pass": true,
@@ -95,17 +60,15 @@
         "overflow": false
       },
       {
-        "viewport": "390x844",
+        "viewport": "375x812",
         "overflow": false
       }
     ],
-    "consoleErrors": [],
-    "networkFailures": []
+    "jsErrors": []
   },
+  "fixtureCleaned": true,
   "summary": {
     "overallStatus": "PASS",
-    "exitCode": 0,
-    "hasFail": false,
-    "hasBlocked": false
+    "exitCode": 0
   }
 }

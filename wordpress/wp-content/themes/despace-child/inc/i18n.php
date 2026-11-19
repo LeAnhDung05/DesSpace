@@ -662,5 +662,37 @@ add_filter( 'redirect_canonical', function( $redirect_url, $requested_url ) {
 	return $redirect_url;
 }, 10, 2 );
 
+/**
+ * Localized URL helper: preserves /en/ prefix when browsing in English mode.
+ *
+ * @param string $path Path or full URL.
+ * @return string Localized URL.
+ */
+function furniva_url( $path = '/' ) {
+	$url = ( 0 === strpos( $path, 'http://' ) || 0 === strpos( $path, 'https://' ) )
+		? $path
+		: home_url( '/' . ltrim( $path, '/' ) );
+
+	if ( function_exists( 'despace_is_english_mode' ) && despace_is_english_mode() ) {
+		$parsed = wp_parse_url( $url );
+		$p = $parsed['path'] ?? '/';
+		if ( 0 !== strpos( $p, '/en/' ) && '/en' !== $p ) {
+			$new_path = '/en' . ( '/' === $p ? '/' : $p );
+			$scheme   = $parsed['scheme'] ?? ( is_ssl() ? 'https' : 'http' );
+			$host     = $parsed['host'] ?? 'localhost';
+			$port     = isset( $parsed['port'] ) ? ':' . $parsed['port'] : '';
+			$query    = isset( $parsed['query'] ) ? '?' . $parsed['query'] : '';
+			$fragment = isset( $parsed['fragment'] ) ? '#' . $parsed['fragment'] : '';
+			return "{$scheme}://{$host}{$port}{$new_path}{$query}{$fragment}";
+		}
+	}
+
+	return $url;
+}
+
+function despace_url( $path = '/' ) {
+	return furniva_url( $path );
+}
+
 
 

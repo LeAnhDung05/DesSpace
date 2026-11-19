@@ -399,6 +399,7 @@ jQuery(function ($) {
 			brand: [],
 			color: [],
 			size: [],
+			material: [],
 			availability: []
 		};
 		f.language = furnivaData.language;
@@ -422,6 +423,9 @@ jQuery(function ($) {
 		var urlParams = new URLSearchParams(window.location.search);
 		var searchKw = urlParams.get("s") || urlParams.get("q");
 		if (searchKw) f.s = searchKw;
+		if (urlParams.get("on_sale") === "1" && f.availability.indexOf("onsale") === -1) {
+			f.availability.push("onsale");
+		}
 
 		return f;
 	}
@@ -1615,8 +1619,8 @@ jQuery(function ($) {
 		}
 	});
 
-	// If customer is NOT logged in, gate all interactive store features
-	if (typeof furnivaData !== "undefined" && !furnivaData.isLoggedIn) {
+	// If customer is NOT logged in and guest checkout is not allowed, gate all interactive store features
+	if (typeof furnivaData !== "undefined" && !furnivaData.isLoggedIn && !furnivaData.guestCheckoutEnabled) {
 		var isVi = furnivaData.language === "vi";
 
 		// Intercept during capturing phase before any jQuery or WooCommerce handlers
