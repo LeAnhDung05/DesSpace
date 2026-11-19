@@ -44,6 +44,7 @@ class ReconstructionEngine:
         dimensions: Dict[str, Any],
         angles: Dict[str, Any],
         progress_callback: Optional[callable] = None,
+        description: str = "",
     ) -> Dict[str, Any]:
         """
         Execute full 3D + AR reconstruction pipeline (.GLB + .USDZ + Thumbnail).
@@ -59,9 +60,9 @@ class ReconstructionEngine:
         loaded_images = self._load_angle_images(angles)
 
         # 2. Detect Furniture Archetype (supports both Vietnamese & English)
-        archetype = self._resolve_archetype(category, name)
+        archetype = self._resolve_archetype(category, name, description)
 
-        # 3. PBR Texture Atlas Synthesis (with real dominant color extraction + metal accent swatch)
+        # 3. PBR Texture Atlas Synthesis (prioritize title finish color over variant lists in description)
         update_progress(35, "Đang trích xuất chất liệu thực tế và tổng hợp Texture Atlas PBR 1024px...")
         texture_bytes = self._synthesize_pbr_texture(loaded_images, name, archetype)
 
@@ -70,7 +71,7 @@ class ReconstructionEngine:
         dim_d = max(0.10, float(dimensions.get("depth") or 80.0) / 100.0)
         dim_h = max(0.10, float(dimensions.get("height") or 75.0) / 100.0)
 
-        parts = self._build_articulated_parts(category, name, dim_w, dim_d, dim_h)
+        parts = self._build_articulated_parts(category, name, dim_w, dim_d, dim_h, description=description)
         positions, normals, uvs, indices = self._flatten_parts(parts)
         interactive_count = sum(1 for pt in parts if pt.get("interactive"))
         engine_mode = "parametric_articulated_v3" if interactive_count > 0 else "parametric_pbr_v3"
@@ -378,8 +379,8 @@ class ReconstructionEngine:
     # -------------------------------------------------------------------------
     # Archetype Resolution (Bilingual VI / EN)
     # -------------------------------------------------------------------------
-    def _resolve_archetype(self, category: str, name: str = "") -> str:
-        text = f"{category} {name}".lower()
+    def _resolve_archetype(self, category: str, name: str = "", description: str = "") -> str:
+        text = re.sub(r"<[^>]+>", " ", f"{category} {name}").lower()
         if any(k in text for k in ["tủ giày", "tu giay", "shoe"]):
             return "shoe_cabinet"
         if any(k in text for k in ["tủ quần áo", "tu quan ao", "wardrobe", "closet", "armoire"]):
@@ -524,21 +525,29 @@ class ReconstructionEngine:
         size = Config.DEFAULT_TEXTURE_SIZE
         cat = category.lower()
 
-        # Default architectural finish palette by product title/category
+        # Default architectural finish palette prioritizing title keywords (name) cleanly
         default_rgb = (128, 88, 58)  # Warm Columbia Walnut
-        name_lower = name.lower()
-        if any(k in name_lower for k in ["wenge", "nâu trầm", "espresso"]):
-            default_rgb = (78, 54, 40)
+        name_lower = re.sub(r"<[^>]+>", " ", name).lower()
+        is_pure_white = any(k in name_lower for k in ["trắng", "white", "ice white", "ivory"]) and not any(
+            k in name_lower for k in ["sồi", "oak", "óc chó", "walnut", "two-tone"]
+        )
+        is_two_tone = any(k in name_lower for k in ["two-tone", "vàng & nâu", "oak & white"])
+        if any(k in name_lower for k in ["xám", "grey", "gray", "ghi", "hiện đại"]):
+            default_rgb = (154, 150, 145)
+        elif is_two_tone:
+            default_rgb = (76, 52, 40)
+        elif any(k in name_lower for k in ["wenge", "nâu trầm", "espresso"]):
+            default_rgb = (68, 46, 36)
+        elif any(k in name_lower for k in ["óc chó", "walnut", "mocha", "columbia"]):
+            default_rgb = (124, 82, 52)
         elif any(k in name_lower for k in ["sồi", "oak", "natural", "tự nhiên", "rustic", "linear"]):
-            default_rgb = (182, 146, 108)
-        elif any(k in name_lower for k in ["xám", "slate", "grey", "gray", "ghi"]):
-            default_rgb = (118, 116, 114)
-        elif any(k in name_lower for k in ["trắng", "white", "ivory"]) and not any(k in name_lower for k in ["sồi", "oak"]):
-            default_rgb = (224, 219, 210)
+            default_rgb = (186, 150, 112)
+        elif is_pure_white:
+            default_rgb = (234, 232, 227)
         elif any(k in name_lower for k in ["đen", "black", "charcoal"]):
             default_rgb = (52, 47, 44)
         elif any(k in name_lower for k in ["anh đào", "cherry"]):
-            default_rgb = (156, 94, 64)
+            default_rgb = (176, 118, 76)
         elif "sofa" in cat:
             default_rgb = (168, 154, 138)
         elif "chair" in cat:
@@ -548,10 +557,15 @@ class ReconstructionEngine:
 
         primary_photo = loaded_images.get("front") or loaded_images.get("perspective")
         sampled_rgb = self._extract_dominant_color(primary_photo, default_rgb)
-        # Anchor palette between extracted product color and clean finish base so hues stay rich & consistent
-        dom_r = int(sampled_rgb[0] * 0.55 + default_rgb[0] * 0.45)
-        dom_g = int(sampled_rgb[1] * 0.55 + default_rgb[1] * 0.45)
-        dom_b = int(sampled_rgb[2] * 0.55 + default_rgb[2] * 0.45)
+        if is_pure_white:
+            dom_r, dom_g, dom_b = default_rgb
+        elif is_two_tone:
+            dom_r, dom_g, dom_b = (76, 52, 40)
+        else:
+            # Anchor palette between extracted product color and clean finish base so hues stay rich & consistent
+            dom_r = int(sampled_rgb[0] * 0.45 + default_rgb[0] * 0.55)
+            dom_g = int(sampled_rgb[1] * 0.45 + default_rgb[1] * 0.55)
+            dom_b = int(sampled_rgb[2] * 0.45 + default_rgb[2] * 0.55)
         front_rgb = (dom_r, dom_g, dom_b)
         # If two-tone white accent explicitly named with wood (e.g. "Gỗ sồi Sonoma & Trắng"), brighten front facade slightly
         if any(k in name_lower for k in ["trắng", "white"]) and any(k in name_lower for k in ["sồi", "oak"]):
@@ -560,29 +574,30 @@ class ReconstructionEngine:
         atlas = Image.new("RGBA", (size, size), (dom_r, dom_g, dom_b, 255))
         draw = ImageDraw.Draw(atlas)
         q = size // 2
+        amp = 2.0 if is_pure_white else 7.5
 
         # 1. Clean Procedural Wood Grain across all 4 structural quadrants (zero 2D photo artifacts!)
-        self._fill_wood_grain_rect(atlas, (0, 0, q, q), front_rgb, vertical=True, grain_amp=7.5, phase=0.0)
-        back_rgb = (max(24, int(dom_r * 0.78)), max(20, int(dom_g * 0.76)), max(18, int(dom_b * 0.73)))
-        self._fill_wood_grain_rect(atlas, (q, 0, size, q), back_rgb, vertical=False, grain_amp=5.0, phase=19.0)
-        side_rgb = (max(24, int(dom_r * 0.94)), max(20, int(dom_g * 0.93)), max(18, int(dom_b * 0.92)))
-        self._fill_wood_grain_rect(atlas, (0, q, q, size), side_rgb, vertical=True, grain_amp=7.0, phase=37.0)
+        self._fill_wood_grain_rect(atlas, (0, 0, q, q), front_rgb, vertical=True, grain_amp=amp, phase=0.0)
+        back_rgb = (max(24, int(dom_r * 0.80)), max(20, int(dom_g * 0.78)), max(18, int(dom_b * 0.76)))
+        self._fill_wood_grain_rect(atlas, (q, 0, size, q), back_rgb, vertical=False, grain_amp=min(amp, 5.0), phase=19.0)
+        side_rgb = (max(24, int(dom_r * 0.95)), max(20, int(dom_g * 0.94)), max(18, int(dom_b * 0.93)))
+        self._fill_wood_grain_rect(atlas, (0, q, q, size), side_rgb, vertical=True, grain_amp=amp, phase=37.0)
         top_rgb = (min(242, int(dom_r * 1.03)), min(238, int(dom_g * 1.03)), min(234, int(dom_b * 1.02)))
-        self._fill_wood_grain_rect(atlas, (q, q, int(size * 0.85), int(size * 0.85)), top_rgb, vertical=False, grain_amp=6.5, phase=53.0)
+        self._fill_wood_grain_rect(atlas, (q, q, int(size * 0.85), int(size * 0.85)), top_rgb, vertical=False, grain_amp=min(amp, 6.5), phase=53.0)
 
         # Dedicated Accent Swatch at (0.85..1.0, 0.85..1.0) -> Dark Espresso / Matte Black Metal
         acc_start = int(size * 0.85)
         draw.rectangle([acc_start, acc_start, size, size], fill=(32, 28, 26, 255))
-        # Subtle dark wood / louver slat swatch at (0.72..0.85, 0.85..1.0)
+        # Dark louver slat swatch (or warm honey oak slat for Vàng & Nâu Two-Tone contrast!)
         slat_start = int(size * 0.72)
-        draw.rectangle(
-            [slat_start, acc_start, acc_start - 1, size],
-            fill=(max(18, int(dom_r * 0.45)), max(15, int(dom_g * 0.43)), max(13, int(dom_b * 0.41)), 255),
+        slat_rgb = (212, 162, 102, 255) if is_two_tone else (
+            max(18, int(dom_r * 0.45)), max(15, int(dom_g * 0.43)), max(13, int(dom_b * 0.41)), 255
         )
+        draw.rectangle([slat_start, acc_start, acc_start - 1, size], fill=slat_rgb)
         # Warm Clean Interior Cavity / Shelf Grain Swatch at (0.55..0.71, 0.85..1.0)
         int_start = int(size * 0.55)
-        int_rgb = (max(26, int(dom_r * 0.84)), max(22, int(dom_g * 0.82)), max(20, int(dom_b * 0.80)))
-        self._fill_wood_grain_rect(atlas, (int_start, acc_start, slat_start - 1, size), int_rgb, vertical=False, grain_amp=4.5, phase=71.0)
+        int_rgb = (max(26, int(dom_r * 0.86)), max(22, int(dom_g * 0.85)), max(20, int(dom_b * 0.83)))
+        self._fill_wood_grain_rect(atlas, (int_start, acc_start, slat_start - 1, size), int_rgb, vertical=False, grain_amp=min(amp, 4.5), phase=71.0)
 
         out_buf = io.BytesIO()
         atlas.save(out_buf, format="PNG", optimize=True)
@@ -626,68 +641,132 @@ class ReconstructionEngine:
         return all_p, all_n, all_uv, all_idx
 
     @staticmethod
-    def _parse_part_spec(name: str, w: float, d: float, h: float, arch: str) -> Dict[str, Any]:
-        lower = (name or "").lower()
-        door_match = re.search(r"(\d+)\s*(?:cánh|canh|doors?)", lower)
-        drawer_match = re.search(r"(\d+)\s*(?:ngăn kéo|ngan keo|hộc kéo|drawers?)", lower)
-        shelf_match = re.search(r"(\d+)\s*(?:tầng|ngăn kệ|shelves?)", lower)
+    def _parse_part_spec(name: str, w: float, d: float, h: float, arch: str, description: str = "") -> Dict[str, Any]:
+        clean_name = re.sub(r"<[^>]+>", " ", name or "").lower()
+        clean_desc = re.sub(r"<[^>]+>", " ", description or "").lower()
+        combined = f"{clean_name} {clean_desc}"
+
+        # Prefer explicit structured spec ("X Cánh cửa | Y Ngăn kệ | Z Ngăn kéo"), then fall back to title/prose
+        door_match = (
+            re.search(r"(\d+)\s*cánh\s*cửa", combined)
+            or re.search(r"(\d+)\s*(?:cánh|canh|doors?)\b", combined)
+        )
+        drawer_match = (
+            re.search(r"(\d+)\s*ngăn\s*kéo", combined)
+            or re.search(r"(\d+)\s*(?:ngăn kéo|ngan keo|hộc kéo|drawers?)\b", combined)
+        )
+        shelf_match = (
+            re.search(r"(\d+)\s*ngăn\s*kệ", combined)
+            or re.search(r"(\d+)\s*(?:tầng kệ|tầng|shelves?)\b", combined)
+        )
 
         door_count = int(door_match.group(1)) if door_match else None
         drawer_count = int(drawer_match.group(1)) if drawer_match else None
         shelf_count = int(shelf_match.group(1)) if shelf_match else None
 
-        has_sliding_door = any(k in lower for k in ["cánh lùa", "canh lua", "barn door", "cửa lùa", "sliding"])
-        has_drawer_kw = any(k in lower for k in ["ngăn kéo", "ngan keo", "hộc kéo", "drawer"])
-        has_door_kw = any(k in lower for k in ["cánh", "canh", "cửa", "door", "tủ"])
+        has_sliding_door = any(k in combined for k in ["cánh lùa", "canh lua", "barn door", "cửa lùa", "sliding"])
+        # Strip explicit "0 ngăn kéo" phrasing before checking drawer presence keyword
+        combined_no_zero_drawer = re.sub(r"\b0\s*(?:ngăn kéo|ngan keo|drawers?)\b", " ", combined)
+        has_drawer_kw = any(k in combined_no_zero_drawer for k in ["ngăn kéo", "ngan keo", "hộc kéo", "drawer"])
+        has_door_kw = any(k in clean_name for k in ["cánh", "canh", "cửa", "door", "tủ"])
 
+        # Door front style from architectural cues using word boundaries (avoid matching 'slat' inside 'slate'!)
+        if any(k in combined for k in ["farmhouse", "chữ x", "cross brace", "willowbrook"]):
+            door_style = "x_brace"
+        elif any(k in combined for k in ["cánh kính", "glass door", "shelvo"]):
+            door_style = "glass"
+        elif any(k in combined for k in ["gương soi", "tích hợp gương", "mirror"]):
+            door_style = "mirror"
+        elif (
+            re.search(r"\b(?:louver(?:ed)?|slats?|slatted|nan|chớp)\b", combined)
+            or any(k in combined for k in ["cánh chớp", "metro", "skyline", "ever fresh", "tower", "axis"])
+        ):
+            door_style = "louver"
+        elif any(k in combined for k in ["zest", "ô vuông", "nổi ô"]):
+            door_style = "framed"
+        else:
+            door_style = "smooth"
+
+        # Archetype-specific structural resolution
+        bookcase_mode = "open_shelving"
         if arch == "chest_of_drawers":
             if drawer_count is None:
                 drawer_count = 6 if w >= 1.05 else (5 if h >= 1.1 else 4)
-            door_count = 0
+            door_count = 1 if has_sliding_door else 0
         elif arch == "bookcase":
-            if door_count is None:
-                door_count = 2 if any(k in lower for k in ["cánh", "canh", "door", "tủ sách"]) else 0
+            if any(k in combined for k in ["chữ a", "dáng thang", "ladder", "a-frame", "stair"]):
+                bookcase_mode = "ladder_a_frame"
+                door_count = 0
+                drawer_count = 0
+            elif door_count is None:
+                if any(k in combined for k in ["trưng bày", "cánh kính", "tủ sách", "cánh tủ", "khóa"]):
+                    door_count = 2 if any(k in combined for k in ["2", "trưng bày", "cánh kính", "tủ sách"]) else 0
+                else:
+                    door_count = 0
             if drawer_count is None:
-                drawer_count = 1 if (door_count == 0 or has_drawer_kw) else 0
+                # Never fabricate phantom drawers onto open bookshelves or glass bookcases
+                drawer_count = 1 if has_drawer_kw else 0
+            if bookcase_mode != "ladder_a_frame":
+                if door_count > 0 and door_style == "glass":
+                    bookcase_mode = "glass_upper_wood_lower"
+                elif door_count > 0 and h >= 1.25:
+                    bookcase_mode = "hybrid_open_top_doors_bottom"
+                else:
+                    bookcase_mode = "open_shelving"
         elif arch == "wardrobe":
             if door_count is None:
-                door_count = 4 if w >= 1.18 and "4" in lower else (3 if w >= 1.08 else 2)
+                door_count = 4 if (w >= 1.18 and "4" in combined) else (3 if w >= 1.08 else 2)
             if drawer_count is None:
                 drawer_count = 1 if has_drawer_kw else 0
         else:  # shoe_cabinet or cabinet / kitchen
             if door_count is None:
                 if has_door_kw:
-                    door_count = 4 if (h >= 1.20 and w >= 1.05 and "4" in lower) else (3 if w >= 0.95 else 2)
+                    door_count = 4 if (h >= 1.20 and w >= 1.05 and "4" in combined) else (3 if w >= 0.95 else 2)
                 else:
                     door_count = 2
             if drawer_count is None:
-                if has_drawer_kw:
-                    drawer_count = 2 if w >= 0.95 else 1
-                else:
-                    drawer_count = 0
+                # Default to 1 if title mentions drawer without count (never invent 2!)
+                drawer_count = 1 if has_drawer_kw else 0
+
+        # Only extrude drawers on top outside doors if >=2 drawers OR tall compartment (>=1.12m like Zest Chic)
+        external_drawer = (
+            arch == "shoe_cabinet"
+            and drawer_count > 0
+            and (drawer_count >= 2 or h >= 1.12)
+        )
+        open_center_niche = (
+            arch in ("shoe_cabinet", "wardrobe", "cabinet")
+            and door_count == 4
+            and h >= 1.25
+            and w < 1.30
+        )
 
         return {
             "door_count": max(0, min(6, door_count or 0)),
             "drawer_count": max(0, min(8, drawer_count or 0)),
-            "shelf_count": max(2, min(8, shelf_count)) if shelf_count else None,
+            "shelf_count": max(2, min(9, shelf_count)) if shelf_count else None,
             "has_sliding_door": has_sliding_door,
+            "door_style": door_style,
+            "bookcase_mode": bookcase_mode,
+            "external_drawer": external_drawer,
+            "open_center_niche": open_center_niche,
         }
 
     def _build_articulated_parts(
-        self, category: str, name: str, width: float, depth: float, height: float
+        self, category: str, name: str, width: float, depth: float, height: float, description: str = ""
     ) -> List[Dict[str, Any]]:
         """
         Build multi-part furniture hierarchy (static hollow Carcass + interior shelves/rail +
         individual pivoted Doors & sliding Drawers in local coordinates around their hinges/tracks).
         """
-        arch = self._resolve_archetype(category, name)
+        arch = self._resolve_archetype(category, name, description)
         if arch in ("sofa", "chair", "table", "bed", "lamp"):
             p, n, uv, idx = self._build_geometry(f"{category} {name}", width, depth, height)
             part = self._new_part(name or arch)
             part["positions"], part["normals"], part["uvs"], part["indices"] = p, n, uv, idx
             return [part]
 
-        spec = self._parse_part_spec(f"{category} {name}", width, depth, height, arch)
+        spec = self._parse_part_spec(f"{category} {name}", width, depth, height, arch, description=description)
         if arch == "shoe_cabinet":
             return self._build_shoe_cabinet_parts(width, depth, height, spec)
         if arch == "wardrobe":
@@ -852,11 +931,11 @@ class ReconstructionEngine:
         door_t: float = 0.015,
         louver_slats: int = 0,
         handle_tall: bool = False,
+        door_style: str = "smooth",
     ) -> Dict[str, Any]:
         """
         Build a pivoted door node whose origin lies exactly on the physical hinge axis.
-        - Hinge L: local X spans [0, +door_w], swings -94 deg (-1.64 rad) toward +Z.
-        - Hinge R: local X spans [-door_w, 0], swings +94 deg (+1.64 rad) toward +Z.
+        Supports distinct facade treatments ('louver', 'x_brace', 'glass_window', 'framed', 'smooth').
         """
         is_left = hinge_side.upper() == "L"
         hinge_x = center_x - door_w / 2.0 if is_left else center_x + door_w / 2.0
@@ -876,18 +955,43 @@ class ReconstructionEngine:
         )
         p, n, uv, idx = part["positions"], part["normals"], part["uvs"], part["indices"]
 
-        # Main door panel
-        self._add_box(p, n, uv, idx, (local_cx, 0.0, 0.0), (door_w, door_h, door_t), self.UV_FRONT)
+        if door_style == "glass_window":
+            # Framed perimeter stiles/rails leaving clear display window to view shelves behind!
+            rim_x = max(0.022, min(0.042, door_w * 0.14))
+            rim_y = max(0.026, min(0.048, door_h * 0.07))
+            self._add_box(p, n, uv, idx, (local_cx - door_w / 2.0 + rim_x / 2.0, 0.0, 0.0), (rim_x, door_h, door_t), self.UV_FRONT)
+            self._add_box(p, n, uv, idx, (local_cx + door_w / 2.0 - rim_x / 2.0, 0.0, 0.0), (rim_x, door_h, door_t), self.UV_FRONT)
+            self._add_box(p, n, uv, idx, (local_cx, door_h / 2.0 - rim_y / 2.0, 0.0), (max(0.02, door_w - rim_x * 2.0), rim_y, door_t), self.UV_FRONT)
+            self._add_box(p, n, uv, idx, (local_cx, -door_h / 2.0 + rim_y / 2.0, 0.0), (max(0.02, door_w - rim_x * 2.0), rim_y, door_t), self.UV_FRONT)
+        else:
+            # Main solid door panel
+            self._add_box(p, n, uv, idx, (local_cx, 0.0, 0.0), (door_w, door_h, door_t), self.UV_FRONT)
 
-        # Optional louvered ventilation slats
-        if louver_slats > 0:
+        # Louvered slats ONLY when door_style == 'louver'
+        if door_style == "louver" and louver_slats > 0:
             for s in range(louver_slats):
                 sy = -door_h * 0.36 + s * (door_h * 0.72 / max(1, louver_slats - 1))
                 self._add_box(p, n, uv, idx, (local_cx, sy, door_t / 2.0 + 0.002), (door_w * 0.76, door_h * 0.042, 0.004), self.UV_SLAT)
+        elif door_style == "x_brace":
+            # Stepped diagonal farmhouse rails + raised border trim
+            bt = max(0.016, door_w * 0.09)
+            self._add_box(p, n, uv, idx, (local_cx - door_w / 2.0 + bt / 2.0, 0.0, door_t / 2.0 + 0.002), (bt, door_h * 0.96, 0.005), self.UV_TOP)
+            self._add_box(p, n, uv, idx, (local_cx + door_w / 2.0 - bt / 2.0, 0.0, door_t / 2.0 + 0.002), (bt, door_h * 0.96, 0.005), self.UV_TOP)
+            self._add_box(p, n, uv, idx, (local_cx, door_h * 0.44, door_t / 2.0 + 0.002), (door_w * 0.94, bt, 0.005), self.UV_TOP)
+            self._add_box(p, n, uv, idx, (local_cx, -door_h * 0.44, door_t / 2.0 + 0.002), (door_w * 0.94, bt, 0.005), self.UV_TOP)
+            steps = 7
+            for k in range(steps):
+                t = (k / (steps - 1)) - 0.5
+                self._add_box(p, n, uv, idx, (local_cx + t * door_w * 0.62, t * door_h * 0.74, door_t / 2.0 + 0.003), (door_w * 0.16, door_h * 0.14, 0.004), self.UV_TOP)
+                self._add_box(p, n, uv, idx, (local_cx - t * door_w * 0.62, t * door_h * 0.74, door_t / 2.0 + 0.003), (door_w * 0.16, door_h * 0.14, 0.004), self.UV_TOP)
+        elif door_style == "framed":
+            bt = max(0.014, door_w * 0.07)
+            self._add_box(p, n, uv, idx, (local_cx - door_w / 2.0 + bt / 2.0, 0.0, door_t / 2.0 + 0.002), (bt, door_h * 0.94, 0.004), self.UV_SIDE)
+            self._add_box(p, n, uv, idx, (local_cx + door_w / 2.0 - bt / 2.0, 0.0, door_t / 2.0 + 0.002), (bt, door_h * 0.94, 0.004), self.UV_SIDE)
 
         # Metallic pull handle near the swing edge (away from hinge)
         hx = door_w * 0.84 if is_left else -door_w * 0.84
-        handle_h = min(0.32, door_h * 0.24) if handle_tall else min(0.14, door_h * 0.28)
+        handle_h = min(0.30, door_h * 0.24) if handle_tall else min(0.14, door_h * 0.28)
         self._add_box(p, n, uv, idx, (hx, 0.0, door_t / 2.0 + 0.010), (0.012, handle_h, 0.015), self.UV_METAL)
         return part
 
@@ -983,6 +1087,8 @@ class ReconstructionEngine:
         louver_slats: int = 0,
         handle_tall: bool = False,
         shelf_count: int = 4,
+        door_style: str = "smooth",
+        open_center_niche: bool = False,
     ):
         """Populate interior shelves/partitions and attach 2/3/4 individually hinged doors."""
         cp, cn, cuv, cidx = carcass["positions"], carcass["normals"], carcass["uvs"], carcass["indices"]
@@ -993,7 +1099,7 @@ class ReconstructionEngine:
         gap = 0.006
 
         # 2x2 Stacked 4 doors for tall/kitchen 4-door cabinets
-        is_2x2 = (door_count == 4 and w < 1.28)
+        is_2x2 = (door_count == 4 and w < 1.30)
         cols = 2 if is_2x2 else door_count
         rows = 2 if is_2x2 else 1
 
@@ -1011,21 +1117,40 @@ class ReconstructionEngine:
             sy = bay_bottom + s * (bay_h / n_shelves)
             self._add_box(cp, cn, cuv, cidx, (0.0, sy, shelf_zc), (usable_w, 0.016, usable_d), self.UV_INTERIOR)
 
-        # Hinged doors arranged cleanly by row & col
-        row_h = (bay_h - side_t - gap * (rows - 1)) / rows
+        # Hinged doors arranged cleanly by row & col (supporting open center display cubby when 2x2 tall cabinet)
         door_w = (w * 0.94 - gap * (cols - 1)) / cols
-        door_h = row_h * 0.96
         start_x = -((door_w * cols + gap * (cols - 1)) / 2.0) + door_w / 2.0
 
+        if is_2x2 and open_center_niche:
+            niche_h = max(0.14, min(0.24, bay_h * 0.14))
+            rem_h = bay_h - side_t - niche_h
+            upper_h = rem_h * 0.48
+            lower_h = rem_h * 0.52
+            upper_bot = bay_bottom + lower_h + niche_h
+            lower_bot = bay_bottom
+            # Clean open shelf frames capping center niche
+            self._add_box(cp, cn, cuv, cidx, (0.0, upper_bot, -0.008), (usable_w, 0.018, d * 0.92), self.UV_TOP)
+            self._add_box(cp, cn, cuv, cidx, (0.0, lower_bot + lower_h, -0.008), (usable_w, 0.018, d * 0.92), self.UV_TOP)
+            row_specs = [
+                (" trên", upper_bot + upper_h / 2.0, upper_h * 0.95),
+                (" dưới", lower_bot + lower_h / 2.0, lower_h * 0.95),
+            ]
+        else:
+            row_h = (bay_h - side_t - gap * (rows - 1)) / rows
+            row_specs = []
+            for r in range(rows):
+                tier_vi = (" trên" if r == 0 else " dưới") if rows > 1 else ""
+                row_cy = bay_bottom + bay_h - side_t / 2.0 - r * (row_h + gap) - row_h / 2.0
+                row_specs.append((tier_vi, row_cy, row_h * 0.96))
+
         door_idx = 1
-        for r in range(rows):
-            row_cy = bay_bottom + bay_h - side_t / 2.0 - r * (row_h + gap) - row_h / 2.0
+        for tier_vi, row_cy, door_h in row_specs:
             for c in range(cols):
                 dx = start_x + c * (door_w + gap)
                 hinge_side = "R" if ((cols == 3 and c == 2) or (cols != 3 and c % 2 == 1)) else "L"
                 side_vi = "trái" if hinge_side == "L" else "phải"
-                tier_vi = (" trên" if r == 0 else " dưới") if rows > 1 else ""
                 label = f"Cánh{tier_vi} {door_idx} ({side_vi})"
+                eff_style = "x_brace" if (door_style == "x_brace" and c == 0) else ("smooth" if door_style == "x_brace" else door_style)
                 parts.append(
                     self._add_hinged_door_part(
                         door_idx,
@@ -1037,13 +1162,14 @@ class ReconstructionEngine:
                         door_w,
                         door_h,
                         door_t=door_t,
-                        louver_slats=louver_slats,
+                        louver_slats=louver_slats if eff_style == "louver" else 0,
                         handle_tall=handle_tall,
+                        door_style=eff_style,
                     )
                 )
                 door_idx += 1
 
-    # 1. Articulated Louvered Shoe Cabinet (Hollow + Shelves + Doors + Optional Top Drawers)
+    # 1. Articulated Shoe Cabinet (Hollow + Shelves + Doors + External/Internal Top Drawers)
     def _build_shoe_cabinet_parts(self, w: float, d: float, h: float, spec: Dict[str, Any]) -> List[Dict[str, Any]]:
         carcass = self._new_part("Carcass")
         parts: List[Dict[str, Any]] = [carcass]
@@ -1065,13 +1191,15 @@ class ReconstructionEngine:
             self._add_box(cp, cn, cuv, cidx, (0.0, leg_h / 2.0, 0.0), (leg_w * 0.85, leg_h, leg_w * 0.85), self.UV_METAL)
 
         drawer_count = spec.get("drawer_count", 0)
+        external_drawer = bool(spec.get("external_drawer", False))
         door_count = max(2, spec.get("door_count", 3 if w >= 0.95 else 2))
+        door_style = spec.get("door_style", "smooth")
+        open_center_niche = bool(spec.get("open_center_niche", False))
         door_bay_h = body_h
 
-        if drawer_count > 0:
+        if drawer_count > 0 and external_drawer:
             drawer_bay_h = min(0.17, body_h * 0.22)
             door_bay_h = body_h - drawer_bay_h
-            # Horizontal shelf separating top drawers & lower doors
             sep_y = leg_h + door_bay_h
             self._add_box(cp, cn, cuv, cidx, (0.0, sep_y, -0.014), (w * 0.96 - side_t, 0.018, max(0.08, d - 0.03)), self.UV_INTERIOR)
             gap = 0.008
@@ -1092,6 +1220,22 @@ class ReconstructionEngine:
                         d,
                     )
                 )
+        elif drawer_count > 0:
+            # Concealed upper organizer drawer behind front doors (keeps exterior doors full-height like real photo)
+            inner_w = max(0.18, w * 0.44 - side_t)
+            inner_h = min(0.11, body_h * 0.16)
+            parts.append(
+                self._add_sliding_drawer_part(
+                    1,
+                    "Ngăn kéo ẩn trên",
+                    0.0,
+                    leg_h + body_h - inner_h * 0.72,
+                    d / 2.0 - 0.034,
+                    inner_w,
+                    inner_h,
+                    d * 0.86,
+                )
+            )
 
         shelf_n = spec.get("shelf_count") or (6 if h >= 1.5 else (4 if h >= 1.0 else 3))
         self._build_door_pair_or_row(
@@ -1103,12 +1247,14 @@ class ReconstructionEngine:
             door_bay_h - side_t,
             door_count,
             side_t=side_t,
-            louver_slats=6 if door_bay_h < 1.1 else 8,
+            louver_slats=(6 if door_bay_h < 1.1 else 8) if door_style == "louver" else 0,
             shelf_count=shelf_n,
+            door_style=door_style,
+            open_center_niche=open_center_niche,
         )
         return parts
 
-    # 2. Articulated Wardrobe / Closet (Hollow + Partition + Top Shelf + Clothes Rail + Hinged Doors + Optional Hidden Drawer)
+    # 2. Articulated Wardrobe / Closet (Hollow + Partition + Top Shelf + Clothes Rail + Hinged Doors + Optional Inner Drawer)
     def _build_wardrobe_parts(self, w: float, d: float, h: float, spec: Dict[str, Any]) -> List[Dict[str, Any]]:
         carcass = self._new_part("Carcass")
         parts: List[Dict[str, Any]] = [carcass]
@@ -1131,14 +1277,15 @@ class ReconstructionEngine:
         self._add_box(cp, cn, cuv, cidx, (0.0, top_shelf_y, shelf_zc), (usable_w, 0.018, usable_d), self.UV_INTERIOR)
 
         door_count = max(2, spec.get("door_count", 3 if w >= 1.08 else 2))
+        door_style = spec.get("door_style", "smooth")
+        open_center_niche = bool(spec.get("open_center_niche", False))
+
         if door_count >= 2:
-            # Partition separating hanging zone and folded storage shelves
             part_x = usable_w * 0.08 if door_count == 2 else -usable_w * 0.16
             self._add_box(cp, cn, cuv, cidx, (part_x, plinth_h + body_h / 2.0, shelf_zc), (0.018, body_h - side_t, usable_d), self.UV_INTERIOR)
             rail_w = (part_x - (-usable_w / 2.0)) - 0.03 if door_count == 2 else (usable_w / 2.0 - part_x) - 0.04
             rail_cx = (-usable_w / 2.0 + part_x) / 2.0 if door_count == 2 else (part_x + usable_w / 2.0) / 2.0
             self._add_box(cp, cn, cuv, cidx, (rail_cx, top_shelf_y - 0.065, 0.0), (max(0.15, rail_w), 0.022, 0.022), self.UV_METAL)
-            # 2 Folded-clothing shelves in adjacent bay
             fold_cx = (part_x + usable_w / 2.0) / 2.0 if door_count == 2 else (-usable_w / 2.0 + part_x) / 2.0
             fold_w = abs(usable_w - abs(rail_w)) - 0.04
             for frac in (0.34, 0.56):
@@ -1146,7 +1293,6 @@ class ReconstructionEngine:
         else:
             self._add_box(cp, cn, cuv, cidx, (0.0, top_shelf_y - 0.065, 0.0), (usable_w * 0.92, 0.022, 0.022), self.UV_METAL)
 
-        # Lower inner drawer for Vault model
         if spec.get("drawer_count", 0) > 0:
             parts.append(
                 self._add_sliding_drawer_part(
@@ -1156,10 +1302,29 @@ class ReconstructionEngine:
                     plinth_h + body_h * 0.12,
                     d / 2.0 - 0.036,
                     usable_w * 0.44,
-                    body_h * 0.12,
+                    body_h * 0.10,
                     d * 0.85,
                 )
             )
+
+        if door_count == 4 and open_center_niche:
+            self._build_door_pair_or_row(
+                parts,
+                carcass,
+                w,
+                d,
+                plinth_h + side_t,
+                body_h - side_t,
+                door_count,
+                side_t=side_t,
+                door_t=0.016,
+                louver_slats=6 if door_style == "louver" else 0,
+                handle_tall=True,
+                shelf_count=spec.get("shelf_count") or 6,
+                door_style=door_style,
+                open_center_niche=True,
+            )
+            return parts
 
         gap = 0.006
         door_w = (w * 0.96 - gap * (door_count - 1)) / door_count
@@ -1183,40 +1348,150 @@ class ReconstructionEngine:
                     door_w,
                     door_h,
                     door_t=0.016,
+                    louver_slats=7 if door_style == "louver" else 0,
                     handle_tall=True,
+                    door_style=door_style,
                 )
             )
         return parts
 
-    # 3. Articulated Bookcase (Hollow Open Shelving + Hinged Glass/Wood Doors or Lower Sliding Drawer)
+    # 3. Articulated Bookcase (Ladder A-Frame / Open Shelving / Hybrid Open Top + Doors Bottom / Framed Glass Display)
     def _build_bookcase_parts(self, w: float, d: float, h: float, spec: Dict[str, Any]) -> List[Dict[str, Any]]:
         carcass = self._new_part("Carcass")
         parts: List[Dict[str, Any]] = [carcass]
         cp, cn, cuv, cidx = carcass["positions"], carcass["normals"], carcass["uvs"], carcass["indices"]
 
-        leg_h = max(0.07, h * 0.07)
+        mode = spec.get("bookcase_mode", "open_shelving")
         panel_t = 0.020
-        body_h = h - leg_h
+        shelf_count = spec.get("shelf_count") or (5 if h >= 1.35 else 4)
 
-        # Left & Right stiles + recessed back board + horizontal shelves
+        if mode == "ladder_a_frame":
+            # Smooth angled A-Frame corner ladder bookshelf (continuous diagonal rails, crisp open shelves, 0 drawers)
+            n_tiers = max(4, min(6, shelf_count))
+            tier_h = (h - panel_t) / n_tiers
+            left_x = -w / 2.0
+            # Tall left outer stile + partial back spine
+            self._add_box(cp, cn, cuv, cidx, (left_x + panel_t / 2.0, h / 2.0, 0.0), (panel_t, h, d), self.UV_SIDE)
+            self._add_box(cp, cn, cuv, cidx, (left_x + w * 0.22, h * 0.48, -d / 2.0 + 0.008), (w * 0.40, h * 0.92, 0.012), self.UV_BACK)
+            for s in range(n_tiers):
+                t_bot = s / n_tiers
+                tier_w = w * max(0.30, 1.0 - t_bot * 0.72)
+                sy = s * tier_h + panel_t / 2.0
+                cx = left_x + tier_w / 2.0
+                self._add_box(cp, cn, cuv, cidx, (cx, sy, 0.0), (tier_w, panel_t, d), self.UV_TOP)
+                # Interior vertical cubby divider inside bottom wider tiers
+                if s < n_tiers - 2:
+                    self._add_box(cp, cn, cuv, cidx, (left_x + tier_w * 0.52, s * tier_h + tier_h / 2.0, 0.0), (panel_t * 0.85, tier_h, d * 0.94), self.UV_INTERIOR)
+            # Clean diagonal twin side rails along the sloped edge (front + back)
+            slope_n = 28
+            x_top = left_x + w * 0.28
+            x_bot = left_x + w - panel_t * 0.5
+            for k in range(slope_n):
+                u = k / (slope_n - 1)
+                rx = x_top + u * (x_bot - x_top)
+                ry = (h - panel_t) * (1.0 - u) + tier_h * 0.15
+                self._add_box(cp, cn, cuv, cidx, (rx, ry, d / 2.0 - 0.012), ((x_bot - x_top) / slope_n * 1.4, panel_t * 1.4, 0.022), self.UV_TOP)
+                self._add_box(cp, cn, cuv, cidx, (rx, ry, -d / 2.0 + 0.012), ((x_bot - x_top) / slope_n * 1.4, panel_t * 1.4, 0.022), self.UV_TOP)
+            return parts
+
+        leg_h = max(0.07, h * 0.07)
+        body_h = h - leg_h
+        door_count = spec.get("door_count", 0)
+
+        # Left & Right outer panels + recessed back board
         self._add_box(cp, cn, cuv, cidx, (-w / 2.0 + panel_t / 2.0, leg_h + body_h / 2.0, 0.0), (panel_t, body_h, d), self.UV_SIDE)
         self._add_box(cp, cn, cuv, cidx, (w / 2.0 - panel_t / 2.0, leg_h + body_h / 2.0, 0.0), (panel_t, body_h, d), self.UV_SIDE)
         self._add_box(cp, cn, cuv, cidx, (0.0, leg_h + body_h / 2.0, -d / 2.0 + 0.008), (w - panel_t * 2.0, body_h - panel_t, 0.012), self.UV_BACK)
-
-        shelf_count = spec.get("shelf_count") or (5 if h >= 1.35 else 4)
-        shelf_depth = d - 0.024 if spec.get("door_count", 0) > 0 else d
-        shelf_zc = -0.012 if spec.get("door_count", 0) > 0 else 0.0
-        for s in range(shelf_count):
-            sy = leg_h + panel_t / 2.0 + s * ((body_h - panel_t) / max(1, shelf_count - 1))
-            self._add_box(cp, cn, cuv, cidx, (0.0, sy, shelf_zc), (w - panel_t * 0.2, panel_t, shelf_depth), self.UV_TOP)
-
         # 4 Metal legs
         leg_sz = min(0.038, w * 0.05)
         for lx in (-w * 0.42, w * 0.42):
             for lz in (-d * 0.36, d * 0.36):
                 self._add_box(cp, cn, cuv, cidx, (lx, leg_h / 2.0, lz), (leg_sz, leg_h, leg_sz), self.UV_METAL)
 
-        door_count = spec.get("door_count", 0)
+        if mode == "hybrid_open_top_doors_bottom" and door_count >= 2:
+            # Upper open asymmetrical display shelves + Lower enclosed cabinet doors (e.g. Aura Display Bookcase)
+            lower_h = body_h * 0.40
+            upper_h = body_h - lower_h
+            split_y = leg_h + lower_h
+            # Top board, split board, bottom board
+            self._add_box(cp, cn, cuv, cidx, (0.0, leg_h + panel_t / 2.0, -0.01), (w - panel_t * 0.2, panel_t, d - 0.02), self.UV_TOP)
+            self._add_box(cp, cn, cuv, cidx, (0.0, split_y, 0.0), (w - panel_t * 0.2, panel_t, d), self.UV_TOP)
+            self._add_box(cp, cn, cuv, cidx, (0.0, h - panel_t / 2.0, 0.0), (w - panel_t * 0.2, panel_t, d), self.UV_TOP)
+            # Upper open tier shelf + subtle asymmetric vertical cubby divider
+            mid_upper_y = split_y + upper_h * 0.50
+            self._add_box(cp, cn, cuv, cidx, (0.0, mid_upper_y, 0.0), (w - panel_t * 2.0, panel_t * 0.85, d), self.UV_TOP)
+            self._add_box(cp, cn, cuv, cidx, (-w * 0.14, (mid_upper_y + h) / 2.0, 0.0), (panel_t * 0.8, upper_h * 0.48, d * 0.96), self.UV_INTERIOR)
+            self._add_box(cp, cn, cuv, cidx, (w * 0.14, (split_y + mid_upper_y) / 2.0, 0.0), (panel_t * 0.8, upper_h * 0.48, d * 0.96), self.UV_INTERIOR)
+            # Lower interior divider & shelf
+            self._add_box(cp, cn, cuv, cidx, (0.0, leg_h + lower_h * 0.50, -0.018), (w - panel_t * 2.0, panel_t * 0.8, d - 0.04), self.UV_INTERIOR)
+            # Lower hinged doors
+            gap = 0.006
+            dw = (w - panel_t * 2.0 - gap * (door_count - 1)) / door_count
+            dh = lower_h * 0.94
+            start_x = -((dw * door_count + gap * (door_count - 1)) / 2.0) + dw / 2.0
+            for i in range(door_count):
+                hinge_side = "L" if i % 2 == 0 else "R"
+                parts.append(
+                    self._add_hinged_door_part(
+                        i + 1,
+                        f"Cánh tủ dưới {i + 1}",
+                        hinge_side,
+                        start_x + i * (dw + gap),
+                        leg_h + lower_h / 2.0,
+                        d / 2.0 - 0.009,
+                        dw,
+                        dh,
+                        door_t=0.015,
+                        door_style="smooth",
+                    )
+                )
+            return parts
+
+        if mode == "glass_upper_wood_lower" and door_count >= 2:
+            # Upper framed glass doors showing interior books/shelves + Lower solid wood doors (e.g. Shelvo)
+            lower_h = body_h * 0.36
+            upper_h = body_h - lower_h
+            for s in range(shelf_count):
+                sy = leg_h + panel_t / 2.0 + s * ((body_h - panel_t) / max(1, shelf_count - 1))
+                self._add_box(cp, cn, cuv, cidx, (0.0, sy, -0.012), (w - panel_t * 0.2, panel_t, d - 0.024), self.UV_TOP)
+            gap = 0.006
+            dw = (w - panel_t * 2.0 - gap * (door_count - 1)) / door_count
+            start_x = -((dw * door_count + gap * (door_count - 1)) / 2.0) + dw / 2.0
+            d_idx = 1
+            for tier_cy, tier_h, style in [
+                (leg_h + lower_h + upper_h / 2.0, upper_h * 0.95, "glass_window"),
+                (leg_h + lower_h / 2.0, lower_h * 0.94, "smooth"),
+            ]:
+                for i in range(door_count):
+                    hinge_side = "L" if i % 2 == 0 else "R"
+                    parts.append(
+                        self._add_hinged_door_part(
+                            d_idx,
+                            f"Cánh tủ sách {d_idx}",
+                            hinge_side,
+                            start_x + i * (dw + gap),
+                            tier_cy,
+                            d / 2.0 - 0.009,
+                            dw,
+                            tier_h,
+                            door_t=0.014,
+                            handle_tall=(style == "glass_window"),
+                            door_style=style,
+                        )
+                    )
+                    d_idx += 1
+            return parts
+
+        # Standard Open Shelving Bookcase (+ optional explicit drawer ONLY if spec requests >0)
+        for s in range(shelf_count + 1):
+            sy = leg_h + panel_t / 2.0 + s * ((body_h - panel_t) / max(1, shelf_count))
+            self._add_box(cp, cn, cuv, cidx, (0.0, sy, 0.0), (w - panel_t * 0.2, panel_t, d), self.UV_TOP)
+        # Mid vertical dividers for clean cubby grid aesthetic
+        for s in range(min(2, max(1, shelf_count - 1))):
+            sy_low = leg_h + s * (body_h / max(1, shelf_count))
+            tier_h = body_h / max(1, shelf_count)
+            self._add_box(cp, cn, cuv, cidx, (0.0, sy_low + tier_h / 2.0, 0.0), (panel_t * 0.85, tier_h - panel_t, d * 0.96), self.UV_INTERIOR)
+
         if door_count > 0:
             gap = 0.006
             dw = (w - panel_t * 2.0 - gap * (door_count - 1)) / door_count
@@ -1236,10 +1511,11 @@ class ReconstructionEngine:
                         dh,
                         door_t=0.014,
                         handle_tall=True,
+                        door_style=spec.get("door_style", "smooth"),
                     )
                 )
         elif spec.get("drawer_count", 0) > 0:
-            drawer_h = (body_h - panel_t) / max(1, shelf_count - 1) - panel_t
+            drawer_h = (body_h - panel_t) / max(1, shelf_count) - panel_t
             parts.append(
                 self._add_sliding_drawer_part(
                     1,
@@ -1279,31 +1555,29 @@ class ReconstructionEngine:
         has_barn = bool(spec.get("has_sliding_door", False))
 
         if has_barn:
-            # Left half: vertical divider + 2 inner shelves + front Sliding Barn Door
+            # Drawers on Left Bay, open adjustable shelves + horizontal Sliding Barn Door on Right Bay!
             self._add_box(cp, cn, cuv, cidx, (0.0, leg_h + body_h / 2.0, shelf_zc), (side_t, body_h - side_t, usable_d), self.UV_INTERIOR)
             for s in (1, 2):
                 sy = leg_h + s * (body_h / 3.0)
-                self._add_box(cp, cn, cuv, cidx, (-usable_w * 0.25, sy, shelf_zc), (usable_w * 0.48, 0.016, usable_d), self.UV_INTERIOR)
+                self._add_box(cp, cn, cuv, cidx, (usable_w * 0.25, sy, shelf_zc), (usable_w * 0.48, 0.016, usable_d), self.UV_INTERIOR)
             # Top steel barn track rail
             self._add_box(cp, cn, cuv, cidx, (0.0, h - top_t - 0.015, d / 2.0 + 0.008), (w * 0.96, 0.014, 0.012), self.UV_METAL)
-            # Barn Door sits over left bay and slides rightward onto right bay when opened
             barn_w = usable_w * 0.50
             parts.append(
                 self._add_sliding_barn_door_part(
                     1,
                     "Cánh lùa Barn Door",
-                    -usable_w * 0.25,
+                    usable_w * 0.25,
                     leg_h + body_h / 2.0,
-                    d / 2.0 - 0.002,
+                    d / 2.0 + 0.002,
                     barn_w,
                     body_h * 0.93,
-                    slide_dx=usable_w * 0.48,
+                    slide_dx=-usable_w * 0.48,
                 )
             )
-            # Right bay stacked drawers
             cols = 1
             rows = max(2, drawer_total)
-            col_cx_list = [usable_w * 0.25]
+            col_cx_list = [-usable_w * 0.25]
             col_w = usable_w * 0.46
         else:
             cols = 2 if (drawer_total >= 6 or (drawer_total % 2 == 0 and w >= 1.05)) else 1
@@ -1361,6 +1635,8 @@ class ReconstructionEngine:
 
         door_count = max(2, spec.get("door_count", 3 if w >= 1.25 else 2))
         shelf_n = spec.get("shelf_count") or (6 if h >= 1.15 else 3)
+        door_style = spec.get("door_style", "smooth")
+        open_center_niche = bool(spec.get("open_center_niche", False))
         self._build_door_pair_or_row(
             parts,
             carcass,
@@ -1370,7 +1646,10 @@ class ReconstructionEngine:
             body_h - side_t,
             door_count,
             side_t=side_t,
+            louver_slats=6 if door_style == "louver" else 0,
             shelf_count=shelf_n,
+            door_style=door_style,
+            open_center_niche=open_center_niche,
         )
         return parts
 

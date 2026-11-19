@@ -639,6 +639,7 @@ class DeSpaceAppWindow(tk.Tk):
                         dimensions={"width": w, "depth": d, "height": h},
                         angles=angles,
                         progress_callback=lambda p, m: update_ui_prog(int(p * 0.72), m),
+                        description=f"{short_desc} {self.pub_color_var.get().strip()}",
                     )
                     glb_path = Path(build_meta["glb_path"])
                     usdz_path = Path(build_meta["usdz_path"])
@@ -1070,6 +1071,7 @@ class DeSpaceAppWindow(tk.Tk):
                     dimensions={"width": w, "depth": d, "height": h},
                     angles=angles,
                     progress_callback=lambda p, m: self._log(f"[{p}%] {m}"),
+                    description=name,
                 )
                 self.after(
                     0,

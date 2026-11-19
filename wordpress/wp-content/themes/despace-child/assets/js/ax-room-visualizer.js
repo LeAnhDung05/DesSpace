@@ -702,12 +702,6 @@
             }
           });
 
-          // Zero interactive nodes -> keep pure <model-viewer> active
-          if (!discovered.length) {
-            resetInteractive3DUI();
-            return;
-          }
-
           interactive3D.parts = discovered;
           interactive3D.modelRoot = root;
           interactive3D.scene.add(root);
@@ -737,30 +731,36 @@
           interactive3D.controls.maxDistance = camDist * 2.5;
           interactive3D.controls.update();
 
-          // Render synchronized 1-tap accessibility chips
-          var $pills = $('#ax3DPartPills').empty();
-          discovered.forEach(function (pt, idx) {
-            var btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'ax-part-chip';
-            btn.setAttribute('aria-pressed', 'false');
-            btn.textContent = pt.label || ('Phần ' + (idx + 1));
-            btn.addEventListener('click', function () {
-              toggleInteractivePart(pt);
-            });
-            pt.chipEl = btn;
-            $pills.append(btn);
-          });
-
           interactive3D.active = true;
           var mv = document.getElementById('axMainModelViewer');
           if (mv) {
             mv.style.visibility = 'hidden';
           }
           $('#axInteractive3DStage').show();
-          $('#axBtnToggleDoors').show();
-          $('#ax3DPartPills').show();
-          $('#ax3DPartHint').text('👆 Chạm trực tiếp vào cánh tủ hoặc ngăn kéo để đóng / mở').show();
+
+          var $pills = $('#ax3DPartPills').empty();
+          if (discovered.length) {
+            discovered.forEach(function (pt, idx) {
+              var btn = document.createElement('button');
+              btn.type = 'button';
+              btn.className = 'ax-part-chip';
+              btn.setAttribute('aria-pressed', 'false');
+              btn.textContent = pt.label || ('Phần ' + (idx + 1));
+              btn.addEventListener('click', function () {
+                toggleInteractivePart(pt);
+              });
+              pt.chipEl = btn;
+              $pills.append(btn);
+            });
+            $('#axBtnToggleDoors').show();
+            $('#ax3DPartPills').show();
+            $('#ax3DPartHint').text('👆 Chạm trực tiếp vào cánh tủ hoặc ngăn kéo để đóng / mở').show();
+          } else {
+            $('#axBtnToggleDoors').hide();
+            $('#ax3DPartPills').hide();
+            $('#ax3DPartHint').hide();
+          }
+
           resizeInteractive3DStage();
           startInteractive3DLoop();
           $('#ax3DLoadingOverlay').fadeOut(160);
@@ -791,7 +791,7 @@
       $('#axTabPaneAR').hide().removeClass('ax-tab-active');
       $('#axTabPane3D').show().addClass('ax-tab-active');
       $('#axModalHeaderSubtitle').text('Quan sát chi tiết mô hình 3D 360° — chạm trực tiếp từng cánh cửa hoặc ngăn kéo để đóng/mở');
-      if (interactive3D.parts.length) {
+      if (interactive3D.modelRoot) {
         interactive3D.active = true;
         resizeInteractive3DStage();
         startInteractive3DLoop();

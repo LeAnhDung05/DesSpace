@@ -128,6 +128,7 @@ def run_publish_cli(args):
         dimensions={"width": dims_parts[0], "depth": dims_parts[1], "height": dims_parts[2]},
         angles=angles,
         progress_callback=lambda p, m: print(f"   [{p}%] {m}"),
+        description=args.desc or "",
     )
 
     print("2. Đang đăng sản phẩm, bộ ảnh và cặp mô hình 3D + AR lên DeSpace Shop...")

@@ -34,7 +34,7 @@ print("  DeSpace 3D Studio Desktop — Core Engine Test Suite (TC-PY01 - TC-PY10
 print("=" * 72)
 
 passed = 0
-total = 15
+total = 16
 
 def check(name: str, condition: bool):
     global passed
@@ -214,9 +214,9 @@ check(
 art_res = engine.reconstruct(
     product_id=89,
     sku="DESPACE-ARTICULATED-CABINET",
-    name="Tủ giày 3 cánh kèm ngăn kéo DeSpace Slate",
+    name="Tủ giày 3 cánh kèm 2 ngăn kéo DeSpace Studio",
     category="shoe-racks-storage",
-    dimensions={"width": 114, "depth": 34, "height": 88},
+    dimensions={"width": 114, "depth": 34, "height": 118},
     angles={},
 )
 art_glb = Path(art_res["glb_path"]).read_bytes()
@@ -250,6 +250,30 @@ barn_drawers = [nd for nd in barn_interactive if nd["extras"].get("type") == "dr
 check(
     "TC-PY15: Sideboard Barn Door routes to chest_of_drawers with 1 sliding barn door + 4 stacked drawers",
     len(slide_doors) == 1 and len(barn_drawers) == 4 and barn_res.get("interactive_parts") == 5
+)
+
+# TC-PY16: Strict 0-drawer adherence & no phantom drawers on 3-door cabinets / open bookcases
+zero_drawer_res = engine.reconstruct(
+    product_id=91,
+    sku="DESPACE-ZERO-DRAWER-TEST",
+    name="Tủ giày 3 cánh DeSpace Metro",
+    category="shoe-racks-storage",
+    dimensions={"width": 114, "depth": 33, "height": 76},
+    angles={},
+    description="3 Cánh cửa | 4 Ngăn kệ | 0 Ngăn kéo",
+)
+book_zero_res = engine.reconstruct(
+    product_id=92,
+    sku="DESPACE-OPEN-SHELF-TEST",
+    name="Kệ sách 4 tầng DeSpace Nova",
+    category="bookshelves",
+    dimensions={"width": 75, "depth": 30, "height": 145},
+    angles={},
+    description="0 Cánh cửa | 4 Ngăn kệ | 0 Ngăn kéo",
+)
+check(
+    "TC-PY16: Strict spec adherence produces 3 doors / 0 drawers and open shelf / 0 phantom drawers",
+    zero_drawer_res.get("interactive_parts") == 3 and book_zero_res.get("interactive_parts") == 0
 )
 
 print("=" * 72)

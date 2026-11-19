@@ -299,6 +299,7 @@ class ExcelProcessor:
                     category=cat,
                     dimensions=dims,
                     angles=angles,
+                    description=item.get("short_description", ""),
                 )
 
                 synced = False
