@@ -386,7 +386,7 @@ function furniva_assets() {
 			'newsletterSuccess' => despace_t( 'Subscribed! Use code WELCOME10 for 10% off.', 'Đăng ký thành công! Dùng mã WELCOME10 để giảm 10%.' ),
 			'contactPreview'    => despace_t( 'Preview form', 'Biểu mẫu xem trước' ),
 			'contactThanks'     => despace_t( 'Thanks for reaching out.', 'Cảm ơn bạn đã liên hệ.' ),
-			'contactNotSent'    => despace_t( 'This preview does not send email yet. You can reach us at noithat@despace.vn.', 'Biểu mẫu xem trước này chưa gửi email. Bạn có thể liên hệ với chúng tôi qua noithat@despace.vn.' ),
+			'contactNotSent'    => despace_t( 'This preview does not send email yet. You can reach us at contact@despace.test (Course Simulation).', 'Biểu mẫu xem trước này chưa gửi email. Bạn có thể liên hệ với chúng tôi qua contact@despace.test (Mô phỏng đồ án).' ),
 			'adding'            => despace_t( 'Adding…', 'Đang thêm…' ),
 			'buyNow'            => despace_t( 'Buy Now', 'Mua ngay' ),
 			'couldNotAdd'       => despace_t( 'Could not add the product.', 'Không thể thêm sản phẩm vào giỏ.' ),
@@ -425,6 +425,20 @@ function furniva_assets() {
 			'linkLabel'         => furniva_t( 'Link: ', 'Liên kết: ' ),
 			'searchPlaceholder' => despace_t( 'Search products…', 'Tìm kiếm sản phẩm…' ),
 			'searchButton'      => despace_t( 'Search', 'Tìm kiếm' ),
+		),
+		'policyUrls' => array(
+			'shipping' => furniva_url( '/chinh-sach-giao-hang/' ),
+			'returns'  => furniva_url( '/chinh-sach-doi-tra-bao-hanh/' ),
+			'privacy'  => furniva_url( '/chinh-sach-bao-mat/' ),
+			'terms'    => furniva_url( '/dieu-khoan-mua-ban/' ),
+		),
+		'policyStrings' => array(
+			'heading'    => furniva_t( 'Additional Customer Rights & Policies:', 'Chính sách bổ trợ & Quyền lợi khách hàng DeSpace:' ),
+			'shipping'   => furniva_t( 'Shipping & Installation Policy', 'Chính sách giao hàng & lắp đặt' ),
+			'returns'    => furniva_t( 'Returns & 5-Year Warranty Policy', 'Chính sách đổi trả & bảo hành 5 năm' ),
+			'privacy'    => furniva_t( 'Privacy Policy', 'Chính sách bảo mật' ),
+			'terms'      => furniva_t( 'Terms of Sale', 'Điều khoản mua bán' ),
+			'disclaimer' => furniva_t( 'Educational project simulation for DeSpace luxury furniture.', 'Nội dung quy chuẩn phục vụ đồ án học tập/thực nghiệm DeSpace.' ),
 		),
 	);
 	wp_localize_script( 'furniva', 'furnivaData', $despace_js_data );

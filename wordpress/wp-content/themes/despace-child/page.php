@@ -22,6 +22,9 @@ while ( have_posts() ) :
 		if ( function_exists( 'is_cart' ) && ( is_cart() || is_checkout() ) ) {
 			echo '<div class="f-wrap f-wc-content">';
 			the_content();
+			if ( is_checkout() && function_exists( 'despace_render_checkout_policy_notice' ) ) {
+				despace_render_checkout_policy_notice();
+			}
 			echo '</div>';
 		} else {
 		echo '<div class="entry-content f-page-content f-page-content--' . esc_attr( sanitize_html_class( $page_slug ) ) . '">';

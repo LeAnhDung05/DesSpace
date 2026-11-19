@@ -5,11 +5,11 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 $shop_id    = wc_get_page_id( 'shop' );
-$shop_url   = $shop_id > 0 ? get_permalink( $shop_id ) : home_url( '/shop/' );
+$shop_url   = furniva_url( $shop_id > 0 ? get_permalink( $shop_id ) : home_url( '/shop/' ) );
 $blog_id    = (int) get_option( 'page_for_posts' );
-$blog_url   = $blog_id ? get_permalink( $blog_id ) : home_url( '/blog/' );
-$account_url = furniva_wc_active() ? get_permalink( wc_get_page_id( 'myaccount' ) ) : home_url( '/my-account/' );
-$wishlist_url = function_exists( 'YITH_WCWL' ) ? YITH_WCWL()->get_wishlist_url() : home_url( '/wishlist/' );
+$blog_url   = furniva_url( $blog_id ? get_permalink( $blog_id ) : home_url( '/blog/' ) );
+$account_url = furniva_url( furniva_wc_active() ? get_permalink( wc_get_page_id( 'myaccount' ) ) : home_url( '/my-account/' ) );
+$wishlist_url = furniva_url( function_exists( 'YITH_WCWL' ) ? YITH_WCWL()->get_wishlist_url() : home_url( '/wishlist/' ) );
 $wishlist_count = 0;
 if ( function_exists( 'yith_wcwl_count_all_products' ) ) {
 	$wishlist_count = yith_wcwl_count_all_products();
@@ -65,7 +65,7 @@ $announcements = array(
 	array(
 		'text'    => furniva_t( 'Personal styling & showroom consultation by DeSpace', 'Tư vấn không gian sống 1-1 cùng chuyên gia DeSpace' ),
 		'title'   => furniva_t( '1-on-1 Personal Interior Styling Consultation', 'Tư vấn không gian sống 1-1 cùng chuyên gia' ),
-		'content' => furniva_t( 'Book a personalized styling session with our interior architects at our showroom (So 20 ngach 21 ngo 367 Ngo Xuan Quan, Gia Lam, Hanoi) or via virtual consultation.', 'Đặt lịch tư vấn trực tiếp 1-1 cùng đội ngũ kiến trúc sư DeSpace tại Showroom (Số 20 ngách 21 ngõ 367 Ngô Xuân Quảng, Gia Lâm, Hà Nội) hoặc qua tư vấn từ xa.' ),
+		'content' => furniva_t( 'Book a personalized styling session with our interior architects at our showroom (DeSpace Building, 123 Nguyen Trai, Thanh Xuan, Hanoi — Course Simulation) or via virtual consultation.', 'Đặt lịch tư vấn trực tiếp 1-1 cùng đội ngũ kiến trúc sư DeSpace tại Showroom (Tòa nhà DeSpace, Số 123 Đường Nguyễn Trãi, Thanh Xuân, Hà Nội — Mô phỏng đồ án) hoặc qua tư vấn từ xa.' ),
 		'action'  => furniva_t( 'Book Consultation', 'Đặt lịch tư vấn' ),
 		'url'     => furniva_url( '/lien-he/' ),
 	),
@@ -116,11 +116,11 @@ $announcements = array(
 		</div>
 
 		<nav class="fv-primary-nav" aria-label="<?php echo esc_attr( furniva_t( 'Primary navigation', 'Điều hướng chính' ) ); ?>">
-			<a <?php echo is_front_page() ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php echo esc_html( furniva_t( 'Home', 'Trang chủ' ) ); ?></a>
+			<a <?php echo is_front_page() ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( furniva_url( '/' ) ); ?>"><?php echo esc_html( furniva_t( 'Home', 'Trang chủ' ) ); ?></a>
 			<a <?php echo ( is_shop() || is_product_taxonomy() ) ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( $shop_url ); ?>"><?php echo esc_html( furniva_t( 'Shop', 'Cửa hàng' ) ); ?></a>
 			<a <?php echo is_home() || is_singular( 'post' ) ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( $blog_url ); ?>"><?php echo esc_html( furniva_t( 'Journal', 'Tạp chí' ) ); ?></a>
-			<a <?php echo ( is_page( 'about' ) || is_page( 've-despace' ) ) ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( home_url( '/ve-despace/' ) ); ?>"><?php echo esc_html( furniva_t( 'About', 'Giới thiệu' ) ); ?></a>
-			<a <?php echo ( is_page( 'contact' ) || is_page( 'lien-he' ) ) ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( home_url( '/lien-he/' ) ); ?>"><?php echo esc_html( furniva_t( 'Contact', 'Liên hệ' ) ); ?></a>
+			<a <?php echo ( is_page( 'about' ) || is_page( 've-despace' ) ) ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( furniva_url( '/ve-despace/' ) ); ?>"><?php echo esc_html( furniva_t( 'About', 'Giới thiệu' ) ); ?></a>
+			<a <?php echo ( is_page( 'contact' ) || is_page( 'lien-he' ) ) ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( furniva_url( '/lien-he/' ) ); ?>"><?php echo esc_html( furniva_t( 'Contact', 'Liên hệ' ) ); ?></a>
 		</nav>
 
 		<div class="fv-header__actions">
@@ -187,7 +187,7 @@ $announcements = array(
 						$cat_display   = furniva_term_label( $scat->name, 'product_cat' );
 				?>
 				<div class="fv-subnav-item fv-subnav-item--has-mega">
-					<a class="fv-subnav-link <?php echo $is_cat_active ? 'is-active' : ''; ?>" href="<?php echo esc_url( get_term_link( $scat ) ); ?>">
+					<a class="fv-subnav-link <?php echo $is_cat_active ? 'is-active' : ''; ?>" href="<?php echo esc_url( furniva_url( get_term_link( $scat ) ) ); ?>">
 						<span><?php echo esc_html( $cat_display ); ?></span>
 						<svg class="fv-subnav-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
 					</a>

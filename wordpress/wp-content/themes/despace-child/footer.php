@@ -137,15 +137,15 @@ foreach ( $chat_products as $chat_product ) {
 			<ul class="fv-footer__owner-details">
 				<li>
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-					<span><strong><?php echo esc_html( furniva_t( 'Showroom (Demo):', 'Showroom (Mô phỏng):' ) ); ?></strong> số 20 ngách 21 ngõ 367, Phố ngô xuân quản, Xã Gia Lâm, Hà Nội</span>
+					<span><strong><?php echo esc_html( furniva_t( 'Showroom (Demo):', 'Showroom (Mô phỏng):' ) ); ?></strong> <?php echo esc_html( $contact_info['address'] ?? 'Tòa nhà DeSpace, Số 123 Đường Nguyễn Trãi, Thanh Xuân, Hà Nội (Mô phỏng đồ án)' ); ?></span>
 				</li>
 				<li>
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-					<span><strong>Hotline:</strong> <a href="tel:0332174590">0332 174 590</a></span>
+					<span><strong>Hotline (Mô phỏng):</strong> <?php echo esc_html( $contact_info['hotline'] ?? '(024) 0000 0000 (Mô phỏng đồ án)' ); ?></span>
 				</li>
 				<li>
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-					<span><strong>Email:</strong> <a href="mailto:noithat@despace.vn">noithat@despace.vn</a></span>
+					<span><strong>Email (Mô phỏng):</strong> <?php echo esc_html( $contact_info['email'] ?? 'contact@despace.test' ); ?></span>
 				</li>
 				<li>
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -153,7 +153,8 @@ foreach ( $chat_products as $chat_product ) {
 				</li>
 			</ul>
 			<div class="fv-footer__owner-channels">
-				<a class="fv-owner-badge-link fv-owner-badge-link--zalo" href="https://zalo.me/0332174590" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr( furniva_t( 'Contact DeSpace on Zalo', 'Liên hệ DeSpace qua Zalo' ) ); ?>">
+				<?php if ( ! empty( $contact_info['zalo_url'] ) ) : ?>
+				<a class="fv-owner-badge-link fv-owner-badge-link--zalo" href="<?php echo esc_url( $contact_info['zalo_url'] ); ?>" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr( furniva_t( 'Contact DeSpace on Zalo', 'Liên hệ DeSpace qua Zalo' ) ); ?>">
 					<svg class="fv-social-svg" viewBox="0 0 48 48" width="18" height="18" fill="none" aria-hidden="true">
 						<rect width="48" height="48" rx="12" fill="#0068FF"/>
 						<path d="M11 26.5C11 20.15 16.37 15 23 15C29.63 15 35 20.15 35 26.5C35 32.85 29.63 38 23 38C20.85 38 18.83 37.46 17.07 36.51L11.5 38L13.13 33.15C11.79 31.25 11 28.98 11 26.5Z" fill="white"/>
@@ -161,6 +162,7 @@ foreach ( $chat_products as $chat_product ) {
 					</svg>
 					<span>Zalo</span>
 				</a>
+				<?php endif; ?>
 				<?php if ( ! empty( $facebook_url ) ) : ?>
 				<a class="fv-owner-badge-link fv-owner-badge-link--facebook" href="<?php echo esc_url( $facebook_url ); ?>" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr( furniva_t( 'Contact DeSpace on Facebook', 'Liên hệ DeSpace qua Facebook' ) ); ?>">
 					<svg class="fv-social-svg" viewBox="0 0 48 48" width="18" height="18" fill="none" aria-hidden="true">
@@ -278,13 +280,15 @@ foreach ( $chat_products as $chat_product ) {
 <!-- Bottom-Right Floating AI Assistant & Contact Dock -->
 <div class="ax-chat-dock" id="ax-chat-dock">
 	<div class="ax-chat-links" aria-label="<?php echo esc_attr( furniva_t( 'Contact the shop owner', 'Liên hệ chủ cửa hàng' ) ); ?>">
-		<a class="ax-chat-link ax-chat-link--zalo" href="https://zalo.me/0332174590" target="_blank" rel="noopener noreferrer" aria-label="Zalo: 0332174590" title="Chat Zalo (0332 174 590)">
+		<?php if ( ! empty( $contact_info['zalo_url'] ) ) : ?>
+		<a class="ax-chat-link ax-chat-link--zalo" href="<?php echo esc_url( $contact_info['zalo_url'] ); ?>" target="_blank" rel="noopener noreferrer" aria-label="Zalo" title="Chat Zalo">
 			<svg viewBox="0 0 48 48" width="24" height="24" fill="none" aria-hidden="true">
 				<rect width="48" height="48" rx="14" fill="#2d2017"/>
 				<path d="M11 26.5C11 20.15 16.37 15 23 15C29.63 15 35 20.15 35 26.5C35 32.85 29.63 38 23 38C20.85 38 18.83 37.46 17.07 36.51L11.5 38L13.13 33.15C11.79 31.25 11 28.98 11 26.5Z" fill="#c5a059"/>
 				<path fill="#2d2017" d="M19.49 24.272v-.45h1.347v6.322h-.77a.576.576 0 0 1-.577-.573v.001a3.27 3.27 0 0 1-1.938.632a3.284 3.284 0 0 1-3.284-3.282a3.284 3.284 0 0 1 3.284-3.282a3.27 3.27 0 0 1 1.937.632zM13.919 21.79v.205c0 .382-.051.694-.3 1.06l-.03.034a8 8 0 0 0-.242.285L9.024 28.8h4.895v.768a.576.576 0 0 1-.577.576H7v-.362c0-.444.11-.642.25-.848L11.858 23.23H7.192V21.79h6.727zm8.551 8.355a.48.48 0 0 1-.48-.48v-7.875h1.442v8.355h-1.442zM27.693 23.6c1.826 0 3.307 1.481 3.307 3.304c0 1.826-1.48 3.306-3.307 3.306c-1.826 0-3.306-1.48-3.306-3.306c0-1.824 1.48-3.304 3.306-3.304zm-10.141 5.253c1.068 0 1.933-.865 1.933-1.931c0-1.065-.865-1.93-1.933-1.93s-1.932.865-1.932 1.93c0 1.067.865 1.931 1.932 1.931zm10.141-.003c1.074 0 1.945-.87 1.945-1.945c0-1.073-.871-1.944-1.945-1.944c-1.075 0-1.945.871-1.945 1.944c0 1.075.87 1.945 1.945 1.945z"/>
 			</svg>
 		</a>
+		<?php endif; ?>
 		<?php if ( ! empty( $facebook_url ) ) : ?>
 		<a class="ax-chat-link ax-chat-link--facebook" href="<?php echo esc_url( $facebook_url ); ?>" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr( furniva_t( 'Facebook: DeSpace', 'Facebook: DeSpace' ) ); ?>" title="<?php echo esc_attr( furniva_t( 'Facebook DeSpace', 'Facebook DeSpace' ) ); ?>">
 			<svg viewBox="0 0 48 48" width="24" height="24" fill="none" aria-hidden="true">

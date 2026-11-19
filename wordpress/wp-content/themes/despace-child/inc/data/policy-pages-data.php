@@ -105,25 +105,25 @@ HTML
                 <li>
                     <span class="ds-info-icon" aria-hidden="true">📍</span>
                     <div>
-                        <strong>Địa chỉ Showroom:</strong>
-                        <p>Số 20 ngách 21 ngõ 367, Phố Ngô Xuân Quảng, Gia Lâm, Hà Nội</p>
-                        <small class="ds-sub-tip">Thuận tiện di chuyển, cách Học viện Nông nghiệp ~500m, gần Vinhomes Ocean Park 1 &amp; 2.</small>
+                        <strong>Địa chỉ Showroom (Mô phỏng đồ án):</strong>
+                        <p>Tòa nhà DeSpace, Số 123 Đường Nguyễn Trãi, Thanh Xuân, Hà Nội (Mô phỏng đồ án)</p>
+                        <small class="ds-sub-tip">Không gian trưng bày trải nghiệm nội thất &amp; tư vấn thiết kế 3D/AR (Dữ liệu đồ án thực nghiệm).</small>
                     </div>
                 </li>
                 <li>
                     <span class="ds-info-icon" aria-hidden="true">📞</span>
                     <div>
-                        <strong>Hotline Tư Vấn 24/7:</strong>
-                        <p><a href="tel:0332174590" class="ds-link-highlight">0332 174 590</a></p>
-                        <small class="ds-sub-tip">Hỗ trợ nhanh qua Zalo, tư vấn kích thước và phối cảnh 3D.</small>
+                        <strong>Hotline Tư Vấn (Mô phỏng đồ án):</strong>
+                        <p><span class="ds-link-highlight">(024) 0000 0000 (Mô phỏng đồ án)</span></p>
+                        <small class="ds-sub-tip">Hỗ trợ tư vấn kích thước và phối cảnh 3D mô phỏng kịch bản đồ án.</small>
                     </div>
                 </li>
                 <li>
                     <span class="ds-info-icon" aria-hidden="true">✉️</span>
                     <div>
                         <strong>Hòm thư Tiếp Nhận Bản Vẽ:</strong>
-                        <p><a href="mailto:noithat@despace.vn" class="ds-link-highlight">noithat@despace.vn</a></p>
-                        <small class="ds-sub-tip">Gửi mặt bằng căn hộ, bản vẽ CAD để nhận dự toán trong 24h.</small>
+                        <p><span class="ds-link-highlight">contact@despace.test (Mô phỏng đồ án)</span></p>
+                        <small class="ds-sub-tip">Tiếp nhận mặt bằng căn hộ mẫu, bản vẽ CAD mô phỏng trong kịch bản đồ án.</small>
                     </div>
                 </li>
                 <li>
@@ -144,18 +144,18 @@ HTML
             </ul>
 
             <div class="ds-dept-directory">
-                <h4>Danh Bạ Bộ Phận Chuyên Trách</h4>
+                <h4>Danh Bạ Bộ Phận Chuyên Trách (Mô phỏng)</h4>
                 <div class="ds-dept-item">
                     <strong>Phòng Thiết Kế &amp; Kiến Trúc:</strong>
-                    <span>Hotline: 0332 174 590 (Nhánh 1) | kts@despace.vn</span>
+                    <span>Tổng đài mô phỏng: (024) 0000 0000 (Nhánh 1) | kts@despace.test</span>
                 </div>
                 <div class="ds-dept-item">
                     <strong>Phòng Dự Án B2B &amp; Biệt Thự:</strong>
-                    <span>Hotline: 0332 174 590 (Nhánh 2) | b2b@despace.vn</span>
+                    <span>Tổng đài mô phỏng: (024) 0000 0000 (Nhánh 2) | b2b@despace.test</span>
                 </div>
                 <div class="ds-dept-item">
                     <strong>Phòng Dịch Vụ Khách Hàng &amp; Bảo Hành:</strong>
-                    <span>Bảo hành kết cấu 5 năm | support@despace.vn</span>
+                    <span>Bảo hành kết cấu 5 năm (Mô phỏng) | support@despace.test</span>
                 </div>
             </div>
         </div>
@@ -204,10 +204,10 @@ HTML
     <div class="ds-map-section">
         <div class="ds-map-header">
             <div>
-                <h3>Vị Trí Showroom DeSpace Trên Bản Đồ</h3>
-                <p>Số 20 ngách 21 ngõ 367, Phố Ngô Xuân Quảng, Gia Lâm, Hà Nội</p>
+                <h3>Vị Trí Showroom DeSpace Trên Bản Đồ (Mô phỏng đồ án)</h3>
+                <p>Tòa nhà DeSpace, Số 123 Đường Nguyễn Trãi, Thanh Xuân, Hà Nội (Mô phỏng đồ án)</p>
             </div>
-            <a href="https://maps.google.com/?q=số+20+ngách+21+ngõ+367+Phố+ngô+xuân+quản+Gia+Lâm+Hà+Nội" target="_blank" rel="noopener noreferrer" class="f-btn f-btn--secondary ds-open-maps-btn">
+            <a href="https://maps.google.com/?q=Hà+Nội" target="_blank" rel="noopener noreferrer" class="f-btn f-btn--secondary ds-open-maps-btn">
                 <span>Mở Trên Google Maps ↗</span>
             </a>
         </div>
@@ -345,17 +345,17 @@ HTML
                 <span>Thời hạn và điều kiện bảo hành sản phẩm như thế nào?</span>
                 <span aria-hidden="true" style="color:#9A6745;font-size:18px;">▾</span>
             </summary>
-            <p style="font-size:13.5px;color:#69645D;line-height:1.75;margin:12px 0 0;">DeSpace cam kết bảo hành kết cấu khung gỗ lên đến <strong>5 năm</strong> và hỗ trợ đổi mới 1 – 1 trong vòng <strong>30 ngày</strong> nếu sản phẩm phát sinh lỗi kỹ thuật từ nhà sản xuất. Quý khách chỉ cần liên hệ hotline/Zalo 0332 174 590 kèm số điện thoại mua hàng để được hỗ trợ kiểm tra và xử lý tận nhà.</p>
+            <p style="font-size:13.5px;color:#69645D;line-height:1.75;margin:12px 0 0;">DeSpace cam kết bảo hành kết cấu khung gỗ lên đến <strong>5 năm</strong> và hỗ trợ đổi mới 1 – 1 trong vòng <strong>30 ngày</strong> nếu sản phẩm phát sinh lỗi kỹ thuật từ nhà sản xuất (Quy chuẩn mô phỏng đồ án). Quý khách chỉ cần liên hệ biểu mẫu hỗ trợ kèm số điện thoại mua hàng để được hỗ trợ kiểm tra và xử lý tận nhà.</p>
         </details>
     </div>
 
     <!-- Quick Help Card -->
     <div style="background:#1C1917;color:#FAF7F2;padding:32px 28px;border-radius:8px;text-align:center;margin-top:40px;">
         <h3 style="font-family:var(--f-font-editorial, serif);font-size:24px;color:#FAF7F2;margin:0 0 10px;">Bạn Cần Tư Vấn Riêng Cho Không Gian Của Mình?</h3>
-        <p style="color:#D6D3D1;font-size:14px;max-width:550px;margin:0 auto 20px;line-height:1.6;">Đội ngũ kiến trúc sư và Giám đốc thiết kế DeSpace luôn sẵn sàng lắng nghe và đưa ra giải pháp phù hợp nhất với căn nhà của bạn.</p>
+        <p style="color:#D6D3D1;font-size:14px;max-width:550px;margin:0 auto 20px;line-height:1.6;">Đội ngũ kiến trúc sư và Giám đốc thiết kế DeSpace luôn sẵn sàng lắng nghe và đưa ra giải pháp phù hợp nhất với căn nhà của bạn (Dữ liệu đồ án thực nghiệm).</p>
         <div style="display:flex;justify-content:center;gap:14px;flex-wrap:wrap;">
             <a href="/lien-he/" class="f-btn f-btn--primary" style="background:#C5A880;color:#1C1917;">Đặt Lịch Tư Vấn 1-1</a>
-            <a href="tel:0332174590" class="f-btn f-btn--secondary" style="border-color:rgba(255,255,255,0.2);color:#FAF7F2;">Gọi Hotline: 0332 174 590</a>
+            <a href="/lien-he/" class="f-btn f-btn--secondary" style="border-color:rgba(255,255,255,0.2);color:#FAF7F2;">Kênh Hỗ Trợ Mô Phỏng</a>
         </div>
     </div>
 </div>
@@ -417,7 +417,7 @@ HTML
 
             <!-- Course Project Simulation Note -->
             <div style="background:#FAF7F2;border-left:4px solid #b8845a;padding:14px 18px;border-radius:4px;font-size:13px;color:#69645D;line-height:1.6;">
-                <strong>Lưu ý mô phỏng đồ án:</strong> Biểu phí vận chuyển chi tiết theo từng km ngoại thành xa và phụ phí bốc xếp cho các trường hợp đặc biệt được xây dựng dưới dạng kịch bản mô phỏng cho đồ án học tập. Trong kịch bản trải nghiệm, khách hàng liên hệ hotline <strong>0332 174 590</strong> hoặc Zalo để được tư vấn mức phí minh họa phù hợp.
+                <strong>Lưu ý mô phỏng đồ án:</strong> Biểu phí vận chuyển chi tiết theo từng km ngoại thành xa và phụ phí bốc xếp cho các trường hợp đặc biệt được xây dựng dưới dạng kịch bản mô phỏng cho đồ án học tập. Trong kịch bản trải nghiệm, khách hàng liên hệ qua biểu mẫu liên hệ hoặc kênh hỗ trợ mô phỏng để được tư vấn mức phí minh họa phù hợp.
             </div>
         </section>
 
@@ -503,7 +503,7 @@ HTML
                 <div style="background:#fff;padding:16px;border-radius:6px;border:1px solid #E7E0D7;">
                     <strong style="color:#C5A880;font-size:18px;display:block;margin-bottom:4px;">01</strong>
                     <strong style="color:#1C1917;font-size:14px;display:block;margin-bottom:6px;">Liên hệ Hỗ trợ</strong>
-                    <p style="font-size:12.5px;color:#69645D;line-height:1.5;margin:0;">Gọi hotline hoặc nhắn Zalo <strong>0332 174 590</strong> hoặc gửi email về <strong>noithat@despace.vn</strong>.</p>
+                    <p style="font-size:12.5px;color:#69645D;line-height:1.5;margin:0;">Gửi yêu cầu qua biểu mẫu liên hệ hoặc email mô phỏng <strong>contact@despace.test</strong> (Kịch bản đồ án).</p>
                 </div>
                 <div style="background:#fff;padding:16px;border-radius:6px;border:1px solid #E7E0D7;">
                     <strong style="color:#C5A880;font-size:18px;display:block;margin-bottom:4px;">02</strong>
@@ -580,11 +580,11 @@ HTML
             <p style="font-size:14px;color:#69645D;line-height:1.75;margin-bottom:12px;">Quý khách có toàn quyền kiểm soát dữ liệu cá nhân của mình:</p>
             <ul style="padding-left:20px;color:#69645D;font-size:14px;line-height:1.75;margin:0 0 14px;">
                 <li>Đăng nhập vào mục <a href="/my-account/" style="color:#9A6745;text-decoration:underline;">Tài khoản của tôi</a> để kiểm tra, cập nhật hoặc sửa đổi địa chỉ giao hàng và thông tin liên hệ.</li>
-                <li>Yêu cầu DeSpace trích xuất bản sao dữ liệu hoặc xóa hoàn toàn dữ liệu tài khoản khỏi hệ thống máy chủ bằng cách gửi email tới <a href="mailto:noithat@despace.vn" style="color:#9A6745;text-decoration:underline;">noithat@despace.vn</a>.</li>
+                <li>Yêu cầu DeSpace trích xuất bản sao dữ liệu hoặc xóa hoàn toàn dữ liệu tài khoản khỏi hệ thống máy chủ bằng cách gửi email tới <span style="color:#9A6745;text-decoration:underline;">contact@despace.test (Mô phỏng đồ án)</span>.</li>
             </ul>
 
             <div style="background:#F3F4F6;border-left:4px solid #6B7280;padding:14px 18px;border-radius:4px;font-size:13px;color:#374151;line-height:1.6;">
-                <strong>Ghi chú:</strong> Văn bản chính sách bảo mật này được công bố công khai nhằm bảo vệ quyền lợi hợp pháp của người tiêu dùng khi giao dịch trên website nội thất DeSpace. Nếu bạn có bất kỳ câu hỏi nào về chính sách quyền riêng tư, xin vui lòng gửi thư về <strong>noithat@despace.vn</strong>.
+                <strong>Ghi chú:</strong> Văn bản chính sách bảo mật này được công bố công khai nhằm bảo vệ quyền lợi hợp pháp của người tiêu dùng khi giao dịch trên website nội thất DeSpace. Nếu bạn có bất kỳ câu hỏi nào về chính sách quyền riêng tư, xin vui lòng gửi thư về <strong>contact@despace.test (Mô phỏng đồ án)</strong>.
             </div>
         </section>
     </div>

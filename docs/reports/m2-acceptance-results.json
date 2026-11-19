@@ -27,8 +27,12 @@
   "step4_add_to_cart_variation": {
     "pass": true,
     "status": "PASS",
-    "qtySelected": "2",
-    "drawerOpen": false
+    "assertedVariationId": 1121,
+    "assertedSku": "M2-TEST-VAR-OAK",
+    "expectedQuantity": 2,
+    "actualQuantity": 2,
+    "matchedItemName": "[TEST-FIXTURE-M2] Ghế Thư Giãn DeSpace Lounge Chair",
+    "cartPageVerified": true
   },
   "step5_quantity_limits_and_validation": {
     "pass": true,

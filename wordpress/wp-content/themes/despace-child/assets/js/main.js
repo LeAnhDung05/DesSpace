@@ -1098,6 +1098,52 @@ jQuery(function ($) {
 		var $zone = $(".wp-block-woocommerce-cart, .wp-block-woocommerce-checkout");
 		if (!$zone.length) return;
 
+		function injectCheckoutBlocksPolicies() {
+			var $checkoutBlock = $(".wp-block-woocommerce-checkout");
+			if (!$checkoutBlock.length) return;
+
+			var $terms = $checkoutBlock.find(".wc-block-checkout__terms");
+			if (!$terms.length) return;
+
+			// Check if already injected inside $terms
+			if ($terms.find("#ds-block-policy-links").length) return;
+
+			var pUrls = (window.furnivaData && furnivaData.policyUrls) || {};
+			var pStrings = (window.furnivaData && furnivaData.policyStrings) || {};
+			var isEn = window.location.pathname.indexOf("/en/") === 0 || ((window.furnivaData && furnivaData.language) === "en");
+
+			var shipUrl = pUrls.shipping || (isEn ? "/en/chinh-sach-giao-hang/" : "/chinh-sach-giao-hang/");
+			var retUrl = pUrls.returns || (isEn ? "/en/chinh-sach-doi-tra-bao-hanh/" : "/chinh-sach-doi-tra-bao-hanh/");
+
+			var heading = pStrings.heading || (isEn ? "✦ Additional Customer Rights & Policies:" : "✦ Chính sách bổ trợ & Quyền lợi khách hàng DeSpace:");
+			var shipText = pStrings.shipping || (isEn ? "Shipping & Installation Policy" : "Chính sách giao hàng & lắp đặt");
+			var retText = pStrings.returns || (isEn ? "Returns & 5-Year Warranty Policy" : "Chính sách đổi trả & bảo hành 5 năm");
+			var disclaimer = pStrings.disclaimer || (isEn ? "Note: Educational project simulation for DeSpace luxury furniture." : "Lưu ý: Nội dung quy chuẩn phục vụ đồ án học tập/thực nghiệm DeSpace.");
+
+			// Only supplement missing Shipping & Returns; DO NOT duplicate Terms & Privacy already rendered by WooCommerce
+			var hasTerms = $terms.find('a[href*="dieu-khoan-mua-ban"], a[href*="terms"]').length > 0;
+			var hasPrivacy = $terms.find('a[href*="chinh-sach-bao-mat"], a[href*="privacy"]').length > 0;
+
+			var extraLinks = [];
+			extraLinks.push('<a href="' + shipUrl + '" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;">' + shipText + '</a>');
+			extraLinks.push('<a href="' + retUrl + '" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;">' + retText + '</a>');
+
+			if (!hasPrivacy && pUrls.privacy) {
+				extraLinks.push('<a href="' + pUrls.privacy + '" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;">' + (pStrings.privacy || "Privacy Policy") + '</a>');
+			}
+			if (!hasTerms && pUrls.terms) {
+				extraLinks.push('<a href="' + pUrls.terms + '" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;">' + (pStrings.terms || "Terms of Sale") + '</a>');
+			}
+
+			var noticeHtml = '<div id="ds-block-policy-links" class="ds-checkout-blocks-policy-links" style="margin-top: 14px; padding: 12px 16px; background: #FAF7F2; border: 1px solid #E7E0D7; border-radius: 6px; font-size: 13px; line-height: 1.6; color: #69645D;">' +
+				'<span style="display:block; font-weight: 600; color: #1c1917; margin-bottom: 4px;">' + heading + '</span>' +
+				extraLinks.join(' • ') +
+				'<div style="margin-top: 6px; font-size: 12px; color: #8c827a; font-style: italic;">' + disclaimer + '</div>' +
+			'</div>';
+
+			$terms.append(noticeHtml);
+		}
+
 		var timer = null, lastHtml = "";
 		function refreshCartHeader() {
 			$.post(furnivaData.ajaxUrl, { action: "furniva_cart_state", nonce: furnivaData.nonce, language: furnivaData.language }).done(function (res) {
@@ -1108,11 +1154,13 @@ jQuery(function ($) {
 			});
 		}
 		refreshCartHeader();
+		injectCheckoutBlocksPolicies();
 
 		var observer = new MutationObserver(function () {
 			clearTimeout(timer);
 			timer = setTimeout(refreshCartHeader, 400);
 			polishEmptyCartBlock();
+			injectCheckoutBlocksPolicies();
 		});
 		observer.observe(document.body, { childList: true, subtree: true });
 	}

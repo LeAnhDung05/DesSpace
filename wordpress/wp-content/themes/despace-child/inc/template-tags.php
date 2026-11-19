@@ -514,7 +514,7 @@ function despace_category_mega_dropdown( $cat_slug ) {
 		return '';
 	}
 
-	$cat_url  = get_term_link( $term );
+	$cat_url  = furniva_url( get_term_link( $term ) );
 	$cat_name = furniva_term_label( $term->name, 'product_cat' );
 
 	ob_start();
@@ -540,7 +540,7 @@ function despace_category_mega_dropdown( $cat_slug ) {
 				$price_html = $product->get_price_html();
 				$is_badge   = ( 0 === $idx ) && ( $product->is_featured() || $product->get_total_sales() > 0 );
 			?>
-				<a class="fv-mega-product-card" href="<?php echo esc_url( get_permalink( $product_id ) ); ?>">
+				<a class="fv-mega-product-card" href="<?php echo esc_url( furniva_url( get_permalink( $product_id ) ) ); ?>">
 					<div class="fv-mega-product-card__thumb">
 						<img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $title ); ?>" loading="lazy" />
 						<?php if ( $is_badge ) : ?>

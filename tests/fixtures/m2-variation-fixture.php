@@ -30,9 +30,10 @@ if ( ! $wp_loaded || ! function_exists( 'wc_get_product' ) ) {
 	exit( 1 );
 }
 
-$action = $argv[1] ?? 'status';
+$action      = $argv[1] ?? 'status';
+$session_key = $argv[2] ?? '';
 
-function despace_cleanup_m2_fixtures() {
+function despace_cleanup_m2_fixtures( $target_session_key = '' ) {
 	global $wpdb;
 	$deleted = 0;
 
@@ -51,17 +52,34 @@ function despace_cleanup_m2_fixtures() {
 		}
 	}
 
-	return $deleted;
+	// Clean up transients created during test run for this fixture
+	$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '%_transient_wc_var_%' OR option_name LIKE '%_transient_timeout_wc_var_%'" );
+
+	// Clean up ONLY the specific test session key if provided, NEVER truncating or touching other sessions
+	$session_cleaned = false;
+	if ( ! empty( $target_session_key ) ) {
+		$clean_key = sanitize_text_field( $target_session_key );
+		$wpdb->delete(
+			$wpdb->prefix . 'woocommerce_sessions',
+			array( 'session_key' => $clean_key )
+		);
+		$session_cleaned = true;
+	}
+
+	return array(
+		'deleted'         => $deleted,
+		'session_cleaned' => $session_cleaned,
+	);
 }
 
 if ( 'delete' === $action || 'cleanup' === $action ) {
-	$count = despace_cleanup_m2_fixtures();
-	echo json_encode( array( 'status' => 'cleaned', 'deleted_count' => $count ) ) . "\n";
+	$result = despace_cleanup_m2_fixtures( $session_key );
+	echo json_encode( array( 'status' => 'cleaned', 'deleted_count' => $result['deleted'], 'session_cleaned' => $result['session_cleaned'] ) ) . "\n";
 	exit( 0 );
 }
 
 if ( 'create' === $action ) {
-	// First clean up any stale fixtures
+	// First clean up any stale fixtures without touching sessions
 	despace_cleanup_m2_fixtures();
 
 	// 1. Create Variable Product with pa_color taxonomy

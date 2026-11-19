@@ -56,6 +56,7 @@ async function runM2Acceptance() {
 
   let fixture = null;
   let browser = null;
+  let context = null;
 
   const results = {
     authConfigured: false,
@@ -84,7 +85,7 @@ async function runM2Acceptance() {
     // 2. Launch browser
     console.log('[2/4] Khởi động trình duyệt Playwright kiểm thử giao diện...');
     browser = await chromium.launch({ channel: 'chrome', headless: true });
-    const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const page = await context.newPage();
 
     const jsErrors = [];
@@ -167,7 +168,7 @@ async function runM2Acceptance() {
     console.log(` -> PASS: Trạng thái hết hàng nhận diện chuẩn xác (SKU: ${skuTextB}, Nút mua disabled: ${btnDisabledB}).\n`);
 
     // -------------------------------------------------------------------------
-    // STEP 4: Add to Cart with valid Quantity
+    // STEP 4: Add to Cart with valid Quantity & Strict Cart Assertion
     // -------------------------------------------------------------------------
     console.log('[STEP 4] Chọn lại Biến thể A, đặt số lượng 2 và thêm vào giỏ...');
     await page.selectOption('select[name*="attribute"]', 'go-soi-modern-oak').catch(() => {});
@@ -179,17 +180,52 @@ async function runM2Acceptance() {
     const qtyVal = await page.$eval('.ax-qty-input', el => el.value).catch(() => '1');
 
     await page.click('#axAddToCart').catch(() => {});
-    await page.waitForTimeout(1200);
+    await page.waitForTimeout(1500);
 
-    // Check cart drawer or page
-    const drawerOpen = await page.$eval('#furniva-cart-drawer, .f-cart-drawer', el => el.classList.contains('is-open')).catch(() => false);
+    // Retrieve active WooCommerce session cart via Store API
+    const cartData = await page.evaluate(async () => {
+      try {
+        const res = await fetch('/wp-json/wc/store/v1/cart', { headers: { 'Accept': 'application/json' } });
+        return await res.json();
+      } catch (e) {
+        return null;
+      }
+    });
+
+    const cartItems = (cartData && cartData.items) ? cartData.items : [];
+    const matchedItem = cartItems.find(item =>
+      item.id === fixture.variation_a.id ||
+      item.sku === fixture.variation_a.sku ||
+      (item.name && item.name.includes('Ghế Thư Giãn'))
+    );
+
+    // Also verify directly on /cart/ page
+    await page.goto('http://localhost:8090/cart/', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(800);
+    const cartHtml = await page.content();
+    const cartPageVerified = cartHtml.includes('M2-TEST-VAR-OAK') || cartHtml.includes('Modern Oak');
+
+    const step4Pass = (matchedItem !== undefined && matchedItem !== null) &&
+                      (matchedItem.quantity === 2 || matchedItem.quantity === parseInt(qtyVal, 10)) &&
+                      (matchedItem.sku === fixture.variation_a.sku || matchedItem.id === fixture.variation_a.id) &&
+                      cartPageVerified;
+
     results.step4_add_to_cart_variation = {
-      pass: true,
-      status: 'PASS',
-      qtySelected: qtyVal,
-      drawerOpen
+      pass: step4Pass,
+      status: step4Pass ? 'PASS' : 'FAIL',
+      assertedVariationId: fixture.variation_a.id,
+      assertedSku: fixture.variation_a.sku,
+      expectedQuantity: 2,
+      actualQuantity: matchedItem ? matchedItem.quantity : 0,
+      matchedItemName: matchedItem ? matchedItem.name : '',
+      cartPageVerified
     };
-    console.log(` -> PASS: Thêm biến thể vào giỏ thành công (Số lượng: ${qtyVal}, Cart drawer: ${drawerOpen}).\n`);
+
+    if (step4Pass) {
+      console.log(` -> PASS: Xác thực giỏ hàng thành công (Variation ID: ${fixture.variation_a.id}, SKU: ${fixture.variation_a.sku}, Số lượng trong giỏ: ${matchedItem.quantity}).\n`);
+    } else {
+      console.log(` -> FAIL: Chưa tìm thấy biến thể hoặc sai số lượng trong giỏ hàng (Mong muốn: 2, Thực tế: ${matchedItem ? matchedItem.quantity : 0}).\n`);
+    }
 
     // -------------------------------------------------------------------------
     // STEP 5: Quantity limits & validation
@@ -297,10 +333,22 @@ async function runM2Acceptance() {
     // CLEANUP FIXTURE (Guaranteed in finally block)
     // -------------------------------------------------------------------------
     console.log('[3/4] DỌN DẸP FIXTURE: Đảm bảo không để lại dữ liệu test rác trong database...');
+    let testSessionKey = '';
+    if (context) {
+      try {
+        const cookies = await context.cookies();
+        const wcCookie = cookies.find(c => c.name.startsWith('wp_woocommerce_session_'));
+        if (wcCookie) {
+          testSessionKey = decodeURIComponent(wcCookie.value).split('||')[0].split('|')[0];
+        }
+      } catch (e) {}
+    }
+
     try {
-      const cleanRes = runFixtureCommand('delete');
+      const cleanCmd = testSessionKey ? `delete ${testSessionKey}` : 'delete';
+      const cleanRes = runFixtureCommand(cleanCmd);
       results.fixtureCleaned = true;
-      console.log(`[CLEANUP] Dọn dẹp thành công ${cleanRes.deleted_count} sản phẩm test fixture khỏi database.\n`);
+      console.log(`[CLEANUP] Dọn dẹp thành công ${cleanRes.deleted_count} sản phẩm test fixture khỏi database (Test session cleaned: ${cleanRes.session_cleaned ? 'YES' : 'NONE'}).\n`);
     } catch (cleanErr) {
       console.error('[CLEANUP ERR] Không thể dọn dẹp fixture:', cleanErr.message);
     }

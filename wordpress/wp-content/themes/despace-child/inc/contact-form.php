@@ -16,20 +16,20 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  */
 function despace_get_contact_info() {
 	$defaults = array(
-		'address'       => 'Số 20 ngách 21 ngõ 367, Phố Ngô Xuân Quảng, Gia Lâm, Hà Nội',
-		'address_note'  => 'Thuận tiện di chuyển, cách Học viện Nông nghiệp ~500m, gần Vinhomes Ocean Park 1 & 2.',
-		'hotline'       => '0332 174 590',
-		'hotline_note'  => 'Hỗ trợ nhanh qua Zalo, tư vấn kích thước và phối cảnh 3D.',
-		'email'         => 'noithat@despace.vn',
-		'email_note'    => 'Gửi mặt bằng căn hộ, bản vẽ CAD để nhận dự toán trong 24h.',
+		'address'       => 'Tòa nhà DeSpace, Số 123 Đường Nguyễn Trãi, Thanh Xuân, Hà Nội (Mô phỏng đồ án)',
+		'address_note'  => 'Không gian trưng bày trải nghiệm nội thất và tư vấn thiết kế 3D trực tiếp (Dữ liệu mô phỏng đồ án).',
+		'hotline'       => '(024) 0000 0000 (Mô phỏng đồ án)',
+		'hotline_note'  => 'Tổng đài tư vấn kích thước và phối cảnh 3D (Mô phỏng đồ án).',
+		'email'         => 'contact@despace.test',
+		'email_note'    => 'Gửi mặt bằng căn hộ, bản vẽ CAD để nhận dự toán trong 24h (Mô phỏng đồ án).',
 		'hours'         => '08:30 – 21:30 (Thứ Hai – Chủ Nhật)',
 		'hours_note'    => 'Mở cửa tất cả các ngày trong tuần, kể cả ngày lễ.',
 		'parking_note'  => 'Bãi đỗ xe ô tô & xe máy an ninh rộng rãi miễn phí, đồ uống tiếp đón cao cấp, iPad Pro trải nghiệm AR 3D thực tế ảo.',
 		'founder_title' => 'Sáng lập & Giám đốc thiết kế',
-		'founder_desc'  => 'Tư vấn trực tiếp không gian sống & hoàn thiện nội thất cao cấp',
-		'zalo_url'      => 'https://zalo.me/0332174590',
+		'founder_desc'  => 'Tư vấn trực tiếp không gian sống & hoàn thiện nội thất cao cấp (Mô phỏng đồ án)',
+		'zalo_url'      => '',
 		'facebook_url'  => '',
-		'maps_url'      => 'https://maps.google.com/?q=số+20+ngách+21+ngõ+367+Phố+ngô+xuân+quản+Gia+Lâm+Hà+Nội',
+		'maps_url'      => 'https://maps.google.com/?q=Hà+Nội',
 	);
 
 	$saved = get_option( 'despace_contact_settings', array() );
@@ -204,14 +204,14 @@ function despace_render_contact_form_html() {
 			</label>
 			<label class="f-contact-field">
 				<span>Số điện thoại <strong class="req" style="color:#BF5B50;">*</strong></span>
-				<input type="tel" name="contact_phone" id="contact_phone" required placeholder="Ví dụ: 0332 174 590" autocomplete="tel" />
+				<input type="tel" name="contact_phone" id="contact_phone" required placeholder="Nhập số điện thoại liên hệ" autocomplete="tel" />
 			</label>
 		</div>
 
 		<div class="ds-form-row">
 			<label class="f-contact-field">
 				<span>Email nhận phản hồi</span>
-				<input type="email" name="contact_email" id="contact_email" placeholder="Ví dụ: email@domain.com" autocomplete="email" />
+				<input type="email" name="contact_email" id="contact_email" placeholder="example@domain.com" autocomplete="email" />
 			</label>
 			<label class="f-contact-field">
 				<span>Loại hình không gian</span>
@@ -375,19 +375,33 @@ function despace_render_contact_admin_page() {
 }
 
 /**
- * Display informational policy links at WooCommerce Checkout
+ * Display informational policy links at WooCommerce Checkout (both Classic and Blocks compatible)
  */
-add_action( 'woocommerce_review_order_before_submit', function() {
+function despace_render_checkout_policy_notice() {
+	$shipping_url = furniva_url( '/chinh-sach-giao-hang/' );
+	$returns_url  = furniva_url( '/chinh-sach-doi-tra-bao-hanh/' );
+	$privacy_url  = furniva_url( '/chinh-sach-bao-mat/' );
+	$terms_url    = furniva_url( '/dieu-khoan-mua-ban/' );
 	?>
-	<div class="ds-checkout-policy-notice" style="margin: 16px 0; padding: 14px 16px; background: #faf7f2; border: 1px solid #e7e0d7; border-radius: 6px; font-size: 12.5px; color: #69645D; line-height: 1.65;">
-		<span style="display:block; font-weight: 600; color: #1c1917; margin-bottom: 4px;">✦ Cam kết dịch vụ & Quyền lợi khách hàng DeSpace:</span>
-		Đơn hàng được bảo hộ bởi 
-		<a href="<?php echo esc_url( home_url( '/chinh-sach-giao-hang/' ) ); ?>" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;">Chính sách giao hàng & lắp đặt</a>, 
-		<a href="<?php echo esc_url( home_url( '/chinh-sach-doi-tra-bao-hanh/' ) ); ?>" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;">Bảo hành 5 năm & Đổi trả 30 ngày</a>, và 
-		<a href="<?php echo esc_url( home_url( '/chinh-sach-bao-mat/' ) ); ?>" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;">Chính sách bảo mật</a>.
+	<div class="ds-checkout-policy-notice" style="margin: 20px 0; padding: 16px 20px; background: #faf7f2; border: 1px solid #e7e0d7; border-radius: 8px; font-size: 13px; color: #69645D; line-height: 1.65;">
+		<span style="display:block; font-weight: 600; color: #1c1917; margin-bottom: 6px; font-size: 13.5px;">
+			✦ <?php echo esc_html( furniva_t( 'DeSpace Service Commitments & Customer Rights:', 'Cam kết dịch vụ & Quyền lợi khách hàng DeSpace:' ) ); ?>
+		</span>
+		<span>
+			<?php echo esc_html( furniva_t( 'Your purchase is protected by our', 'Đơn hàng được bảo hộ và hỗ trợ bởi' ) ); ?>
+			<a href="<?php echo esc_url( $shipping_url ); ?>" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;"><?php echo esc_html( furniva_t( 'Shipping & Installation Policy', 'Chính sách giao hàng & lắp đặt' ) ); ?></a>,
+			<a href="<?php echo esc_url( $returns_url ); ?>" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;"><?php echo esc_html( furniva_t( 'Returns & 5-Year Warranty Policy', 'Chính sách đổi trả & bảo hành 5 năm' ) ); ?></a>,
+			<a href="<?php echo esc_url( $privacy_url ); ?>" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;"><?php echo esc_html( furniva_t( 'Privacy Policy', 'Chính sách bảo mật' ) ); ?></a>,
+			<?php echo esc_html( furniva_t( 'and', 'và' ) ); ?>
+			<a href="<?php echo esc_url( $terms_url ); ?>" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;"><?php echo esc_html( furniva_t( 'Terms of Service', 'Điều khoản mua bán' ) ); ?></a>.
+		</span>
+		<div style="margin-top: 8px; font-size: 12px; color: #8c827a; font-style: italic;">
+			<?php echo esc_html( furniva_t( 'Note: Educational project simulation for DeSpace luxury furniture store.', 'Lưu ý: Nội dung quy chuẩn phục vụ đồ án học tập/thực nghiệm DeSpace.' ) ); ?>
+		</div>
 	</div>
 	<?php
-}, 9 );
+}
+add_action( 'woocommerce_review_order_before_submit', 'despace_render_checkout_policy_notice', 9 );
 
 /**
  * Automatically mark policy and informational pages as customized by an administrator
@@ -448,12 +462,16 @@ function despace_ensure_policy_pages( $force_overwrite = false ) {
 		$has_content     = ! empty( trim( (string) $row->post_content ) );
 		$has_mojibake    = ( false !== strpos( $row->post_content, 'ChÃ' ) || false !== strpos( $row->post_content, 'Ã¡' ) );
 
-		// Always ensure canonical slug, status = publish, and post_type = page
+		// Always ensure canonical slug and post_type = page
 		$update_data = array(
-			'post_name'   => $data['slug'],
-			'post_status' => $data['status'],
-			'post_type'   => 'page',
+			'post_name' => $data['slug'],
+			'post_type' => 'page',
 		);
+
+		// Do not overwrite post_status if administrator customized or drafted the page in WP Admin
+		if ( ! $is_admin_edited ) {
+			$update_data['post_status'] = $data['status'];
+		}
 
 		// Only restore template content if forcing, or if content is empty or corrupted by mojibake import
 		if ( ! $is_admin_edited && ( $force_overwrite || ! $has_content || $has_mojibake ) ) {
