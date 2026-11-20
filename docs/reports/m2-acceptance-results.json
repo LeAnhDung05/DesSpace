@@ -27,7 +27,7 @@
   "step4_add_to_cart_variation": {
     "pass": true,
     "status": "PASS",
-    "assertedVariationId": 1142,
+    "assertedVariationId": 1151,
     "assertedSku": "M2-TEST-VAR-OAK",
     "expectedQuantity": 2,
     "actualQuantity": 2,

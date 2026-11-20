@@ -1566,6 +1566,17 @@ add_action('wp_ajax_nopriv_furniva_get_wishlist_count', 'furniva_ajax_get_wishli
 add_action('wp_ajax_despace_get_wishlist_count', 'furniva_ajax_get_wishlist_count');
 add_action('wp_ajax_nopriv_despace_get_wishlist_count', 'furniva_ajax_get_wishlist_count');
 
+/**
+ * Prevent YITH WooCommerce Wishlist 4.19.0 React bundle from firing guaranteed-401
+ * REST requests (/wp-json/yith/wishlist/v1/lists/) on every page load for logged-out guests.
+ * Theme product cards use .f-card-wishlist-btn + furniva_wishlist_toggle (which requires login).
+ */
+add_action('wp_enqueue_scripts', function () {
+	if (! is_user_logged_in()) {
+		wp_dequeue_script('yith-wcwl-add-to-wishlist');
+	}
+}, 100);
+
 // ---------------------------------------------------------------- My Account Customizations
 function despace_luxury_account_menu_items($items)
 {

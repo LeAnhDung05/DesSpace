@@ -193,64 +193,64 @@ function despace_render_contact_form_html() {
 
 		<!-- Anti-spam Honeypot Trap (invisible to real human users) -->
 		<div style="position:absolute;left:-9999px;top:-9999px;opacity:0;pointer-events:none;" aria-hidden="true">
-			<label for="despace_hp">Bỏ trống trường này nếu bạn là người dùng thật:</label>
+			<label for="despace_hp"><?php echo esc_html( furniva_t( 'Leave this field empty if you are human:', 'Bỏ trống trường này nếu bạn là người dùng thật:' ) ); ?></label>
 			<input type="text" id="despace_hp" name="despace_hp" tabindex="-1" autocomplete="off" />
 		</div>
 
 		<div class="ds-form-row">
 			<label class="f-contact-field">
-				<span>Họ và tên <strong class="req" style="color:#BF5B50;">*</strong></span>
-				<input type="text" name="contact_name" id="contact_name" required placeholder="Ví dụ: Nguyễn Văn A" autocomplete="name" />
+				<span><?php echo esc_html( furniva_t( 'Full name', 'Họ và tên' ) ); ?> <strong class="req" style="color:#BF5B50;">*</strong></span>
+				<input type="text" name="contact_name" id="contact_name" required placeholder="<?php echo esc_attr( furniva_t( 'e.g., Alex Nguyen', 'Ví dụ: Nguyễn Văn A' ) ); ?>" autocomplete="name" />
 			</label>
 			<label class="f-contact-field">
-				<span>Số điện thoại <strong class="req" style="color:#BF5B50;">*</strong></span>
-				<input type="tel" name="contact_phone" id="contact_phone" required placeholder="Nhập số điện thoại liên hệ" autocomplete="tel" />
+				<span><?php echo esc_html( furniva_t( 'Phone number', 'Số điện thoại' ) ); ?> <strong class="req" style="color:#BF5B50;">*</strong></span>
+				<input type="tel" name="contact_phone" id="contact_phone" required placeholder="<?php echo esc_attr( furniva_t( 'Enter your contact phone number', 'Nhập số điện thoại liên hệ' ) ); ?>" autocomplete="tel" />
 			</label>
 		</div>
 
 		<div class="ds-form-row">
 			<label class="f-contact-field">
-				<span>Email nhận phản hồi</span>
+				<span><?php echo esc_html( furniva_t( 'Email for reply', 'Email nhận phản hồi' ) ); ?></span>
 				<input type="email" name="contact_email" id="contact_email" placeholder="example@domain.com" autocomplete="email" />
 			</label>
 			<label class="f-contact-field">
-				<span>Loại hình không gian</span>
+				<span><?php echo esc_html( furniva_t( 'Space type', 'Loại hình không gian' ) ); ?></span>
 				<select name="space_type" id="space_type" class="ds-select">
-					<option value="">-- Chọn loại hình không gian --</option>
-					<option value="Căn hộ chung cư">Căn hộ chung cư</option>
-					<option value="Biệt thự / Liền kề">Biệt thự / Liền kề</option>
-					<option value="Nhà phố">Nhà phố</option>
-					<option value="Showroom / Văn phòng">Showroom / Văn phòng</option>
-					<option value="Mua lẻ sản phẩm nội thất">Mua lẻ sản phẩm nội thất</option>
+					<option value=""><?php echo esc_html( furniva_t( '-- Select space type --', '-- Chọn loại hình không gian --' ) ); ?></option>
+					<option value="Căn hộ chung cư"><?php echo esc_html( furniva_t( 'Apartment', 'Căn hộ chung cư' ) ); ?></option>
+					<option value="Biệt thự / Liền kề"><?php echo esc_html( furniva_t( 'Villa / Townhouse', 'Biệt thự / Liền kề' ) ); ?></option>
+					<option value="Nhà phố"><?php echo esc_html( furniva_t( 'City house', 'Nhà phố' ) ); ?></option>
+					<option value="Showroom / Văn phòng"><?php echo esc_html( furniva_t( 'Showroom / Office', 'Showroom / Văn phòng' ) ); ?></option>
+					<option value="Mua lẻ sản phẩm nội thất"><?php echo esc_html( furniva_t( 'Individual furniture purchase', 'Mua lẻ sản phẩm nội thất' ) ); ?></option>
 				</select>
 			</label>
 		</div>
 
 		<div class="ds-form-row">
 			<label class="f-contact-field">
-				<span>Dịch vụ mong muốn</span>
+				<span><?php echo esc_html( furniva_t( 'Requested service', 'Dịch vụ mong muốn' ) ); ?></span>
 				<select name="service_type" id="service_type" class="ds-select">
-					<option value="Trải nghiệm Showroom & 3D/AR">Trải nghiệm Showroom & 3D/AR</option>
-					<option value="Khảo sát & đo đạc tại nhà">Khảo sát & đo đạc tại nhà</option>
-					<option value="Đóng đồ theo kích thước thiết kế riêng">Đóng đồ theo kích thước thiết kế riêng</option>
-					<option value="Thiết kế & thi công nội thất trọn gói">Thiết kế & thi công nội thất trọn gói</option>
+					<option value="Trải nghiệm Showroom & 3D/AR"><?php echo esc_html( furniva_t( 'Showroom & 3D/AR Experience', 'Trải nghiệm Showroom & 3D/AR' ) ); ?></option>
+					<option value="Khảo sát & đo đạc tại nhà"><?php echo esc_html( furniva_t( 'On-site space measurement', 'Khảo sát & đo đạc tại nhà' ) ); ?></option>
+					<option value="Đóng đồ theo kích thước thiết kế riêng"><?php echo esc_html( furniva_t( 'Custom-sized furniture', 'Đóng đồ theo kích thước thiết kế riêng' ) ); ?></option>
+					<option value="Thiết kế & thi công nội thất trọn gói"><?php echo esc_html( furniva_t( 'Full interior design & fit-out', 'Thiết kế & thi công nội thất trọn gói' ) ); ?></option>
 				</select>
 			</label>
 			<label class="f-contact-field">
-				<span>Thời gian dự kiến ghé thăm</span>
-				<input type="text" name="visit_time" id="visit_time" placeholder="Ví dụ: Thứ 7 tuần này, 10:00 sáng" />
+				<span><?php echo esc_html( furniva_t( 'Preferred visit time', 'Thời gian dự kiến ghé thăm' ) ); ?></span>
+				<input type="text" name="visit_time" id="visit_time" placeholder="<?php echo esc_attr( furniva_t( 'e.g., This Saturday, 10:00 AM', 'Ví dụ: Thứ 7 tuần này, 10:00 sáng' ) ); ?>" />
 			</label>
 		</div>
 
 		<label class="f-contact-field">
-			<span>Lời nhắn & yêu cầu chi tiết <strong class="req" style="color:#BF5B50;">*</strong></span>
-			<textarea name="contact_message" id="contact_message" rows="4" required placeholder="Chia sẻ với chúng tôi về nhu cầu không gian sống, kích thước hoặc mẫu nội thất bạn quan tâm..."></textarea>
+			<span><?php echo esc_html( furniva_t( 'Message & detailed request', 'Lời nhắn & yêu cầu chi tiết' ) ); ?> <strong class="req" style="color:#BF5B50;">*</strong></span>
+			<textarea name="contact_message" id="contact_message" rows="4" required placeholder="<?php echo esc_attr( furniva_t( 'Share your space needs, dimensions, or furniture pieces of interest...', 'Chia sẻ với chúng tôi về nhu cầu không gian sống, kích thước hoặc mẫu nội thất bạn quan tâm...' ) ); ?>"></textarea>
 		</label>
 
 		<div id="despace-contact-status" class="ds-contact-status" role="status" aria-live="polite" style="display:none;margin-top:12px;padding:12px 16px;border-radius:6px;font-size:13px;line-height:1.6;"></div>
 
 		<button class="f-btn f-btn--primary ds-submit-btn" type="submit" id="despace-contact-submit-btn">
-			<span class="btn-text">Gửi Đăng Ký Tư Vấn Trực Tiếp</span>
+			<span class="btn-text"><?php echo esc_html( furniva_t( 'Submit Consultation Request', 'Gửi Đăng Ký Tư Vấn Trực Tiếp' ) ); ?></span>
 		</button>
 	</form>
 	<?php

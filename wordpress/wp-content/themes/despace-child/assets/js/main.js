@@ -1689,6 +1689,20 @@ jQuery(function ($) {
 			return;
 		}
 
+		// Prevent guaranteed-401 AJAX call for logged-out guests: show clear login guidance instead.
+		var isLoggedInByData = !furnivaData || !Object.prototype.hasOwnProperty.call(furnivaData, "isLoggedIn") || (furnivaData.isLoggedIn === true || furnivaData.isLoggedIn === 1 || furnivaData.isLoggedIn === "1");
+		if (!isLoggedInByData) {
+			var guestWlMsg = isVi
+				? "Quý khách vui lòng đăng nhập để lưu sản phẩm vào danh sách yêu thích."
+				: "Please sign in to save this product to your wishlist.";
+			if ($("#axAuthGateModal").length) {
+				openAuthGateModal(guestWlMsg, window.location.href);
+			} else {
+				showAxToast(guestWlMsg, "error");
+			}
+			return;
+		}
+
 		var pid = parseInt($btn.attr("data-product-id"), 10);
 		if (!pid || $btn.hasClass("is-loading")) return;
 
