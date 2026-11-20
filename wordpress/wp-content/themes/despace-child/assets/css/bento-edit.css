@@ -679,3 +679,30 @@
     padding: 20px 22px;
   }
 }
+
+/* Carousel slide transition & keyboard focus accessibility */
+.fv-bento-card__bg {
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s ease;
+}
+
+.fv-bento-card__bg.is-switching {
+  opacity: 0.72;
+}
+
+.fv-bento-nav-btn:focus-visible,
+.fv-bento-pill-btn:focus-visible {
+  outline: 2px solid #FFFFFF;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fv-bento-card__bg,
+  .fv-bento-nav-btn,
+  .fv-bento-progress-bars span {
+    transition: none !important;
+  }
+
+  .fv-bento-card:hover .fv-bento-card__bg {
+    transform: none;
+  }
+}

@@ -22,9 +22,6 @@ while ( have_posts() ) :
 		if ( function_exists( 'is_cart' ) && ( is_cart() || is_checkout() ) ) {
 			echo '<div class="f-wrap f-wc-content">';
 			the_content();
-			if ( is_checkout() && function_exists( 'despace_render_checkout_policy_notice' ) ) {
-				despace_render_checkout_policy_notice();
-			}
 			echo '</div>';
 		} else {
 		echo '<div class="entry-content f-page-content f-page-content--' . esc_attr( sanitize_html_class( $page_slug ) ) . '">';
@@ -44,6 +41,15 @@ while ( have_posts() ) :
 			</section>
 			<?php
 		elseif ( in_array( $page_slug, array( 'contact', 'lien-he' ), true ) ) :
+			$raw_contact_content = (string) get_post_field( 'post_content', get_the_ID() );
+			if ( function_exists( 'despace_render_contact_form_html' ) && false === strpos( $raw_contact_content, '[despace_contact_form' ) && false === stripos( $raw_contact_content, '<form' ) ) :
+				?>
+				<section class="f-wrap f-contact-form-section" aria-labelledby="f-contact-form-heading" style="margin: 32px auto;">
+					<h2 id="f-contact-form-heading" style="margin-bottom: 16px;"><?php echo esc_html( furniva_t( 'Send a consultation inquiry', 'Gửi yêu cầu tư vấn' ) ); ?></h2>
+					<?php echo despace_render_contact_form_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				</section>
+				<?php
+			endif;
 			?>
 			<section class="f-contact-help f-wrap" aria-label="<?php echo esc_attr( furniva_t( 'Customer care', 'Chăm sóc khách hàng' ) ); ?>">
 				<div><span>01</span><h3><?php echo esc_html( furniva_t( 'Order support', 'Hỗ trợ đơn hàng' ) ); ?></h3><p><?php echo esc_html( furniva_t( 'Help with delivery, order status and returns.', 'Hỗ trợ thông tin giao hàng, tình trạng đơn và đổi trả.' ) ); ?></p></div>

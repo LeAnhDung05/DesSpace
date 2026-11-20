@@ -105,8 +105,15 @@ class RestApiModule {
 		$brand     = sanitize_text_field( $request->get_param( 'brand' ) ?? '' );
 		$color     = sanitize_text_field( $request->get_param( 'color' ) ?? '' );
 		$size      = sanitize_text_field( $request->get_param( 'size' ) ?? '' );
-		$min_price = floatval( $request->get_param( 'min_price' ) ?? 0 );
-		$max_price = floatval( $request->get_param( 'max_price' ) ?? 0 );
+		$raw_min   = $request->get_param( 'min_price' ) ?? $request->get_param( 'price_min' ) ?? '';
+		$raw_max   = $request->get_param( 'max_price' ) ?? $request->get_param( 'price_max' ) ?? '';
+		$min_price = ( '' !== $raw_min && is_numeric( $raw_min ) ) ? max( 0.0, (float) $raw_min ) : 0.0;
+		$max_price = ( '' !== $raw_max && is_numeric( $raw_max ) ) ? max( 0.0, (float) $raw_max ) : 0.0;
+		if ( $min_price > 0 && $max_price > 0 && $min_price > $max_price ) {
+			$tmp       = $min_price;
+			$min_price = $max_price;
+			$max_price = $tmp;
+		}
 		$has_3d    = rest_sanitize_boolean( $request->get_param( 'has_3d' ) ?? false );
 		$on_sale   = rest_sanitize_boolean( $request->get_param( 'on_sale' ) ?? $request->get_param( 'onsale' ) ?? false );
 		$orderby   = sanitize_text_field( $request->get_param( 'orderby' ) ?? $request->get_param( 'sort' ) ?? 'date' );
@@ -130,7 +137,7 @@ class RestApiModule {
 			);
 		}
 
-		if ( $material ) {
+		if ( $material && taxonomy_exists( 'pa_material' ) ) {
 			$field = is_numeric( $material ) ? 'term_id' : 'slug';
 			$tax_query[] = array(
 				'taxonomy' => 'pa_material',
@@ -139,15 +146,15 @@ class RestApiModule {
 			);
 		}
 
-		if ( $brand ) {
+		if ( $brand && taxonomy_exists( 'product_brand' ) ) {
 			$tax_query[] = array(
-				'taxonomy' => 'pa_brand',
+				'taxonomy' => 'product_brand',
 				'field'    => is_numeric( $brand ) ? 'term_id' : 'slug',
 				'terms'    => $brand,
 			);
 		}
 
-		if ( $color ) {
+		if ( $color && taxonomy_exists( 'pa_color' ) ) {
 			$tax_query[] = array(
 				'taxonomy' => 'pa_color',
 				'field'    => is_numeric( $color ) ? 'term_id' : 'slug',
@@ -155,7 +162,7 @@ class RestApiModule {
 			);
 		}
 
-		if ( $size ) {
+		if ( $size && taxonomy_exists( 'pa_size' ) ) {
 			$tax_query[] = array(
 				'taxonomy' => 'pa_size',
 				'field'    => is_numeric( $size ) ? 'term_id' : 'slug',
@@ -246,33 +253,27 @@ class RestApiModule {
 		switch ( $orderby ) {
 			case 'price':
 			case 'price-asc':
-				$args['orderby']  = 'meta_value_num';
+				$args['orderby']  = array( 'meta_value_num' => 'ASC', 'ID' => 'ASC' );
 				$args['meta_key'] = '_price';
-				$args['order']    = 'ASC';
 				break;
 			case 'price-desc':
-				$args['orderby']  = 'meta_value_num';
+				$args['orderby']  = array( 'meta_value_num' => 'DESC', 'ID' => 'DESC' );
 				$args['meta_key'] = '_price';
-				$args['order']    = 'DESC';
 				break;
 			case 'popularity':
-				$args['orderby']  = 'meta_value_num';
+				$args['orderby']  = array( 'meta_value_num' => 'DESC', 'ID' => 'DESC' );
 				$args['meta_key'] = 'total_sales';
-				$args['order']    = 'DESC';
 				break;
 			case 'rating':
-				$args['orderby']  = 'meta_value_num';
+				$args['orderby']  = array( 'meta_value_num' => 'DESC', 'ID' => 'DESC' );
 				$args['meta_key'] = '_wc_average_rating';
-				$args['order']    = 'DESC';
 				break;
 			case 'title':
-				$args['orderby'] = 'title';
-				$args['order']   = $order;
+				$args['orderby'] = array( 'title' => $order, 'ID' => $order );
 				break;
 			case 'date':
 			default:
-				$args['orderby'] = 'date';
-				$args['order']   = $order;
+				$args['orderby'] = array( 'date' => $order, 'ID' => $order );
 				break;
 		}
 

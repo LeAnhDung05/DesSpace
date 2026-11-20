@@ -39,8 +39,21 @@ Lần đầu Docker tải image và MySQL tạo database, có thể mất vài p
    ```
 
    Nếu leader xác nhận phiên bản khác, hãy dùng phiên bản nhóm thống nhất thay cho `11.1.2`.
-3. SQL không chứa các tệp ảnh và mô hình 3D. Nếu ảnh/GLB bị thiếu, xin gói `uploads` từ leader và đồng bộ vào site Docker; không chép database Local vào volume Docker.
-4. Theme, plugin DeSpace và MU plugins được bind-mount từ repo nên thay đổi mã nguồn sẽ xuất hiện trong container ngay.
+3. Repo không lưu theme cha **Astra** (được `despace-child/style.css` khai báo `Template: astra`, bản kiểm kê `4.14.0`). Cài theme cha vào volume Docker bằng WP-CLI (không cần `--activate` vì `despace-child` đã được kích hoạt):
+
+   ```powershell
+   docker compose run --rm wpcli theme install astra --version=4.14.0 --path=/var/www/html
+   ```
+
+4. Repo không lưu plugin **YITH WooCommerce Wishlist** (bản kiểm kê nguồn `4.19.0`, dùng cho tính năng yêu thích trên catalog, trang chi tiết và `/wishlist/`) và **TranslatePress - Multilingual** (bản kiểm kê nguồn `3.3.7`, dùng cho route `/en/`). Cài đúng phiên bản từ WordPress.org bằng WP-CLI (không commit mã plugin vào Git):
+
+   ```powershell
+   docker compose run --rm wpcli plugin install yith-woocommerce-wishlist --version=4.19.0 --activate --path=/var/www/html
+   docker compose run --rm wpcli plugin install translatepress-multilingual --version=3.3.7 --activate --path=/var/www/html
+   ```
+
+5. SQL không chứa các tệp ảnh và mô hình 3D. Nếu ảnh/GLB bị thiếu, xin gói `uploads` từ leader và đồng bộ vào site Docker; không chép database Local vào volume Docker.
+6. Theme, plugin DeSpace và MU plugins được bind-mount từ repo nên thay đổi mã nguồn sẽ xuất hiện trong container ngay.
 
 ## Dừng và mở lại
 

@@ -91,11 +91,30 @@ if ( 'create' === $action ) {
 	$variable->set_description( 'Sản phẩm phục vụ kiểm thử biến thể M2 tự động có cleanup an toàn.' );
 	$variable->set_short_description( 'Ghế thư giãn cao cấp bọc da DeSpace kiểm thử biến thể.' );
 
-	// Attach image if available
-	$existing_images = get_posts( array( 'post_type' => 'attachment', 'posts_per_page' => 3 ) );
-	$img_id_main = ! empty( $existing_images[0] ) ? $existing_images[0]->ID : 0;
-	$img_id_a    = ! empty( $existing_images[1] ) ? $existing_images[1]->ID : $img_id_main;
-	$img_id_b    = ! empty( $existing_images[2] ) ? $existing_images[2]->ID : $img_id_main;
+	// Reference existing published catalog product images that exist on disk (read-only; never created or deleted)
+	$catalog_products = wc_get_products( array(
+		'status'  => 'publish',
+		'limit'   => 10,
+		'orderby' => 'ID',
+		'order'   => 'ASC',
+	) );
+	$valid_image_ids = array();
+	foreach ( $catalog_products as $cp ) {
+		$cid = (int) $cp->get_image_id();
+		if ( $cid > 0 && ! in_array( $cid, $valid_image_ids, true ) ) {
+			$file = get_attached_file( $cid );
+			if ( $file && file_exists( $file ) && wp_get_attachment_image_url( $cid, 'full' ) ) {
+				$valid_image_ids[] = $cid;
+			}
+		}
+		if ( count( $valid_image_ids ) >= 2 ) {
+			break;
+		}
+	}
+	$img_id_main = ! empty( $valid_image_ids[0] ) ? $valid_image_ids[0] : 0;
+	$img_id_a    = ! empty( $valid_image_ids[1] ) ? $valid_image_ids[1] : 0;
+	// Variation B intentionally has NO own image (image_id = 0) to verify fallback to parent image
+	$img_id_b    = 0;
 
 	if ( $img_id_main ) {
 		$variable->set_image_id( $img_id_main );
@@ -191,23 +210,29 @@ if ( 'create' === $action ) {
 	$response = array(
 		'status'            => 'created',
 		'variable_parent'   => array(
-			'id'   => $var_parent_id,
-			'slug' => 'm2-test-fixture-lounge-chair',
-			'url'  => get_permalink( $var_parent_id ),
+			'id'        => $var_parent_id,
+			'slug'      => 'm2-test-fixture-lounge-chair',
+			'url'       => get_permalink( $var_parent_id ),
+			'image_id'  => $img_id_main,
+			'image_url' => $img_id_main ? wp_get_attachment_image_url( $img_id_main, 'full' ) : '',
 		),
 		'variation_a'       => array(
-			'id'    => $var_a_id,
-			'sku'   => 'M2-TEST-VAR-OAK',
-			'color' => 'go-soi-modern-oak',
-			'price' => '18500000',
-			'stock' => 3,
+			'id'        => $var_a_id,
+			'sku'       => 'M2-TEST-VAR-OAK',
+			'color'     => 'go-soi-modern-oak',
+			'price'     => '18500000',
+			'stock'     => 3,
+			'image_id'  => $img_id_a,
+			'image_url' => $img_id_a ? wp_get_attachment_image_url( $img_id_a, 'full' ) : '',
 		),
 		'variation_b'       => array(
-			'id'    => $var_b_id,
-			'sku'   => 'M2-TEST-VAR-WENGE',
-			'color' => 'nau-wenge',
-			'price' => '19500000',
-			'stock' => 0,
+			'id'        => $var_b_id,
+			'sku'       => 'M2-TEST-VAR-WENGE',
+			'color'     => 'nau-wenge',
+			'price'     => '19500000',
+			'stock'     => 0,
+			'image_id'  => 0,
+			'image_url' => '',
 		),
 		'simple_outofstock' => array(
 			'id'   => $simple_out_id,

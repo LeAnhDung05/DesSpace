@@ -154,8 +154,8 @@ function despace_require_login_for_checkout() {
 	if ( function_exists( 'is_checkout' ) && is_checkout() && ! is_user_logged_in() && ! is_order_received_page() ) {
 		wc_add_notice(
 			furniva_t(
-				'Please sign in or create an DeSpace Privilege account to complete your purchase and activate 5-year warranty.',
-				'Quý khách vui lòng đăng nhập hoặc đăng ký tài khoản thành viên DeSpace Privilege để hoàn tất thanh toán và kích hoạt bảo hành 5 năm.'
+				'Please sign in or create a DeSpace account to complete your purchase and track order & warranty support (project simulation).',
+				'Quý khách vui lòng đăng nhập hoặc đăng ký tài khoản DeSpace để hoàn tất thanh toán và theo dõi đơn hàng, hỗ trợ bảo hành (mô phỏng đồ án).'
 			),
 			'notice'
 		);
@@ -256,7 +256,7 @@ function despace_render_auth_modal() {
 
 			<div class="ax-auth-gate-perk">
 				<span class="ax-auth-gate-badge">✦ <?php echo esc_html( furniva_t( 'VIP WELCOME GIFT', 'ĐẶC QUYỀN HỘI VIÊN' ) ); ?></span>
-				<p><?php echo esc_html( furniva_t( 'Sign up now to get 10% off with code WELCOME10 and activate 5-year structural warranty.', 'Gia nhập ngay hôm nay nhận mã giảm 10% WELCOME10 và kích hoạt bảo hành kết cấu 5 năm toàn diện.' ) ); ?></p>
+				<p><?php echo esc_html( furniva_t( 'Sign up now to receive code WELCOME10 and track order & warranty support (project simulation).', 'Đăng ký ngay để sử dụng mã WELCOME10 và theo dõi đơn hàng, thông tin bảo hành (mô phỏng đồ án).' ) ); ?></p>
 			</div>
 
 			<div class="ax-auth-gate-actions">

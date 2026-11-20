@@ -100,29 +100,29 @@ do_action( 'woocommerce_before_single_product' );
 
                 <!-- Navigation arrows -->
                 <?php if ( count( $all_images ) > 1 ) : ?>
-                <button class="ax-gallery-nav ax-gallery-prev" id="axGalleryPrev" aria-label="Previous image">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
+                <button type="button" class="ax-gallery-nav ax-gallery-prev" id="axGalleryPrev" aria-label="<?php echo esc_attr( furniva_t( 'Previous image', 'Ảnh trước' ) ); ?>">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
                 </button>
-                <button class="ax-gallery-nav ax-gallery-next" id="axGalleryNext" aria-label="Next image">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
+                <button type="button" class="ax-gallery-nav ax-gallery-next" id="axGalleryNext" aria-label="<?php echo esc_attr( furniva_t( 'Next image', 'Ảnh tiếp theo' ) ); ?>">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
                 </button>
                 <?php endif; ?>
 
                 <!-- Zoom button -->
-                <button class="ax-gallery-zoom" aria-label="Zoom image">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                <button type="button" class="ax-gallery-zoom" aria-label="<?php echo esc_attr( furniva_t( 'Zoom image', 'Phóng to ảnh' ) ); ?>">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
                 </button>
 
                 <!-- Thumbnails -->
                 <?php if ( count( $all_images ) > 1 ) : ?>
-                <div class="ax-gallery-thumbs">
+                <div class="ax-gallery-thumbs" role="group" aria-label="<?php echo esc_attr( furniva_t( 'Product thumbnails', 'Ảnh thu nhỏ sản phẩm' ) ); ?>">
                     <?php foreach ( $all_images as $idx => $img_id ) :
                         $thumb_url = wp_get_attachment_image_url( $img_id, 'woocommerce_gallery_thumbnail' );
                         if ( ! $thumb_url ) continue;
                     ?>
-                        <div class="ax-thumb-item <?php echo $idx === 0 ? 'active' : ''; ?>" data-index="<?php echo $idx; ?>">
+                        <button type="button" class="ax-thumb-item <?php echo $idx === 0 ? 'active' : ''; ?>" data-index="<?php echo esc_attr( $idx ); ?>" aria-pressed="<?php echo $idx === 0 ? 'true' : 'false'; ?>" aria-label="<?php echo esc_attr( sprintf( furniva_t( 'View image %d', 'Xem ảnh %d' ), $idx + 1 ) ); ?>">
                             <img src="<?php echo esc_url( $thumb_url ); ?>" alt="" loading="lazy" />
-                        </div>
+                        </button>
                     <?php endforeach; ?>
                 </div>
                 <?php endif; ?>
@@ -196,9 +196,9 @@ do_action( 'woocommerce_before_single_product' );
                     $single_finish = furniva_term_label( $color_terms[0], 'pa_color' );
                 }
                 if ( $single_finish && ! $product->is_type( 'variable' ) ) : ?>
-                <div class="ax-finish-badge-row" style="margin-bottom: 18px; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
-                    <span class="ax-var-label" style="font-size: 0.8rem; font-weight: 600; letter-spacing: 0.05em; color: #71717a; text-transform: uppercase;"><?php echo esc_html( furniva_t( 'Finish:', 'Màu hoàn thiện:' ) ); ?></span>
-                    <strong class="ax-finish-val" style="color: #18181b; font-weight: 600;"><?php echo esc_html( $single_finish ); ?></strong>
+                <div class="ax-finish-badge-row">
+                    <span class="ax-var-label"><?php echo esc_html( furniva_t( 'Finish:', 'Màu hoàn thiện:' ) ); ?></span>
+                    <strong class="ax-finish-val"><?php echo esc_html( $single_finish ); ?></strong>
                 </div>
                 <?php endif; ?>
 
@@ -424,7 +424,7 @@ do_action( 'woocommerce_before_single_product' );
                         <h3><?php echo esc_html( furniva_t( 'Shipping Information', 'Thông tin vận chuyển' ) ); ?></h3>
                         <p><?php echo esc_html( furniva_t( 'Available delivery methods and fees are shown during checkout based on your address and order.', 'Phương thức và phí giao hàng sẽ được hiển thị tại bước thanh toán theo địa chỉ và đơn hàng của bạn.' ) ); ?></p>
                         <h3><?php echo esc_html( furniva_t( 'Return Policy', 'Chính sách đổi trả' ) ); ?></h3>
-                        <?php $terms_url = wc_get_page_permalink( 'terms' ); ?>
+                        <?php $terms_url = wc_get_page_permalink( 'terms' ) ? furniva_url( wc_get_page_permalink( 'terms' ) ) : furniva_url( '/chinh-sach-doi-tra-bao-hanh/' ); ?>
                         <p><?php echo esc_html( furniva_t( 'Please review the store terms for the applicable return and exchange conditions.', 'Vui lòng xem điều khoản của cửa hàng để biết điều kiện đổi trả áp dụng.' ) ); ?>
                             <?php if ( $terms_url ) : ?> <a href="<?php echo esc_url( $terms_url ); ?>"><?php echo esc_html( furniva_t( 'View store terms', 'Xem điều khoản cửa hàng' ) ); ?></a><?php endif; ?>
                         </p>
@@ -477,8 +477,8 @@ jQuery(function($) {
         if (index < 0 || index >= totalImages) return;
         $images.hide().removeClass('active');
         $images.eq(index).show().addClass('active');
-        $thumbs.removeClass('active');
-        $thumbs.eq(index).addClass('active');
+        $thumbs.removeClass('active').attr('aria-pressed', 'false');
+        $thumbs.eq(index).addClass('active').attr('aria-pressed', 'true');
         currentImageIndex = index;
     }
 
@@ -498,6 +498,14 @@ jQuery(function($) {
     });
 
     // Zoom Lightbox
+    function closeLightbox(restoreFocus) {
+        $('#axGalleryLightbox').fadeOut(180).attr('aria-hidden', 'true');
+        $('body').css('overflow', '');
+        if (restoreFocus) {
+            $('.ax-gallery-zoom').first().trigger('focus');
+        }
+    }
+
     $('.ax-gallery-zoom').on('click', function() {
         var $activeImg = $('#axGalleryMain .ax-gallery-image.active');
         if ($activeImg.length) {
@@ -506,18 +514,19 @@ jQuery(function($) {
             $('#axGalleryLightbox .ax-lightbox-img').attr('src', src).attr('alt', alt);
             $('#axGalleryLightbox').fadeIn(200).attr('aria-hidden', 'false');
             $('body').css('overflow', 'hidden');
+            setTimeout(function() {
+                $('#axGalleryLightbox .ax-lightbox-close').trigger('focus');
+            }, 60);
         }
     });
 
     $(document).on('click', '#axGalleryLightbox .ax-lightbox-close, #axGalleryLightbox .ax-lightbox-backdrop', function() {
-        $('#axGalleryLightbox').fadeOut(180).attr('aria-hidden', 'true');
-        $('body').css('overflow', '');
+        closeLightbox(true);
     });
 
     $(document).on('keydown', function(e) {
         if (e.key === 'Escape' && $('#axGalleryLightbox').is(':visible')) {
-            $('#axGalleryLightbox').fadeOut(180).attr('aria-hidden', 'true');
-            $('body').css('overflow', '');
+            closeLightbox(true);
         }
     });
 
@@ -640,6 +649,9 @@ jQuery(function($) {
                 sizes: variation.image.sizes || '',
                 alt: variation.image.alt || '<?php echo esc_js( $product->get_name() ); ?>'
             });
+            showImage(0);
+        } else if (originalImage && $mainImage.length) {
+            $mainImage.attr(originalImage);
             showImage(0);
         }
     });

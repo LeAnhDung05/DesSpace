@@ -183,6 +183,7 @@
     border-radius: 8px;
     overflow: hidden;
     cursor: pointer;
+    padding: 0;
     border: 2px solid transparent;
     transition: all 0.2s;
     background: #efe9de;
@@ -328,6 +329,40 @@
     color: #8a7a65;
     margin-bottom: 12px;
     text-transform: uppercase;
+}
+
+.ax-finish-badge-row {
+    margin-bottom: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 8px;
+    row-gap: 4px;
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+
+.ax-finish-badge-row .ax-var-label {
+    display: inline-block;
+    margin: 0;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    line-height: 1.45;
+    color: #71717a;
+    text-transform: uppercase;
+}
+
+.ax-finish-badge-row .ax-finish-val {
+    margin: 0;
+    min-width: 0;
+    flex: 0 1 auto;
+    color: #18181b;
+    font-weight: 600;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
 }
 
 .ax-color-swatches {
@@ -597,6 +632,7 @@
 .ax-qty-input::-webkit-outer-spin-button,
 .ax-qty-input::-webkit-inner-spin-button {
     -webkit-appearance: none;
+    appearance: none;
     margin: 0;
 }
 

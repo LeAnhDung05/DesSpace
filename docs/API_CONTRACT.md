@@ -67,7 +67,7 @@
 - `min_price` (*numeric, optional*): Giá tối thiểu (VND).
 - `max_price` (*numeric, optional*): Giá tối đa (VND).
 - `material` (*string, optional*): Thuộc tính chất liệu taxonomy `pa_material` (VD: `go-soi`, `da-bo-that`).
-- `brand` (*string, optional*): Thuộc tính thương hiệu taxonomy `pa_brand`.
+- `brand` (*string, optional*): Thương hiệu sản phẩm theo taxonomy chuẩn WooCommerce Core `product_brand` (giữ nguyên tên tham số `brand` để tương thích ngược).
 - `color` (*string, optional*): Thuộc tính màu sắc taxonomy `pa_color`.
 - `size` (*string, optional*): Thuộc tính kích thước taxonomy `pa_size`.
 - `has_3d` (*boolean, optional*): Lọc chỉ các sản phẩm có sẵn mô hình 3D (`true`/`false`, kiểm tra `_despace_glb_attachment_id > 0`).

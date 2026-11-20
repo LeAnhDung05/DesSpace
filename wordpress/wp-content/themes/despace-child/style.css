@@ -4,8 +4,11 @@ Theme URI:    https://despace.vn
 Description:  DeSpace Premium Architectural Furniture Sanctuary - High-end Scandinavian, Muji Serenity & Apple Simplicity WordPress & WooCommerce Child Theme.
 Author:       DeSpace Team
 Template:     astra
-Version:      2.9.0
+Version:      3.0.0
+Requires at least: 6.4
+Requires PHP: 8.1
 License:      GNU General Public License v2 or later
+License URI:  https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain:  despace-child
 */
 
@@ -3194,6 +3197,7 @@ a.reset_variations:hover,
 .yith-quick-view-content .quantity input.qty::-webkit-outer-spin-button,
 .yith-quick-view-content .quantity input.qty::-webkit-inner-spin-button {
 	-webkit-appearance: none;
+	appearance: none;
 	margin: 0;
 }
 
@@ -3662,39 +3666,73 @@ body.drawer-open { overflow: hidden; }
 	color: var(--f-champagne-dark);
 }
 
-.f-sticky-bar-right .f-btn {
+.f-sticky-bar-right {
+	flex-shrink: 0;
+}
+
+.f-sticky-bar-right .f-btn,
+.f-sticky-add-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
 	padding: 10px 22px;
+	min-height: 44px;
 	font-size: 13.5px;
+	line-height: 1.2;
+	white-space: nowrap;
+}
+
+.f-sticky-add-btn svg {
+	width: 16px;
+	height: 16px;
+	flex-shrink: 0;
+	display: block;
 }
 
 /* ============================================================
    10. Toast, Shimmer, Back to Top & Micro-Interactions
    ============================================================ */
 /* Toast Pill */
-.f-toast {
+.f-toast,
+.ax-toast {
 	position: fixed;
 	bottom: 30px;
 	left: 50%;
 	transform: translateX(-50%) translateY(20px);
-	background: rgba(25, 24, 22, 0.92);
+	background: rgba(25, 24, 22, 0.94);
 	backdrop-filter: blur(16px);
 	color: #ffffff;
-	padding: 10px 24px;
+	padding: 12px 22px;
 	border-radius: var(--f-radius-pill);
 	font-size: 13.5px;
 	font-weight: 500;
+	line-height: 1.45;
 	letter-spacing: 0.02em;
+	width: max-content;
+	max-width: calc(100vw - 32px);
+	box-sizing: border-box;
+	text-align: center;
+	pointer-events: none;
+	animation: none !important;
 	opacity: 0;
 	visibility: hidden;
-	transition: all 0.3s var(--f-ease);
+	transition: opacity 0.25s var(--f-ease), transform 0.25s var(--f-ease), visibility 0.25s var(--f-ease);
 	z-index: 1050;
-	box-shadow: 0 10px 28px rgba(25, 24, 22, 0.2);
+	box-shadow: 0 10px 28px rgba(25, 24, 22, 0.22);
 }
 
-.f-toast.is-visible {
+.f-toast.is-visible,
+.ax-toast.is-visible {
 	opacity: 1;
 	visibility: visible;
 	transform: translateX(-50%) translateY(0);
+}
+
+.f-toast--error,
+.ax-toast.ax-toast--error {
+	background: rgba(139, 38, 32, 0.96);
+	border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
 /* Shimmer Loading Cards */
@@ -4663,6 +4701,32 @@ ul.products,
 	color: #fff !important;
 }
 
+.f-card-wishlist-btn:focus-visible {
+	outline: 2px solid #A96F4B !important;
+	outline-offset: 2px !important;
+}
+
+.f-card-wishlist-btn.is-active {
+	background: #ffffff !important;
+	color: #B44335 !important;
+	box-shadow: 0 2px 10px rgba(25, 23, 21, 0.16) !important;
+}
+
+.f-card-wishlist-btn.is-active svg {
+	fill: currentColor !important;
+	stroke: currentColor !important;
+}
+
+.f-card-wishlist-btn.is-unavailable {
+	opacity: 0.58 !important;
+	cursor: not-allowed !important;
+}
+
+.f-card-wishlist-btn.is-loading {
+	opacity: 0.65 !important;
+	pointer-events: none !important;
+}
+
 .f-card-body {
 	padding: 12px 12px 13px;
 }
@@ -5221,6 +5285,31 @@ ul.products,
 .f-widget li + li { border-top: 1px solid var(--f-shop-border); }
 .f-widget li a { display: flex; justify-content: space-between; gap: 8px; padding: 10px 0; font-size: 12px; }
 .f-widget li a:hover { color: var(--f-accent-dark); }
+/* Prevent sidebar link styles from distorting embedded WooCommerce product cards in Journal sidebar */
+.f-widget .f-products { display: grid; grid-template-columns: 1fr; gap: 16px; }
+.f-widget .f-products > li + li { border-top: none; }
+.f-widget .f-products li a.f-card-media,
+.f-widget .f-products li a.f-card-title { display: block; padding: 0; }
+.f-widget .f-products li a.f-card-cart,
+.f-widget .f-products li a.add_to_cart_button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	width: 100%;
+	min-height: 40px;
+	padding: 9px 14px;
+	font-size: 12.5px;
+	line-height: 1.2;
+	white-space: nowrap;
+}
+.f-widget .f-products li a.f-card-cart svg,
+.f-widget .f-products li a.add_to_cart_button svg {
+	width: 15px;
+	height: 15px;
+	flex-shrink: 0;
+	display: block;
+}
 .f-tag-cloud { display: flex; flex-wrap: wrap; gap: 7px; }
 .f-tag-cloud a { padding: 6px 9px; border: 1px solid var(--f-shop-border); color: var(--f-muted); font-size: 11px !important; }
 .f-sidebar ul.f-products { display: grid !important; grid-template-columns: 1fr !important; gap: 10px !important; }
@@ -7892,7 +7981,100 @@ button.single_add_to_cart_button:active {
 }
 
 /* Owner and payment details in the DeSpace footer. */
-.fv-footer__grid { grid-template-columns: 1.35fr repeat(5, minmax(0, 1fr)); }
+.fv-footer__grid { grid-template-columns: 1.25fr 0.85fr 0.85fr 1fr 1.45fr; gap: 32px 24px; padding-bottom: 36px; }
+.fv-footer__newsletter {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(340px, 460px);
+	align-items: center;
+	gap: 20px 44px;
+	padding-top: 26px;
+	padding-bottom: 30px;
+	border-top: 1px solid rgb(247 243 236 / 14%);
+	color: rgb(247 243 236 / 76%);
+	font-size: 12px;
+}
+.fv-footer__newsletter-copy {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+.fv-footer .fv-footer__newsletter-copy h2 {
+	margin: 0;
+	color: #ffffff;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.3;
+	letter-spacing: 0.02em;
+}
+.fv-footer__newsletter-copy p {
+	margin: 0;
+	max-width: 520px;
+	color: rgb(247 243 236 / 68%);
+	font-size: 12.5px;
+	line-height: 1.6;
+}
+.fv-footer__newsletter-form-wrap {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	min-width: 0;
+	width: 100%;
+}
+.fv-footer__newsletter form {
+	display: flex;
+	width: 100%;
+	gap: 8px;
+}
+.fv-footer__newsletter input {
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: 44px;
+	padding: 0 14px;
+	border: 1px solid rgb(247 243 236 / 26%);
+	border-radius: 4px;
+	background: rgb(255 255 255 / 8%);
+	color: #ffffff;
+	font-size: 13px;
+}
+.fv-footer__newsletter input::placeholder {
+	color: rgb(247 243 236 / 54%);
+}
+.fv-footer__newsletter input:focus-visible {
+	outline: 2px solid #d7c9a6;
+	outline-offset: 2px;
+}
+.fv-footer__newsletter button {
+	flex: 0 0 auto;
+	min-height: 44px;
+	padding: 0 20px;
+	border: 1px solid rgb(247 243 236 / 40%);
+	border-radius: 4px;
+	background: transparent;
+	color: #ffffff;
+	font-size: 12.5px;
+	font-weight: 600;
+	white-space: nowrap;
+	cursor: pointer;
+	transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.fv-footer__newsletter button:hover,
+.fv-footer__newsletter button:focus-visible {
+	background: #f7f3ec;
+	border-color: #f7f3ec;
+	color: #191816;
+}
+.fv-footer__newsletter .f-news-ok {
+	display: none;
+	color: #d7c9a6;
+	font-size: 12px;
+	line-height: 1.5;
+}
+.fv-footer__newsletter .f-news-note {
+	color: rgb(247 243 236 / 56%);
+	font-size: 11px;
+	line-height: 1.5;
+}
 .fv-footer__owner-name { margin: 1px 0 2px; color: #fff; font-size: 14px; letter-spacing: .12em; }
 .fv-footer__owner p { max-width: 190px; color: rgba(247, 243, 236, .65); line-height: 1.6; }
 .fv-footer__owner a { text-decoration: underline; text-decoration-color: rgba(247, 243, 236, .3); text-underline-offset: 3px; }
@@ -8113,13 +8295,14 @@ button.single_add_to_cart_button:active {
 .ax-chat-note { margin: 0; padding: 0 14px 11px; color: #82776b; font-size: 9px; }
 
 @media (max-width: 1279.98px) {
-	.fv-footer__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-	.fv-footer__brand { grid-column: 1 / -1; }
+	.fv-footer__grid { grid-template-columns: 1.15fr 0.85fr 0.85fr 1fr 1.35fr; gap: 28px 20px; }
 }
-@media (max-width: 1023.98px) {
-	.fv-footer__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-	.fv-footer__brand { grid-column: 1 / -1; }
-	.fv-footer__owner { grid-column: auto; }
+@media (max-width: 1024px) {
+	.fv-footer__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 20px; }
+	.fv-footer__brand { grid-column: 1 / -1; max-width: 560px; align-items: flex-start; text-align: left; margin-inline: 0; }
+	.fv-footer__owner { grid-column: 1 / -1; max-width: 640px; align-items: flex-start; text-align: left; }
+	.fv-footer__owner p { max-width: 100%; }
+	.fv-footer__newsletter { grid-template-columns: minmax(0, 1fr) minmax(300px, 420px); gap: 18px 28px; }
 	.ax-chat-dock { right: 14px; bottom: 72px; gap: 8px; }
 	.ax-chat-toggle { width: 56px !important; height: 56px !important; }
 	.ax-chat-mascot-wrapper { width: 50px !important; height: 50px !important; }
@@ -8130,14 +8313,23 @@ button.single_add_to_cart_button:active {
 	.fv-search-dialog .dgwt-wcas-search-input { min-height: 46px !important; padding-left: 16px !important; font-size: 13px !important; }
 	.fv-search-dialog .fv-search-dialog__close { right: 12px; width: 38px; height: 38px; }
 }
-@media (max-width: 759.98px) {
-	.fv-footer__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-	.fv-footer__owner { grid-column: 1 / -1; align-items: center; text-align: center; }
-	.fv-footer__owner p { max-width: 280px; }
+@media (max-width: 767.98px) {
+	.fv-footer__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 16px; padding-bottom: 26px; }
+	.fv-footer__brand { grid-column: 1 / -1; max-width: 100%; align-items: flex-start; text-align: left; margin-inline: 0; }
+	.fv-footer__owner { grid-column: 1 / -1; max-width: 100%; align-items: flex-start; text-align: left; }
+	.fv-footer__owner p { max-width: 100%; }
+	.fv-footer__newsletter { grid-template-columns: 1fr; gap: 14px; padding-top: 22px; padding-bottom: 26px; }
 	.fv-footer__legal { gap: 12px; }
 	.f-payments { justify-content: center; }
 	.ax-chat-dock { right: 12px; bottom: 72px; }
 	.ax-chat-panel { width: min(360px, calc(100vw - 24px)); height: min(520px, calc(100dvh - 156px)); min-height: 320px; }
+}
+@media (max-width: 420px) {
+	.fv-footer__newsletter form { flex-direction: column; gap: 10px; }
+	.fv-footer__newsletter button { width: 100%; }
+}
+@media (max-width: 359.98px) {
+	.fv-footer__grid { grid-template-columns: 1fr; gap: 20px; }
 }
 @media (prefers-reduced-motion: reduce) {
 	.fv-header__brand-block, .fv-primary-nav, .fv-header__actions > *, .fv-search-dialog[open],
@@ -9317,6 +9509,7 @@ nav.woocommerce-pagination a.prev.page-numbers {
   min-height: 2.8em;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -10266,6 +10459,67 @@ body.ax-auth-modal-open {
 	color: #78716C;
 	margin: -10px 0 20px;
 	line-height: 1.6;
+}
+.f-contact-form-section {
+	padding: 28px;
+	border: 1px solid var(--f-shop-border, #e7e0d7);
+	border-radius: 10px;
+	background: #faf7f2;
+}
+.f-contact-form-ajax {
+	display: grid;
+	gap: 16px;
+}
+.f-contact-form-ajax .f-contact-field {
+	display: grid;
+	gap: 6px;
+	min-width: 0;
+}
+.f-contact-form-ajax .f-contact-field > span {
+	color: #3f3a34;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+.f-contact-form-ajax input:not([type="hidden"]),
+.f-contact-form-ajax select,
+.f-contact-form-ajax textarea {
+	width: 100%;
+	min-height: 48px;
+	padding: 12px 14px;
+	border: 1px solid #cfc6b9;
+	border-radius: 6px;
+	background: #ffffff;
+	color: #1c1917;
+	font-size: 14px;
+	line-height: 1.45;
+	box-sizing: border-box;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.f-contact-form-ajax textarea {
+	min-height: 132px;
+	resize: vertical;
+}
+.f-contact-form-ajax input:not([type="hidden"]):focus-visible,
+.f-contact-form-ajax select:focus-visible,
+.f-contact-form-ajax textarea:focus-visible {
+	border-color: #9a6745;
+	outline: 2px solid rgba(154, 103, 69, 0.28);
+	outline-offset: 1px;
+}
+button.ax-chat-link {
+	padding: 0;
+	border: none;
+	cursor: pointer;
+	appearance: none;
+}
+.ax-chat-link:focus-visible {
+	outline: 2px solid #c5a059;
+	outline-offset: 3px;
+}
+body:has(#furniva-sticky-bar.is-visible) .ax-chat-dock {
+	bottom: 96px;
 }
 .ds-form-row {
 	display: grid;

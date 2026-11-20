@@ -24,7 +24,7 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 			<span><?php echo esc_html( furniva_t( 'DeSpace PRIVILEGE CLUB', 'CÂU LẠC BỘ ĐẶC QUYỀN DeSpace' ) ); ?></span>
 		</div>
 		<h1 class="ax-auth-title"><?php echo esc_html( furniva_t( 'Welcome to Your Private Sanctuary', 'Không Gian Quản Trị & Đặc Quyền Hội Viên' ) ); ?></h1>
-		<p class="ax-auth-subtitle"><?php echo esc_html( furniva_t( 'Sign in to access your bespoke orders, 5-year warranty vault, and exclusive member privileges.', 'Đăng nhập để theo dõi đơn hàng thiết kế, sổ địa chỉ nhận hàng và kích hoạt gói bảo hành toàn diện 5 năm.' ) ); ?></p>
+		<p class="ax-auth-subtitle"><?php echo esc_html( furniva_t( 'Sign in to access your orders, saved addresses, and warranty support (project simulation).', 'Đăng nhập để theo dõi đơn hàng, sổ địa chỉ nhận hàng và thông tin bảo hành (mô phỏng đồ án).' ) ); ?></p>
 	</header>
 
 	<div class="ax-auth-layout">
@@ -237,7 +237,7 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
 					</div>
 					<div class="ax-privilege-item-content">
-						<h4><?php echo esc_html( furniva_t( '5-Year Structural Warranty', 'Bảo Hành Kết Cấu 5 Năm Toàn Diện' ) ); ?></h4>
+						<h4><?php echo esc_html( furniva_t( 'Craftsmanship Warranty (Simulation)', 'Bảo Hành Kết Cấu (Mô Phỏng Đồ Án)' ) ); ?></h4>
 						<p><?php echo esc_html( furniva_t( 'Automatic digital warranty vault for all engineered wood & fittings.', 'Hệ thống bảo hành điện tử trọn vòng đời cho khung gỗ, bản lề và ray trượt.' ) ); ?></p>
 					</div>
 				</li>

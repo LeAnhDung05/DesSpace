@@ -10,9 +10,9 @@
   "step2_select_variation_a": {
     "pass": true,
     "data": {
-      "price": "₫21.000.000 \nOriginal price was: ₫21.000.000.\n₫18.500.000\nCurrent price is: ₫18.500.000.",
+      "price": "21.000.000 ₫ \nOriginal price was: 21.000.000 ₫.\n18.500.000 ₫\nCurrent price is: 18.500.000 ₫.",
       "sku": "M2-TEST-VAR-OAK",
-      "stock": "3 in stock",
+      "stock": "Availability: 3 in stock",
       "btnDisabled": false
     }
   },
@@ -27,7 +27,7 @@
   "step4_add_to_cart_variation": {
     "pass": true,
     "status": "PASS",
-    "assertedVariationId": 1121,
+    "assertedVariationId": 1142,
     "assertedSku": "M2-TEST-VAR-OAK",
     "expectedQuantity": 2,
     "actualQuantity": 2,

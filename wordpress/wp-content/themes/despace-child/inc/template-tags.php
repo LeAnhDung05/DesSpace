@@ -119,14 +119,35 @@ function despace_filter_sidebar() {
 	}
 
 	$cat_terms = get_terms( array( 'taxonomy' => 'product_cat', 'hide_empty' => true, 'parent' => 0, 'exclude' => array( wc_get_page_id( 'shop' ) ) ) );
-	$brands    = get_terms( array( 'taxonomy' => 'pa_brand', 'hide_empty' => true ) );
+	$brands    = taxonomy_exists( 'product_brand' ) ? get_terms( array( 'taxonomy' => 'product_brand', 'hide_empty' => true ) ) : array();
 	$colors    = get_terms( array( 'taxonomy' => 'pa_color', 'hide_empty' => true ) );
 	$sizes     = get_terms( array( 'taxonomy' => 'pa_size', 'hide_empty' => true ) );
 	$materials = get_terms( array( 'taxonomy' => 'pa_material', 'hide_empty' => true ) );
 
-	$price_range = despace_get_price_range_data();
+	$price_range     = despace_get_price_range_data();
+	$price_min_bound = (int) floor( $price_range['min'] ?? 0 );
+	$price_max_bound = (int) ceil( $price_range['max'] ?? 0 );
+	$currency_symbol = function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol(), ENT_QUOTES, 'UTF-8' ) : '₫';
+	$form_action     = function_exists( 'wc_get_page_permalink' ) ? furniva_url( wc_get_page_permalink( 'shop' ) ) : furniva_url( '/shop/' );
+
+	global $wpdb;
+	$instock_count = (int) $wpdb->get_var(
+		"SELECT COUNT(DISTINCT p.ID) FROM {$wpdb->posts} p
+		 INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+		 WHERE p.post_type = 'product' AND p.post_status = 'publish'
+		   AND pm.meta_key = '_stock_status' AND pm.meta_value = 'instock'"
+	);
+	$has_3d_count = (int) $wpdb->get_var(
+		"SELECT COUNT(DISTINCT p.ID) FROM {$wpdb->posts} p
+		 INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+		 WHERE p.post_type = 'product' AND p.post_status = 'publish'
+		   AND pm.meta_key = '_despace_glb_attachment_id' AND CAST(pm.meta_value AS UNSIGNED) > 0"
+	);
+
+	$req_min = isset( $_GET['price_min'] ) && is_numeric( $_GET['price_min'] ) ? absint( $_GET['price_min'] ) : '';
+	$req_max = isset( $_GET['price_max'] ) && is_numeric( $_GET['price_max'] ) ? absint( $_GET['price_max'] ) : '';
 	?>
-	<aside class="f-filters" id="furniva-filters">
+	<aside class="f-filters" id="furniva-filters" aria-label="<?php echo esc_attr( furniva_t( 'Product filters', 'Bộ lọc sản phẩm' ) ); ?>">
 		<div class="f-filters-header">
 			<div class="f-filters-head-left">
 				<h3 class="f-filters-title"><?php echo esc_html( furniva_t( 'Filter Catalogue', 'Bộ lọc sản phẩm' ) ); ?></h3>
@@ -135,7 +156,7 @@ function despace_filter_sidebar() {
 			<button type="button" class="f-filter-close-drawer" id="furniva-filter-close" aria-label="<?php echo esc_attr( furniva_t( 'Close filters', 'Đóng bộ lọc' ) ); ?>">✕</button>
 		</div>
 
-		<form id="furniva-filter-form" onsubmit="return false;">
+		<form id="furniva-filter-form" method="get" action="<?php echo esc_url( $form_action ); ?>">
 			<!-- Category (Open) -->
 			<details open class="f-filter-group" data-filter-name="category">
 				<summary>
@@ -240,7 +261,7 @@ function despace_filter_sidebar() {
 			</details>
 			<?php endif; ?>
 
-			<!-- Price (Collapsed by default, styled with slider) -->
+			<!-- Price (Accessible min/max inputs with real WooCommerce bounds & currency) -->
 			<details class="f-filter-group" data-filter-name="price">
 				<summary>
 					<span><?php echo esc_html( furniva_t( 'PRICE', 'GIÁ TIỀN' ) ); ?></span>
@@ -248,16 +269,19 @@ function despace_filter_sidebar() {
 				<div class="f-filter-body">
 					<div class="f-price-slider-box">
 						<div class="f-price-labels-row">
-							<span class="f-price-lbl" id="f-price-min-val">$0</span>
-							<span class="f-price-lbl" id="f-price-max-val">$2,000</span>
+							<span class="f-price-lbl" id="f-price-min-val"><?php echo esc_html( number_format( $price_min_bound, 0, ',', '.' ) . ' ' . $currency_symbol ); ?></span>
+							<span class="f-price-lbl" id="f-price-max-val"><?php echo esc_html( number_format( $price_max_bound, 0, ',', '.' ) . ' ' . $currency_symbol ); ?></span>
 						</div>
-						<div class="f-price-slider-track">
-							<div class="f-price-slider-fill"></div>
-							<div class="f-price-thumb f-price-thumb-left"></div>
-							<div class="f-price-thumb f-price-thumb-right"></div>
+						<div class="f-price-inputs" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+							<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#69645D;">
+								<span><?php echo esc_html( furniva_t( 'Min', 'Từ' ) ); ?> (<?php echo esc_html( $currency_symbol ); ?>)</span>
+								<input type="number" name="price_min" id="f-price-min" min="0" step="100000" value="<?php echo esc_attr( $req_min ); ?>" placeholder="<?php echo esc_attr( $price_min_bound ); ?>" aria-label="<?php echo esc_attr( furniva_t( 'Minimum price', 'Giá tối thiểu' ) ); ?>" style="width:100%;padding:7px 9px;border:1px solid #E7E0D7;border-radius:4px;font-size:13px;background:#fff;color:#1C1917;" />
+							</label>
+							<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#69645D;">
+								<span><?php echo esc_html( furniva_t( 'Max', 'Đến' ) ); ?> (<?php echo esc_html( $currency_symbol ); ?>)</span>
+								<input type="number" name="price_max" id="f-price-max" min="0" step="100000" value="<?php echo esc_attr( $req_max ); ?>" placeholder="<?php echo esc_attr( $price_max_bound ); ?>" aria-label="<?php echo esc_attr( furniva_t( 'Maximum price', 'Giá tối đa' ) ); ?>" style="width:100%;padding:7px 9px;border:1px solid #E7E0D7;border-radius:4px;font-size:13px;background:#fff;color:#1C1917;" />
+							</label>
 						</div>
-						<input type="hidden" name="price_min" id="f-price-min" value="" />
-						<input type="hidden" name="price_max" id="f-price-max" value="" />
 					</div>
 				</div>
 			</details>
@@ -271,7 +295,7 @@ function despace_filter_sidebar() {
 					<label class="f-filter-check">
 						<input type="checkbox" name="availability" value="instock" data-name="<?php echo esc_attr( furniva_t( 'In stock', 'Còn hàng' ) ); ?>" />
 						<span><?php echo esc_html( furniva_t( 'In stock', 'Còn hàng' ) ); ?></span>
-						<span class="f-count">(40)</span>
+						<span class="f-count">(<?php echo (int) $instock_count; ?>)</span>
 					</label>
 				</div>
 			</details>
@@ -285,13 +309,13 @@ function despace_filter_sidebar() {
 					<label class="f-filter-check">
 						<input type="checkbox" name="has_3d" value="yes" data-name="<?php echo esc_attr( furniva_t( '3D/AR Available', 'Xem được 3D/AR' ) ); ?>" />
 						<span><?php echo esc_html( furniva_t( '3D / AR Available', 'Xem được 3D/AR' ) ); ?></span>
-						<span class="f-count">(35)</span>
+						<span class="f-count">(<?php echo (int) $has_3d_count; ?>)</span>
 					</label>
 				</div>
 			</details>
 
 			<div class="f-filter-foot">
-				<button type="button" class="f-filter-apply" id="furniva-filter-apply"><?php echo esc_html( furniva_t( 'Apply', 'Áp dụng' ) ); ?></button>
+				<button type="submit" class="f-filter-apply" id="furniva-filter-apply"><?php echo esc_html( furniva_t( 'Apply', 'Áp dụng' ) ); ?></button>
 				<button type="button" class="f-filter-clear" id="furniva-filter-clear"><?php echo esc_html( furniva_t( 'Clear All', 'Xóa tất cả' ) ); ?></button>
 			</div>
 		</form>

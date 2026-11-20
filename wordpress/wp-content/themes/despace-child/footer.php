@@ -174,15 +174,20 @@ foreach ( $chat_products as $chat_product ) {
 				<?php endif; ?>
 			</div>
 		</div>
+	</div>
 
-		<div class="fv-footer__column fv-footer__newsletter">
+	<div class="fv-wrap fv-footer__newsletter">
+		<div class="fv-footer__newsletter-copy">
 			<h2><?php echo esc_html( furniva_t( 'A note from DeSpace', 'Bản tin DeSpace' ) ); ?></h2>
 			<p><?php echo esc_html( furniva_t( 'Occasional notes on new pieces, thoughtful spaces and studio news.', 'Cập nhật vừa đủ về sản phẩm mới, không gian sống và tin tức từ studio.' ) ); ?></p>
+		</div>
+		<div class="fv-footer__newsletter-form-wrap">
 			<form id="furniva-newsletter">
-				<input type="email" placeholder="<?php echo esc_attr( furniva_t( 'Your email address', 'Địa chỉ email của bạn' ) ); ?>" required />
+				<label class="screen-reader-text" for="furniva-newsletter-email"><?php echo esc_html( furniva_t( 'Email address', 'Địa chỉ email' ) ); ?></label>
+				<input id="furniva-newsletter-email" name="newsletter_email" type="email" autocomplete="email" placeholder="<?php echo esc_attr( furniva_t( 'Your email address', 'Địa chỉ email của bạn' ) ); ?>" required />
 				<button type="submit"><?php echo esc_html( furniva_t( 'Subscribe', 'Đăng ký' ) ); ?></button>
 			</form>
-			<div class="f-news-ok"><?php echo esc_html( furniva_t( 'Thanks for subscribing — check your inbox for the WELCOME10 code.', 'Cảm ơn bạn đã đăng ký — hãy kiểm tra email để nhận mã WELCOME10.' ) ); ?></div>
+			<div class="f-news-ok" role="status" aria-live="polite"><?php echo esc_html( furniva_t( 'Thanks for subscribing — check your inbox for the WELCOME10 code.', 'Cảm ơn bạn đã đăng ký — hãy kiểm tra email để nhận mã WELCOME10.' ) ); ?></div>
 			<div class="f-news-note"><?php echo esc_html( furniva_t( 'By subscribing you agree to our privacy policy.', 'Khi đăng ký, bạn đồng ý với chính sách quyền riêng tư của chúng tôi.' ) ); ?></div>
 		</div>
 	</div>
@@ -279,24 +284,29 @@ foreach ( $chat_products as $chat_product ) {
 
 <!-- Bottom-Right Floating AI Assistant & Contact Dock -->
 <div class="ax-chat-dock" id="ax-chat-dock">
-	<div class="ax-chat-links" aria-label="<?php echo esc_attr( furniva_t( 'Contact the shop owner', 'Liên hệ chủ cửa hàng' ) ); ?>">
+	<div class="ax-chat-links" aria-label="<?php echo esc_attr( furniva_t( 'Contact channels', 'Kênh liên hệ DeSpace' ) ); ?>">
 		<?php if ( ! empty( $contact_info['zalo_url'] ) ) : ?>
-		<a class="ax-chat-link ax-chat-link--zalo" href="<?php echo esc_url( $contact_info['zalo_url'] ); ?>" target="_blank" rel="noopener noreferrer" aria-label="Zalo" title="Chat Zalo">
+		<a class="ax-chat-link ax-chat-link--zalo" href="<?php echo esc_url( $contact_info['zalo_url'] ); ?>" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr( furniva_t( 'Chat on Zalo', 'Chat Zalo DeSpace' ) ); ?>" title="<?php echo esc_attr( furniva_t( 'Chat on Zalo', 'Chat Zalo DeSpace' ) ); ?>">
+		<?php else : ?>
+		<button type="button" class="ax-chat-link ax-chat-link--zalo is-unconfigured" data-despace-unconfigured-channel="Zalo" aria-label="<?php echo esc_attr( furniva_t( 'Zalo (Project simulation — URL not configured)', 'Zalo DeSpace (Mô phỏng đồ án — chưa cấu hình liên kết)' ) ); ?>" title="<?php echo esc_attr( furniva_t( 'Zalo (Not configured)', 'Zalo DeSpace (Chưa cấu hình URL)' ) ); ?>">
+		<?php endif; ?>
 			<svg viewBox="0 0 48 48" width="24" height="24" fill="none" aria-hidden="true">
 				<rect width="48" height="48" rx="14" fill="#2d2017"/>
 				<path d="M11 26.5C11 20.15 16.37 15 23 15C29.63 15 35 20.15 35 26.5C35 32.85 29.63 38 23 38C20.85 38 18.83 37.46 17.07 36.51L11.5 38L13.13 33.15C11.79 31.25 11 28.98 11 26.5Z" fill="#c5a059"/>
 				<path fill="#2d2017" d="M19.49 24.272v-.45h1.347v6.322h-.77a.576.576 0 0 1-.577-.573v.001a3.27 3.27 0 0 1-1.938.632a3.284 3.284 0 0 1-3.284-3.282a3.284 3.284 0 0 1 3.284-3.282a3.27 3.27 0 0 1 1.937.632zM13.919 21.79v.205c0 .382-.051.694-.3 1.06l-.03.034a8 8 0 0 0-.242.285L9.024 28.8h4.895v.768a.576.576 0 0 1-.577.576H7v-.362c0-.444.11-.642.25-.848L11.858 23.23H7.192V21.79h6.727zm8.551 8.355a.48.48 0 0 1-.48-.48v-7.875h1.442v8.355h-1.442zM27.693 23.6c1.826 0 3.307 1.481 3.307 3.304c0 1.826-1.48 3.306-3.307 3.306c-1.826 0-3.306-1.48-3.306-3.306c0-1.824 1.48-3.304 3.306-3.304zm-10.141 5.253c1.068 0 1.933-.865 1.933-1.931c0-1.065-.865-1.93-1.933-1.93s-1.932.865-1.932 1.93c0 1.067.865 1.931 1.932 1.931zm10.141-.003c1.074 0 1.945-.87 1.945-1.945c0-1.073-.871-1.944-1.945-1.944c-1.075 0-1.945.871-1.945 1.944c0 1.075.87 1.945 1.945 1.945z"/>
 			</svg>
-		</a>
-		<?php endif; ?>
+		<?php echo ! empty( $contact_info['zalo_url'] ) ? '</a>' : '</button>'; ?>
+
 		<?php if ( ! empty( $facebook_url ) ) : ?>
-		<a class="ax-chat-link ax-chat-link--facebook" href="<?php echo esc_url( $facebook_url ); ?>" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr( furniva_t( 'Facebook: DeSpace', 'Facebook: DeSpace' ) ); ?>" title="<?php echo esc_attr( furniva_t( 'Facebook DeSpace', 'Facebook DeSpace' ) ); ?>">
+		<a class="ax-chat-link ax-chat-link--facebook" href="<?php echo esc_url( $facebook_url ); ?>" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr( furniva_t( 'Facebook DeSpace', 'Facebook DeSpace' ) ); ?>" title="<?php echo esc_attr( furniva_t( 'Facebook DeSpace', 'Facebook DeSpace' ) ); ?>">
+		<?php else : ?>
+		<button type="button" class="ax-chat-link ax-chat-link--facebook is-unconfigured" data-despace-unconfigured-channel="Facebook" aria-label="<?php echo esc_attr( furniva_t( 'Facebook (Project simulation — URL not configured)', 'Facebook DeSpace (Mô phỏng đồ án — chưa cấu hình liên kết)' ) ); ?>" title="<?php echo esc_attr( furniva_t( 'Facebook (Not configured)', 'Facebook DeSpace (Chưa cấu hình URL)' ) ); ?>">
+		<?php endif; ?>
 			<svg viewBox="0 0 48 48" width="24" height="24" fill="none" aria-hidden="true">
 				<circle cx="24" cy="24" r="23" fill="#2d2017"/>
 				<path d="M29.5 25.1l.8-5.3h-5.1v-3.4c0-1.5.7-2.9 3.1-2.9h2.4V9c-.4-.1-1.9-.3-3.7-.3-3.8 0-6.3 2.3-6.3 6.5v3.6h-4.7v5.3h4.7v12.8c.9.1 1.9.2 2.9.2s2-.1 2.9-.2V25.1h4.1z" fill="#c5a059"/>
 			</svg>
-		</a>
-		<?php endif; ?>
+		<?php echo ! empty( $facebook_url ) ? '</a>' : '</button>'; ?>
 	</div>
 	<section class="ax-chat-panel" id="ax-chat-panel" aria-labelledby="ax-chat-title" aria-hidden="true" hidden>
 		<header class="ax-chat-panel__head">

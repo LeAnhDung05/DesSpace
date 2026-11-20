@@ -139,7 +139,7 @@ add_filter( 'posts_join', function( $join, $query ) {
     global $wpdb;
     if ( despace_is_product_search( $query ) ) {
         if ( strpos( $join, 'axg_search_meta' ) === false ) {
-            $join .= " LEFT JOIN {$wpdb->postmeta} AS axg_search_meta ON ({$wpdb->posts}.ID = axg_search_meta.post_id AND axg_search_meta.meta_key IN ('_despace_name_vi', '_axgnud_name_vi', '_despace_short_desc_vi', '_axgnud_short_desc_vi', '_despace_search_keywords', '_axgnud_search_keywords')) ";
+            $join .= " LEFT JOIN {$wpdb->postmeta} AS axg_search_meta ON ({$wpdb->posts}.ID = axg_search_meta.post_id AND axg_search_meta.meta_key IN ('_sku', '_despace_name_vi', '_axgnud_name_vi', '_despace_short_desc_vi', '_axgnud_short_desc_vi', '_despace_search_keywords', '_axgnud_search_keywords')) ";
         }
     }
     return $join;
@@ -151,9 +151,14 @@ add_filter( 'posts_where', function( $where, $query ) {
         $s = trim( (string) $query->get( 's' ) );
         if ( ! empty( $s ) ) {
             $like = '%' . $wpdb->esc_like( $s ) . '%';
+            $meta_like = $wpdb->prepare( 'axg_search_meta.meta_value LIKE %s', $like );
+            $var_sku_subquery = $wpdb->prepare(
+                "EXISTS (SELECT 1 FROM {$wpdb->posts} AS ds_var INNER JOIN {$wpdb->postmeta} AS ds_var_sku ON ds_var.ID = ds_var_sku.post_id WHERE ds_var.post_parent = {$wpdb->posts}.ID AND ds_var.post_type = 'product_variation' AND ds_var_sku.meta_key = '_sku' AND ds_var_sku.meta_value LIKE %s)",
+                $like
+            );
             $where = preg_replace(
                 "/\(\s*{$wpdb->posts}\.post_title\s+LIKE\s*(\'[^\']+\')\s*\)/",
-                "({$wpdb->posts}.post_title LIKE $1 OR axg_search_meta.meta_value LIKE '" . esc_sql( $like ) . "')",
+                "({$wpdb->posts}.post_title LIKE $1 OR {$meta_like} OR {$var_sku_subquery})",
                 $where
             );
         }

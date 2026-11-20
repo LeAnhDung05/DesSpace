@@ -155,7 +155,7 @@ HTML
                 </div>
                 <div class="ds-dept-item">
                     <strong>Phòng Dịch Vụ Khách Hàng &amp; Bảo Hành:</strong>
-                    <span>Bảo hành kết cấu 5 năm (Mô phỏng) | support@despace.test</span>
+                    <span>Hỗ trợ bảo hành kết cấu (Mô phỏng đồ án) | support@despace.test</span>
                 </div>
             </div>
         </div>
@@ -179,22 +179,22 @@ HTML
         <div class="ds-process-grid">
             <div class="ds-process-card">
                 <span class="ds-step-badge">01</span>
-                <h4>Lắng Nghe &amp; Thấu Hiểu</h4>
+                <h3>Lắng Nghe &amp; Thấu Hiểu</h3>
                 <p>Trao đổi về phong cách sống, thói quen sinh hoạt và nhu cầu lưu trữ để định hình giải pháp không gian hài hòa.</p>
             </div>
             <div class="ds-process-card">
                 <span class="ds-step-badge">02</span>
-                <h4>Khảo Sát &amp; Demo 3D/AR</h4>
+                <h3>Khảo Sát &amp; Demo 3D/AR</h3>
                 <p>Đo đạc hiện trạng, dựng mô hình 3D tỷ lệ 1:1 và cho bạn trải nghiệm sản phẩm đặt trong phòng qua camera AR trước khi quyết định.</p>
             </div>
             <div class="ds-process-card">
                 <span class="ds-step-badge">03</span>
-                <h4>Duyệt Mẫu &amp; Báo Giá</h4>
+                <h3>Duyệt Mẫu &amp; Báo Giá</h3>
                 <p>Trực tiếp kiểm tra mẫu gỗ sồi, óc chó chuẩn FSC, vải OEKO-TEX và bảng báo giá chi tiết, minh bạch không phát sinh.</p>
             </div>
             <div class="ds-process-card">
                 <span class="ds-step-badge">04</span>
-                <h4>Chế Tác &amp; Bàn Giao</h4>
+                <h3>Chế Tác &amp; Bàn Giao</h3>
                 <p>Gia công tỉ mỉ tại xưởng DeSpace, vận chuyển bọc lót chống sốc 3 lớp an toàn và kỹ thuật viên lắp đặt hoàn thiện sạch sẽ.</p>
             </div>
         </div>
@@ -254,7 +254,7 @@ HTML
 
     <!-- Academic Simulation Disclaimer -->
     <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:12px 18px;margin-bottom:32px;font-size:13px;color:#92400E;line-height:1.6;">
-        <strong>Lưu ý kịch bản đồ án:</strong> Các giải đáp liên quan đến thời hạn bảo hành 5 năm, chính sách đổi trả 30 ngày và hạn mức miễn phí vận chuyển 10.000.000 VNĐ là nội dung giả lập phục vụ xây dựng quy trình thương mại điện tử cho đồ án DeSpace, đang chờ nhóm xét duyệt và chưa áp dụng thực tế.
+        <strong>Lưu ý kịch bản đồ án:</strong> Các giải đáp liên quan đến chính sách bảo hành kết cấu, đổi trả và vận chuyển là nội dung mô phỏng phục vụ xây dựng quy trình thương mại điện tử cho đồ án DeSpace, chưa áp dụng thực tế.
     </div>
 
     <!-- Group 1: Sản phẩm & Chất liệu -->
@@ -345,7 +345,7 @@ HTML
                 <span>Thời hạn và điều kiện bảo hành sản phẩm như thế nào?</span>
                 <span aria-hidden="true" style="color:#9A6745;font-size:18px;">▾</span>
             </summary>
-            <p style="font-size:13.5px;color:#69645D;line-height:1.75;margin:12px 0 0;">DeSpace cam kết bảo hành kết cấu khung gỗ lên đến <strong>5 năm</strong> và hỗ trợ đổi mới 1 – 1 trong vòng <strong>30 ngày</strong> nếu sản phẩm phát sinh lỗi kỹ thuật từ nhà sản xuất (Quy chuẩn mô phỏng đồ án). Quý khách chỉ cần liên hệ biểu mẫu hỗ trợ kèm số điện thoại mua hàng để được hỗ trợ kiểm tra và xử lý tận nhà.</p>
+            <p style="font-size:13.5px;color:#69645D;line-height:1.75;margin:12px 0 0;">DeSpace áp dụng chính sách hỗ trợ bảo hành kết cấu khung gỗ và đổi trả đối với lỗi kỹ thuật từ nhà sản xuất theo khung quy trình mô phỏng đồ án (thời hạn cụ thể sẽ được công bố chính thức khi triển khai thực tế). Quý khách có thể liên hệ biểu mẫu hỗ trợ kèm mã đơn hàng để được hướng dẫn.</p>
         </details>
     </div>
 
@@ -446,40 +446,40 @@ HTML
 <div class="f-wrap ds-policy-page-wrap" style="max-width:960px;margin:0 auto;padding-top:20px;padding-bottom:60px;">
     <div style="margin-bottom:32px;">
         <span class="f-kicker" style="color:#b8845a;font-weight:700;letter-spacing:2px;text-transform:uppercase;font-size:11px;">CAM KẾT CHẤT LƯỢNG VƯỢT TRỘI</span>
-        <h2 style="font-family:var(--f-font-editorial, serif);font-size:clamp(28px,3.5vw,38px);margin:8px 0 14px;">Chính Sách Đổi Trả 30 Ngày &amp; Bảo Hành 5 Năm</h2>
-        <p style="color:#69645D;font-size:14px;line-height:1.7;">Mỗi sản phẩm nội thất DeSpace được sinh ra để đồng hành bền bỉ cùng tổ ấm của bạn. Chúng tôi cam kết bảo vệ quyền lợi chính đáng của khách hàng bằng chính sách hậu mãi chuyên nghiệp và dài lâu.</p>
+        <h2 style="font-family:var(--f-font-editorial, serif);font-size:clamp(28px,3.5vw,38px);margin:8px 0 14px;">Chính Sách Đổi Trả &amp; Bảo Hành (Mô Phỏng Đồ Án)</h2>
+        <p style="color:#69645D;font-size:14px;line-height:1.7;">Mỗi sản phẩm nội thất DeSpace được thiết kế để đồng hành bền bỉ cùng tổ ấm của bạn. Dưới đây là khung quy trình hỗ trợ đổi trả và bảo hành sản phẩm phục vụ kịch bản đồ án.</p>
     </div>
 
     <!-- Academic Simulation Disclaimer -->
     <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:14px 18px;margin-bottom:28px;font-size:13px;color:#92400E;line-height:1.6;">
-        <strong>Lưu ý mô phỏng đồ án:</strong> Toàn bộ thời hạn bảo hành kết cấu 5 năm, bảo hành phụ kiện 1 – 2 năm và chính sách đổi mới 30 ngày được biên soạn nhằm minh họa cho kịch bản đồ án môn học DeSpace. Đây là nội dung giả lập quy trình nghiệp vụ và chưa phải cam kết pháp lý thương mại đã được doanh nghiệp ban hành.
+        <strong>Lưu ý mô phỏng đồ án:</strong> Toàn bộ phạm vi bảo hành kết cấu, phụ kiện và quy trình đổi trả dưới đây được biên soạn nhằm minh họa cho kịch bản đồ án môn học DeSpace (không ấn định thời hạn thương mại cố định). Đây là nội dung giả lập quy trình nghiệp vụ và chưa phải cam kết pháp lý thương mại đã được doanh nghiệp ban hành.
     </div>
 
     <div style="display:grid;gap:28px;">
-        <!-- Section 1: 30-Day Returns -->
+        <!-- Section 1: Returns -->
         <section style="background:#FAF7F2;padding:28px;border-radius:8px;border:1px solid #E7E0D7;">
-            <h3 style="font-family:var(--f-font-editorial, serif);font-size:22px;color:#1C1917;margin:0 0 14px;">1. Chính Sách Đổi Mới 1 – 1 Trong Vòng 30 Ngày</h3>
-            <p style="font-size:14px;color:#69645D;line-height:1.75;margin-bottom:12px;">Khách hàng được quyền yêu cầu đổi mới sản phẩm tương đương trong vòng <strong>30 ngày</strong> kể từ ngày ký biên bản bàn giao nếu sản phẩm gặp các trường hợp sau:</p>
+            <h3 style="font-family:var(--f-font-editorial, serif);font-size:22px;color:#1C1917;margin:0 0 14px;">1. Chính Sách Đổi Mới Đối Với Lỗi Kỹ Thuật</h3>
+            <p style="font-size:14px;color:#69645D;line-height:1.75;margin-bottom:12px;">Khách hàng có thể gửi yêu cầu đổi sản phẩm tương đương sau khi ký biên bản bàn giao nếu sản phẩm gặp các trường hợp sau (mô phỏng đồ án):</p>
             <ul style="padding-left:20px;color:#69645D;font-size:14px;line-height:1.75;margin:0 0 14px;">
                 <li>Sản phẩm phát sinh lỗi kỹ thuật do quá trình chế tác hoặc xử lý vật liệu của nhà sản xuất (nứt tách mộng gỗ, cong vênh vượt tiêu chuẩn, lỗi liên kết kết cấu).</li>
                 <li>Sản phẩm giao không đúng quy cách, màu sắc hoặc mã hiệu so với đơn đặt hàng đã xác nhận.</li>
             </ul>
-            <p style="font-size:13.5px;color:#69645D;line-height:1.6;margin:0;"><strong>Điều kiện tiếp nhận:</strong> Sản phẩm còn nguyên tem mác DeSpace, chưa bị can thiệp sửa chữa tự ý bởi bên thứ ba và có thông tin số điện thoại đặt hàng trên hệ thống.</p>
+            <p style="font-size:13.5px;color:#69645D;line-height:1.6;margin:0;"><strong>Điều kiện tiếp nhận:</strong> Sản phẩm còn nguyên tem mác DeSpace, chưa bị can thiệp sửa chữa tự ý bởi bên thứ ba và có thông tin đơn hàng trên hệ thống.</p>
         </section>
 
-        <!-- Section 2: 5-Year Warranty -->
+        <!-- Section 2: Structural Warranty -->
         <section style="background:#FAF7F2;padding:28px;border-radius:8px;border:1px solid #E7E0D7;">
-            <h3 style="font-family:var(--f-font-editorial, serif);font-size:22px;color:#1C1917;margin:0 0 14px;">2. Thời Hạn &amp; Phạm Vi Bảo Hành Kết Cấu 5 Năm</h3>
+            <h3 style="font-family:var(--f-font-editorial, serif);font-size:22px;color:#1C1917;margin:0 0 14px;">2. Phạm Vi Bảo Hành Kết Cấu &amp; Phụ Kiện (Mô Phỏng)</h3>
             <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:16px;margin-top:14px;margin-bottom:16px;">
                 <div style="background:#fff;padding:18px;border-radius:6px;border:1px solid #E7E0D7;">
-                    <span style="display:inline-block;background:#C5A880;color:#1C1917;font-size:11px;font-weight:700;padding:2px 8px;border-radius:3px;margin-bottom:8px;">BẢO HÀNH 5 NĂM</span>
+                    <span style="display:inline-block;background:#C5A880;color:#1C1917;font-size:11px;font-weight:700;padding:2px 8px;border-radius:3px;margin-bottom:8px;">BẢO HÀNH KẾT CẤU (MÔ PHỎNG)</span>
                     <strong style="color:#1C1917;font-size:15px;display:block;margin-bottom:6px;">Kết Cấu Khung Gỗ Chịu Lực</strong>
-                    <p style="font-size:13px;color:#69645D;line-height:1.6;margin:0;">Bảo hành độ bền mối ghép mộng, độ ổn định của khung gỗ tự nhiên sồi, óc chó và khả năng chịu lực của các tầng kệ chính.</p>
+                    <p style="font-size:13px;color:#69645D;line-height:1.6;margin:0;">Hỗ trợ bảo hành độ bền mối ghép mộng, độ ổn định của khung gỗ và khả năng chịu lực của các tầng kệ chính theo quy chuẩn đơn hàng.</p>
                 </div>
                 <div style="background:#fff;padding:18px;border-radius:6px;border:1px solid #E7E0D7;">
-                    <span style="display:inline-block;background:#E7E0D7;color:#1C1917;font-size:11px;font-weight:700;padding:2px 8px;border-radius:3px;margin-bottom:8px;">BẢO HÀNH 1 – 2 NĂM</span>
+                    <span style="display:inline-block;background:#E7E0D7;color:#1C1917;font-size:11px;font-weight:700;padding:2px 8px;border-radius:3px;margin-bottom:8px;">PHỤ KIỆN CƠ KHÍ (MÔ PHỎNG)</span>
                     <strong style="color:#1C1917;font-size:15px;display:block;margin-bottom:6px;">Phụ Kiện Cơ Khí &amp; Giảm Chấn</strong>
-                    <p style="font-size:13px;color:#69645D;line-height:1.6;margin:0;">Bản lề giảm chấn, ray trượt ngăn kéo, piston trợ lực theo tiêu chuẩn bảo hành chính hãng từ nhà sản xuất Blum và Hafele.</p>
+                    <p style="font-size:13px;color:#69645D;line-height:1.6;margin:0;">Bản lề giảm chấn, ray trượt ngăn kéo, piston trợ lực theo tiêu chuẩn bảo hành của nhà sản xuất phụ kiện.</p>
                 </div>
             </div>
             <p style="font-size:13.5px;color:#69645D;line-height:1.6;margin:0;">✦ <strong>Hỗ trợ bảo dưỡng trọn đời:</strong> Hết thời hạn bảo hành miễn phí, DeSpace vẫn tiếp tục hỗ trợ căn chỉnh phụ kiện và cung cấp linh kiện thay thế với chi phí gốc cho mọi khách hàng thân thiết.</p>
@@ -555,7 +555,7 @@ HTML
                 <li>Địa chỉ nhận hàng (để thực hiện dịch vụ giao nhận và thi công lắp đặt).</li>
                 <li>Thông tin đơn hàng, lịch sử giao dịch và các ghi chú tư vấn không gian nội thất.</li>
             </ul>
-            <p style="font-size:13.5px;color:#69645D;line-height:1.6;margin:0;"><strong>Mục đích sử dụng:</strong> Xử lý đơn hàng, thông báo tiến độ chế tác, cung cấp dịch vụ bảo hành 5 năm và giải đáp các thắc mắc kỹ thuật của quý khách.</p>
+            <p style="font-size:13.5px;color:#69645D;line-height:1.6;margin:0;"><strong>Mục đích sử dụng:</strong> Xử lý đơn hàng, thông báo tiến độ chế tác, hỗ trợ bảo hành theo chính sách (mô phỏng đồ án) và giải đáp các thắc mắc kỹ thuật của quý khách.</p>
         </section>
 
         <!-- Section 2 -->
@@ -623,7 +623,7 @@ HTML
 
         <section style="background:#FAF7F2;padding:28px;border-radius:8px;border:1px solid #E7E0D7;">
             <h3 style="font-family:var(--f-font-editorial, serif);font-size:22px;color:#1C1917;margin:0 0 14px;">3. Giao Nhận, Lắp Đặt &amp; Bảo Hành</h3>
-            <p style="font-size:14px;color:#69645D;line-height:1.75;margin:0;">Khách hàng có trách nhiệm đồng kiểm tra tình trạng hàng hóa trước khi ký biên bản bàn giao. Mọi quyền lợi đổi trả trong 30 ngày và bảo hành kết cấu 5 năm được áp dụng theo đúng nội dung công bố tại trang <a href="/chinh-sach-giao-hang/" style="color:#9A6745;text-decoration:underline;">Chính sách giao hàng</a> và <a href="/chinh-sach-doi-tra-bao-hanh/" style="color:#9A6745;text-decoration:underline;">Chính sách đổi trả &amp; bảo hành</a>.</p>
+            <p style="font-size:14px;color:#69645D;line-height:1.75;margin:0;">Khách hàng có trách nhiệm đồng kiểm tra tình trạng hàng hóa trước khi ký biên bản bàn giao. Mọi quyền lợi đổi trả và bảo hành kết cấu (mô phỏng đồ án) được áp dụng theo đúng nội dung công bố tại trang <a href="/chinh-sach-giao-hang/" style="color:#9A6745;text-decoration:underline;">Chính sách giao hàng</a> và <a href="/chinh-sach-doi-tra-bao-hanh/" style="color:#9A6745;text-decoration:underline;">Chính sách đổi trả &amp; bảo hành</a>.</p>
         </section>
     </div>
 </div>

@@ -1327,6 +1327,7 @@
   line-height: 1.3;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .fv-real-card > p {
@@ -1733,6 +1734,7 @@
   font-size: 12px;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
 }
 
 .fv-article-card__copy > a {
@@ -1793,6 +1795,7 @@
   line-height: 1.4;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .fv-social-play {
@@ -1870,9 +1873,6 @@
 
 .fv-footer__grid {
   display: grid;
-  grid-template-columns: 1.6fr repeat(4, minmax(0, 1fr));
-  gap: 28px;
-  padding-bottom: 40px;
 }
 
 .fv-footer__brand {
@@ -2276,20 +2276,15 @@
     grid-auto-columns: min(360px, 47vw);
   }
 
-  .fv-footer__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 30px 24px;
-  }
-
   .fv-footer__brand {
     grid-column: 1 / -1;
-    max-width: 520px;
-    align-items: center;
-    text-align: center;
+    max-width: 560px;
+    align-items: flex-start;
+    text-align: left;
   }
 
   .fv-footer__brand > a:first-child {
-    margin: 0 auto 4px;
+    margin: 0 0 8px;
   }
 
   .furniva {

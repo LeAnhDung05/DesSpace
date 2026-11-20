@@ -125,7 +125,7 @@ $announcements = array(
 
 		<div class="fv-header__actions">
 			<div class="fv-header-language" aria-label="<?php echo esc_attr( furniva_t( 'Language', 'Ngôn ngữ' ) ); ?>"><?php echo furniva_language_switcher_html(); ?></div>
-			<button class="fv-icon-button" type="button" data-furniva-search-open aria-label="<?php echo esc_attr( furniva_t( 'Search products', 'Tìm kiếm sản phẩm' ) ); ?>">
+			<button class="fv-icon-button" type="button" data-furniva-search-open aria-controls="fv-header-search-bar" aria-expanded="false" aria-label="<?php echo esc_attr( furniva_t( 'Search products', 'Tìm kiếm sản phẩm' ) ); ?>">
 				<?php echo furniva_svg( 'search' ); ?>
 				<span class="screen-reader-text sr-only"><?php echo esc_html( furniva_t( 'Search products', 'Tìm kiếm sản phẩm' ) ); ?></span>
 			</button>
@@ -148,7 +148,7 @@ $announcements = array(
 				<span class="fv-search-bar__icon" aria-hidden="true"><?php echo furniva_svg( 'search' ); ?></span>
 				<form class="fv-search-bar__form" role="search" method="get" action="<?php echo esc_url( furniva_url( '/' ) ); ?>">
 					<input type="hidden" name="post_type" value="product" />
-					<input type="search" class="fv-search-bar__input" name="s" placeholder="<?php echo esc_attr( furniva_t( 'Search products, collections, materials…', 'Tìm kiếm sản phẩm, bộ sưu tập, chất liệu…' ) ); ?>" autocomplete="off" />
+					<input type="search" class="fv-search-bar__input" name="s" aria-label="<?php echo esc_attr( furniva_t( 'Search products, collections, materials', 'Tìm kiếm sản phẩm, bộ sưu tập, chất liệu' ) ); ?>" placeholder="<?php echo esc_attr( furniva_t( 'Search products, collections, materials…', 'Tìm kiếm sản phẩm, bộ sưu tập, chất liệu…' ) ); ?>" autocomplete="off" />
 				</form>
 				<div class="fv-search-bar__quick-tags">
 					<span class="fv-quick-tag-label"><?php echo esc_html( furniva_t( 'Hot:', 'Gợi ý:' ) ); ?></span>

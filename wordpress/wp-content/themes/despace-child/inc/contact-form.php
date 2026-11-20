@@ -378,6 +378,11 @@ function despace_render_contact_admin_page() {
  * Display informational policy links at WooCommerce Checkout (both Classic and Blocks compatible)
  */
 function despace_render_checkout_policy_notice() {
+	static $rendered = false;
+	if ( $rendered ) {
+		return;
+	}
+	$rendered     = true;
 	$shipping_url = furniva_url( '/chinh-sach-giao-hang/' );
 	$returns_url  = furniva_url( '/chinh-sach-doi-tra-bao-hanh/' );
 	$privacy_url  = furniva_url( '/chinh-sach-bao-mat/' );
@@ -390,7 +395,7 @@ function despace_render_checkout_policy_notice() {
 		<span>
 			<?php echo esc_html( furniva_t( 'Your purchase is protected by our', 'Đơn hàng được bảo hộ và hỗ trợ bởi' ) ); ?>
 			<a href="<?php echo esc_url( $shipping_url ); ?>" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;"><?php echo esc_html( furniva_t( 'Shipping & Installation Policy', 'Chính sách giao hàng & lắp đặt' ) ); ?></a>,
-			<a href="<?php echo esc_url( $returns_url ); ?>" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;"><?php echo esc_html( furniva_t( 'Returns & 5-Year Warranty Policy', 'Chính sách đổi trả & bảo hành 5 năm' ) ); ?></a>,
+			<a href="<?php echo esc_url( $returns_url ); ?>" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;"><?php echo esc_html( furniva_t( 'Returns & Warranty Policy', 'Chính sách đổi trả & bảo hành' ) ); ?></a>,
 			<a href="<?php echo esc_url( $privacy_url ); ?>" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;"><?php echo esc_html( furniva_t( 'Privacy Policy', 'Chính sách bảo mật' ) ); ?></a>,
 			<?php echo esc_html( furniva_t( 'and', 'và' ) ); ?>
 			<a href="<?php echo esc_url( $terms_url ); ?>" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;"><?php echo esc_html( furniva_t( 'Terms of Service', 'Điều khoản mua bán' ) ); ?></a>.
@@ -458,9 +463,15 @@ function despace_ensure_policy_pages( $force_overwrite = false ) {
 			continue;
 		}
 
-		$is_admin_edited = ( '1' === (string) get_post_meta( $id, '_despace_admin_edited', true ) );
-		$has_content     = ! empty( trim( (string) $row->post_content ) );
-		$has_mojibake    = ( false !== strpos( $row->post_content, 'ChÃ' ) || false !== strpos( $row->post_content, 'Ã¡' ) );
+		$is_admin_edited       = ( '1' === (string) get_post_meta( $id, '_despace_admin_edited', true ) );
+		$plain_text            = trim( wp_strip_all_tags( (string) $row->post_content ) );
+		$has_content           = ! empty( $plain_text );
+		$is_stub               = mb_strlen( $plain_text ) < 200;
+		$is_wc_sample          = ( false !== strpos( (string) $row->post_content, 'This is a sample page.' ) );
+		$has_legacy_unverified   = ( false !== strpos( (string) $row->post_content, 'Học viện Nông nghiệp' ) || false !== strpos( (string) $row->post_content, 'Hotline Tư Vấn 24/7' ) );
+		$has_unverified_warranty = ( false !== stripos( (string) $row->post_content, '3 năm' ) || false !== stripos( (string) $row->post_content, '5 năm' ) || false !== stripos( (string) $row->post_content, '3-year' ) || false !== stripos( (string) $row->post_content, '5-year' ) );
+		$has_broken_contact_form = ( 12 === (int) $id && false !== strpos( (string) $row->post_content, 'ds-booking-form-box' ) && false === strpos( (string) $row->post_content, '[despace_contact_form' ) && false === stripos( (string) $row->post_content, '<form' ) );
+		$has_mojibake            = ( false !== strpos( $row->post_content, 'ChÃ' ) || false !== strpos( $row->post_content, 'Ã¡' ) );
 
 		// Always ensure canonical slug and post_type = page
 		$update_data = array(
@@ -473,8 +484,8 @@ function despace_ensure_policy_pages( $force_overwrite = false ) {
 			$update_data['post_status'] = $data['status'];
 		}
 
-		// Only restore template content if forcing, or if content is empty or corrupted by mojibake import
-		if ( ! $is_admin_edited && ( $force_overwrite || ! $has_content || $has_mojibake ) ) {
+		// Only restore template content if forcing, or if content is empty, stub, WC sample, legacy unverified seed, unverified warranty duration, broken stripped form, or mojibake
+		if ( ! $is_admin_edited && ( $force_overwrite || ! $has_content || $is_stub || $is_wc_sample || $has_legacy_unverified || $has_unverified_warranty || $has_broken_contact_form || $has_mojibake ) ) {
 			$update_data['post_title']   = $data['title'];
 			$update_data['post_content'] = $data['content'];
 		}
