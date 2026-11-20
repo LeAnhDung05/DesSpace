@@ -1,0 +1,41 @@
+{
+  "product_id": 408,
+  "sku": "AXG-STR-031",
+  "name": "DeSpace Pantry 4-Door Columbia Walnut",
+  "dimensions_cm": {
+    "width": 120.0,
+    "depth": 38.0,
+    "height": 125.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.6,
+      0.0,
+      -0.19
+    ],
+    "max": [
+      0.6,
+      1.25,
+      0.219
+    ],
+    "size": [
+      1.2,
+      1.25,
+      0.409
+    ]
+  },
+  "vertex_count": 360,
+  "triangle_count": 180,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 144400,
+    "usdz": "model.usdz",
+    "usdz_bytes": 159533,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}

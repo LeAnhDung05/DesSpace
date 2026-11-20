@@ -1,0 +1,41 @@
+{
+  "product_id": 381,
+  "sku": "AXG-STR-004",
+  "name": "DeSpace Metro 2-Door 1-Drawer",
+  "dimensions_cm": {
+    "width": 78.0,
+    "depth": 34.0,
+    "height": 88.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.39,
+      0.0,
+      -0.17
+    ],
+    "max": [
+      0.39,
+      0.88,
+      0.197
+    ],
+    "size": [
+      0.78,
+      0.88,
+      0.367
+    ]
+  },
+  "vertex_count": 288,
+  "triangle_count": 144,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 142328,
+    "usdz": "model.usdz",
+    "usdz_bytes": 154461,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}

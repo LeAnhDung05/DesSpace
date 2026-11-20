@@ -54,8 +54,7 @@ Tài liệu này giải thích lý do vì sao khi bạn mới kéo code về má
 
 ---
 
-## 5. THƯ MỤC ẢNH & MÔ HÌNH 3D (wp-content/uploads)
-* Leader đã đóng gói sẵn tệp `uploads.zip` (chứa toàn bộ ảnh sản phẩm thực tế và các tệp 3D `.glb`, `.usdz`).
-* Thành viên tải tệp `uploads.zip` do Leader gửi, sau đó giải nén chép vào thư mục:
-  `app\public\wp-content\uploads\` (trên LocalWP Windows)
-* Khi đó, toàn bộ ảnh sản phẩm và nút xem mô hình 3D AR sẽ hiển thị sắc nét 100%!
+## 5. THƯ MỤC ẢNH SẢN PHẨM & MÔ HÌNH 3D (`wp-content/uploads`) — ĐÃ TÍCH HỢP SẴN TRONG GIT!
+* Toàn bộ **ảnh sản phẩm thực tế** (`despace-catalog/images/`, `products-real/`), **ảnh Tạp chí** (`journal/`) và **toàn bộ 94 tệp mô hình 3D `.glb` / `.usdz`** (`3d/`) đã được đẩy thẳng lên GitHub trong thư mục `wordpress/wp-content/uploads/`.
+* Khi thành viên chạy `git pull`, toàn bộ ảnh sản phẩm và mô hình 3D sẽ tự động tải về máy (không cần tải thêm `uploads.zip` rời).
+* *(Nếu bạn dùng LocalWP với cấu trúc thư mục tách riêng ngoài repo, chỉ cần sao chép thư mục `wordpress/wp-content/uploads/` từ repo sang `app\public\wp-content\uploads\` rồi chạy Cách 1 hoặc Cách 2 để nạp Database mới nhất.)*

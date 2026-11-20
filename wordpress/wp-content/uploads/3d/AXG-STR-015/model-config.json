@@ -1,0 +1,41 @@
+{
+  "product_id": 392,
+  "sku": "AXG-STR-015",
+  "name": "DeSpace Minimal Compact 2-Door Wenge",
+  "dimensions_cm": {
+    "width": 84.0,
+    "depth": 32.0,
+    "height": 76.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.42,
+      0.0,
+      -0.16
+    ],
+    "max": [
+      0.42,
+      0.76,
+      0.186
+    ],
+    "size": [
+      0.84,
+      0.76,
+      0.346
+    ]
+  },
+  "vertex_count": 240,
+  "triangle_count": 120,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 131736,
+    "usdz": "model.usdz",
+    "usdz_bytes": 141811,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}

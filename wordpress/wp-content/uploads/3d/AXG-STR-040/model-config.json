@@ -1,0 +1,41 @@
+{
+  "product_id": 417,
+  "sku": "AXG-STR-040",
+  "name": "DeSpace Regal 6-Drawer Dresser Sonoma",
+  "dimensions_cm": {
+    "width": 120.0,
+    "depth": 40.0,
+    "height": 70.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.6,
+      0.0,
+      -0.2
+    ],
+    "max": [
+      0.6,
+      0.7,
+      0.229
+    ],
+    "size": [
+      1.2,
+      0.7,
+      0.429
+    ]
+  },
+  "vertex_count": 432,
+  "triangle_count": 216,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 146208,
+    "usdz": "model.usdz",
+    "usdz_bytes": 164326,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}

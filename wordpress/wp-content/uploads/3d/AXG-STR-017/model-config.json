@@ -1,0 +1,41 @@
+{
+  "product_id": 394,
+  "sku": "AXG-STR-017",
+  "name": "DeSpace Prime 2-Door 1-Drawer Wenge",
+  "dimensions_cm": {
+    "width": 75.0,
+    "depth": 38.0,
+    "height": 124.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.375,
+      0.0,
+      -0.19
+    ],
+    "max": [
+      0.375,
+      1.24,
+      0.217
+    ],
+    "size": [
+      0.75,
+      1.24,
+      0.407
+    ]
+  },
+  "vertex_count": 288,
+  "triangle_count": 144,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 133536,
+    "usdz": "model.usdz",
+    "usdz_bytes": 145633,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}

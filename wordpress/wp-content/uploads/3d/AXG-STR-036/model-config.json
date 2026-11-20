@@ -1,0 +1,41 @@
+{
+  "product_id": 413,
+  "sku": "AXG-STR-036",
+  "name": "DeSpace Sideboard Barn Door Rustic Oak",
+  "dimensions_cm": {
+    "width": 102.0,
+    "depth": 40.0,
+    "height": 85.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.51,
+      0.0,
+      -0.2
+    ],
+    "max": [
+      0.51,
+      0.85,
+      0.234
+    ],
+    "size": [
+      1.02,
+      0.85,
+      0.434
+    ]
+  },
+  "vertex_count": 432,
+  "triangle_count": 216,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 146636,
+    "usdz": "model.usdz",
+    "usdz_bytes": 164873,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": false,
+    "status": "warning"
+  }
+}

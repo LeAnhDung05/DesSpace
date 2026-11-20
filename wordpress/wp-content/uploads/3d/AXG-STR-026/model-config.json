@@ -1,0 +1,41 @@
+{
+  "product_id": 403,
+  "sku": "AXG-STR-026",
+  "name": "DeSpace A-Frame Ladder Bookshelf",
+  "dimensions_cm": {
+    "width": 90.0,
+    "depth": 30.0,
+    "height": 150.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.45,
+      0.0,
+      -0.075
+    ],
+    "max": [
+      0.45,
+      1.56,
+      0.225
+    ],
+    "size": [
+      0.9,
+      1.56,
+      0.3
+    ]
+  },
+  "vertex_count": 288,
+  "triangle_count": 144,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 142892,
+    "usdz": "model.usdz",
+    "usdz_bytes": 154921,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": false,
+    "status": "warning"
+  }
+}

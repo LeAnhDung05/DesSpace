@@ -1,0 +1,41 @@
+{
+  "product_id": 389,
+  "sku": "AXG-STR-012",
+  "name": "DeSpace Ever Fresh 3-Door Mustard",
+  "dimensions_cm": {
+    "width": 110.0,
+    "depth": 33.0,
+    "height": 71.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.55,
+      0.0,
+      -0.165
+    ],
+    "max": [
+      0.55,
+      0.71,
+      0.191
+    ],
+    "size": [
+      1.1,
+      0.71,
+      0.356
+    ]
+  },
+  "vertex_count": 360,
+  "triangle_count": 180,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 146328,
+    "usdz": "model.usdz",
+    "usdz_bytes": 161481,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "product_id": 402,
+  "sku": "AXG-STR-025",
+  "name": "DeSpace Display Open Shelf Cabinet Base",
+  "dimensions_cm": {
+    "width": 80.0,
+    "depth": 30.0,
+    "height": 164.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.4,
+      0.0,
+      -0.15
+    ],
+    "max": [
+      0.4,
+      1.64,
+      0.177
+    ],
+    "size": [
+      0.8,
+      1.64,
+      0.327
+    ]
+  },
+  "vertex_count": 360,
+  "triangle_count": 180,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 145628,
+    "usdz": "model.usdz",
+    "usdz_bytes": 160811,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}

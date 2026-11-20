@@ -1,0 +1,41 @@
+{
+  "product_id": 398,
+  "sku": "AXG-STR-021",
+  "name": "DeSpace Wardura 3-Door Lome Cherry",
+  "dimensions_cm": {
+    "width": 115.0,
+    "depth": 45.0,
+    "height": 182.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.575,
+      0.0,
+      -0.225
+    ],
+    "max": [
+      0.575,
+      1.82,
+      0.258
+    ],
+    "size": [
+      1.15,
+      1.82,
+      0.483
+    ]
+  },
+  "vertex_count": 360,
+  "triangle_count": 180,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 145624,
+    "usdz": "model.usdz",
+    "usdz_bytes": 160751,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": false,
+    "status": "warning"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "product_id": 411,
+  "sku": "AXG-STR-034",
+  "name": "DeSpace Spice 2-Door 6-Tier Sonoma",
+  "dimensions_cm": {
+    "width": 61.0,
+    "depth": 33.0,
+    "height": 120.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.305,
+      0.0,
+      -0.165
+    ],
+    "max": [
+      0.305,
+      1.2,
+      0.191
+    ],
+    "size": [
+      0.61,
+      1.2,
+      0.356
+    ]
+  },
+  "vertex_count": 360,
+  "triangle_count": 180,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 143472,
+    "usdz": "model.usdz",
+    "usdz_bytes": 158577,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "product_id": 397,
+  "sku": "AXG-STR-020",
+  "name": "DeSpace Tower 4-Door Columbia Walnut",
+  "dimensions_cm": {
+    "width": 120.0,
+    "depth": 47.0,
+    "height": 185.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.6,
+      0.0,
+      -0.235
+    ],
+    "max": [
+      0.6,
+      1.85,
+      0.268
+    ],
+    "size": [
+      1.2,
+      1.85,
+      0.503
+    ]
+  },
+  "vertex_count": 432,
+  "triangle_count": 216,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 147152,
+    "usdz": "model.usdz",
+    "usdz_bytes": 165271,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": false,
+    "status": "warning"
+  }
+}

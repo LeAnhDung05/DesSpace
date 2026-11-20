@@ -1,0 +1,41 @@
+{
+  "product_id": 400,
+  "sku": "AXG-STR-023",
+  "name": "DeSpace Giant Wood 2-Door Hidden Drawer",
+  "dimensions_cm": {
+    "width": 80.0,
+    "depth": 48.0,
+    "height": 180.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.4,
+      0.0,
+      -0.24
+    ],
+    "max": [
+      0.4,
+      1.8,
+      0.273
+    ],
+    "size": [
+      0.8,
+      1.8,
+      0.513
+    ]
+  },
+  "vertex_count": 288,
+  "triangle_count": 144,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 144116,
+    "usdz": "model.usdz",
+    "usdz_bytes": 156223,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": false,
+    "status": "warning"
+  }
+}

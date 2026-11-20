@@ -1,0 +1,41 @@
+{
+  "product_id": 415,
+  "sku": "AXG-STR-038",
+  "name": "DeSpace Iris 4-Drawer Chest Ice White",
+  "dimensions_cm": {
+    "width": 80.0,
+    "depth": 40.0,
+    "height": 100.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.4,
+      0.0,
+      -0.2
+    ],
+    "max": [
+      0.4,
+      1.0,
+      0.229
+    ],
+    "size": [
+      0.8,
+      1.0,
+      0.429
+    ]
+  },
+  "vertex_count": 336,
+  "triangle_count": 168,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 135440,
+    "usdz": "model.usdz",
+    "usdz_bytes": 149532,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}

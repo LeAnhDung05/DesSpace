@@ -1,0 +1,41 @@
+{
+  "product_id": 404,
+  "sku": "AXG-STR-027",
+  "name": "DeSpace Safe 4-Tier Bookshelf Sonoma",
+  "dimensions_cm": {
+    "width": 75.0,
+    "depth": 30.0,
+    "height": 145.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.375,
+      0.0,
+      -0.15
+    ],
+    "max": [
+      0.375,
+      1.45,
+      0.15
+    ],
+    "size": [
+      0.75,
+      1.45,
+      0.3
+    ]
+  },
+  "vertex_count": 288,
+  "triangle_count": 144,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 140708,
+    "usdz": "model.usdz",
+    "usdz_bytes": 152868,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}

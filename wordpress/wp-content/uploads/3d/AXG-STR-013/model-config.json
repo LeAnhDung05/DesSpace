@@ -1,0 +1,41 @@
+{
+  "product_id": 390,
+  "sku": "AXG-STR-013",
+  "name": "DeSpace Minimal 3-Door Sonoma",
+  "dimensions_cm": {
+    "width": 114.0,
+    "depth": 32.0,
+    "height": 84.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.57,
+      0.0,
+      -0.16
+    ],
+    "max": [
+      0.57,
+      0.84,
+      0.186
+    ],
+    "size": [
+      1.14,
+      0.84,
+      0.346
+    ]
+  },
+  "vertex_count": 288,
+  "triangle_count": 144,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 140732,
+    "usdz": "model.usdz",
+    "usdz_bytes": 152811,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}

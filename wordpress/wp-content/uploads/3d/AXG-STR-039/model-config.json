@@ -1,0 +1,41 @@
+{
+  "product_id": 416,
+  "sku": "AXG-STR-039",
+  "name": "DeSpace Sera 5-Drawer Tall Mocha Walnut",
+  "dimensions_cm": {
+    "width": 68.0,
+    "depth": 40.0,
+    "height": 118.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.34,
+      0.0,
+      -0.2
+    ],
+    "max": [
+      0.34,
+      1.18,
+      0.229
+    ],
+    "size": [
+      0.68,
+      1.18,
+      0.429
+    ]
+  },
+  "vertex_count": 384,
+  "triangle_count": 192,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 145328,
+    "usdz": "model.usdz",
+    "usdz_bytes": 161422,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "product_id": 393,
+  "sku": "AXG-STR-016",
+  "name": "DeSpace Reflect Mirror Door Wenge",
+  "dimensions_cm": {
+    "width": 75.0,
+    "depth": 38.0,
+    "height": 105.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.375,
+      0.0,
+      -0.19
+    ],
+    "max": [
+      0.375,
+      1.05,
+      0.216
+    ],
+    "size": [
+      0.75,
+      1.05,
+      0.406
+    ]
+  },
+  "vertex_count": 264,
+  "triangle_count": 132,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 132624,
+    "usdz": "model.usdz",
+    "usdz_bytes": 143719,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}

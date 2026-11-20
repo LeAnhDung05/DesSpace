@@ -1,0 +1,41 @@
+{
+  "product_id": 386,
+  "sku": "AXG-STR-009",
+  "name": "DeSpace Skyline 6ft Louvered Wenge",
+  "dimensions_cm": {
+    "width": 75.0,
+    "depth": 32.0,
+    "height": 183.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.375,
+      0.0,
+      -0.16
+    ],
+    "max": [
+      0.375,
+      1.83,
+      0.186
+    ],
+    "size": [
+      0.75,
+      1.83,
+      0.346
+    ]
+  },
+  "vertex_count": 1320,
+  "triangle_count": 660,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 172760,
+    "usdz": "model.usdz",
+    "usdz_bytes": 228703,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}

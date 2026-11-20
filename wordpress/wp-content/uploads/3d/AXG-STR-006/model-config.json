@@ -1,0 +1,41 @@
+{
+  "product_id": 383,
+  "sku": "AXG-STR-006",
+  "name": "DeSpace Runner Louvered 2-Door",
+  "dimensions_cm": {
+    "width": 85.0,
+    "depth": 38.0,
+    "height": 92.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.425,
+      0.0,
+      -0.19
+    ],
+    "max": [
+      0.425,
+      0.92,
+      0.216
+    ],
+    "size": [
+      0.85,
+      0.92,
+      0.406
+    ]
+  },
+  "vertex_count": 888,
+  "triangle_count": 444,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 165132,
+    "usdz": "model.usdz",
+    "usdz_bytes": 202444,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}

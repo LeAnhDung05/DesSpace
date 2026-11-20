@@ -1,0 +1,41 @@
+{
+  "product_id": 395,
+  "sku": "AXG-STR-018",
+  "name": "DeSpace Combo Tall 3-Door Wenge",
+  "dimensions_cm": {
+    "width": 112.0,
+    "depth": 40.0,
+    "height": 183.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.56,
+      0.0,
+      -0.2
+    ],
+    "max": [
+      0.56,
+      1.83,
+      0.233
+    ],
+    "size": [
+      1.12,
+      1.83,
+      0.433
+    ]
+  },
+  "vertex_count": 360,
+  "triangle_count": 180,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 136300,
+    "usdz": "model.usdz",
+    "usdz_bytes": 151405,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": false,
+    "status": "warning"
+  }
+}

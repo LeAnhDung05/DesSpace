@@ -1,0 +1,41 @@
+{
+  "product_id": 412,
+  "sku": "AXG-STR-035",
+  "name": "DeSpace Thyme Standing Bakers Rack",
+  "dimensions_cm": {
+    "width": 65.0,
+    "depth": 35.0,
+    "height": 135.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.325,
+      0.0,
+      -0.175
+    ],
+    "max": [
+      0.325,
+      1.35,
+      0.202
+    ],
+    "size": [
+      0.65,
+      1.35,
+      0.377
+    ]
+  },
+  "vertex_count": 408,
+  "triangle_count": 204,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 146240,
+    "usdz": "model.usdz",
+    "usdz_bytes": 163447,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "product_id": 409,
+  "sku": "AXG-STR-032",
+  "name": "DeSpace Pantry 4-Door Wenge",
+  "dimensions_cm": {
+    "width": 120.0,
+    "depth": 38.0,
+    "height": 125.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.6,
+      0.0,
+      -0.19
+    ],
+    "max": [
+      0.6,
+      1.25,
+      0.219
+    ],
+    "size": [
+      1.2,
+      1.25,
+      0.409
+    ]
+  },
+  "vertex_count": 360,
+  "triangle_count": 180,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 136284,
+    "usdz": "model.usdz",
+    "usdz_bytes": 151414,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}

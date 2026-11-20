@@ -12,7 +12,20 @@ wordpress/wp-includes/
 wordpress/wp-content/cache/
 wordpress/wp-content/upgrade/
 wordpress/wp-content/backups/
-wordpress/wp-content/uploads/
+wordpress/wp-content/uploads/*
+!wordpress/wp-content/uploads/3d/
+!wordpress/wp-content/uploads/3d/**
+!wordpress/wp-content/uploads/despace-catalog/
+wordpress/wp-content/uploads/despace-catalog/*
+!wordpress/wp-content/uploads/despace-catalog/images/
+!wordpress/wp-content/uploads/despace-catalog/images/**
+!wordpress/wp-content/uploads/products-real/
+!wordpress/wp-content/uploads/products-real/**
+!wordpress/wp-content/uploads/journal/
+!wordpress/wp-content/uploads/journal/**
+!wordpress/wp-content/uploads/hero.jpg
+!wordpress/wp-content/uploads/logo.png
+!wordpress/wp-content/uploads/woocommerce-placeholder*.webp
 wordpress/wp-content/languages/
 wordpress/wp-content/debug.log
 

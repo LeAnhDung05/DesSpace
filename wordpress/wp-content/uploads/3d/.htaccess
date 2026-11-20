@@ -1,0 +1,9 @@
+<IfModule mod_mime.c>
+    AddType model/gltf-binary .glb
+    AddType model/vnd.usdz+zip .usdz
+</IfModule>
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+    Header set Cache-Control "public, max-age=86400"
+</IfModule>

@@ -1,0 +1,41 @@
+{
+  "product_id": 382,
+  "sku": "AXG-STR-005",
+  "name": "DeSpace Rustica Farmhouse 3-Door",
+  "dimensions_cm": {
+    "width": 115.0,
+    "depth": 35.0,
+    "height": 95.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.575,
+      0.0,
+      -0.175
+    ],
+    "max": [
+      0.575,
+      0.95,
+      0.201
+    ],
+    "size": [
+      1.15,
+      0.95,
+      0.376
+    ]
+  },
+  "vertex_count": 288,
+  "triangle_count": 144,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 141160,
+    "usdz": "model.usdz",
+    "usdz_bytes": 153239,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "product_id": 385,
+  "sku": "AXG-STR-008",
+  "name": "DeSpace Fusion Tall 6-Tier Wenge",
+  "dimensions_cm": {
+    "width": 61.0,
+    "depth": 33.0,
+    "height": 119.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.305,
+      0.0,
+      -0.165
+    ],
+    "max": [
+      0.305,
+      1.19,
+      0.191
+    ],
+    "size": [
+      0.61,
+      1.19,
+      0.356
+    ]
+  },
+  "vertex_count": 360,
+  "triangle_count": 180,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 136300,
+    "usdz": "model.usdz",
+    "usdz_bytes": 151414,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "product_id": 406,
+  "sku": "AXG-STR-029",
+  "name": "DeSpace Nova 5-Tier Tall Bookcase Sonoma",
+  "dimensions_cm": {
+    "width": 75.0,
+    "depth": 30.0,
+    "height": 180.0
+  },
+  "bounding_box_m": {
+    "min": [
+      -0.375,
+      0.0,
+      -0.15
+    ],
+    "max": [
+      0.375,
+      1.8,
+      0.15
+    ],
+    "size": [
+      0.75,
+      1.8,
+      0.3
+    ]
+  },
+  "vertex_count": 336,
+  "triangle_count": 168,
+  "files": {
+    "glb": "model.glb",
+    "glb_bytes": 142536,
+    "usdz": "model.usdz",
+    "usdz_bytes": 156732,
+    "thumbnail": "thumbnail.webp"
+  },
+  "quality_control": {
+    "floor_aligned": true,
+    "dimensions_match": true,
+    "status": "passed"
+  }
+}
