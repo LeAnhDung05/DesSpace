@@ -588,15 +588,12 @@ add_action( 'init', function() {
 } );
 
 function furniva_dequeue_unneeded_styles() {
+	// Dequeue (do not deregister) legacy styles so plugin dependency graphs (e.g. yith-wcwl-main) remain valid in WP 6.9+.
 	wp_dequeue_style( 'woocommerce_prettyPhoto_css' );
-	wp_deregister_style( 'woocommerce_prettyPhoto_css' );
 	wp_dequeue_style( 'jquery-selectBox' );
-	wp_deregister_style( 'jquery-selectBox' );
 	if ( ! is_singular( 'product' ) ) {
 		wp_dequeue_style( 'photoswipe' );
-		wp_deregister_style( 'photoswipe' );
 		wp_dequeue_style( 'photoswipe-default-skin' );
-		wp_deregister_style( 'photoswipe-default-skin' );
 		wp_dequeue_script( 'photoswipe' );
 		wp_dequeue_script( 'photoswipe-ui-default' );
 		wp_dequeue_script( 'zoom' );
