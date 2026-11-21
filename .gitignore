@@ -52,6 +52,7 @@ wordpress/wp-content/themes/*
 !database/*.bat
 !database/*.md
 !database/*.csv
+database/backup_*
 
 
 # Dependencies and IDE / OS files
@@ -70,3 +71,6 @@ desktop_app/output/*
 desktop_app/temp/
 desktop_app/settings.json
 wordpress/wp-content/jetpack-waf/
+scratch/
+DesSpace/
+.mimosa/

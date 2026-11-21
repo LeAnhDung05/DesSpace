@@ -2,6 +2,16 @@
 jQuery(function ($) {
 	"use strict";
 
+	/* ---------------------------------------------------------------- unconfigured floating social buttons */
+	$(document).on("click", "[data-despace-unconfigured-channel]", function () {
+		var channel = $(this).attr("data-despace-unconfigured-channel") || "Social";
+		var isEn = window.location.pathname.indexOf("/en/") === 0 || ((window.furnivaData && furnivaData.language) === "en");
+		var msg = isEn
+			? channel + " channel (project simulation) has no configured external URL yet."
+			: "Kênh " + channel + " (mô phỏng đồ án) chưa cấu hình đường dẫn chính thức.";
+		toast(msg);
+	});
+
 	/* ---------------------------------------------------------------- toast */
 	function toast(msg) {
 		var $t = $("#furniva-toast");
@@ -40,8 +50,35 @@ jQuery(function ($) {
 	/* ---------------------------------------------------------------- mobile nav */
 	$("#furniva-burger").on("click", function () {
 		var $menu = $("#furniva-mobile-nav");
-		$menu.toggleClass("open");
-		$(this).attr("aria-expanded", $menu.hasClass("open") ? "true" : "false");
+		var isOpen = $menu.hasClass("open");
+		$menu.toggleClass("open", !isOpen);
+		$(this).attr("aria-expanded", !isOpen ? "true" : "false").toggleClass("is-active", !isOpen);
+		$("body").toggleClass("is-menu-open", !isOpen);
+	});
+
+	// Close mobile nav on escape key, outside click, or link click
+	$(document).on("keydown", function (e) {
+		if (e.key === "Escape" && $("#furniva-mobile-nav").hasClass("open")) {
+			$("#furniva-mobile-nav").removeClass("open");
+			$("#furniva-burger").attr("aria-expanded", "false").removeClass("is-active").trigger("focus");
+			$("body").removeClass("is-menu-open");
+		}
+	});
+
+	$(document).on("click", function (e) {
+		if ($("#furniva-mobile-nav").hasClass("open")) {
+			if (!$(e.target).closest("#furniva-mobile-nav, #furniva-burger").length) {
+				$("#furniva-mobile-nav").removeClass("open");
+				$("#furniva-burger").attr("aria-expanded", "false").removeClass("is-active");
+				$("body").removeClass("is-menu-open");
+			}
+		}
+	});
+
+	$("#furniva-mobile-nav a").on("click", function () {
+		$("#furniva-mobile-nav").removeClass("open");
+		$("#furniva-burger").attr("aria-expanded", "false").removeClass("is-active");
+		$("body").removeClass("is-menu-open");
 	});
 
 	/* ---------------------------------------------- homepage lookbook + FAQ */
@@ -119,14 +156,20 @@ jQuery(function ($) {
 	});
 
 	/* ---------------------------------------------------------- storefront search */
+	var $lastSearchTrigger = null;
+
 	function openDeSpaceSearch(e) {
 		if (e && e.preventDefault) e.preventDefault();
+		if (this && this.nodeType === 1) {
+			$lastSearchTrigger = $(this);
+		}
 		var $headerBar = $(".fv-header__bar");
 		var $searchBar = $("#fv-header-search-bar");
 
 		if ($headerBar.length && $searchBar.length) {
 			$headerBar.addClass("is-search-active");
 			$searchBar.attr("aria-hidden", "false");
+			$("[data-furniva-search-open]").attr("aria-expanded", "true");
 			setTimeout(function () {
 				$searchBar.find(".fv-search-bar__input").trigger("focus");
 			}, 100);
@@ -137,6 +180,7 @@ jQuery(function ($) {
 		if (dialog) {
 			if (!dialog.open && typeof dialog.showModal === "function") dialog.showModal();
 			$(".fv-header").addClass("is-search-open");
+			$("[data-furniva-search-open]").attr("aria-expanded", "true");
 			setTimeout(function () {
 				$(dialog).find("input[type=search], .dgwt-wcas-search-input").first().trigger("focus");
 			}, 80);
@@ -145,24 +189,35 @@ jQuery(function ($) {
 		}
 	}
 
-	function closeDeSpaceSearch() {
+	function closeDeSpaceSearch(restoreFocus) {
 		var $headerBar = $(".fv-header__bar");
 		var $searchBar = $("#fv-header-search-bar");
+		var activeInside = $searchBar.length && $searchBar[0].contains(document.activeElement);
+		if (activeInside && document.activeElement && typeof document.activeElement.blur === "function") {
+			document.activeElement.blur();
+		}
 		$headerBar.removeClass("is-search-active");
 		$searchBar.attr("aria-hidden", "true");
+		$("[data-furniva-search-open]").attr("aria-expanded", "false");
 		$(".fv-header").removeClass("is-search-open");
 
 		var dialog = document.getElementById("furniva-search-dialog");
 		if (dialog && dialog.open) dialog.close();
+
+		if ((restoreFocus || activeInside) && $lastSearchTrigger && $lastSearchTrigger.length) {
+			$lastSearchTrigger.trigger("focus");
+		}
 	}
 
 	$(document).on("click", "#furniva-bnav-search, [data-furniva-search-open]", openDeSpaceSearch);
-	$(document).on("click", "[data-furniva-search-close]", closeDeSpaceSearch);
+	$(document).on("click", "[data-furniva-search-close]", function () {
+		closeDeSpaceSearch(true);
+	});
 
 	// Close on Escape key
 	$(document).on("keydown", function (e) {
 		if (e.key === "Escape" && $(".fv-header__bar").hasClass("is-search-active")) {
-			closeDeSpaceSearch();
+			closeDeSpaceSearch(true);
 		}
 	});
 
@@ -202,11 +257,115 @@ jQuery(function ($) {
 		toast(furnivaData.strings.newsletterSuccess);
 	});
 
-	/* ---------------------------------------------------------------- contact form (demo) */
-	$(document).on("submit", "#furniva-contact-form", function (e) {
+	/* ---------------------------------------------------------------- DeSpace Contact Form (AJAX + Validation) */
+	$(document).on("submit", "#despace-contact-form, #furniva-contact-form, .f-contact-form-ajax", function (e) {
 		e.preventDefault();
-		var s = furnivaData.strings;
-		$(this).replaceWith('<div class="f-contact-success" role="status"><span>' + s.contactPreview + '</span><h3>' + s.contactThanks + '</h3><p>' + s.contactNotSent + '</p></div>');
+		var $form = $(this);
+		var $btn = $form.find('button[type="submit"]');
+		var $status = $form.find("#despace-contact-status");
+		if (!$status.length) {
+			$status = $('<div class="ds-contact-status" role="status" aria-live="polite" style="margin-top:12px;padding:12px 16px;border-radius:6px;font-size:13px;line-height:1.6;"></div>');
+			$form.append($status);
+		}
+
+		// Client validation
+		var name = $.trim($form.find('input[name="contact_name"]').val() || "");
+		var phone = $.trim($form.find('input[name="contact_phone"]').val() || "");
+		var email = $.trim($form.find('input[name="contact_email"]').val() || "");
+		var message = $.trim($form.find('textarea[name="contact_message"]').val() || "");
+
+		if (name.length < 2) {
+			$status.css({ display: "block", background: "#fdf2f2", color: "#991b1b", border: "1px solid #f87171" })
+				.text("Vui lòng nhập họ và tên (tối thiểu 2 ký tự).");
+			$form.find('input[name="contact_name"]').focus();
+			return;
+		}
+
+		var digits = phone.replace(/\D/g, "");
+		if (digits.length < 9 || digits.length > 12) {
+			$status.css({ display: "block", background: "#fdf2f2", color: "#991b1b", border: "1px solid #f87171" })
+				.text("Vui lòng nhập số điện thoại hợp lệ (9 – 11 chữ số).");
+			$form.find('input[name="contact_phone"]').focus();
+			return;
+		}
+
+		if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+			$status.css({ display: "block", background: "#fdf2f2", color: "#991b1b", border: "1px solid #f87171" })
+				.text("Địa chỉ email không đúng định dạng.");
+			$form.find('input[name="contact_email"]').focus();
+			return;
+		}
+
+		if (message.length < 3) {
+			$status.css({ display: "block", background: "#fdf2f2", color: "#991b1b", border: "1px solid #f87171" })
+				.text("Vui lòng nhập lời nhắn hoặc ghi chú yêu cầu tư vấn.");
+			$form.find('textarea[name="contact_message"]').focus();
+			return;
+		}
+
+		// Prepare FormData
+		var formData = new FormData(this);
+		if (!formData.get("action")) {
+			formData.append("action", "despace_contact_submit");
+		}
+		if (!formData.get("nonce") && window.despaceData && despaceData.contactNonce) {
+			formData.append("nonce", despaceData.contactNonce);
+		}
+
+		$btn.prop("disabled", true).addClass("is-loading");
+		var originalBtnText = $btn.find(".btn-text").length ? $btn.find(".btn-text").text() : $btn.text();
+		if ($btn.find(".btn-text").length) {
+			$btn.find(".btn-text").text("Đang gửi thông tin…");
+		} else {
+			$btn.text("Đang gửi thông tin…");
+		}
+
+		$status.css({ display: "block", background: "#f3f4f6", color: "#374151", border: "1px solid #d1d5db" })
+			.text("Đang gửi thông tin yêu cầu tư vấn…");
+
+		var ajaxUrl = (window.despaceData && despaceData.ajaxUrl) || (window.furnivaData && furnivaData.ajaxUrl) || "/wp-admin/admin-ajax.php";
+
+		$.ajax({
+			url: ajaxUrl,
+			type: "POST",
+			data: formData,
+			processData: false,
+			contentType: false,
+			dataType: "json",
+			success: function (res) {
+				$btn.prop("disabled", false).removeClass("is-loading");
+				if ($btn.find(".btn-text").length) {
+					$btn.find(".btn-text").text(originalBtnText);
+				} else {
+					$btn.text(originalBtnText);
+				}
+
+				if (res && res.success) {
+					$status.css({ display: "block", background: "#ecfdf5", color: "#065f46", border: "1px solid #6ee7b7" })
+						.html("<strong>✦ " + (res.data && res.data.message ? res.data.message : "Đăng ký thành công!") + "</strong>");
+					$form[0].reset();
+				} else {
+					var errMsg = (res && res.data && res.data.message) ? res.data.message : "Đã có lỗi xảy ra. Vui lòng thử lại sau.";
+					$status.css({ display: "block", background: "#fdf2f2", color: "#991b1b", border: "1px solid #f87171" })
+						.text(errMsg);
+				}
+			},
+			error: function (xhr) {
+				$btn.prop("disabled", false).removeClass("is-loading");
+				if ($btn.find(".btn-text").length) {
+					$btn.find(".btn-text").text(originalBtnText);
+				} else {
+					$btn.text(originalBtnText);
+				}
+
+				var err = "Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối mạng hoặc liên hệ qua hotline.";
+				if (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+					err = xhr.responseJSON.data.message;
+				}
+				$status.css({ display: "block", background: "#fdf2f2", color: "#991b1b", border: "1px solid #f87171" })
+					.text(err);
+			}
+		});
 	});
 
 	/* ---------------------------------------------------------------- quantity stepper (single product) */
@@ -255,7 +414,7 @@ jQuery(function ($) {
 
 	/* ---------------------------------------------------------------- AJAX shop filter */
 	var filterTimer = null,
-		fetching = false,
+		filterXhr = null,
 		currentPage = 1,
 		baseCat = (window.furnivaData && furnivaData.baseCat) || "",
 		$results = $("#furniva-shop-results"),
@@ -269,6 +428,7 @@ jQuery(function ($) {
 			brand: [],
 			color: [],
 			size: [],
+			material: [],
 			availability: []
 		};
 		f.language = furnivaData.language;
@@ -276,7 +436,11 @@ jQuery(function ($) {
 
 		$("#furniva-filter-form input[type=checkbox]:checked").each(function () {
 			var name = $(this).attr("name");
-			if (f[name]) f[name].push($(this).val());
+			if (name === "has_3d") {
+				f.has_3d = $(this).val();
+			} else if (f[name]) {
+				f[name].push($(this).val());
+			}
 		});
 		var min = $("#f-price-min").val(), max = $("#f-price-max").val();
 		if (min !== "" && !isNaN(min)) f.price_min = min;
@@ -284,6 +448,13 @@ jQuery(function ($) {
 
 		var $ordering = $("select.orderby").first();
 		if ($ordering.length) f.orderby = $ordering.val();
+
+		var urlParams = new URLSearchParams(window.location.search);
+		var searchKw = urlParams.get("s") || urlParams.get("q");
+		if (searchKw) f.s = searchKw;
+		if (urlParams.get("on_sale") === "1" && f.availability.indexOf("onsale") === -1) {
+			f.availability.push("onsale");
+		}
 
 		return f;
 	}
@@ -319,13 +490,24 @@ jQuery(function ($) {
 		var min = $("#f-price-min").val(), max = $("#f-price-max").val();
 		if ((min !== "" && !isNaN(min)) || (max !== "" && !isNaN(max))) {
 			count++;
-			var fmtVnd = function (n) {
-				return Number(n).toLocaleString("vi-VN") + " ₫";
-			};
-			var priceLabel = escapeHtml(min !== "" ? fmtVnd(min) : "0 ₫") + " – " + escapeHtml(max !== "" ? fmtVnd(max) : "∞");
+			var currSym = (window.furnivaData && furnivaData.currencySymbol) || "₫";
+			var fmtPrice = function (v) { return Number(v).toLocaleString("vi-VN") + " " + currSym; };
+			var priceLabel = (min !== "" && !isNaN(min) ? fmtPrice(min) : "0 " + currSym) + " – " + (max !== "" && !isNaN(max) ? fmtPrice(max) : "∞");
 			tags.push('<button type="button" class="f-active-tag" data-filter-type="price">' +
 				'<span class="f-active-tag-group">' + escapeHtml(furnivaData.strings.priceLabel) + ':</span> ' +
-				'<span class="f-active-tag-val">' + priceLabel + '</span>' +
+				'<span class="f-active-tag-val">' + escapeHtml(priceLabel) + '</span>' +
+				'<span class="f-active-tag-x">&times;</span>' +
+				'</button>');
+		}
+
+		var urlParams = new URLSearchParams(window.location.search);
+		var searchKw = urlParams.get("s") || urlParams.get("q");
+		if (searchKw) {
+			count++;
+			var searchLabel = escapeHtml(searchKw);
+			tags.push('<button type="button" class="f-active-tag" data-filter-type="search">' +
+				'<span class="f-active-tag-group">' + escapeHtml((furnivaData.strings && furnivaData.strings.searchLabel) || "Tìm kiếm") + ':</span> ' +
+				'<span class="f-active-tag-val">"' + searchLabel + '"</span>' +
 				'<span class="f-active-tag-x">&times;</span>' +
 				'</button>');
 		}
@@ -359,12 +541,11 @@ jQuery(function ($) {
 		applyGridCols($(this).data("cols"));
 	});
 
-	var activeFilterXhr = null;
+	var filterXhr = null;
 	function runFilter(append, skipHistory) {
-		if (!append && activeFilterXhr && activeFilterXhr.readyState !== 4) {
-			activeFilterXhr.abort();
-		} else if (append && fetching) {
-			return;
+		if (filterXhr && filterXhr.readyState !== 4) {
+			if (append) return;
+			filterXhr.abort();
 		}
 		fetching = true;
 		currentPage = append ? currentPage : 1;
@@ -384,31 +565,72 @@ jQuery(function ($) {
 		if (!append) {
 			var skHtml = window.DeSpaceSkeleton
 				? window.DeSpaceSkeleton.renderProductGrid({ count: 8, cols: skCols })
-				: '<ul class="f-products ' + colClass + ' f-skeleton-grid"></ul>';
+				: (function () {
+					var html = '<ul class="f-products ' + colClass + ' f-skeleton-grid" aria-busy="true">';
+					for (var i = 0; i < 8; i++) {
+						html += '<li class="f-skeleton-card"><div class="f-sk-media f-shimmer"></div><div class="f-sk-body"><div class="f-sk-cat f-shimmer"></div><div class="f-sk-title f-shimmer"></div><div class="f-sk-price f-shimmer"></div></div></li>';
+					}
+					return html + '</ul>';
+				})();
 			$results.html(skHtml);
 		} else {
-			var $existingList = $results.find("ul.f-products").first();
-			if ($existingList.length && window.DeSpaceSkeleton) {
-				$existingList.append(window.DeSpaceSkeleton.renderProductItems(4, "ds-sk-append-item"));
+			var $existingListSk = $results.find("ul.f-products").first();
+			if ($existingListSk.length && window.DeSpaceSkeleton) {
+				$existingListSk.append(window.DeSpaceSkeleton.renderProductItems(4, "ds-sk-append-item"));
 			}
-			$("#furniva-load-more").prop("disabled", true);
+			$("#furniva-load-more").prop("disabled", true).text((furnivaData.strings && furnivaData.strings.loadingMore) || "Loading…");
 		}
 
-		activeFilterXhr = $.post(furnivaData.ajaxUrl, $.param(data)).done(function (res) {
-			if (!res || !res.success) {
-				$results.find(".ds-sk-append-item").remove();
+		function renderFilterError() {
+			$results.find(".ds-sk-append-item").remove();
+			var errTitle = (furnivaData.strings && furnivaData.strings.filterErrorTitle) || "Unable to load products";
+			var errDesc = (furnivaData.strings && furnivaData.strings.filterErrorDesc) || "A network error occurred. Please try again.";
+			var retryLbl = (furnivaData.strings && furnivaData.strings.filterRetry) || "Try again";
+			if (!append) {
+				$results.html(
+					'<div class="f-no-results f-filter-error" role="alert">' +
+					'<div class="f-no-results-icon" aria-hidden="true"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg></div>' +
+					'<h3 class="f-no-results-title">' + escapeHtml(errTitle) + '</h3>' +
+					'<p class="f-no-results-desc">' + escapeHtml(errDesc) + '</p>' +
+					'<button type="button" class="f-btn f-btn--primary" id="furniva-filter-retry">' + escapeHtml(retryLbl) + '</button>' +
+					'</div>'
+				);
+			} else {
+				currentPage = Math.max(1, currentPage - 1);
+				$("#furniva-load-more").prop("disabled", false).text(furnivaData.strings.loadMore);
+				toast(errDesc);
+			}
+		}
+
+		var xhr = $.post(furnivaData.ajaxUrl, $.param(data));
+		filterXhr = xhr;
+		xhr.done(function (res) {
+			if (xhr !== filterXhr) return;
+			if (!res || !res.success || !res.data) {
+				renderFilterError();
 				return;
 			}
 			if (!append) {
 				$results.html(res.data.grid);
 				$results.find(".f-products").addClass("ds-sk-reveal");
 			} else {
-				var $existing = $results.find("ul.f-products").first();
-				$existing.find(".ds-sk-append-item").remove();
-				var $incomingItems = $(res.data.grid).find("> li");
-				if ($existing.length && $incomingItems.length) {
-					$incomingItems.addClass("ds-sk-reveal");
-					$existing.append($incomingItems);
+				var $existingList = $results.find("ul.f-products").first();
+				$existingList.find(".ds-sk-append-item").remove();
+				var $incoming = $(res.data.grid).find("> li");
+				if ($existingList.length && $incoming.length) {
+					var existingIds = {};
+					$existingList.find("> li").each(function () {
+						var m = (this.className || "").match(/\bpost-(\d+)\b/);
+						if (m) existingIds[m[1]] = true;
+					});
+					$incoming.each(function () {
+						var m = (this.className || "").match(/\bpost-(\d+)\b/);
+						if (!m || !existingIds[m[1]]) {
+							$(this).addClass("ds-sk-reveal");
+							$existingList.append(this);
+							if (m) existingIds[m[1]] = true;
+						}
+					});
 				} else {
 					$results.html(res.data.grid);
 				}
@@ -421,7 +643,7 @@ jQuery(function ($) {
 			$("#furniva-load-more").remove();
 			if (res.data.more && res.data.next) {
 				currentPage = res.data.next - 1;
-				$results.append('<div style="text-align:center;padding:34px 0 8px"><button type="button" class="f-btn f-btn--ghost" id="furniva-load-more">' + furnivaData.strings.loadMore + '</button></div>');
+				$results.append('<div class="f-load-more-wrap" style="text-align:center;padding:34px 0 8px"><button type="button" class="f-btn f-btn--ghost" id="furniva-load-more">' + furnivaData.strings.loadMore + '</button></div>');
 			}
 			$count.text(res.data.text);
 			if (res.data.range) {
@@ -435,7 +657,10 @@ jQuery(function ($) {
 			var params = {};
 			$.each(collectFilters(), function (k, v) {
 				if (typeof v === "object" && v.length) params[k] = v.join(",");
-				else if (k.indexOf("price") === 0) params[k] = v;
+				else if (k.indexOf("price") === 0 && v !== "") params[k] = v;
+				else if (k === "has_3d" && v) params[k] = v;
+				else if (k === "s" && v) params[k] = v;
+				else if (k === "orderby" && v && v !== "menu_order") params[k] = v;
 			});
 			var qs = $.param(params);
 			var targetUrl = window.location.pathname + (qs ? "?" + qs : "");
@@ -446,14 +671,22 @@ jQuery(function ($) {
 					history.replaceState({ furnivaFilter: true }, "", targetUrl);
 				}
 			}
-		}).fail(function () {
-			$results.find(".ds-sk-append-item").remove();
-			$("#furniva-load-more").prop("disabled", false);
+		}).fail(function (jqXHR, textStatus) {
+			if (textStatus === "abort" || xhr !== filterXhr) return;
+			renderFilterError();
 		}).always(function () {
-			fetching = false;
-			$results.removeClass("is-busy").attr("aria-busy", "false");
+			if (xhr === filterXhr) {
+				filterXhr = null;
+				fetching = false;
+				$results.removeClass("is-busy").attr("aria-busy", "false");
+			}
 		});
 	}
+
+	// retry filter on network error
+	$(document).on("click", "#furniva-filter-retry", function () {
+		runFilter(false, true);
+	});
 
 	// active tag click → remove specific filter
 	$(document).on("click", ".f-active-tag", function (e) {
@@ -461,6 +694,12 @@ jQuery(function ($) {
 		var type = $(this).data("filter-type");
 		if (type === "price") {
 			$("#f-price-min, #f-price-max").val("");
+		} else if (type === "search") {
+			var qs = new URLSearchParams(window.location.search);
+			qs.delete("s");
+			qs.delete("q");
+			var newUrl = window.location.pathname + (qs.toString() ? "?" + qs.toString() : "");
+			history.replaceState({ furnivaFilter: true }, "", newUrl);
 		} else {
 			var name = String($(this).attr("data-name") || ""), val = String($(this).attr("data-val") || "");
 			$("#furniva-filter-form input[type=checkbox]").filter(function () {
@@ -478,16 +717,53 @@ jQuery(function ($) {
 		clearTimeout(filterTimer);
 		filterTimer = setTimeout(function () { runFilter(false); }, 600);
 	});
-	$("#furniva-filter-apply").on("click", function () { runFilter(false); });
+	$(document).on("submit", "#furniva-filter-form", function (e) {
+		e.preventDefault();
+		clearTimeout(filterTimer);
+		runFilter(false);
+	});
+	$("#furniva-filter-apply").on("click", function (e) {
+		e.preventDefault();
+		clearTimeout(filterTimer);
+		runFilter(false);
+	});
 	$(document).on("click", "#furniva-filter-clear, #furniva-filter-clear-top, #furniva-clear-all-tags, #furniva-no-results-reset", function () {
+		if ($(this).is("a")) return;
+		clearTimeout(filterTimer);
+		var qs = new URLSearchParams(window.location.search);
+		var hadFilters = $("#furniva-filter-form input[type=checkbox]:checked").length > 0 ||
+			$("#f-price-min").val() !== "" ||
+			$("#f-price-max").val() !== "" ||
+			qs.has("s") || qs.has("q") || qs.has("on_sale");
 		$("#furniva-filter-form input[type=checkbox]").prop("checked", false);
 		$("#f-price-min, #f-price-max").val("");
+		if (qs.has("s") || qs.has("q") || qs.has("on_sale")) {
+			qs.delete("s");
+			qs.delete("q");
+			qs.delete("on_sale");
+			var newUrl = window.location.pathname + (qs.toString() ? "?" + qs.toString() : "");
+			history.replaceState({ furnivaFilter: true }, "", newUrl);
+		}
+		if (!hadFilters && baseCat && window.furnivaData && furnivaData.shopUrl) {
+			window.location.href = furnivaData.shopUrl;
+			return;
+		}
 		runFilter(false);
 	});
 
-	// re-filter when the sort dropdown changes (AJAX too)
-	$(document).on("change", "select.orderby", function () {
+	// re-filter when the sort dropdown changes (AJAX only when JS is active; keeps native GET fallback when JS is disabled)
+	if ($("#furniva-filter-form").length) {
+		$("form.woocommerce-ordering").off("change", "select.orderby");
+	}
+	$(document).on("submit", "form.woocommerce-ordering", function (e) {
 		if ($("#furniva-filter-form").length) {
+			e.preventDefault();
+			if (!filterXhr) runFilter(false);
+		}
+	});
+	$(document).on("change", "select.orderby", function (e) {
+		if ($("#furniva-filter-form").length) {
+			e.stopImmediatePropagation();
 			runFilter(false);
 		}
 	});
@@ -504,19 +780,32 @@ jQuery(function ($) {
 			var qs = new URLSearchParams(window.location.search);
 			$("#furniva-filter-form input[type=checkbox]").prop("checked", false);
 			$("#f-price-min, #f-price-max").val("");
-			$.each(["category", "brand", "color", "size", "availability"], function (i, key) {
-				var v = qs.get(key);
-				if (v) {
-					var allowedSlugs = v.split(",").map(function (s) { return s.trim(); }).filter(Boolean);
-					if (allowedSlugs.length) {
-						$("#furniva-filter-form input[type=checkbox]").filter(function () {
-							return $(this).attr("name") === key && allowedSlugs.indexOf(String($(this).val())) !== -1;
-						}).prop("checked", true);
+			$.each(["category", "brand", "color", "size", "material", "availability"], function (i, key) {
+				var allowedSlugs = [];
+				qs.getAll(key).forEach(function (v) {
+					if (v) {
+						v.split(",").forEach(function (s) {
+							var trimmed = s.trim();
+							if (trimmed) allowedSlugs.push(trimmed);
+						});
 					}
+				});
+				if (allowedSlugs.length) {
+					$("#furniva-filter-form input[type=checkbox]").filter(function () {
+						return $(this).attr("name") === key && allowedSlugs.indexOf(String($(this).val())) !== -1;
+					}).prop("checked", true);
 				}
 			});
-			if (qs.get("price_min")) $("#f-price-min").val(qs.get("price_min"));
-			if (qs.get("price_max")) $("#f-price-max").val(qs.get("price_max"));
+			if (qs.get("has_3d")) {
+				$("#furniva-filter-form input[type=checkbox]").filter(function () {
+					return $(this).attr("name") === "has_3d";
+				}).prop("checked", true);
+			}
+			if (qs.get("price_min") || qs.get("min_price")) $("#f-price-min").val(qs.get("price_min") || qs.get("min_price"));
+			if (qs.get("price_max") || qs.get("max_price")) $("#f-price-max").val(qs.get("price_max") || qs.get("max_price"));
+			if ($("select.orderby").length) {
+				$("select.orderby").val(qs.get("orderby") || "menu_order");
+			}
 		} catch (err) {
 			// Ignore malformed query string rather than aborting main.js initialization
 		}
@@ -548,22 +837,35 @@ jQuery(function ($) {
 	function openFilterDrawer() {
 		$("#furniva-filters").addClass("open");
 		$("#furniva-filters-backdrop").addClass("open");
+		$("#furniva-filter-toggle").attr("aria-expanded", "true");
 		$("body").addClass("f-filter-drawer-open");
+		setTimeout(function () {
+			$("#furniva-filter-close").trigger("focus");
+		}, 60);
 	}
-	function closeFilterDrawer() {
+	function closeFilterDrawer(restoreFocus) {
 		$("#furniva-filters").removeClass("open");
 		$("#furniva-filters-backdrop").removeClass("open");
+		$("#furniva-filter-toggle").attr("aria-expanded", "false");
 		$("body").removeClass("f-filter-drawer-open");
+		if (restoreFocus) {
+			$("#furniva-filter-toggle").trigger("focus");
+		}
 	}
 	$("#furniva-filter-toggle").on("click", function () {
 		if ($("#furniva-filters").hasClass("open")) {
-			closeFilterDrawer();
+			closeFilterDrawer(true);
 		} else {
 			openFilterDrawer();
 		}
 	});
 	$(document).on("click", "#furniva-filter-close, #furniva-filters-backdrop", function () {
-		closeFilterDrawer();
+		closeFilterDrawer(true);
+	});
+	$(document).on("keydown", function (e) {
+		if (e.key === "Escape" && $("#furniva-filters").hasClass("open")) {
+			closeFilterDrawer(true);
+		}
 	});
 
 	/* ---------------------------------------------------------------- variation swatches */
@@ -996,6 +1298,52 @@ jQuery(function ($) {
 		var $zone = $(".wp-block-woocommerce-cart, .wp-block-woocommerce-checkout");
 		if (!$zone.length) return;
 
+		function injectCheckoutBlocksPolicies() {
+			var $checkoutBlock = $(".wp-block-woocommerce-checkout");
+			if (!$checkoutBlock.length) return;
+
+			var $terms = $checkoutBlock.find(".wc-block-checkout__terms");
+			if (!$terms.length) return;
+
+			// Check if already injected inside $terms
+			if ($terms.find("#ds-block-policy-links").length) return;
+
+			var pUrls = (window.furnivaData && furnivaData.policyUrls) || {};
+			var pStrings = (window.furnivaData && furnivaData.policyStrings) || {};
+			var isEn = window.location.pathname.indexOf("/en/") === 0 || ((window.furnivaData && furnivaData.language) === "en");
+
+			var shipUrl = pUrls.shipping || (isEn ? "/en/chinh-sach-giao-hang/" : "/chinh-sach-giao-hang/");
+			var retUrl = pUrls.returns || (isEn ? "/en/chinh-sach-doi-tra-bao-hanh/" : "/chinh-sach-doi-tra-bao-hanh/");
+
+			var heading = pStrings.heading || (isEn ? "✦ Additional Customer Rights & Policies:" : "✦ Chính sách bổ trợ & Quyền lợi khách hàng DeSpace:");
+			var shipText = pStrings.shipping || (isEn ? "Shipping & Installation Policy" : "Chính sách giao hàng & lắp đặt");
+			var retText = pStrings.returns || (isEn ? "Returns & Warranty Policy" : "Chính sách đổi trả & bảo hành");
+			var disclaimer = pStrings.disclaimer || (isEn ? "Note: Educational project simulation for DeSpace luxury furniture." : "Lưu ý: Nội dung quy chuẩn phục vụ đồ án học tập/thực nghiệm DeSpace.");
+
+			// Only supplement missing Shipping & Returns; DO NOT duplicate Terms & Privacy already rendered by WooCommerce
+			var hasTerms = $terms.find('a[href*="dieu-khoan-mua-ban"], a[href*="terms"]').length > 0;
+			var hasPrivacy = $terms.find('a[href*="chinh-sach-bao-mat"], a[href*="privacy"]').length > 0;
+
+			var extraLinks = [];
+			extraLinks.push('<a href="' + shipUrl + '" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;">' + shipText + '</a>');
+			extraLinks.push('<a href="' + retUrl + '" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;">' + retText + '</a>');
+
+			if (!hasPrivacy && pUrls.privacy) {
+				extraLinks.push('<a href="' + pUrls.privacy + '" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;">' + (pStrings.privacy || "Privacy Policy") + '</a>');
+			}
+			if (!hasTerms && pUrls.terms) {
+				extraLinks.push('<a href="' + pUrls.terms + '" target="_blank" rel="noopener" style="color: #9A6745; text-decoration: underline; font-weight: 500;">' + (pStrings.terms || "Terms of Sale") + '</a>');
+			}
+
+			var noticeHtml = '<div id="ds-block-policy-links" class="ds-checkout-blocks-policy-links" style="margin-top: 14px; padding: 12px 16px; background: #FAF7F2; border: 1px solid #E7E0D7; border-radius: 6px; font-size: 13px; line-height: 1.6; color: #69645D;">' +
+				'<span style="display:block; font-weight: 600; color: #1c1917; margin-bottom: 4px;">' + heading + '</span>' +
+				extraLinks.join(' • ') +
+				'<div style="margin-top: 6px; font-size: 12px; color: #8c827a; font-style: italic;">' + disclaimer + '</div>' +
+				'</div>';
+
+			$terms.append(noticeHtml);
+		}
+
 		var timer = null, lastHtml = "";
 		function refreshCartHeader() {
 			$.post(furnivaData.ajaxUrl, { action: "furniva_cart_state", nonce: furnivaData.nonce, language: furnivaData.language }).done(function (res) {
@@ -1006,11 +1354,13 @@ jQuery(function ($) {
 			});
 		}
 		refreshCartHeader();
+		injectCheckoutBlocksPolicies();
 
 		var observer = new MutationObserver(function () {
 			clearTimeout(timer);
 			timer = setTimeout(refreshCartHeader, 400);
 			polishEmptyCartBlock();
+			injectCheckoutBlocksPolicies();
 		});
 		$zone.each(function () {
 			observer.observe(this, { childList: true, subtree: true });
@@ -1080,16 +1430,22 @@ jQuery(function ($) {
 	});
 
 	/* ---------------------------------------------------------------- DeSpace Luxury Wishlist & Cart Interactivity */
-	function showAxToast(msg) {
-		var $t = $("#axToast, #axCartToast");
+	function showAxToast(msg, type) {
+		var isError = type === "error";
+		var $t = $("#axToast, #axCartToast").first();
 		if (!$t.length) {
-			$t = $('<div class="ax-toast" id="axToast"></div>').appendTo("body");
+			$t = $('<div class="ax-toast" id="axToast" aria-atomic="true"></div>').appendTo("body");
 		}
-		$t.text(msg).addClass("is-visible");
+		$t.attr("role", isError ? "alert" : "status")
+			.attr("aria-live", isError ? "assertive" : "polite")
+			.attr("aria-atomic", "true")
+			.toggleClass("ax-toast--error", isError)
+			.text(msg)
+			.addClass("is-visible");
 		clearTimeout(window._axToastTimer);
 		window._axToastTimer = setTimeout(function () {
 			$t.removeClass("is-visible");
-		}, 3000);
+		}, 4000);
 	}
 
 	// 1. Wishlist: Share Button
@@ -1419,6 +1775,95 @@ jQuery(function ($) {
 		});
 	});
 
+	// 12b. Catalog & Product Card Wishlist Button (.f-card-wishlist-btn)
+	$(document).on("click", ".f-card-wishlist-btn", function (e) {
+		e.preventDefault();
+		e.stopPropagation();
+
+		var $btn = $(this);
+		var isVi = !furnivaData || furnivaData.language !== "en";
+
+		var wlUnavailableByData = furnivaData && Object.prototype.hasOwnProperty.call(furnivaData, "wishlistReady") && (furnivaData.wishlistReady === false || furnivaData.wishlistReady === "" || furnivaData.wishlistReady === "0");
+		if ($btn.attr("data-wishlist-unavailable") === "1" || $btn.attr("aria-disabled") === "true" || wlUnavailableByData) {
+			var unavMsg = isVi
+				? "Tính năng yêu thích hiện chưa sẵn sàng do chưa cài đặt plugin YITH WooCommerce Wishlist."
+				: "Wishlist is temporarily unavailable because the YITH WooCommerce Wishlist plugin is not installed.";
+			showAxToast(unavMsg, "error");
+			return;
+		}
+
+		// Prevent guaranteed-401 AJAX call for logged-out guests: show clear login guidance instead.
+		var isLoggedInByData = !furnivaData || !Object.prototype.hasOwnProperty.call(furnivaData, "isLoggedIn") || (furnivaData.isLoggedIn === true || furnivaData.isLoggedIn === 1 || furnivaData.isLoggedIn === "1");
+		if (!isLoggedInByData) {
+			var guestWlMsg = isVi
+				? "Quý khách vui lòng đăng nhập để lưu sản phẩm vào danh sách yêu thích."
+				: "Please sign in to save this product to your wishlist.";
+			if ($("#axAuthGateModal").length) {
+				openAuthGateModal(guestWlMsg, window.location.href);
+			} else {
+				showAxToast(guestWlMsg, "error");
+			}
+			return;
+		}
+
+		var pid = parseInt($btn.attr("data-product-id"), 10);
+		if (!pid || $btn.hasClass("is-loading")) return;
+
+		var ajaxUrl = (furnivaData && furnivaData.ajaxUrl) ? furnivaData.ajaxUrl : "/wp-admin/admin-ajax.php";
+		var nonce = (furnivaData && furnivaData.wishlistNonce) ? furnivaData.wishlistNonce : "";
+
+		$btn.addClass("is-loading").attr("aria-busy", "true");
+
+		$.ajax({
+			url: ajaxUrl,
+			method: "POST",
+			dataType: "json",
+			data: {
+				action: "furniva_wishlist_toggle",
+				product_id: pid,
+				security: nonce
+			}
+		}).done(function (res) {
+			if (res && res.success && res.data) {
+				var isAdded = Boolean(res.data.added);
+				var $matchingBtns = $('.f-card-wishlist-btn[data-product-id="' + pid + '"]');
+				$matchingBtns.each(function () {
+					var $itemBtn = $(this);
+					var label = res.data.aria_label || (isAdded
+						? ($itemBtn.attr("data-label-remove") || (isVi ? "Bỏ khỏi danh sách yêu thích" : "Remove from wishlist"))
+						: ($itemBtn.attr("data-label-add") || (isVi ? "Thêm vào danh sách yêu thích" : "Add to wishlist")));
+					$itemBtn
+						.toggleClass("is-active", isAdded)
+						.attr("aria-pressed", isAdded ? "true" : "false")
+						.attr("aria-label", label)
+						.attr("title", label);
+				});
+
+				if (typeof res.data.count === "number") {
+					$(".fv-wishlist-count").text(res.data.count).toggle(res.data.count > 0);
+				}
+
+				showAxToast(res.data.message || (isAdded
+					? (isVi ? "Đã thêm vào danh sách yêu thích ♥" : "Added to your wishlist ♥")
+					: (isVi ? "Đã xóa khỏi danh sách yêu thích" : "Removed from wishlist")), "success");
+
+				$(document.body).trigger(isAdded ? "added_to_wishlist" : "removed_from_wishlist");
+			} else {
+				var errMsg = (res && res.data && res.data.message)
+					? res.data.message
+					: (isVi ? "Không thể cập nhật danh sách yêu thích. Vui lòng thử lại." : "Unable to update wishlist. Please try again.");
+				showAxToast(errMsg, "error");
+			}
+		}).fail(function (xhr) {
+			var failMsg = (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message)
+				? xhr.responseJSON.data.message
+				: (isVi ? "Lỗi kết nối khi cập nhật danh sách yêu thích. Vui lòng thử lại." : "Network error while updating wishlist. Please try again.");
+			showAxToast(failMsg, "error");
+		}).always(function () {
+			$btn.removeClass("is-loading").removeAttr("aria-busy");
+		});
+	});
+
 	// 13. Sync Wishlist Badges on YITH / Theme Wishlist Events
 	$(document.body).on("added_to_wishlist removed_from_wishlist", function () {
 		$.post(furnivaData ? furnivaData.ajaxUrl : "/wp-admin/admin-ajax.php", {
@@ -1562,14 +2007,45 @@ jQuery(function ($) {
 		}
 	});
 
-	// Guest Checkout is fully open for Add-to-Cart, Buy Now, AR Cart, and Checkout;
-	// only account-bound Wishlist syncing prompts sign-in for unauthenticated visitors.
+	// Guest auth gate: always gate account-bound Wishlist clicks to prevent guest YITH 401 errors;
+	// gate Add-to-Cart & Buy Now only when WooCommerce Guest Checkout is disabled.
 	if (typeof furnivaData !== "undefined" && !furnivaData.isLoggedIn) {
 		var isVi = furnivaData.language === "vi";
+		var guestCheckoutAllowed = !!furnivaData.guestCheckoutEnabled;
 
 		document.addEventListener("click", function (e) {
 			var $target = $(e.target);
-			var $wlBtn = $target.closest(".ax-toggle-wishlist-btn, .ax-cart-action-wishlist, .yith-wcwl-add-button a, .add_to_wishlist, #axAddToWishlist, .ax-btn-wishlist, .yith-wcwl-add-to-wishlist-button");
+
+			if (!guestCheckoutAllowed) {
+				// A. Add to Cart triggers
+				var $addBtn = $target.closest(".add_to_cart_button, .single_add_to_cart_button, #axAddToCart, .f-card-add, .f-sticky-add-btn, .ajax_add_to_cart, form.cart button[type='submit']");
+				if ($addBtn.length) {
+					e.preventDefault();
+					e.stopPropagation();
+					e.stopImmediatePropagation();
+					var msg = isVi
+						? "Quý khách vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng, sử dụng mã ưu đãi WELCOME10 và theo dõi thông tin bảo hành (mô phỏng đồ án)."
+						: "Please sign in or create an account to add items to your cart and unlock VIP member benefits.";
+					openAuthGateModal(msg, window.location.href);
+					return false;
+				}
+
+				// B. Buy Now button
+				var $buyBtn = $target.closest("#furniva-buy-now, .f-buy-now");
+				if ($buyBtn.length) {
+					e.preventDefault();
+					e.stopPropagation();
+					e.stopImmediatePropagation();
+					var msgBuy = isVi
+						? "Quý khách vui lòng đăng nhập để mua ngay sản phẩm và tiến hành thanh toán."
+						: "Please sign in to proceed with direct purchasing.";
+					openAuthGateModal(msgBuy, (furnivaData.checkoutUrl || "/checkout/"));
+					return false;
+				}
+			}
+
+			// C. Wishlist triggers (always require sign-in for guests)
+			var $wlBtn = $target.closest(".f-card-wishlist-btn:not([data-wishlist-unavailable='1']), .ax-toggle-wishlist-btn, .ax-cart-action-wishlist, .yith-wcwl-add-button a, .add_to_wishlist, #axAddToWishlist, .ax-btn-wishlist, .yith-wcwl-add-to-wishlist-button");
 			if ($wlBtn.length) {
 				e.preventDefault();
 				e.stopPropagation();

@@ -108,7 +108,7 @@ $shop_url = wc_get_page_permalink( 'shop' );
 
                         <!-- Room Canvas -->
                         <div class="ar-room-canvas" id="arRoomCanvas" style="display: none;">
-                            <img id="arRoomImage" class="ar-room-image" alt="Your room" />
+                            <img id="arRoomImage" class="ar-room-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Your room" />
                             <div class="ar-canvas-overlay" id="arCanvasOverlay">
                                 <!-- Placed products will appear here -->
                             </div>
@@ -349,7 +349,7 @@ $shop_url = wc_get_page_permalink( 'shop' );
             </button>
             <div class="ar-modal-body">
                 <div class="ar-modal-image">
-                    <img id="arModalProductImage" src="" alt="" />
+                    <img id="arModalProductImage" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" />
                 </div>
                 <div class="ar-modal-info">
                     <h3 id="arModalProductName"></h3>

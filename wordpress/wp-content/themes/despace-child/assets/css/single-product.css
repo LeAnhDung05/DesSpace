@@ -7,6 +7,7 @@
     background: #f7f4ef;
     min-height: 60vh;
     padding-bottom: 80px;
+    overflow-x: clip;
 }
 
 .ax-container {
@@ -19,10 +20,13 @@
 .ax-breadcrumb {
     padding: 20px 0 12px;
     font-size: 13px;
+    line-height: 1.5;
 }
 
 .ax-bc-nav {
     color: #6b6357;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .ax-bc-nav a {
@@ -38,6 +42,11 @@
 .ax-bc-sep {
     margin: 0 8px;
     color: #c5b8a8;
+}
+
+.ax-bc-current {
+    color: #191816;
+    font-weight: 500;
 }
 
 /* Product Grid */
@@ -65,6 +74,7 @@
     align-items: center;
     gap: 6px;
     background: rgba(255, 255, 255, 0.96);
+    -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
     color: #191816;
     font-size: 11px;
@@ -111,6 +121,7 @@
     line-height: 1 !important;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.92);
+    -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
     border: none;
     display: flex;
@@ -147,6 +158,7 @@
     line-height: 1 !important;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.92);
+    -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
     border: none;
     display: flex;
@@ -178,6 +190,7 @@
     border-radius: 8px;
     overflow: hidden;
     cursor: pointer;
+    padding: 0;
     border: 2px solid transparent;
     transition: all 0.2s;
     background: #efe9de;
@@ -218,10 +231,22 @@
     font-family: "Newsreader", Georgia, serif;
     font-size: 2.6rem;
     font-weight: 500;
-    line-height: 1.1;
+    line-height: 1.15;
     letter-spacing: -0.01em;
     color: #191816;
     margin: 0 0 16px;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.ax-product-sku {
+    margin: 6px 0 14px;
+    color: #6b655f;
+    font-size: 13px;
+}
+
+.ax-product-sku span:first-child {
+    margin-right: 5px;
 }
 
 /* Rating */
@@ -257,11 +282,31 @@
 
 /* Price */
 .ax-product-price {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
     font-size: 2.2rem;
     font-weight: 600;
     color: #191816;
     margin-bottom: 16px;
     letter-spacing: -0.01em;
+    line-height: 1.2;
+}
+
+.ax-product-price del {
+    font-size: 1.35rem;
+    font-weight: 400;
+    color: #8c827a;
+    text-decoration: line-through;
+    opacity: 0.85;
+}
+
+.ax-product-price ins {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #191816;
+    text-decoration: none;
 }
 
 /* Description */
@@ -291,6 +336,40 @@
     color: #8a7a65;
     margin-bottom: 12px;
     text-transform: uppercase;
+}
+
+.ax-finish-badge-row {
+    margin-bottom: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 8px;
+    row-gap: 4px;
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+
+.ax-finish-badge-row .ax-var-label {
+    display: inline-block;
+    margin: 0;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    line-height: 1.45;
+    color: #71717a;
+    text-transform: uppercase;
+}
+
+.ax-finish-badge-row .ax-finish-val {
+    margin: 0;
+    min-width: 0;
+    flex: 0 1 auto;
+    color: #18181b;
+    font-weight: 600;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
 }
 
 .ax-color-swatches {
@@ -361,6 +440,14 @@
     display: inline-block;
 }
 
+.ax-stock-status.is-out-of-stock .ax-stock-dot {
+    background: #bf5b50;
+}
+
+.ax-stock-status.is-in-stock .ax-stock-dot {
+    background: #6f806c;
+}
+
 .ax-stock-in {
     color: #6f806c;
     font-weight: 500;
@@ -371,9 +458,115 @@
     font-weight: 500;
 }
 
+#axAddToCart:disabled,
+#axAddToCart[aria-disabled="true"] {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 /* Product Form (hidden, but needed for WC) */
 .ax-product-form {
     display: none;
+}
+
+.ax-product-form.is-variable {
+    display: block;
+    margin: 18px 0;
+}
+
+.ax-product-form.is-variable table.variations {
+    width: 100%;
+    margin: 0;
+    border: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.ax-product-form.is-variable table.variations tr {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0 0 16px;
+}
+
+.ax-product-form.is-variable table.variations th,
+.ax-product-form.is-variable table.variations td {
+    display: block;
+    padding: 0;
+    border: 0;
+    text-align: left;
+}
+
+.ax-product-form.is-variable table.variations label {
+    color: #191816;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.ax-product-form.is-variable table.variations select {
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 38px 10px 14px;
+    border: 1.5px solid #d8c4ae;
+    border-radius: 12px;
+    background-color: #ffffff;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23191816' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    color: #191816;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ax-product-form.is-variable table.variations select:focus {
+    outline: none;
+    border-color: #191816;
+    box-shadow: 0 0 0 3px rgba(25, 24, 22, 0.12);
+}
+
+.ax-product-form.is-variable .reset_variations {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    color: #6b655f;
+    font-size: 13px;
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.ax-product-form.is-variable .reset_variations:hover {
+    color: #191816;
+}
+
+.ax-product-form.is-variable .single_variation_wrap .quantity,
+.ax-product-form.is-variable .single_variation_wrap .single_add_to_cart_button {
+    display: none !important;
+}
+
+.ax-product-form.is-variable .woocommerce-variation.single_variation {
+    display: none !important;
+}
+
+.ax-variation-feedback:empty {
+    display: none;
+}
+
+.ax-variation-feedback {
+    margin: -6px 0 16px;
+    color: #9d3e36;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
 }
 
 /* Buy Actions */
@@ -395,6 +588,20 @@
     background: #ffffff;
     overflow: hidden;
     height: 52px;
+    flex-shrink: 0;
+    transition: opacity 0.2s, border-color 0.2s;
+}
+
+.ax-qty-stepper.is-disabled {
+    opacity: 0.55;
+    background: #f7f4ef;
+    cursor: not-allowed;
+}
+
+.ax-qty-stepper.is-disabled button,
+.ax-qty-stepper.is-disabled input {
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 .ax-qty-minus,
@@ -414,6 +621,8 @@
     color: #191816;
     font-size: 18px;
     cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
     transition: background 0.2s;
 }
 
@@ -436,11 +645,13 @@
     color: #191816;
     background: #ffffff;
     -moz-appearance: textfield;
+    appearance: textfield;
 }
 
 .ax-qty-input::-webkit-outer-spin-button,
 .ax-qty-input::-webkit-inner-spin-button {
     -webkit-appearance: none;
+    appearance: none;
     margin: 0;
 }
 
@@ -501,10 +712,6 @@
 
 .ax-btn-cart {
     flex: 1;
-}
-
-.ax-qty-stepper {
-    flex-shrink: 0;
 }
 
 /* Trust Features */
@@ -655,8 +862,7 @@
 }
 
 /* Details, Shipping, Reviews Tabs */
-.ax-tab-inner h2,
-.ax-tab-inner h3 {
+.ax-tab-inner h2 {
     font-family: "Newsreader", Georgia, serif;
     font-size: 1.4rem;
     font-weight: 500;
@@ -665,8 +871,11 @@
 }
 
 .ax-tab-inner h3 {
+    font-family: "Newsreader", Georgia, serif;
     font-size: 1.2rem;
-    margin-top: 24px;
+    font-weight: 500;
+    color: #191816;
+    margin: 24px 0 16px;
 }
 
 .ax-tab-inner p {
@@ -698,6 +907,200 @@
 }
 
 /* ============================================================
+   REVIEWS & COMMENTS TAB
+   ============================================================ */
+#reviews {
+    margin-top: 8px;
+}
+
+#reviews #comments h2.woocommerce-Reviews-title {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: #191816;
+    margin-bottom: 24px;
+}
+
+#reviews ol.commentlist {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+#reviews ol.commentlist li.review {
+    background: #ffffff;
+    border: 1px solid #e8e2d9;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+#reviews .comment_container {
+    display: flex;
+    gap: 16px;
+}
+
+#reviews .comment_container img.avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid #e8e2d9;
+}
+
+#reviews .comment-text {
+    flex: 1;
+}
+
+#reviews .comment-text .meta {
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: #8a7a65;
+}
+
+#reviews .comment-text .woocommerce-review__author {
+    color: #191816;
+    font-weight: 600;
+}
+
+#reviews .comment-text .description {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #4a453e;
+}
+
+#reviews .comment-text .star-rating {
+    float: right;
+    color: #c5a880;
+    font-size: 14px;
+    letter-spacing: 2px;
+}
+
+#review_form #reply-title {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: #191816;
+    margin-bottom: 16px;
+    display: block;
+}
+
+#review_form .comment-form-rating {
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#review_form label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #191816;
+    display: block;
+    margin-bottom: 6px;
+}
+
+#review_form input[type="text"],
+#review_form input[type="email"],
+#review_form textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid #d8c4ae;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #191816;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#review_form input[type="text"]:focus,
+#review_form input[type="email"]:focus,
+#review_form textarea:focus {
+    border-color: #191816;
+    box-shadow: 0 0 0 3px rgba(25, 24, 22, 0.1);
+}
+
+#review_form .form-submit input[type="submit"] {
+    background: #191816;
+    color: #ffffff;
+    border: 1.5px solid #191816;
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#review_form .form-submit input[type="submit"]:hover {
+    background: #2b2520;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(25, 24, 22, 0.15);
+}
+
+/* ============================================================
+   WOOCOMMERCE NOTICES
+   ============================================================ */
+.ax-product-page .woocommerce-notices-wrapper {
+    margin-bottom: 24px;
+}
+
+.ax-product-page .woocommerce-message,
+.ax-product-page .woocommerce-error,
+.ax-product-page .woocommerce-info {
+    padding: 14px 20px;
+    border-radius: 12px;
+    margin: 0 0 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    list-style: none;
+    border: 1px solid transparent;
+}
+
+.ax-product-page .woocommerce-message {
+    background: #edf4ec;
+    border-color: #c4dbc1;
+    color: #2e5429;
+}
+
+.ax-product-page .woocommerce-message .button {
+    margin-left: auto;
+    background: #2e5429;
+    color: #ffffff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.ax-product-page .woocommerce-message .button:hover {
+    background: #1e3a1a;
+}
+
+.ax-product-page .woocommerce-error {
+    background: #fdf2f0;
+    border-color: #f3cdc7;
+    color: #9d3e36;
+}
+
+.ax-product-page .woocommerce-info {
+    background: #f7f4ef;
+    border-color: #d8c4ae;
+    color: #6b6357;
+}
+
+/* ============================================================
    RELATED PRODUCTS
    ============================================================ */
 .ax-related-section {
@@ -715,6 +1118,21 @@
     margin: 0 0 32px;
 }
 
+/* Hide duplicate WooCommerce default related heading */
+.ax-related-section .related.products > h2,
+.ax-related-section .related > h2 {
+    display: none;
+}
+
+.ax-related-section ul.products {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
 /* ============================================================
    RESPONSIVE
    ============================================================ */
@@ -730,6 +1148,11 @@
 
     .ax-product-price {
         font-size: clamp(1.4rem, 3.4vw, 1.85rem);
+    }
+
+    .ax-related-section ul.products {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
     }
 }
 
@@ -928,6 +1351,17 @@
         font-size: 1.35rem;
         margin-bottom: 12px;
     }
+
+    .ax-related-section ul.products {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+
+    .ax-gallery-lightbox .ax-lightbox-close {
+        top: 14px;
+        right: 14px;
+        background: rgba(0, 0, 0, 0.65);
+    }
 }
 
 @media (max-width: 480px) {
@@ -940,4 +1374,133 @@
         padding: 10px 16px;
         font-size: 13px;
     }
+
+    .ax-product-grid {
+        gap: 24px;
+    }
+
+    .ax-related-section ul.products {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+}
+
+/* ============================================================
+   ADDITIONAL INFORMATION (WOOCOMMERCE ATTRIBUTES)
+   ============================================================ */
+.ax-tab-inner table.shop_attributes {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 20px 0;
+    border: 1px solid #e8e2d9;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.ax-tab-inner table.shop_attributes th,
+.ax-tab-inner table.shop_attributes td {
+    padding: 14px 18px;
+    border-bottom: 1px solid #e8e2d9;
+    font-size: 14px;
+    text-align: left;
+}
+
+.ax-tab-inner table.shop_attributes th {
+    font-weight: 600;
+    color: #191816;
+    background: #faf8f5;
+    width: 28%;
+}
+
+.ax-tab-inner table.shop_attributes td {
+    color: #6b655f;
+    background: #ffffff;
+}
+
+.ax-tab-inner table.shop_attributes td p {
+    margin: 0;
+    line-height: 1.5;
+    color: inherit;
+}
+
+.ax-tab-inner table.shop_attributes tr:last-child th,
+.ax-tab-inner table.shop_attributes tr:last-child td {
+    border-bottom: none;
+}
+
+/* ============================================================
+   IMAGE LIGHTBOX MODAL
+   ============================================================ */
+.ax-gallery-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.ax-gallery-lightbox .ax-lightbox-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(25, 24, 22, 0.88);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.ax-gallery-lightbox .ax-lightbox-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ax-gallery-lightbox .ax-lightbox-img {
+    max-width: 100%;
+    max-height: 85vh;
+    object-fit: contain;
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    background: #faf8f5;
+}
+
+.ax-gallery-lightbox .ax-lightbox-close {
+    position: absolute;
+    top: -46px;
+    right: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: #ffffff;
+    font-size: 26px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    line-height: 1;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.ax-gallery-lightbox .ax-lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(1.08);
+}
+
+/* ============================================================
+   ACCESSIBILITY & FOCUS STATES
+   ============================================================ */
+.ax-product-page a:focus-visible,
+.ax-product-page button:focus-visible,
+.ax-product-page input:focus-visible,
+.ax-product-page select:focus-visible {
+    outline: 2px solid #191816;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 4px rgba(197, 168, 128, 0.35);
 }

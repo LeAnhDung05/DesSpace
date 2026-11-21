@@ -89,37 +89,28 @@ class RestApiModule {
 			)
 		);
 
-		// 2. Product filter & Catalog endpoints
-		register_rest_route(
-			self::REST_NAMESPACE,
-			'/products/filter',
-			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'filter_products' ),
-				'permission_callback' => '__return_true',
-			)
+		// 2. Product filter & Catalog endpoints (API Contract M2)
+		$filter_args = array(
+			'methods'             => WP_REST_Server::READABLE,
+			'callback'            => array( $this, 'filter_products' ),
+			'permission_callback' => '__return_true',
 		);
-
-		register_rest_route(
-			self::REST_NAMESPACE,
-			'/catalog',
-			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'filter_products' ),
-				'permission_callback' => '__return_true',
-			)
-		);
+		register_rest_route( self::REST_NAMESPACE, '/products/filter', $filter_args );
+		register_rest_route( self::REST_NAMESPACE, '/catalog', $filter_args );
 
 		// 3. Reports endpoints (API Contract M5)
-		register_rest_route(
-			self::REST_NAMESPACE,
-			'/reports/overview',
-			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_reports_overview' ),
-				'permission_callback' => array( RoleManager::class, 'rest_check_reports_permission' ),
-			)
-		);
+		// DashboardMetricsController registers /reports/overview when M5 module is active.
+		if ( ! class_exists( 'DeSpace\\Reports\\REST\\DashboardMetricsController' ) ) {
+			register_rest_route(
+				self::REST_NAMESPACE,
+				'/reports/overview',
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_reports_overview' ),
+					'permission_callback' => array( RoleManager::class, 'rest_check_reports_permission' ),
+				)
+			);
+		}
 
 		register_rest_route(
 			self::REST_NAMESPACE,
@@ -840,109 +831,194 @@ class RestApiModule {
 	}
 
 	/**
-	 * Filter products REST handler (supports both /products/filter and /catalog).
+	 * Filter products REST handler implementing official API Contract (M2 + /catalog).
 	 */
 	public function filter_products( WP_REST_Request $request ): WP_REST_Response {
-		$keyword   = sanitize_text_field( (string) ( $request->get_param( 'q' ) ?? $request->get_param( 'keyword' ) ?? '' ) );
+		global $wpdb;
+
+		$keyword   = sanitize_text_field( (string) ( $request->get_param( 'q' ) ?? $request->get_param( 'keyword' ) ?? $request->get_param( 's' ) ?? '' ) );
 		$category  = sanitize_text_field( (string) ( $request->get_param( 'category' ) ?? '' ) );
 		$material  = sanitize_text_field( (string) ( $request->get_param( 'material' ) ?? '' ) );
+		$brand     = sanitize_text_field( (string) ( $request->get_param( 'brand' ) ?? '' ) );
 		$color     = sanitize_text_field( (string) ( $request->get_param( 'color' ) ?? '' ) );
 		$size      = sanitize_text_field( (string) ( $request->get_param( 'size' ) ?? '' ) );
-		$has_3d    = $request->get_param( 'has_3d' );
-		$min_price = floatval( $request->get_param( 'min_price' ) ?? 0 );
-		$max_price = floatval( $request->get_param( 'max_price' ) ?? 0 );
-		$orderby   = sanitize_key( (string) ( $request->get_param( 'orderby' ) ?? 'date' ) );
-		$order     = strtoupper( sanitize_key( (string) ( $request->get_param( 'order' ) ?? 'DESC' ) ) );
-		$order     = in_array( $order, array( 'ASC', 'DESC' ), true ) ? $order : 'DESC';
-		$page      = max( 1, absint( $request->get_param( 'page' ) ?: 1 ) );
-		$per_page  = min( 48, max( 1, absint( $request->get_param( 'per_page' ) ?: 20 ) ) );
+		$raw_min   = $request->get_param( 'min_price' ) ?? $request->get_param( 'price_min' ) ?? '';
+		$raw_max   = $request->get_param( 'max_price' ) ?? $request->get_param( 'price_max' ) ?? '';
+		$min_price = ( '' !== $raw_min && is_numeric( $raw_min ) ) ? max( 0.0, (float) $raw_min ) : 0.0;
+		$max_price = ( '' !== $raw_max && is_numeric( $raw_max ) ) ? max( 0.0, (float) $raw_max ) : 0.0;
+		if ( $min_price > 0 && $max_price > 0 && $min_price > $max_price ) {
+			$tmp       = $min_price;
+			$min_price = $max_price;
+			$max_price = $tmp;
+		}
+		$has_3d   = rest_sanitize_boolean( $request->get_param( 'has_3d' ) ?? false );
+		$on_sale  = rest_sanitize_boolean( $request->get_param( 'on_sale' ) ?? $request->get_param( 'onsale' ) ?? false );
+		$orderby  = sanitize_text_field( (string) ( $request->get_param( 'orderby' ) ?? $request->get_param( 'sort' ) ?? 'date' ) );
+		$order    = strtoupper( sanitize_text_field( (string) ( $request->get_param( 'order' ) ?? 'DESC' ) ) );
+		$order    = in_array( $order, array( 'ASC', 'DESC' ), true ) ? $order : 'DESC';
+		$page     = max( 1, absint( $request->get_param( 'page' ) ?: 1 ) );
+		$per_page = min( 50, max( 1, absint( $request->get_param( 'per_page' ) ?: 12 ) ) );
+
+		$tax_query  = array();
+		$meta_query = array();
+		$post__in   = null;
+
+		$parse_terms = static function ( string $raw ): array {
+			$parts = array_values( array_filter( array_map( 'trim', explode( ',', $raw ) ) ) );
+			if ( 1 === count( $parts ) && is_numeric( $parts[0] ) ) {
+				return array( 'field' => 'term_id', 'terms' => array( (int) $parts[0] ) );
+			}
+			return array( 'field' => 'slug', 'terms' => array_map( 'sanitize_title', $parts ) );
+		};
+
+		if ( '' !== $category ) {
+			$parsed      = $parse_terms( $category );
+			$tax_query[] = array(
+				'taxonomy' => 'product_cat',
+				'field'    => $parsed['field'],
+				'terms'    => $parsed['terms'],
+			);
+		}
+		if ( '' !== $material && taxonomy_exists( 'pa_material' ) ) {
+			$parsed      = $parse_terms( $material );
+			$tax_query[] = array(
+				'taxonomy' => 'pa_material',
+				'field'    => $parsed['field'],
+				'terms'    => $parsed['terms'],
+			);
+		}
+		if ( '' !== $brand ) {
+			$brand_tax = taxonomy_exists( 'product_brand' ) ? 'product_brand' : ( taxonomy_exists( 'pa_brand' ) ? 'pa_brand' : '' );
+			if ( '' !== $brand_tax ) {
+				$parsed      = $parse_terms( $brand );
+				$tax_query[] = array(
+					'taxonomy' => $brand_tax,
+					'field'    => $parsed['field'],
+					'terms'    => $parsed['terms'],
+				);
+			}
+		}
+		if ( '' !== $color && taxonomy_exists( 'pa_color' ) ) {
+			$parsed      = $parse_terms( $color );
+			$tax_query[] = array(
+				'taxonomy' => 'pa_color',
+				'field'    => $parsed['field'],
+				'terms'    => $parsed['terms'],
+			);
+		}
+		if ( '' !== $size && taxonomy_exists( 'pa_size' ) ) {
+			$parsed      = $parse_terms( $size );
+			$tax_query[] = array(
+				'taxonomy' => 'pa_size',
+				'field'    => $parsed['field'],
+				'terms'    => $parsed['terms'],
+			);
+		}
+
+		if ( $min_price > 0 || $max_price > 0 ) {
+			$price_query = array( 'key' => '_price', 'type' => 'NUMERIC' );
+			if ( $min_price > 0 && $max_price > 0 ) {
+				$price_query['value']   = array( $min_price, $max_price );
+				$price_query['compare'] = 'BETWEEN';
+			} elseif ( $min_price > 0 ) {
+				$price_query['value']   = $min_price;
+				$price_query['compare'] = '>=';
+			} else {
+				$price_query['value']   = $max_price;
+				$price_query['compare'] = '<=';
+			}
+			$meta_query[] = $price_query;
+		}
+
+		if ( $has_3d ) {
+			$meta_query[] = array(
+				'relation' => 'OR',
+				array( 'key' => '_despace_glb_attachment_id', 'value' => 0, 'compare' => '>', 'type' => 'NUMERIC' ),
+				array( 'key' => '_despace_model_glb', 'value' => '', 'compare' => '!=' ),
+				array( 'key' => '_despace_glb_url', 'value' => '', 'compare' => '!=' ),
+				array( 'key' => '_axgnud_model_glb', 'value' => '', 'compare' => '!=' ),
+			);
+		}
+
+		// Search keyword matching SKU (including variation SKU mapped to parent) and title
+		if ( '' !== $keyword ) {
+			$sku_product_ids = isset( $wpdb ) ? $wpdb->get_col( $wpdb->prepare(
+				"SELECT DISTINCT CASE WHEN p.post_type = 'product_variation' THEN p.post_parent ELSE p.ID END AS product_id
+				FROM {$wpdb->postmeta} pm
+				INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+				WHERE pm.meta_key = '_sku' AND pm.meta_value LIKE %s",
+				'%' . $wpdb->esc_like( $keyword ) . '%'
+			) ) : array();
+
+			$title_query = new \WP_Query( array(
+				'post_type'      => 'product',
+				'post_status'    => 'publish',
+				'posts_per_page' => 200,
+				'fields'         => 'ids',
+				's'              => $keyword,
+			) );
+
+			$matched_ids = array_map( 'intval', array_unique( array_merge( (array) $sku_product_ids, (array) $title_query->posts ) ) );
+			$matched_ids = array_values( array_filter( $matched_ids, static fn( $id ) => $id > 0 ) );
+			$post__in    = ! empty( $matched_ids ) ? $matched_ids : array( 0 );
+		}
+
+		// Intersect on_sale filter
+		if ( $on_sale && function_exists( 'wc_get_product_ids_on_sale' ) ) {
+			$sale_ids = wc_get_product_ids_on_sale();
+			if ( empty( $sale_ids ) ) {
+				$sale_ids = array( 0 );
+			}
+			if ( null !== $post__in ) {
+				$intersected = array_values( array_intersect( $post__in, $sale_ids ) );
+				$post__in    = ! empty( $intersected ) ? $intersected : array( 0 );
+			} else {
+				$post__in = $sale_ids;
+			}
+		}
 
 		$args = array(
 			'post_type'      => 'product',
 			'post_status'    => 'publish',
 			'posts_per_page' => $per_page,
 			'paged'          => $page,
-			'order'          => $order,
 		);
 
-		// Whitelisted sorting options
-		switch ( $orderby ) {
-			case 'price':
-				$args['meta_key'] = '_price';
-				$args['orderby']  = 'meta_value_num';
-				break;
-			case 'title':
-				$args['orderby'] = 'title';
-				break;
-			case 'popularity':
-				$args['meta_key'] = 'total_sales';
-				$args['orderby']  = 'meta_value_num';
-				break;
-			default:
-				$orderby         = 'date';
-				$args['orderby'] = 'date';
-				break;
-		}
-
-		if ( $keyword ) {
-			$args['s'] = $keyword;
-		}
-
-		$tax_query = array();
-		if ( $category ) {
-			$tax_query[] = array(
-				'taxonomy' => 'product_cat',
-				'field'    => 'slug',
-				'terms'    => array_filter( array_map( 'sanitize_title', explode( ',', $category ) ) ),
-			);
-		}
-		if ( $material ) {
-			$tax_query[] = array(
-				'taxonomy' => 'pa_material',
-				'field'    => 'slug',
-				'terms'    => array_filter( array_map( 'sanitize_title', explode( ',', $material ) ) ),
-			);
-		}
-		if ( $color ) {
-			$tax_query[] = array(
-				'taxonomy' => 'pa_color',
-				'field'    => 'slug',
-				'terms'    => array_filter( array_map( 'sanitize_title', explode( ',', $color ) ) ),
-			);
-		}
-		if ( $size ) {
-			$tax_query[] = array(
-				'taxonomy' => 'pa_size',
-				'field'    => 'slug',
-				'terms'    => array_filter( array_map( 'sanitize_title', explode( ',', $size ) ) ),
-			);
-		}
 		if ( ! empty( $tax_query ) ) {
 			$args['tax_query'] = count( $tax_query ) > 1 ? array_merge( array( 'relation' => 'AND' ), $tax_query ) : $tax_query;
 		}
-
-		$meta_query = array();
-		if ( $min_price > 0 || $max_price > 0 ) {
-			$meta_query[] = array(
-				'key'     => '_price',
-				'value'   => array( $min_price, $max_price > 0 ? $max_price : 999999999 ),
-				'type'    => 'NUMERIC',
-				'compare' => 'BETWEEN',
-			);
-		}
-		if ( null !== $has_3d && '' !== (string) $has_3d ) {
-			$want_3d = filter_var( $has_3d, FILTER_VALIDATE_BOOLEAN );
-			if ( $want_3d ) {
-				$meta_query[] = array(
-					'relation' => 'OR',
-					array( 'key' => '_despace_model_glb', 'value' => '', 'compare' => '!=' ),
-					array( 'key' => '_despace_glb_url', 'value' => '', 'compare' => '!=' ),
-					array( 'key' => '_axgnud_model_glb', 'value' => '', 'compare' => '!=' ),
-				);
-			}
-		}
 		if ( ! empty( $meta_query ) ) {
 			$args['meta_query'] = count( $meta_query ) > 1 ? array_merge( array( 'relation' => 'AND' ), $meta_query ) : $meta_query;
+		}
+		if ( null !== $post__in ) {
+			$args['post__in'] = $post__in;
+		}
+
+		switch ( $orderby ) {
+			case 'price':
+			case 'price-asc':
+				$args['orderby']  = array( 'meta_value_num' => 'ASC', 'ID' => 'ASC' );
+				$args['meta_key'] = '_price';
+				break;
+			case 'price-desc':
+				$args['orderby']  = array( 'meta_value_num' => 'DESC', 'ID' => 'DESC' );
+				$args['meta_key'] = '_price';
+				break;
+			case 'popularity':
+				$args['orderby']  = array( 'meta_value_num' => 'DESC', 'ID' => 'DESC' );
+				$args['meta_key'] = 'total_sales';
+				break;
+			case 'rating':
+				$args['orderby']  = array( 'meta_value_num' => 'DESC', 'ID' => 'DESC' );
+				$args['meta_key'] = '_wc_average_rating';
+				break;
+			case 'title':
+				$args['orderby'] = array( 'title' => $order, 'ID' => $order );
+				break;
+			case 'date':
+			default:
+				$args['orderby'] = array( 'date' => $order, 'ID' => $order );
+				break;
 		}
 
 		$query    = new \WP_Query( $args );
@@ -951,55 +1027,86 @@ class RestApiModule {
 			Product3DModule::preload_products_3d_info( array_map( 'absint', $post_ids ) );
 		}
 
-		$results = array();
+		$items = array();
 		foreach ( $query->posts as $post ) {
 			$prod = function_exists( 'wc_get_product' ) ? wc_get_product( $post->ID ) : null;
-			if ( $prod ) {
-				$info_3d = Product3DModule::get_product_3d_info( (int) $prod->get_id() );
-				$terms   = function_exists( 'get_the_terms' ) ? get_the_terms( $prod->get_id(), 'product_cat' ) : array();
-				$cats    = ( is_array( $terms ) && ! is_wp_error( $terms ) )
-					? array_map( static fn( $t ) => array( 'slug' => $t->slug, 'name' => $t->name ), $terms )
-					: array();
-				$results[] = array(
-					'id'           => $prod->get_id(),
-					'name'         => $prod->get_name(),
-					'price'        => (float) $prod->get_price(),
-					'sku'          => $prod->get_sku(),
-					'stock_status' => $prod->get_stock_status(),
-					'categories'   => $cats,
-					'has_3d'       => ! empty( $info_3d['glb_url'] ),
-					'ar_enabled'   => ! empty( $info_3d['ar_enabled'] ),
-					'model_url'    => $info_3d['glb_url'] ?? '',
-					'permalink'    => $prod->get_permalink(),
-					'link'         => $prod->get_permalink(),
-					'image'        => wp_get_attachment_image_url( $prod->get_image_id(), 'medium' ),
-					'image_url'    => wp_get_attachment_image_url( $prod->get_image_id(), 'medium' ),
-				);
+			if ( ! $prod ) {
+				continue;
 			}
+
+			$info_3d     = Product3DModule::get_product_3d_info( (int) $prod->get_id() );
+			$glb_id      = (int) get_post_meta( $prod->get_id(), '_despace_glb_attachment_id', true );
+			$has_prod_3d = $glb_id > 0 || ! empty( $info_3d['glb_url'] );
+			$enable_ar   = ! empty( $info_3d['ar_enabled'] ) || 'yes' === get_post_meta( $prod->get_id(), '_despace_enable_ar', true ) || $has_prod_3d;
+
+			$categories_data = array();
+			$term_ids        = $prod->get_category_ids();
+			foreach ( $term_ids as $tid ) {
+				$term = get_term( $tid, 'product_cat' );
+				if ( $term && ! is_wp_error( $term ) ) {
+					$categories_data[] = array(
+						'id'   => $term->term_id,
+						'name' => $term->name,
+						'slug' => $term->slug,
+					);
+				}
+			}
+
+			$img_url = wp_get_attachment_image_url( $prod->get_image_id(), 'medium' ) ?: '';
+			$items[] = array(
+				'id'                => $prod->get_id(),
+				'name'              => $prod->get_name(),
+				'slug'              => $prod->get_slug(),
+				'permalink'         => $prod->get_permalink(),
+				'link'              => $prod->get_permalink(),
+				'sku'               => $prod->get_sku(),
+				'price'             => (float) $prod->get_price(),
+				'regular_price'     => (float) $prod->get_regular_price(),
+				'sale_price'        => (float) $prod->get_sale_price(),
+				'price_html'        => $prod->get_price_html(),
+				'stock_status'      => $prod->get_stock_status(),
+				'categories'        => $categories_data,
+				'thumbnail_url'     => $img_url,
+				'image'             => $img_url,
+				'image_url'         => $img_url,
+				'has_3d'            => $has_prod_3d,
+				'glb_attachment_id' => $glb_id,
+				'model_url'         => $info_3d['glb_url'] ?? '',
+				'enable_ar'         => $enable_ar,
+				'ar_enabled'        => $enable_ar,
+			);
 		}
 
+		$total_items = (int) $query->found_posts;
+		$total_pages = $per_page > 0 ? (int) ceil( $total_items / $per_page ) : 1;
+
 		return new WP_REST_Response( array(
-			'found'           => (int) $query->found_posts,
-			'applied_filters' => array(
-				'q'         => $keyword,
-				'category'  => $category,
-				'material'  => $material,
-				'color'     => $color,
-				'size'      => $size,
-				'has_3d'    => null !== $has_3d ? filter_var( $has_3d, FILTER_VALIDATE_BOOLEAN ) : null,
-				'min_price' => $min_price,
-				'max_price' => $max_price,
-				'orderby'   => $orderby,
-				'order'     => $order,
-			),
-			'results'         => $results,
-			'items'           => $results,
+			'success'         => true,
+			'items'           => $items,
 			'pagination'      => array(
 				'page'        => $page,
 				'per_page'    => $per_page,
-				'total_items' => (int) $query->found_posts,
-				'total_pages' => (int) $query->max_num_pages,
+				'total_items' => $total_items,
+				'total_pages' => $total_pages,
 			),
+			'applied_filters' => array(
+				'q'         => $keyword,
+				'keyword'   => $keyword,
+				'category'  => $category,
+				'material'  => $material,
+				'brand'     => $brand,
+				'color'     => $color,
+				'size'      => $size,
+				'has_3d'    => $has_3d,
+				'min_price' => $min_price,
+				'max_price' => $max_price,
+				'on_sale'   => $on_sale,
+				'orderby'   => $orderby,
+				'order'     => $order,
+			),
+			// Backward compatibility fields
+			'found'           => $total_items,
+			'results'         => $items,
 		), 200 );
 	}
 

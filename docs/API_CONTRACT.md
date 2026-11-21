@@ -59,16 +59,20 @@
 
 ## 4. Chi tiết Hợp đồng từng Endpoint
 
-### 4.1. Module M2 — Lọc danh mục sản phẩm: `GET /products/filter`
+### 4.1. Module M2 — Lọc danh mục sản phẩm: `GET /products/filter` (alias: `/catalog`)
 
 **Query Parameters:**
-- `q` (*string, optional*): Từ khóa tìm kiếm theo tên sản phẩm hoặc mã SKU.
+- `q` (*string, optional*): Từ khóa tìm kiếm theo tên sản phẩm hoặc mã SKU (hỗ trợ tìm mã SKU của sản phẩm biến thể và tự động ánh xạ về sản phẩm cha). Các alias: `keyword`, `s`.
 - `category` (*string/int, optional*): Slug hoặc Term ID danh mục sản phẩm (VD: `sofa-phong-khach`).
 - `min_price` (*numeric, optional*): Giá tối thiểu (VND).
 - `max_price` (*numeric, optional*): Giá tối đa (VND).
-- `material` (*string, optional*): Thuộc tính chất liệu (VD: `go-soi`, `da-bo-that`).
-- `has_3d` (*boolean, optional*): Lọc chỉ các sản phẩm có sẵn mô hình 3D (`true`/`false`).
-- `orderby` (*string, optional*): Trường sắp xếp (`price`, `date`, `popularity`, `title`). Mặc định: `date`.
+- `material` (*string, optional*): Thuộc tính chất liệu taxonomy `pa_material` (VD: `go-soi`, `da-bo-that`).
+- `brand` (*string, optional*): Thương hiệu sản phẩm theo taxonomy chuẩn WooCommerce Core `product_brand` (giữ nguyên tên tham số `brand` để tương thích ngược).
+- `color` (*string, optional*): Thuộc tính màu sắc taxonomy `pa_color`.
+- `size` (*string, optional*): Thuộc tính kích thước taxonomy `pa_size`.
+- `has_3d` (*boolean, optional*): Lọc chỉ các sản phẩm có sẵn mô hình 3D (`true`/`false`, kiểm tra `_despace_glb_attachment_id > 0`).
+- `on_sale` (*boolean, optional*): Lọc chỉ các sản phẩm đang có giá khuyến mãi (`true`/`false`, giao tập hợp an toàn với danh sách tìm kiếm SKU). Alias: `onsale`.
+- `orderby` (*string, optional*): Trường sắp xếp (`price`, `price-desc`, `date`, `popularity`, `rating`, `title`). Mặc định: `date`.
 - `order` (*string, optional*): Hướng sắp xếp (`asc`, `desc`). Mặc định: `desc`.
 - `page` (*int, optional*): Trang hiện tại. Mặc định: `1`.
 - `per_page` (*int, optional*): Số sản phẩm/trang. Mặc định: `12` (Tối đa: `50`).

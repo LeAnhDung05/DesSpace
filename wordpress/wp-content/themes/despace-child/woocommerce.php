@@ -17,7 +17,7 @@ if ( is_singular( 'product' ) ) {
 	// Page head & categories for quick navigation
 	$title              = woocommerce_page_title( false );
 	$current_cat_id     = is_product_category() ? get_queried_object_id() : 0;
-	$shop_url           = wc_get_page_permalink( 'shop' );
+	$shop_url           = furniva_url( wc_get_page_permalink( 'shop' ) );
 	$total_all_products = wp_count_posts( 'product' )->publish ?? 0;
 
 	$default_cat_id = (int) get_option( 'default_product_cat', 0 );
@@ -89,8 +89,8 @@ if ( is_singular( 'product' ) ) {
 									<path d="m9 12 2 2 4-4"></path>
 								</svg>
 								<div class="f-trust-card-text">
-									<strong class="f-trust-card-val"><?php echo esc_html( furniva_t( '5 Yr', '5 năm' ) ); ?></strong>
-									<span class="f-trust-card-lbl"><?php echo esc_html( furniva_t( 'CRAFT WARRANTY', 'BẢO HÀNH CHẾ TÁC' ) ); ?></span>
+									<strong class="f-trust-card-val"><?php echo esc_html( furniva_t( 'QUALITY', 'CHẤT LƯỢNG' ) ); ?></strong>
+									<span class="f-trust-card-lbl"><?php echo esc_html( furniva_t( 'CRAFT WARRANTY (MOCK)', 'BẢO HÀNH CHẾ TÁC (ĐỒ ÁN)' ) ); ?></span>
 								</div>
 							</div>
 							<div class="f-trust-card-item">
@@ -101,8 +101,8 @@ if ( is_singular( 'product' ) ) {
 									<circle cx="18.5" cy="18.5" r="2.5"></circle>
 								</svg>
 								<div class="f-trust-card-text">
-									<strong class="f-trust-card-val"><?php echo esc_html( furniva_t( 'FREE DELIVERY', 'GIAO HÀNG MIỄN PHÍ' ) ); ?></strong>
-									<span class="f-trust-card-lbl"><?php echo esc_html( furniva_t( 'ON ORDERS OVER $500', 'CHO ĐƠN TRÊN $500' ) ); ?></span>
+									<strong class="f-trust-card-val"><?php echo esc_html( furniva_t( 'WHITE-GLOVE', 'CHU ĐÁO' ) ); ?></strong>
+									<span class="f-trust-card-lbl"><?php echo esc_html( furniva_t( 'DELIVERY & SETUP', 'GIAO HÀNG & BÀI TRÍ' ) ); ?></span>
 								</div>
 							</div>
 						</div>
@@ -135,7 +135,7 @@ if ( is_singular( 'product' ) ) {
 						</a>
 					</li>
 					<?php foreach ( $top_cats as $cat ) :
-						$cat_link = get_term_link( $cat );
+						$cat_link = furniva_url( get_term_link( $cat ) );
 						$is_active = ( $current_cat_id === $cat->term_id );
 						$cat_thumb_id = absint( get_term_meta( $cat->term_id, 'thumbnail_id', true ) );
 						if ( ! $cat_thumb_id ) {
@@ -192,7 +192,7 @@ if ( is_singular( 'product' ) ) {
 			<div class="f-shop-main">
 				<div class="f-shop-head">
 					<div class="f-shop-head-left">
-						<button type="button" class="f-filter-toggle" id="furniva-filter-toggle" aria-label="<?php echo esc_attr( furniva_t( 'Open filter sidebar', 'Mở bộ lọc sản phẩm' ) ); ?>">
+						<button type="button" class="f-filter-toggle" id="furniva-filter-toggle" aria-controls="furniva-filters" aria-expanded="false" aria-label="<?php echo esc_attr( furniva_t( 'Open filter sidebar', 'Mở bộ lọc sản phẩm' ) ); ?>">
 							<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
 							<span><?php echo esc_html( furniva_t( 'Filter', 'Lọc' ) ); ?></span>
 							<span class="f-filter-active-count" id="furniva-filter-badge" style="display:none">0</span>
@@ -255,7 +255,20 @@ if ( is_singular( 'product' ) ) {
 							</div>
 							<h3 class="f-no-results-title"><?php echo esc_html( furniva_t( 'No matching objects found', 'Không tìm thấy sản phẩm phù hợp' ) ); ?></h3>
 							<p class="f-no-results-desc"><?php echo esc_html( furniva_t( 'We couldn’t find any items matching your selected criteria. Try adjusting or clearing your filters.', 'Không có sản phẩm nào khớp với tiêu chí bạn chọn. Hãy điều chỉnh hoặc xóa bộ lọc.' ) ); ?></p>
-							<button type="button" class="f-btn f-btn--primary f-no-results-reset" id="furniva-no-results-reset"><?php echo esc_html( furniva_t( 'Reset All Filters', 'Đặt lại bộ lọc' ) ); ?></button>
+							<?php
+							$has_active_query_filters = false;
+							foreach ( array( 'category', 'brand', 'color', 'size', 'material', 'availability', 'has_3d', 'on_sale', 'price_min', 'price_max', 'min_price', 'max_price', 's', 'q' ) as $f_key ) {
+								if ( isset( $_GET[ $f_key ] ) && '' !== $_GET[ $f_key ] ) {
+									$has_active_query_filters = true;
+									break;
+								}
+							}
+							if ( is_product_category() && ! $has_active_query_filters ) :
+								?>
+								<a href="<?php echo esc_url( $shop_url ); ?>" class="f-btn f-btn--primary f-no-results-reset" id="furniva-no-results-reset"><?php echo esc_html( furniva_t( 'Browse All Products', 'Xem tất cả sản phẩm' ) ); ?></a>
+							<?php else : ?>
+								<button type="button" class="f-btn f-btn--primary f-no-results-reset" id="furniva-no-results-reset"><?php echo esc_html( furniva_t( 'Reset All Filters', 'Đặt lại bộ lọc' ) ); ?></button>
+							<?php endif; ?>
 						</div>
 						<?php
 					}
@@ -272,8 +285,8 @@ if ( is_singular( 'product' ) ) {
 				<h2 id="f-shop-guide-title"><?php echo esc_html( furniva_t( 'A thoughtful choice starts with a few details.', 'Một lựa chọn phù hợp bắt đầu từ vài chi tiết nhỏ.' ) ); ?></h2>
 				<p><?php echo esc_html( furniva_t( 'A little planning helps each piece feel as if it was made for your home.', 'Một chút chuẩn bị giúp món đồ mới hòa hợp tự nhiên với ngôi nhà của bạn.' ) ); ?></p>
 				<div class="f-shop-guide-links">
-					<a href="<?php echo esc_url( home_url( '/shipping-returns/' ) ); ?>"><?php echo esc_html( furniva_t( 'Shipping & Returns', 'Giao hàng & Đổi trả' ) ); ?><span aria-hidden="true">↗</span></a>
-					<a href="<?php echo esc_url( home_url( '/faqs/' ) ); ?>"><?php echo esc_html( furniva_t( 'Visit FAQs', 'Xem câu hỏi thường gặp' ) ); ?><span aria-hidden="true">↗</span></a>
+					<a href="<?php echo esc_url( furniva_url( '/chinh-sach-giao-hang/' ) ); ?>"><?php echo esc_html( furniva_t( 'Shipping & Delivery', 'Chính sách giao hàng' ) ); ?><span aria-hidden="true">↗</span></a>
+					<a href="<?php echo esc_url( furniva_url( '/cau-hoi-thuong-gap/' ) ); ?>"><?php echo esc_html( furniva_t( 'Visit FAQs', 'Xem câu hỏi thường gặp' ) ); ?><span aria-hidden="true">↗</span></a>
 				</div>
 			</div>
 			<div class="f-shop-guide-questions">

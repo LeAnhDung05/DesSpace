@@ -5,10 +5,10 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 $shop_id    = wc_get_page_id( 'shop' );
-$shop_url   = function_exists( 'despace_safe_wc_page_url' ) ? despace_safe_wc_page_url( 'shop', '/cua-hang/' ) : ( ( $shop_id > 0 && 'publish' === get_post_status( $shop_id ) ) ? get_permalink( $shop_id ) : home_url( '/cua-hang/' ) );
-$blog_id    = (int) get_option( 'page_for_posts' );
-$blog_url   = ( $blog_id > 0 && 'publish' === get_post_status( $blog_id ) ) ? get_permalink( $blog_id ) : home_url( '/blog/' );
-$account_url = function_exists( 'despace_safe_wc_page_url' ) ? despace_safe_wc_page_url( 'myaccount', '/tai-khoan/' ) : home_url( '/tai-khoan/' );
+$shop_url     = furniva_url( function_exists( 'despace_safe_wc_page_url' ) ? despace_safe_wc_page_url( 'shop', '/cua-hang/' ) : ( ( $shop_id > 0 && 'publish' === get_post_status( $shop_id ) ) ? get_permalink( $shop_id ) : home_url( '/cua-hang/' ) ) );
+$blog_id      = (int) get_option( 'page_for_posts' );
+$blog_url     = furniva_url( ( $blog_id > 0 && 'publish' === get_post_status( $blog_id ) ) ? get_permalink( $blog_id ) : home_url( '/blog/' ) );
+$account_url  = furniva_url( function_exists( 'despace_safe_wc_page_url' ) ? despace_safe_wc_page_url( 'myaccount', '/tai-khoan/' ) : home_url( '/tai-khoan/' ) );
 $wishlist_url = home_url( '/wishlist/' );
 if ( function_exists( 'YITH_WCWL' ) ) {
 	$wl_raw = YITH_WCWL()->get_wishlist_url();
@@ -16,6 +16,7 @@ if ( function_exists( 'YITH_WCWL' ) ) {
 		$wishlist_url = $wl_raw;
 	}
 }
+$wishlist_url = furniva_url( $wishlist_url );
 $wishlist_count = 0;
 if ( function_exists( 'yith_wcwl_count_all_products' ) ) {
 	$wishlist_count = yith_wcwl_count_all_products();
@@ -50,42 +51,42 @@ $announcements = array(
 		'title'   => furniva_t( 'Welcome Offer: 10% Off Your First Order', 'Ưu đãi chào mừng: Giảm 10% đơn hàng đầu tiên' ),
 		'content' => furniva_t( 'Enter promotional code WELCOME10 at checkout to enjoy 10% off your entire first luxury furniture order at DeSpace.', 'Sử dụng mã ưu đãi WELCOME10 khi thanh toán để được giảm ngay 10% cho toàn bộ sản phẩm trong đơn hàng đầu tiên tại DeSpace.' ),
 		'action'  => furniva_t( 'Shop Now', 'Mua sắm ngay' ),
-		'url'     => home_url( '/shop/' ),
+		'url'     => furniva_url( '/shop/' ),
 	),
 	array(
 		'text'    => furniva_t( 'Complimentary delivery on orders over $500', 'Miễn phí giao hàng toàn quốc cho đơn từ $500' ),
 		'title'   => furniva_t( 'Complimentary Insured Delivery & Assembly', 'Miễn phí giao hàng & lắp đặt tận nơi' ),
 		'content' => furniva_t( 'DeSpace offers 100% complimentary nationwide delivery and white-glove setup on all orders over $500 (or 12,000,000 VND).', 'DeSpace miễn phí 100% chi phí vận chuyển toàn quốc và hỗ trợ lắp đặt chuyên nghiệp đối với mọi đơn hàng từ $500 (hoặc 12.000.000 VNĐ).' ),
 		'action'  => furniva_t( 'Explore Collection', 'Khám phá bộ sưu tập' ),
-		'url'     => home_url( '/shop/' ),
+		'url'     => furniva_url( '/shop/' ),
 	),
 	array(
 		'text'    => furniva_t( 'Thoughtfully selected furniture for modern living', 'Nội thất tinh tuyển cho không gian sống hiện đại' ),
 		'title'   => furniva_t( 'Thoughtfully Curated Design Philosophy', 'Triết lý thiết kế tinh tuyển & bền vững' ),
 		'content' => furniva_t( 'Every DeSpace piece is thoughtfully crafted from sustainably sourced timbers and moisture-resistant surfaces designed to elevate contemporary spaces.', 'Mỗi sản phẩm tại DeSpace đều được tuyển chọn kỹ lưỡng từ chất liệu gỗ tự nhiên cao cấp, bề mặt phủ melamine chống ẩm, đạt chuẩn thẩm mỹ tinh tế trường tồn.' ),
 		'action'  => furniva_t( 'About DeSpace', 'Về DeSpace' ),
-		'url'     => home_url( '/ve-despace/' ),
+		'url'     => furniva_url( '/ve-despace/' ),
 	),
 	array(
-		'text'    => furniva_t( '5-Year Official Warranty & 30-Day Hassle-Free Returns', 'Bảo hành chính hãng 5 năm & Đổi trả trong 30 ngày' ),
-		'title'   => furniva_t( '5-Year Warranty & 30-Day Free Returns', 'Bảo hành chính hãng 5 năm & Đổi trả 30 ngày' ),
-		'content' => furniva_t( 'Uncompromised craftsmanship guarantee: 5-year structural warranty with complimentary 30-day exchange for complete peace of mind.', 'Cam kết chất lượng vượt trội: Bảo hành kết cấu 5 năm, 1 đổi 1 trong 30 ngày nếu phát sinh lỗi từ nhà sản xuất.' ),
+		'text'    => furniva_t( 'Craft Warranty & Hassle-Free Returns (Simulation)', 'Chính sách bảo hành & Đổi trả (Mô phỏng đồ án)' ),
+		'title'   => furniva_t( 'Craft Warranty & Returns Policy Simulation', 'Chính sách bảo hành & Đổi trả (Mô phỏng đồ án)' ),
+		'content' => furniva_t( 'Course project simulation: structural warranty framework with complimentary exchange scenario for demonstration.', 'Nội dung giả lập phục vụ đồ án DeSpace: Mô phỏng chính sách bảo hành kết cấu và đổi trả sản phẩm lỗi kỹ thuật.' ),
 		'action'  => furniva_t( 'Contact Support', 'Liên hệ hỗ trợ' ),
-		'url'     => home_url( '/lien-he/' ),
+		'url'     => furniva_url( '/lien-he/' ),
 	),
 	array(
 		'text'    => furniva_t( 'Personal styling & showroom consultation by DeSpace', 'Tư vấn không gian sống 1-1 cùng chuyên gia DeSpace' ),
 		'title'   => furniva_t( '1-on-1 Personal Interior Styling Consultation', 'Tư vấn không gian sống 1-1 cùng chuyên gia' ),
-		'content' => furniva_t( 'Book a personalized styling session with our interior architects at our showroom (So 20 ngach 21 ngo 367 Ngo Xuan Quan, Gia Lam, Hanoi) or via virtual consultation.', 'Đặt lịch tư vấn trực tiếp 1-1 cùng đội ngũ kiến trúc sư DeSpace tại Showroom (Số 20 ngách 21 ngõ 367 Ngô Xuân Quảng, Gia Lâm, Hà Nội) hoặc qua tư vấn từ xa.' ),
+		'content' => furniva_t( 'Book a personalized styling session with our interior architects at our showroom (DeSpace Building, 123 Nguyen Trai, Thanh Xuan, Hanoi — Course Simulation) or via virtual consultation.', 'Đặt lịch tư vấn trực tiếp 1-1 cùng đội ngũ kiến trúc sư DeSpace tại Showroom (Tòa nhà DeSpace, Số 123 Đường Nguyễn Trãi, Thanh Xuân, Hà Nội — Mô phỏng đồ án) hoặc qua tư vấn từ xa.' ),
 		'action'  => furniva_t( 'Book Consultation', 'Đặt lịch tư vấn' ),
-		'url'     => home_url( '/lien-he/' ),
+		'url'     => furniva_url( '/lien-he/' ),
 	),
 	array(
 		'text'    => furniva_t( 'Discover our newest 2026 curated design collection', 'Khám phá bộ sưu tập thiết kế mới nhất 2026 tại showroom' ),
 		'title'   => furniva_t( 'Discover DeSpace 2026 Curated Collection', 'Bộ sưu tập DeSpace 2026 Mới Nhất' ),
 		'content' => furniva_t( 'Explore our latest releases of smart modular shoe cabinets, wardrobes, and minimalist display bookshelves designed for modern homes.', 'Khám phá các thiết kế tủ giày thông minh, tủ quần áo module và kệ sách cao cấp vừa xuất xưởng năm 2026 tại hệ thống DeSpace.' ),
 		'action'  => furniva_t( 'Discover Now', 'Khám phá ngay' ),
-		'url'     => home_url( '/shop/' ),
+		'url'     => furniva_url( '/shop/' ),
 	),
 );
 ?>
@@ -117,7 +118,7 @@ $announcements = array(
 			<button class="fv-icon-button fv-menu-button" id="furniva-burger" type="button" aria-label="<?php echo esc_attr( furniva_t( 'Open menu', 'Mở menu' ) ); ?>" aria-controls="furniva-mobile-nav" aria-expanded="false">
 				<?php echo furniva_svg( 'burger' ); ?>
 			</button>
-			<a class="fv-header__logo" href="<?php echo esc_url( home_url( '/' ) ); ?>" aria-label="DeSpace — <?php echo esc_attr( furniva_t( 'Home', 'Trang chủ' ) ); ?>">
+			<a class="fv-header__logo" href="<?php echo esc_url( furniva_url( '/' ) ); ?>" aria-label="DeSpace — <?php echo esc_attr( furniva_t( 'Home', 'Trang chủ' ) ); ?>">
 				<?php if ( $logo_id ) : ?>
 					<?php echo wp_get_attachment_image( $logo_id, 'full', false, array( 'alt' => 'DeSpace' ) ); ?>
 				<?php else : ?>
@@ -127,16 +128,16 @@ $announcements = array(
 		</div>
 
 		<nav class="fv-primary-nav" aria-label="<?php echo esc_attr( furniva_t( 'Primary navigation', 'Điều hướng chính' ) ); ?>">
-			<a <?php echo is_front_page() ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php echo esc_html( furniva_t( 'Home', 'Trang chủ' ) ); ?></a>
+			<a <?php echo is_front_page() ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( furniva_url( '/' ) ); ?>"><?php echo esc_html( furniva_t( 'Home', 'Trang chủ' ) ); ?></a>
 			<a <?php echo ( is_shop() || is_product_taxonomy() ) ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( $shop_url ); ?>"><?php echo esc_html( furniva_t( 'Shop', 'Cửa hàng' ) ); ?></a>
 			<a <?php echo is_home() || is_singular( 'post' ) ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( $blog_url ); ?>"><?php echo esc_html( furniva_t( 'Journal', 'Tạp chí' ) ); ?></a>
-			<a <?php echo is_page( 'about' ) ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( home_url( '/about/' ) ); ?>"><?php echo esc_html( furniva_t( 'About', 'Giới thiệu' ) ); ?></a>
-			<a <?php echo is_page( 'contact' ) ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( home_url( '/contact/' ) ); ?>"><?php echo esc_html( furniva_t( 'Contact', 'Liên hệ' ) ); ?></a>
+			<a <?php echo ( is_page( 'about' ) || is_page( 've-despace' ) ) ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( furniva_url( '/ve-despace/' ) ); ?>"><?php echo esc_html( furniva_t( 'About', 'Giới thiệu' ) ); ?></a>
+			<a <?php echo ( is_page( 'contact' ) || is_page( 'lien-he' ) ) ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( furniva_url( '/lien-he/' ) ); ?>"><?php echo esc_html( furniva_t( 'Contact', 'Liên hệ' ) ); ?></a>
 		</nav>
 
 		<div class="fv-header__actions">
 			<div class="fv-header-language" aria-label="<?php echo esc_attr( furniva_t( 'Language', 'Ngôn ngữ' ) ); ?>"><?php echo furniva_language_switcher_html(); ?></div>
-			<button class="fv-icon-button" type="button" data-furniva-search-open aria-label="<?php echo esc_attr( furniva_t( 'Search products', 'Tìm kiếm sản phẩm' ) ); ?>">
+			<button class="fv-icon-button" type="button" data-furniva-search-open aria-controls="fv-header-search-bar" aria-expanded="false" aria-label="<?php echo esc_attr( furniva_t( 'Search products', 'Tìm kiếm sản phẩm' ) ); ?>">
 				<?php echo furniva_svg( 'search' ); ?>
 				<span class="screen-reader-text sr-only"><?php echo esc_html( furniva_t( 'Search products', 'Tìm kiếm sản phẩm' ) ); ?></span>
 			</button>
@@ -157,17 +158,17 @@ $announcements = array(
 		<div class="fv-header__search-bar" id="fv-header-search-bar" aria-hidden="true">
 			<div class="fv-search-bar__inner">
 				<span class="fv-search-bar__icon" aria-hidden="true"><?php echo furniva_svg( 'search' ); ?></span>
-				<form class="fv-search-bar__form" role="search" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>">
+				<form class="fv-search-bar__form" role="search" method="get" action="<?php echo esc_url( furniva_url( '/' ) ); ?>">
 					<input type="hidden" name="post_type" value="product" />
-					<input type="search" class="fv-search-bar__input" name="s" placeholder="<?php echo esc_attr( furniva_t( 'Search products, collections, materials…', 'Tìm kiếm sản phẩm, bộ sưu tập, chất liệu…' ) ); ?>" autocomplete="off" />
+					<input type="search" class="fv-search-bar__input" name="s" aria-label="<?php echo esc_attr( furniva_t( 'Search products, collections, materials', 'Tìm kiếm sản phẩm, bộ sưu tập, chất liệu' ) ); ?>" placeholder="<?php echo esc_attr( furniva_t( 'Search products, collections, materials…', 'Tìm kiếm sản phẩm, bộ sưu tập, chất liệu…' ) ); ?>" autocomplete="off" />
 				</form>
 				<div class="fv-search-bar__quick-tags">
 					<span class="fv-quick-tag-label"><?php echo esc_html( furniva_t( 'Hot:', 'Gợi ý:' ) ); ?></span>
-					<a href="<?php echo esc_url( home_url( '/product-category/shoe-racks-storage/' ) ); ?>"><?php echo esc_html( furniva_t( 'Shoe Cabinets', 'Tủ giày' ) ); ?></a>
-					<a href="<?php echo esc_url( home_url( '/product-category/wardrobes/' ) ); ?>"><?php echo esc_html( furniva_t( 'Wardrobes', 'Tủ quần áo' ) ); ?></a>
-					<a href="<?php echo esc_url( home_url( '/product-category/bookshelves/' ) ); ?>"><?php echo esc_html( furniva_t( 'Bookshelves', 'Kệ sách' ) ); ?></a>
-					<a href="<?php echo esc_url( home_url( '/product-category/kitchen-cabinets/' ) ); ?>"><?php echo esc_html( furniva_t( 'Kitchen Cabinets', 'Tủ bếp' ) ); ?></a>
-					<a href="<?php echo esc_url( home_url( '/product-category/chest-of-drawers-sideboards/' ) ); ?>"><?php echo esc_html( furniva_t( 'Sideboards & Drawers', 'Tủ ngăn kéo' ) ); ?></a>
+					<a href="<?php echo esc_url( furniva_url( home_url( '/product-category/shoe-racks-storage/' ) ) ); ?>"><?php echo esc_html( furniva_t( 'Shoe Cabinets', 'Tủ giày' ) ); ?></a>
+					<a href="<?php echo esc_url( furniva_url( home_url( '/product-category/wardrobes/' ) ) ); ?>"><?php echo esc_html( furniva_t( 'Wardrobes', 'Tủ quần áo' ) ); ?></a>
+					<a href="<?php echo esc_url( furniva_url( home_url( '/product-category/bookshelves/' ) ) ); ?>"><?php echo esc_html( furniva_t( 'Bookshelves', 'Kệ sách' ) ); ?></a>
+					<a href="<?php echo esc_url( furniva_url( home_url( '/product-category/kitchen-cabinets/' ) ) ); ?>"><?php echo esc_html( furniva_t( 'Kitchen Cabinets', 'Tủ bếp' ) ); ?></a>
+					<a href="<?php echo esc_url( furniva_url( home_url( '/product-category/chest-of-drawers-sideboards/' ) ) ); ?>"><?php echo esc_html( furniva_t( 'Sideboards & Drawers', 'Tủ ngăn kéo' ) ); ?></a>
 				</div>
 				<button class="fv-icon-button fv-search-bar__close" type="button" data-furniva-search-close aria-label="<?php echo esc_attr( furniva_t( 'Close search', 'Đóng tìm kiếm' ) ); ?>">
 					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -199,7 +200,7 @@ $announcements = array(
 						$cat_display   = furniva_term_label( $scat->name, 'product_cat' );
 				?>
 				<div class="fv-subnav-item fv-subnav-item--has-mega">
-					<a class="fv-subnav-link <?php echo $is_cat_active ? 'is-active' : ''; ?>" href="<?php echo esc_url( get_term_link( $scat ) ); ?>">
+					<a class="fv-subnav-link <?php echo $is_cat_active ? 'is-active' : ''; ?>" href="<?php echo esc_url( furniva_url( get_term_link( $scat ) ) ); ?>">
 						<span><?php echo esc_html( $cat_display ); ?></span>
 						<svg class="fv-subnav-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
 					</a>
@@ -210,7 +211,7 @@ $announcements = array(
 				endif;
 				?>
 				<span class="fv-subnav-divider" aria-hidden="true"></span>
-				<a class="fv-subnav-link fv-subnav-link--highlight" href="<?php echo esc_url( home_url( '/shop/?on_sale=1' ) ); ?>">
+				<a class="fv-subnav-link fv-subnav-link--highlight" href="<?php echo esc_url( furniva_url( '/shop/?on_sale=1' ) ); ?>">
 					<span class="fv-subnav-badge">✦ <?php echo esc_html( furniva_t( 'Special Offers', 'Ưu đãi đặc biệt' ) ); ?></span>
 				</a>
 			</div>
@@ -220,20 +221,20 @@ $announcements = array(
 	<div class="f-mobile-nav" id="furniva-mobile-nav">
 		<ul>
 			<li class="f-mobile-language"><?php echo furniva_language_switcher_html(); ?></li>
-			<li><a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php echo esc_html( furniva_t( 'Home', 'Trang chủ' ) ); ?></a></li>
-			<li><a href="<?php echo esc_url( $shop_url ); ?>"><?php echo esc_html( furniva_t( 'Shop all', 'Xem tất cả sản phẩm' ) ); ?></a></li>
+			<li><a href="<?php echo esc_url( furniva_url( '/' ) ); ?>"><?php echo esc_html( furniva_t( 'Home', 'Trang chủ' ) ); ?></a></li>
+			<li><a href="<?php echo esc_url( furniva_url( $shop_url ) ); ?>"><?php echo esc_html( furniva_t( 'Shop all', 'Xem tất cả sản phẩm' ) ); ?></a></li>
 			<?php
 			$mobile_categories = get_terms( array( 'taxonomy' => 'product_cat', 'hide_empty' => true, 'parent' => 0 ) );
 			if ( ! is_wp_error( $mobile_categories ) && $mobile_categories ) :
 				foreach ( $mobile_categories as $category ) :
 					if ( 'uncategorized' === $category->slug ) continue;
 				?>
-				<li><a href="<?php echo esc_url( get_term_link( $category ) ); ?>"><?php echo esc_html( furniva_term_label( $category->name, 'product_cat' ) ); ?></a></li>
+				<li><a href="<?php echo esc_url( furniva_url( get_term_link( $category ) ) ); ?>"><?php echo esc_html( furniva_term_label( $category->name, 'product_cat' ) ); ?></a></li>
 				<?php endforeach; ?>
 			<?php endif; ?>
-			<li><a href="<?php echo esc_url( $blog_url ); ?>"><?php echo esc_html( furniva_t( 'Journal', 'Tạp chí' ) ); ?></a></li>
-			<li><a href="<?php echo esc_url( home_url( '/about/' ) ); ?>"><?php echo esc_html( furniva_t( 'About', 'Giới thiệu' ) ); ?></a></li>
-			<li><a href="<?php echo esc_url( home_url( '/contact/' ) ); ?>"><?php echo esc_html( furniva_t( 'Contact', 'Liên hệ' ) ); ?></a></li>
+			<li><a href="<?php echo esc_url( furniva_url( $blog_url ) ); ?>"><?php echo esc_html( furniva_t( 'Journal', 'Tạp chí' ) ); ?></a></li>
+			<li><a href="<?php echo esc_url( furniva_url( '/ve-despace/' ) ); ?>"><?php echo esc_html( furniva_t( 'About', 'Giới thiệu' ) ); ?></a></li>
+			<li><a href="<?php echo esc_url( furniva_url( '/lien-he/' ) ); ?>"><?php echo esc_html( furniva_t( 'Contact', 'Liên hệ' ) ); ?></a></li>
 		</ul>
 	</div>
 </header>
