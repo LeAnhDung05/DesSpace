@@ -260,9 +260,12 @@ function despace_render_contact_form_html() {
 add_shortcode( 'despace_contact_form', 'despace_render_contact_form_html' );
 
 /**
- * Register admin menu to view/configure showroom & contact info and view leads.
+ * Register admin menu (standalone fallback when unified DeSpace Admin Cockpit is inactive).
  */
 add_action( 'admin_menu', function() {
+	if ( function_exists( 'despace_register_admin_hub_menu' ) ) {
+		return;
+	}
 	add_options_page(
 		'Cấu hình Showroom & Liên hệ',
 		'DeSpace Showroom',
@@ -273,104 +276,241 @@ add_action( 'admin_menu', function() {
 } );
 
 /**
- * Render admin options page
+ * Render Screen 5: Tư vấn & Showroom (2 tabs: leads | showroom).
  */
 function despace_render_contact_admin_page() {
-	if ( ! current_user_can( 'manage_options' ) ) return;
+	if ( ! current_user_can( 'manage_woocommerce' ) && ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Bạn không có quyền truy cập mục Tư vấn & Showroom.', 403 );
+	}
 
-	$info = despace_get_contact_info();
-	$message = '';
+	$info       = despace_get_contact_info();
+	$message    = '';
+	$active_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'leads';
+	if ( ! in_array( $active_tab, array( 'leads', 'showroom' ), true ) ) {
+		$active_tab = 'leads';
+	}
 
 	if ( isset( $_POST['despace_save_contact'] ) && check_admin_referer( 'despace_save_contact_action' ) ) {
 		$new_settings = array(
-			'address'      => sanitize_text_field( $_POST['address'] ?? '' ),
-			'address_note' => sanitize_text_field( $_POST['address_note'] ?? '' ),
-			'hotline'      => sanitize_text_field( $_POST['hotline'] ?? '' ),
-			'hotline_note' => sanitize_text_field( $_POST['hotline_note'] ?? '' ),
-			'email'        => sanitize_email( $_POST['email'] ?? '' ),
-			'email_note'   => sanitize_text_field( $_POST['email_note'] ?? '' ),
-			'hours'        => sanitize_text_field( $_POST['hours'] ?? '' ),
-			'hours_note'   => sanitize_text_field( $_POST['hours_note'] ?? '' ),
-			'parking_note' => sanitize_text_field( $_POST['parking_note'] ?? '' ),
+			'address'       => sanitize_text_field( wp_unslash( $_POST['address'] ?? '' ) ),
+			'address_note'  => sanitize_text_field( wp_unslash( $_POST['address_note'] ?? '' ) ),
+			'hotline'       => sanitize_text_field( wp_unslash( $_POST['hotline'] ?? '' ) ),
+			'hotline_note'  => sanitize_text_field( wp_unslash( $_POST['hotline_note'] ?? '' ) ),
+			'email'         => sanitize_email( wp_unslash( $_POST['email'] ?? '' ) ),
+			'email_note'    => sanitize_text_field( wp_unslash( $_POST['email_note'] ?? '' ) ),
+			'hours'         => sanitize_text_field( wp_unslash( $_POST['hours'] ?? '' ) ),
+			'hours_note'    => sanitize_text_field( wp_unslash( $_POST['hours_note'] ?? '' ) ),
+			'parking_note'  => sanitize_textarea_field( wp_unslash( $_POST['parking_note'] ?? '' ) ),
+			'founder_title' => sanitize_text_field( wp_unslash( $_POST['founder_title'] ?? $info['founder_title'] ) ),
+			'founder_desc'  => sanitize_text_field( wp_unslash( $_POST['founder_desc'] ?? $info['founder_desc'] ) ),
+			'zalo_url'      => esc_url_raw( wp_unslash( $_POST['zalo_url'] ?? '' ) ),
+			'facebook_url'  => esc_url_raw( wp_unslash( $_POST['facebook_url'] ?? '' ) ),
+			'maps_url'      => esc_url_raw( wp_unslash( $_POST['maps_url'] ?? '' ) ),
 		);
 		update_option( 'despace_contact_settings', $new_settings );
-		$info = despace_get_contact_info();
-		$message = 'Cập nhật cấu hình showroom thành công!';
+		$info       = despace_get_contact_info();
+		$message    = 'Đã lưu cấu hình Showroom & Liên hệ thành công!';
+		$active_tab = 'showroom';
 	}
 
 	$inquiries = get_option( 'despace_contact_inquiries', array() );
+	if ( ! is_array( $inquiries ) ) {
+		$inquiries = array();
+	}
+	$total_leads = count( $inquiries );
+	$lead_query  = isset( $_GET['lead_q'] ) ? sanitize_text_field( wp_unslash( $_GET['lead_q'] ) ) : '';
+	$filtered_inquiries = $inquiries;
+	if ( '' !== $lead_query ) {
+		$q_lower = mb_strtolower( $lead_query );
+		$filtered_inquiries = array_values(
+			array_filter(
+				$inquiries,
+				static function ( $row ) use ( $q_lower ) {
+					$haystack = mb_strtolower(
+						(string) ( $row['name'] ?? '' ) . ' ' .
+						(string) ( $row['phone'] ?? '' ) . ' ' .
+						(string) ( $row['email'] ?? '' ) . ' ' .
+						(string) ( $row['service'] ?? '' ) . ' ' .
+						(string) ( $row['message'] ?? '' )
+					);
+					return false !== mb_strpos( $haystack, $q_lower );
+				}
+			)
+		);
+	}
+
+	$has_cockpit = function_exists( 'despace_render_admin_cockpit_header' );
 	?>
-	<div class="wrap">
-		<h1>Cấu hình Showroom & Thông tin Liên hệ DeSpace</h1>
-		<?php if ( $message ) : ?>
-			<div class="notice notice-success is-dismissible"><p><?php echo esc_html( $message ); ?></p></div>
+	<div class="wrap <?php echo $has_cockpit ? 'ds-cockpit-wrap' : ''; ?>">
+		<?php if ( $has_cockpit ) : ?>
+			<?php
+			despace_render_admin_cockpit_header(
+				'despace-contact-settings',
+				'Tư vấn & Showroom DeSpace',
+				'Quản lý tập trung toàn bộ yêu cầu đăng ký tư vấn nội thất của khách hàng và thông tin hiển thị Showroom trên toàn website.',
+				array(
+					array(
+						'label'  => 'Xem trang Liên hệ ↗',
+						'url'    => home_url( '/lien-he/' ),
+						'style'  => 'ghost',
+						'target' => '_blank',
+					),
+				)
+			);
+			?>
+		<?php else : ?>
+			<h1>Tư vấn &amp; Showroom DeSpace</h1>
 		<?php endif; ?>
 
-		<div style="display:flex;gap:30px;flex-wrap:wrap;margin-top:20px;">
-			<div style="flex:1;min-width:320px;max-width:600px;background:#fff;padding:24px;border:1px solid #ccd0d4;border-radius:6px;">
-				<h2>Thông tin Showroom DeSpace</h2>
-				<form method="POST">
-					<?php wp_nonce_field( 'despace_save_contact_action' ); ?>
-					<table class="form-table" role="presentation">
-						<tr>
-							<th scope="row"><label for="address">Địa chỉ Showroom</label></th>
-							<td><input name="address" type="text" id="address" value="<?php echo esc_attr( $info['address'] ); ?>" class="regular-text" /></td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="hotline">Hotline</label></th>
-							<td><input name="hotline" type="text" id="hotline" value="<?php echo esc_attr( $info['hotline'] ); ?>" class="regular-text" /></td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="email">Email</label></th>
-							<td><input name="email" type="email" id="email" value="<?php echo esc_attr( $info['email'] ); ?>" class="regular-text" /></td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="hours">Giờ mở cửa</label></th>
-							<td><input name="hours" type="text" id="hours" value="<?php echo esc_attr( $info['hours'] ); ?>" class="regular-text" /></td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="parking_note">Tiện ích đón tiếp</label></th>
-							<td><textarea name="parking_note" id="parking_note" rows="3" class="large-text"><?php echo esc_textarea( $info['parking_note'] ); ?></textarea></td>
-						</tr>
-					</table>
-					<p class="submit">
-						<input type="submit" name="despace_save_contact" class="button button-primary" value="Lưu Cấu Hình" />
-					</p>
-				</form>
-			</div>
+		<?php if ( $message ) : ?>
+			<div class="notice notice-success is-dismissible" style="margin:0 0 18px;"><p><strong><?php echo esc_html( $message ); ?></strong></p></div>
+		<?php endif; ?>
 
-			<div style="flex:1;min-width:320px;background:#fff;padding:24px;border:1px solid #ccd0d4;border-radius:6px;">
-				<h2>Danh sách đăng ký tư vấn gần đây (<?php echo count( (array) $inquiries ); ?>)</h2>
-				<?php if ( empty( $inquiries ) ) : ?>
-					<p>Chưa có yêu cầu đăng ký nào.</p>
+		<nav class="ds-subtabs" aria-label="Phân mục Tư vấn & Showroom">
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-contact-settings&tab=leads' ) ); ?>" class="ds-subtabs__item <?php echo 'leads' === $active_tab ? 'is-active' : ''; ?>">
+				Khách đăng ký tư vấn
+				<span class="ds-pill ds-pill--neutral"><?php echo esc_html( number_format_i18n( $total_leads ) ); ?></span>
+			</a>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-contact-settings&tab=showroom' ) ); ?>" class="ds-subtabs__item <?php echo 'showroom' === $active_tab ? 'is-active' : ''; ?>">
+				Cấu hình Thông tin Showroom
+			</a>
+		</nav>
+
+		<?php if ( 'leads' === $active_tab ) : ?>
+			<section class="ds-panel">
+				<div class="ds-panel__header">
+					<div>
+						<h2 class="ds-panel__title">Danh sách khách hàng đăng ký tư vấn (<?php echo esc_html( number_format_i18n( count( $filtered_inquiries ) ) ); ?>)</h2>
+						<p class="ds-panel__desc">Yêu cầu gửi từ biểu mẫu tư vấn trang Liên hệ được lưu tự động và đồng bộ về hộp thư quản trị.</p>
+					</div>
+					<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" style="display:flex; gap:8px; align-items:center;">
+						<input type="hidden" name="page" value="despace-contact-settings" />
+						<input type="hidden" name="tab" value="leads" />
+						<input type="search" name="lead_q" value="<?php echo esc_attr( $lead_query ); ?>" placeholder="Tìm tên, SĐT, dịch vụ..." style="min-width:220px; height:36px;" />
+						<button type="submit" class="ds-btn ds-btn--dark">Tìm kiếm</button>
+						<?php if ( '' !== $lead_query ) : ?>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-contact-settings&tab=leads' ) ); ?>" class="ds-btn ds-btn--outline">Xóa lọc</a>
+						<?php endif; ?>
+					</form>
+				</div>
+
+				<?php if ( empty( $filtered_inquiries ) ) : ?>
+					<p style="margin:0; color:#57534e;">
+						<?php echo '' !== $lead_query ? 'Không tìm thấy yêu cầu tư vấn nào khớp từ khóa.' : 'Chưa có yêu cầu đăng ký tư vấn nào. Khi khách điền biểu mẫu tại trang Liên hệ, thông tin sẽ hiển thị tại đây.'; ?>
+					</p>
 				<?php else : ?>
-					<div style="max-height:450px;overflow-y:auto;">
-						<table class="widefat fixed striped">
+					<div class="ds-table-wrap">
+						<table class="ds-table">
 							<thead>
 								<tr>
 									<th>Thời gian</th>
-									<th>Họ tên</th>
-									<th>Số ĐT</th>
-									<th>Dịch vụ</th>
-									<th>Lời nhắn</th>
+									<th>Khách hàng</th>
+									<th>Liên hệ</th>
+									<th>Dịch vụ quan tâm</th>
+									<th>Nội dung tư vấn</th>
 								</tr>
 							</thead>
 							<tbody>
-								<?php foreach ( array_slice( (array) $inquiries, 0, 20 ) as $inq ) : ?>
+								<?php foreach ( array_slice( $filtered_inquiries, 0, 50 ) as $inq ) : ?>
+									<?php
+									$phone = (string) ( $inq['phone'] ?? '' );
+									$email = (string) ( $inq['email'] ?? '' );
+									?>
 									<tr>
-										<td><small><?php echo esc_html( $inq['created_at'] ?? '' ); ?></small></td>
-										<td><strong><?php echo esc_html( $inq['name'] ?? '' ); ?></strong></td>
-										<td><?php echo esc_html( $inq['phone'] ?? '' ); ?></td>
-										<td><small><?php echo esc_html( $inq['service'] ?? '' ); ?></small></td>
-										<td><small><?php echo esc_html( $inq['message'] ?? '' ); ?></small></td>
+										<td style="white-space:nowrap; color:#57534e;"><?php echo esc_html( $inq['created_at'] ?? '—' ); ?></td>
+										<td><strong><?php echo esc_html( $inq['name'] ?? '—' ); ?></strong></td>
+										<td>
+											<?php if ( '' !== $phone ) : ?>
+												<div><a href="tel:<?php echo esc_attr( preg_replace( '/[^0-9+]/', '', $phone ) ); ?>" style="font-weight:600; color:#8f3f21; text-decoration:none;"><?php echo esc_html( $phone ); ?></a></div>
+											<?php endif; ?>
+											<?php if ( '' !== $email ) : ?>
+												<div style="font-size:12.5px;"><a href="mailto:<?php echo esc_attr( $email ); ?>" style="color:#57534e;"><?php echo esc_html( $email ); ?></a></div>
+											<?php endif; ?>
+										</td>
+										<td><span class="ds-pill ds-pill--info"><?php echo esc_html( $inq['service'] ?? 'Tư vấn chung' ); ?></span></td>
+										<td style="max-width:420px; white-space:normal;"><?php echo esc_html( $inq['message'] ?? '' ); ?></td>
 									</tr>
 								<?php endforeach; ?>
 							</tbody>
 						</table>
 					</div>
 				<?php endif; ?>
-			</div>
-		</div>
+			</section>
+		<?php else : ?>
+			<section class="ds-panel">
+				<div class="ds-panel__header">
+					<div>
+						<h2 class="ds-panel__title">Thông tin Thương hiệu &amp; Showroom DeSpace</h2>
+						<p class="ds-panel__desc">Cập nhật tại đây sẽ đồng bộ ngay ra Footer, trang Liên hệ và các trang chính sách của cửa hàng.</p>
+					</div>
+				</div>
+
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=despace-contact-settings&tab=showroom' ) ); ?>">
+					<?php wp_nonce_field( 'despace_save_contact_action' ); ?>
+					<table class="form-table" role="presentation">
+						<tr>
+							<th scope="row"><label for="address">Địa chỉ Showroom</label></th>
+							<td>
+								<input name="address" type="text" id="address" value="<?php echo esc_attr( $info['address'] ); ?>" class="large-text" />
+								<p class="description">Ghi chú địa chỉ:</p>
+								<input name="address_note" type="text" id="address_note" value="<?php echo esc_attr( $info['address_note'] ); ?>" class="large-text" />
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="hotline">Hotline tư vấn</label></th>
+							<td>
+								<input name="hotline" type="text" id="hotline" value="<?php echo esc_attr( $info['hotline'] ); ?>" class="regular-text" />
+								<p class="description">Ghi chú hotline:</p>
+								<input name="hotline_note" type="text" id="hotline_note" value="<?php echo esc_attr( $info['hotline_note'] ); ?>" class="large-text" />
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="email">Email tiếp nhận tư vấn</label></th>
+							<td>
+								<input name="email" type="email" id="email" value="<?php echo esc_attr( $info['email'] ); ?>" class="regular-text" />
+								<p class="description">Ghi chú email:</p>
+								<input name="email_note" type="text" id="email_note" value="<?php echo esc_attr( $info['email_note'] ); ?>" class="large-text" />
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="hours">Giờ mở cửa</label></th>
+							<td>
+								<input name="hours" type="text" id="hours" value="<?php echo esc_attr( $info['hours'] ); ?>" class="regular-text" />
+								<p class="description">Ghi chú giờ làm việc:</p>
+								<input name="hours_note" type="text" id="hours_note" value="<?php echo esc_attr( $info['hours_note'] ); ?>" class="large-text" />
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="parking_note">Tiện ích đón tiếp &amp; đỗ xe</label></th>
+							<td><textarea name="parking_note" id="parking_note" rows="3" class="large-text"><?php echo esc_textarea( $info['parking_note'] ); ?></textarea></td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="zalo_url">Liên kết Zalo OA / Tư vấn</label></th>
+							<td><input name="zalo_url" type="url" id="zalo_url" value="<?php echo esc_attr( $info['zalo_url'] ); ?>" placeholder="https://zalo.me/..." class="regular-text" /></td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="facebook_url">Liên kết Facebook Fanpage</label></th>
+							<td><input name="facebook_url" type="url" id="facebook_url" value="<?php echo esc_attr( $info['facebook_url'] ); ?>" placeholder="https://facebook.com/..." class="regular-text" /></td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="maps_url">Liên kết Google Maps</label></th>
+							<td><input name="maps_url" type="url" id="maps_url" value="<?php echo esc_attr( $info['maps_url'] ); ?>" placeholder="https://maps.google.com/..." class="large-text" /></td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="founder_title">Chức danh đại diện Showroom</label></th>
+							<td>
+								<input name="founder_title" type="text" id="founder_title" value="<?php echo esc_attr( $info['founder_title'] ); ?>" class="regular-text" />
+								<p class="description">Mô tả vai trò:</p>
+								<input name="founder_desc" type="text" id="founder_desc" value="<?php echo esc_attr( $info['founder_desc'] ); ?>" class="large-text" />
+							</td>
+						</tr>
+					</table>
+					<p class="submit">
+						<button type="submit" name="despace_save_contact" value="1" class="ds-btn ds-btn--primary">Lưu Cấu Hình Showroom</button>
+					</p>
+				</form>
+			</section>
+		<?php endif; ?>
 	</div>
 	<?php
 }

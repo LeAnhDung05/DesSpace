@@ -19,6 +19,65 @@ function despace_store_admin_can_manage() {
 }
 
 /**
+ * Determine the primary DeSpace capability held by the current user for the unified cockpit menu.
+ *
+ * Allows administrator, shop_manager, and despace_staff to enter the DeSpace menu
+ * while hiding it completely from customers/subscribers.
+ */
+function despace_store_admin_hub_capability() {
+	if ( ! function_exists( 'current_user_can' ) ) {
+		return '';
+	}
+
+	$candidates = array(
+		'manage_woocommerce',
+		'manage_options',
+		'view_despace_reports',
+		'view_despace_inventory_logs',
+		'manage_despace_3d',
+	);
+
+	foreach ( $candidates as $cap ) {
+		if ( current_user_can( $cap ) ) {
+			return $cap;
+		}
+	}
+
+	return '';
+}
+
+/**
+ * Check whether the current user can access the unified DeSpace Admin Cockpit.
+ */
+function despace_store_admin_can_access_hub() {
+	return '' !== despace_store_admin_hub_capability();
+}
+
+/**
+ * Check whether the current user can access DeSpace Reports (M5).
+ */
+function despace_store_admin_can_view_reports() {
+	return function_exists( 'current_user_can' )
+		&& ( current_user_can( 'view_despace_reports' ) || current_user_can( 'manage_options' ) );
+}
+
+/**
+ * Check whether the current user can access DeSpace Inventory Audit Logs (M4).
+ */
+function despace_store_admin_can_view_inventory() {
+	return function_exists( 'current_user_can' )
+		&& ( current_user_can( 'view_despace_inventory_logs' ) || current_user_can( 'manage_woocommerce' ) || current_user_can( 'manage_options' ) );
+}
+
+/**
+ * Check whether the current user can access DeSpace 3D & AR Studio.
+ */
+function despace_store_admin_can_manage_3d() {
+	return function_exists( 'current_user_can' )
+		&& ( current_user_can( 'manage_despace_3d' ) || current_user_can( 'manage_woocommerce' ) || current_user_can( 'manage_options' ) );
+}
+
+/**
  * Localize the most-used WordPress menu labels for the store owner.
  */
 function despace_store_admin_localize_menu() {
@@ -450,10 +509,10 @@ function despace_store_admin_clean_dashboard() {
 add_action( 'wp_dashboard_setup', 'despace_store_admin_clean_dashboard', 100 );
 
 /**
- * Load dashboard-specific styles only on the dashboard screen.
+ * Load dashboard-specific styles across all DeSpace Admin Cockpit screens.
  */
 function despace_store_admin_assets( $hook_suffix ) {
-	if ( ! despace_store_admin_can_manage() ) {
+	if ( ! despace_store_admin_can_access_hub() ) {
 		return;
 	}
 
@@ -464,6 +523,11 @@ function despace_store_admin_assets( $hook_suffix ) {
 		'woocommerce_page_wc-orders',
 		'woocommerce_page_despace-reports',
 		'woocommerce_page_despace-inventory-logs',
+		'despace_page_despace-reports',
+		'despace_page_despace-inventory-logs',
+		'despace_page_despace-3d-manager',
+		'despace_page_despace-contact-settings',
+		'despace_page_despace-system',
 	);
 	$is_despace_screen = in_array( (string) $hook_suffix, $allowed_hooks, true )
 		|| false !== strpos( (string) $hook_suffix, 'despace' );
@@ -618,8 +682,7 @@ function despace_store_admin_render_dashboard() {
 			'order'   => 'DESC',
 		)
 	) : array();
-	$contact_page  = get_page_by_path( 'contact', OBJECT, 'page' );
-	$contact_url   = $contact_page ? get_edit_post_link( $contact_page->ID, '' ) : admin_url( 'edit.php?post_type=page' );
+	$contact_url   = admin_url( 'admin.php?page=despace-contact-settings&tab=showroom' );
 	?>
 	<div class="despace-admin-dashboard">
 		<header class="despace-admin-hero">
@@ -630,7 +693,8 @@ function despace_store_admin_render_dashboard() {
 				<p class="despace-admin-date"><?php echo esc_html( date_i18n( 'l, j F Y' ) ); ?></p>
 			</div>
 			<nav class="despace-admin-hero__actions" aria-label="Lối tắt quản trị">
-				<a class="despace-admin-button despace-admin-button--light" href="<?php echo esc_url( admin_url( 'post-new.php?post_type=product' ) ); ?>">Thêm sản phẩm</a>
+				<a class="despace-admin-button despace-admin-button--light" href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub' ) ); ?>">Mở DeSpace Cockpit</a>
+				<a class="despace-admin-button despace-admin-button--outline" href="<?php echo esc_url( admin_url( 'post-new.php?post_type=product' ) ); ?>">+ Thêm sản phẩm</a>
 				<a class="despace-admin-button despace-admin-button--outline" href="<?php echo esc_url( despace_store_admin_orders_url() ); ?>">Mở đơn hàng</a>
 			</nav>
 		</header>
@@ -888,50 +952,356 @@ add_filter( 'login_headertext', function() {
 function despace_admin_bar_branding( $wp_admin_bar ) {
 	$icon_url = content_url( '/themes/despace-child/assets/images/despace-mark.png' );
 	$wp_admin_bar->remove_node( 'wp-logo' );
+	if ( ! despace_store_admin_can_access_hub() ) {
+		return;
+	}
 	$wp_admin_bar->add_node( array(
 		'id'    => 'despace-logo-node',
 		'title' => '<img src="' . esc_url( $icon_url ) . '" style="height:18px; width:18px; vertical-align:middle; margin-right:6px;" alt="DeSpace" /> <span style="font-weight:700; letter-spacing:0.5px; color:#F5F0EA;">DeSpace</span>',
 		'href'  => admin_url( 'admin.php?page=despace-hub' ),
-		'meta'  => array( 'title' => 'DeSpace Management Center' ),
+		'meta'  => array( 'title' => 'DeSpace Admin Cockpit' ),
 	) );
 }
 add_action( 'admin_bar_menu', 'despace_admin_bar_branding', 11 );
 
-/** Register Top-Level DeSpace Hub in Admin Navigation */
+/**
+ * Count consultation leads stored in despace_contact_inquiries.
+ */
+function despace_admin_get_inquiry_count() {
+	$inquiries = get_option( 'despace_contact_inquiries', array() );
+	return is_array( $inquiries ) ? count( $inquiries ) : 0;
+}
+
+/**
+ * Register unified top-level DeSpace Admin Cockpit menu and its 6 ordered sub-pages.
+ */
 function despace_register_admin_hub_menu() {
-	if ( ! despace_store_admin_can_manage() ) {
+	$hub_cap = despace_store_admin_hub_capability();
+	if ( '' === $hub_cap ) {
 		return;
 	}
 
 	add_menu_page(
-		'DeSpace Hub — Trung Tâm Quản Trị Cửa Hàng',
-		'DeSpace Hub',
-		'manage_woocommerce',
+		'DeSpace — Trung Tâm Điều Hành',
+		'DeSpace',
+		$hub_cap,
 		'despace-hub',
 		'despace_render_hub_overview_page',
 		'dashicons-store',
 		3
 	);
 
+	// 1. Tổng quan điều hành (Executive Overview)
 	add_submenu_page(
 		'despace-hub',
-		'Tổng quan DeSpace Hub',
-		'Tổng quan hệ thống',
-		'manage_woocommerce',
+		'DeSpace — Tổng quan điều hành',
+		'Tổng quan điều hành',
+		$hub_cap,
 		'despace-hub',
 		'despace_render_hub_overview_page'
 	);
 
+	// 2. Báo cáo Doanh thu & KPI (M5)
+	if ( class_exists( '\DeSpace\Reports\Admin\DashboardPage' ) ) {
+		$reports_cap = current_user_can( 'view_despace_reports' ) ? 'view_despace_reports' : 'manage_options';
+		add_submenu_page(
+			'despace-hub',
+			'DeSpace — Báo cáo Doanh thu & KPI',
+			'Báo cáo Doanh thu',
+			$reports_cap,
+			'despace-reports',
+			array( '\DeSpace\Reports\Admin\DashboardPage', 'render_page' )
+		);
+	}
+
+	// 3. Nhật ký & Kiểm toán Kho (M4)
+	if ( class_exists( '\DeSpace\Inventory\Admin\InventoryLogsPage' ) ) {
+		$inv_cap = current_user_can( 'view_despace_inventory_logs' ) ? 'view_despace_inventory_logs' : 'manage_woocommerce';
+		$inv_hook = add_submenu_page(
+			'despace-hub',
+			'DeSpace — Nhật ký & Kiểm toán Kho',
+			'Nhật ký Kho',
+			$inv_cap,
+			'despace-inventory-logs',
+			array( '\DeSpace\Inventory\Admin\InventoryLogsPage', 'render_page' )
+		);
+		if ( $inv_hook ) {
+			add_filter( "manage_{$inv_hook}_columns", array( '\DeSpace\Inventory\Admin\InventoryLogsPage', 'get_table_columns' ) );
+		}
+	}
+
+	// 4. Xưởng 3D & AR Studio
+	if ( function_exists( 'axgnud_render_3d_manager_page' ) ) {
+		$cap_3d = current_user_can( 'manage_despace_3d' ) ? 'manage_despace_3d' : 'manage_woocommerce';
+		add_submenu_page(
+			'despace-hub',
+			'DeSpace — Xưởng 3D & AR Studio',
+			'Xưởng 3D & AR Studio',
+			$cap_3d,
+			'despace-3d-manager',
+			'axgnud_render_3d_manager_page'
+		);
+	}
+
+	// 5. Tư vấn & Showroom
+	if ( function_exists( 'despace_render_contact_admin_page' ) ) {
+		$lead_count   = despace_admin_get_inquiry_count();
+		$lead_badge   = $lead_count > 0
+			? ' <span class="update-plugins count-' . absint( $lead_count ) . '"><span class="plugin-count">' . absint( $lead_count ) . '</span></span>'
+			: '';
+		$showroom_cap = current_user_can( 'manage_woocommerce' ) ? 'manage_woocommerce' : 'manage_options';
+		add_submenu_page(
+			'despace-hub',
+			'DeSpace — Tư vấn & Showroom',
+			'Tư vấn & Showroom' . $lead_badge,
+			$showroom_cap,
+			'despace-contact-settings',
+			'despace_render_contact_admin_page'
+		);
+	}
+
+	// 6. Hệ thống & Phân quyền (Administrators only)
 	add_submenu_page(
 		'despace-hub',
-		'Thông tin Showroom & Chủ cửa hàng',
-		'Thông tin Showroom',
-		'manage_woocommerce',
-		'despace-showroom-info',
-		'despace_render_showroom_info_page'
+		'DeSpace — Hệ thống & Phân quyền',
+		'Hệ thống & Phân quyền',
+		'manage_options',
+		'despace-system',
+		'despace_render_system_admin_page'
 	);
 }
 add_action( 'admin_menu', 'despace_register_admin_hub_menu', 8 );
+
+/**
+ * Remove duplicate standalone sidebar registrations once unified under DeSpace.
+ * Keeps individual plugin hooks intact for isolated unit tests.
+ */
+function despace_consolidate_duplicate_admin_menus() {
+	if ( ! despace_store_admin_can_access_hub() ) {
+		return;
+	}
+
+	global $admin_page_hooks, $_registered_pages;
+
+	if ( class_exists( '\DeSpace\Reports\Admin\DashboardPage' ) ) {
+		remove_menu_page( 'despace-reports' );
+		remove_submenu_page( 'woocommerce', 'despace-reports' );
+		unset( $admin_page_hooks['despace-reports'], $_registered_pages['toplevel_page_despace-reports'] );
+	}
+
+	if ( class_exists( '\DeSpace\Inventory\Admin\InventoryLogsPage' ) ) {
+		remove_submenu_page( 'woocommerce', 'despace-inventory-logs' );
+	}
+
+	if ( function_exists( 'axgnud_render_3d_manager_page' ) ) {
+		remove_menu_page( 'despace-3d-manager' );
+		unset( $admin_page_hooks['despace-3d-manager'], $_registered_pages['toplevel_page_despace-3d-manager'] );
+	}
+
+	if ( function_exists( 'despace_render_contact_admin_page' ) ) {
+		remove_submenu_page( 'options-general.php', 'despace-contact-settings' );
+	}
+
+	if ( function_exists( 'axgnud_3d_ai_settings_page' ) ) {
+		remove_submenu_page( 'options-general.php', 'axgnud-3d-ai-settings' );
+	}
+}
+add_action( 'admin_menu', 'despace_consolidate_duplicate_admin_menus', 999 );
+
+/**
+ * Backward-compatible redirects for legacy DeSpace admin slugs and tabs.
+ * Runs late on admin_menu (priority 1000) before WordPress core checks user_can_access_admin_page().
+ */
+function despace_redirect_legacy_admin_routes() {
+	if ( ! is_admin() || wp_doing_ajax() ) {
+		return;
+	}
+
+	$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+	if ( '' === $page ) {
+		return;
+	}
+
+	if ( 'despace-showroom-info' === $page && despace_store_admin_can_manage() ) {
+		wp_safe_redirect( admin_url( 'admin.php?page=despace-contact-settings&tab=showroom' ) );
+		exit;
+	}
+
+	if ( 'axgnud-3d-ai-settings' === $page && current_user_can( 'manage_options' ) ) {
+		wp_safe_redirect( admin_url( 'admin.php?page=despace-3d-manager&tab=ai' ) );
+		exit;
+	}
+
+	if ( 'despace-hub' === $page && isset( $_GET['tab'] ) && despace_store_admin_can_access_hub() ) {
+		$tab = sanitize_key( wp_unslash( $_GET['tab'] ) );
+		$map = array(
+			'assets'    => array( 'url' => 'admin.php?page=despace-system&tab=tools', 'cap' => 'manage_options' ),
+			'rbac'      => array( 'url' => 'admin.php?page=despace-system&tab=rbac', 'cap' => 'manage_options' ),
+			'3d'        => array( 'url' => 'admin.php?page=despace-3d-manager', 'cap' => '' ),
+			'inventory' => array( 'url' => 'admin.php?page=despace-inventory-logs', 'cap' => '' ),
+			'showroom'  => array( 'url' => 'admin.php?page=despace-contact-settings&tab=showroom', 'cap' => '' ),
+		);
+		if ( isset( $map[ $tab ] ) ) {
+			if ( '' !== $map[ $tab ]['cap'] && ! current_user_can( $map[ $tab ]['cap'] ) ) {
+				wp_die( 'Bạn không có quyền truy cập mục này.', 'Truy cập bị từ chối', array( 'response' => 403 ) );
+			}
+			$target = admin_url( $map[ $tab ]['url'] );
+			if ( isset( $_GET['unzipped'] ) ) {
+				$target = add_query_arg( 'unzipped', sanitize_key( wp_unslash( $_GET['unzipped'] ) ), $target );
+			}
+			if ( isset( $_GET['repaired'] ) ) {
+				$target = add_query_arg( 'repaired', absint( $_GET['repaired'] ), $target );
+			}
+			wp_safe_redirect( $target );
+			exit;
+		}
+	}
+}
+add_action( 'admin_menu', 'despace_redirect_legacy_admin_routes', 1000 );
+
+/**
+ * Render the shared Quiet Luxury Admin Cockpit header and 6-module navigation bar.
+ *
+ * @param string $active_slug   Current admin page slug.
+ * @param string $page_title    Main heading for the active screen.
+ * @param string $page_subtitle Descriptive subtitle.
+ * @param array  $actions       Optional array of CTA button definitions:
+ *                              [ 'label' => string, 'url' => string, 'style' => 'primary|ghost|dark', 'target' => '_blank', 'id' => string, 'type' => 'link|button' ].
+ */
+function despace_render_admin_cockpit_header( string $active_slug, string $page_title, string $page_subtitle = '', array $actions = array() ): void {
+	$logo_url   = content_url( '/themes/despace-child/assets/images/despace-logo-header.png' );
+	$lead_count = despace_admin_get_inquiry_count();
+	$env_type   = function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production';
+
+	$nav_items = array(
+		array(
+			'slug'    => 'despace-hub',
+			'label'   => 'Tổng quan',
+			'url'     => admin_url( 'admin.php?page=despace-hub' ),
+			'visible' => despace_store_admin_can_access_hub(),
+			'badge'   => 0,
+		),
+		array(
+			'slug'    => 'despace-reports',
+			'label'   => 'Báo cáo Doanh thu',
+			'url'     => admin_url( 'admin.php?page=despace-reports' ),
+			'visible' => class_exists( '\DeSpace\Reports\Admin\DashboardPage' ) && despace_store_admin_can_view_reports(),
+			'badge'   => 0,
+		),
+		array(
+			'slug'    => 'despace-inventory-logs',
+			'label'   => 'Nhật ký Kho',
+			'url'     => admin_url( 'admin.php?page=despace-inventory-logs' ),
+			'visible' => class_exists( '\DeSpace\Inventory\Admin\InventoryLogsPage' ) && despace_store_admin_can_view_inventory(),
+			'badge'   => 0,
+		),
+		array(
+			'slug'    => 'despace-3d-manager',
+			'label'   => 'Xưởng 3D & AR',
+			'url'     => admin_url( 'admin.php?page=despace-3d-manager' ),
+			'visible' => function_exists( 'axgnud_render_3d_manager_page' ) && despace_store_admin_can_manage_3d(),
+			'badge'   => 0,
+		),
+		array(
+			'slug'    => 'despace-contact-settings',
+			'label'   => 'Tư vấn & Showroom',
+			'url'     => admin_url( 'admin.php?page=despace-contact-settings' ),
+			'visible' => function_exists( 'despace_render_contact_admin_page' ) && despace_store_admin_can_manage(),
+			'badge'   => $lead_count,
+		),
+		array(
+			'slug'    => 'despace-system',
+			'label'   => 'Hệ thống & Phân quyền',
+			'url'     => admin_url( 'admin.php?page=despace-system' ),
+			'visible' => current_user_can( 'manage_options' ),
+			'badge'   => 0,
+		),
+	);
+
+	if ( empty( $actions ) ) {
+		if ( despace_store_admin_can_manage() ) {
+			$actions[] = array(
+				'label' => '+ Thêm sản phẩm',
+				'url'   => admin_url( 'post-new.php?post_type=product' ),
+				'style' => 'primary',
+			);
+			$actions[] = array(
+				'label' => 'Đơn hàng (HPOS)',
+				'url'   => despace_store_admin_orders_url(),
+				'style' => 'ghost',
+			);
+		}
+		$actions[] = array(
+			'label'  => 'Xem cửa hàng ↗',
+			'url'    => home_url( '/' ),
+			'style'  => 'ghost',
+			'target' => '_blank',
+		);
+	}
+	?>
+	<header class="ds-cockpit-header" role="banner">
+		<div class="ds-cockpit-banner">
+			<div class="ds-cockpit-banner__left">
+				<div class="ds-cockpit-brand-row">
+					<img src="<?php echo esc_url( $logo_url ); ?>" alt="DeSpace" class="ds-cockpit-logo" />
+					<span class="ds-cockpit-badge">Admin Cockpit v3.0</span>
+					<?php if ( 'local' === $env_type ) : ?>
+						<span class="ds-cockpit-badge">Local Environment</span>
+					<?php endif; ?>
+				</div>
+				<h1><?php echo esc_html( $page_title ); ?></h1>
+				<?php if ( '' !== $page_subtitle ) : ?>
+					<p class="ds-cockpit-subtitle"><?php echo esc_html( $page_subtitle ); ?></p>
+				<?php endif; ?>
+			</div>
+
+			<div class="ds-cockpit-actions">
+				<?php foreach ( $actions as $action ) : ?>
+					<?php
+					$style_class = 'ds-btn--ghost';
+					if ( isset( $action['style'] ) && 'primary' === $action['style'] ) {
+						$style_class = 'ds-btn--primary';
+					} elseif ( isset( $action['style'] ) && 'dark' === $action['style'] ) {
+						$style_class = 'ds-btn--dark';
+					}
+					$btn_id   = ! empty( $action['id'] ) ? ' id="' . esc_attr( $action['id'] ) . '"' : '';
+					$btn_type = $action['type'] ?? 'link';
+					if ( 'button' === $btn_type ) :
+						?>
+						<button type="button"<?php echo $btn_id; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?> class="ds-btn <?php echo esc_attr( $style_class ); ?>">
+							<?php echo esc_html( $action['label'] ?? '' ); ?>
+						</button>
+					<?php else : ?>
+						<?php
+						$target_attr = ! empty( $action['target'] ) ? ' target="' . esc_attr( $action['target'] ) . '" rel="noopener noreferrer"' : '';
+						?>
+						<a href="<?php echo esc_url( $action['url'] ?? '#' ); ?>"<?php echo $btn_id . $target_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?> class="ds-btn <?php echo esc_attr( $style_class ); ?>">
+							<?php echo esc_html( $action['label'] ?? '' ); ?>
+						</a>
+					<?php endif; ?>
+				<?php endforeach; ?>
+			</div>
+		</div>
+
+		<nav class="ds-cockpit-nav" aria-label="Điều hướng trung tâm quản trị DeSpace">
+			<?php foreach ( $nav_items as $item ) : ?>
+				<?php
+				if ( empty( $item['visible'] ) ) {
+					continue;
+				}
+				$is_active = ( $item['slug'] === $active_slug );
+				?>
+				<a href="<?php echo esc_url( $item['url'] ); ?>" class="ds-cockpit-nav__item <?php echo $is_active ? 'is-active' : ''; ?>"<?php echo $is_active ? ' aria-current="page"' : ''; ?>>
+					<span><?php echo esc_html( $item['label'] ); ?></span>
+					<?php if ( ! empty( $item['badge'] ) ) : ?>
+						<span class="ds-cockpit-nav__badge"><?php echo esc_html( number_format_i18n( (int) $item['badge'] ) ); ?></span>
+					<?php endif; ?>
+				</a>
+			<?php endforeach; ?>
+		</nav>
+	</header>
+	<?php
+}
 
 /**
  * Safely extract only allowed media/3D files from a ZipArchive into target directory (prevents Zip Slip & RCE).
@@ -1051,7 +1421,7 @@ function despace_handle_hub_unzip_uploads() {
 		if ( $zip->open( $_FILES['upload_zip_file']['tmp_name'] ) === true ) {
 			despace_safe_extract_zip_archive( $zip, $target_dir );
 			$zip->close();
-			wp_safe_redirect( admin_url( 'admin.php?page=despace-hub&tab=assets&unzipped=1' ) );
+			wp_safe_redirect( admin_url( 'admin.php?page=despace-system&tab=tools&unzipped=1' ) );
 			exit;
 		} else {
 			wp_die( 'Không thể giải nén tệp zip vừa tải lên.' );
@@ -1087,7 +1457,7 @@ function despace_handle_hub_unzip_uploads() {
 	if ( $zip->open( $found_zip ) === true ) {
 		despace_safe_extract_zip_archive( $zip, $target_dir );
 		$zip->close();
-		wp_safe_redirect( admin_url( 'admin.php?page=despace-hub&tab=assets&unzipped=1' ) );
+		wp_safe_redirect( admin_url( 'admin.php?page=despace-system&tab=tools&unzipped=1' ) );
 		exit;
 	} else {
 		wp_die( 'Lỗi khi mở tệp ZIP: ' . esc_html( $found_zip ) );
@@ -1144,46 +1514,427 @@ function despace_handle_hub_repair_urls() {
 	$transient_like = '%' . $wpdb->esc_like( '_transient_' ) . '%';
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $transient_like ) );
 
-	wp_safe_redirect( admin_url( 'admin.php?page=despace-hub&tab=assets&repaired=' . intval( $updated_rows ) ) );
+	wp_safe_redirect( admin_url( 'admin.php?page=despace-system&tab=tools&repaired=' . intval( $updated_rows ) ) );
 	exit;
 }
 
-/** Render DeSpace Hub Overview Page */
+// Handle Desktop 3D Studio Sync Key rotation (Administrators only)
+add_action( 'admin_post_despace_rotate_desktop_key', 'despace_handle_rotate_desktop_key' );
+function despace_handle_rotate_desktop_key() {
+	check_admin_referer( 'despace_rotate_desktop_key_nonce' );
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Bạn không có quyền xoay khóa kết nối Desktop 3D Studio.', 403 );
+	}
+
+	try {
+		$new_key = bin2hex( random_bytes( 32 ) );
+	} catch ( Exception $e ) {
+		$new_key = hash( 'sha256', wp_generate_password( 64, true, true ) . microtime( true ) );
+	}
+
+	update_option( 'despace_desktop_sync_key', $new_key, false );
+	wp_safe_redirect( admin_url( 'admin.php?page=despace-3d-manager&tab=desktop&key_rotated=1' ) );
+	exit;
+}
+
+/**
+ * Render Screen 1: Tổng quan điều hành (Executive Overview).
+ */
 function despace_render_hub_overview_page() {
-	$current_tab   = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'overview';
-	$logo_url      = content_url( '/themes/despace-child/assets/images/despace-logo-header.png' );
-	$product_count = (int) ( wp_count_posts( 'product' )->publish ?? 0 );
-	$post_count    = (int) ( wp_count_posts( 'post' )->publish ?? 0 );
-	$processing    = function_exists( 'wc_orders_count' ) ? wc_orders_count( 'processing' ) : 0;
-	$pending       = function_exists( 'wc_orders_count' ) ? wc_orders_count( 'pending' ) : 0;
-	$completed     = function_exists( 'wc_orders_count' ) ? wc_orders_count( 'completed' ) : 0;
-	$low_stock     = function_exists( 'despace_store_admin_low_stock_count' ) ? despace_store_admin_low_stock_count() : 0;
-	
+	if ( ! despace_store_admin_can_access_hub() ) {
+		wp_die( 'Bạn không có quyền truy cập Trung tâm Điều hành DeSpace.', 403 );
+	}
+
 	global $wpdb;
-	$log_table = $wpdb->prefix . 'despace_inventory_logs';
-	$log_count = $wpdb->get_var( "SHOW TABLES LIKE '$log_table'" ) ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM $log_table" ) : 0;
+
+	$can_manage     = despace_store_admin_can_manage();
+	$can_reports    = despace_store_admin_can_view_reports();
+	$can_inventory  = despace_store_admin_can_view_inventory();
+	$can_3d         = despace_store_admin_can_manage_3d();
+	$can_system     = current_user_can( 'manage_options' );
+
+	$product_count  = (int) ( wp_count_posts( 'product' )->publish ?? 0 );
+	$processing     = function_exists( 'wc_orders_count' ) ? (int) wc_orders_count( 'processing' ) : 0;
+	$on_hold        = function_exists( 'wc_orders_count' ) ? (int) wc_orders_count( 'on-hold' ) : 0;
+	$pending        = function_exists( 'wc_orders_count' ) ? (int) wc_orders_count( 'pending' ) : 0;
+	$completed      = function_exists( 'wc_orders_count' ) ? (int) wc_orders_count( 'completed' ) : 0;
+	$action_orders  = $processing + $on_hold + $pending;
+	$low_stock      = function_exists( 'despace_store_admin_low_stock_count' ) ? (int) despace_store_admin_low_stock_count() : 0;
+	$lead_count     = despace_admin_get_inquiry_count();
+
+	// 30-day HPOS net revenue (completed + processing orders).
+	$revenue_30d      = 0.0;
+	$valid_orders_30d = 0;
+	if ( function_exists( 'wc_get_orders' ) ) {
+		$since_30d   = gmdate( 'Y-m-d', strtotime( '-30 days' ) );
+		$orders_30d  = wc_get_orders(
+			array(
+				'status'       => array( 'wc-processing', 'wc-completed' ),
+				'date_created' => '>=' . $since_30d,
+				'limit'        => -1,
+				'return'       => 'objects',
+			)
+		);
+		if ( is_array( $orders_30d ) ) {
+			foreach ( $orders_30d as $ord ) {
+				if ( $ord instanceof WC_Order ) {
+					$revenue_30d += (float) $ord->get_total();
+					$valid_orders_30d++;
+				}
+			}
+		}
+	}
+
+	// 3D & AR coverage.
+	$uploads_info    = wp_upload_dir();
+	$uploads_basedir = $uploads_info['basedir'];
+	$glb_files       = is_dir( $uploads_basedir . '/3d' ) ? glob( $uploads_basedir . '/3d/*/model.glb' ) : array();
+	$usdz_files      = is_dir( $uploads_basedir . '/3d' ) ? glob( $uploads_basedir . '/3d/*/model.usdz' ) : array();
+	$glb_count       = is_array( $glb_files ) ? count( $glb_files ) : 0;
+	$usdz_count      = is_array( $usdz_files ) ? count( $usdz_files ) : 0;
+
+	// M4 Inventory Logs count.
+	$log_table  = $wpdb->prefix . 'despace_inventory_logs';
+	$has_logs   = ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $log_table ) ) ) === $log_table );
+	$log_count  = $has_logs ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$log_table}" ) : 0;
+	$today_str  = current_time( 'Y-m-d' );
+	$logs_today = $has_logs ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$log_table} WHERE DATE(created_at) = %s", $today_str ) ) : 0;
+
+	// Reviews summary.
 	$review_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->comments} WHERE comment_type = 'review' AND comment_approved = '1'" );
 	$avg_rating   = 5.0;
 	if ( $review_count > 0 ) {
 		$rating_sum = (float) $wpdb->get_var( "SELECT SUM(meta_value) FROM {$wpdb->commentmeta} cm JOIN {$wpdb->comments} c ON c.comment_ID = cm.comment_id WHERE c.comment_type = 'review' AND c.comment_approved = '1' AND cm.meta_key = 'rating'" );
-		$avg_rating = $rating_sum > 0 ? round( $rating_sum / $review_count, 1 ) : 4.8;
+		$avg_rating = $rating_sum > 0 ? round( $rating_sum / $review_count, 1 ) : 5.0;
 	}
 
-	// Inspect Uploads Directory Status
-	$uploads_info = wp_upload_dir();
+	// Recent 5 orders & Low-stock list.
+	$recent_orders      = function_exists( 'wc_get_orders' ) ? wc_get_orders(
+		array(
+			'limit'   => 5,
+			'orderby' => 'date',
+			'order'   => 'DESC',
+		)
+	) : array();
+	$low_stock_products = function_exists( 'wc_get_product' ) ? despace_store_admin_low_stock_products( 5 ) : array();
+
+	$hpos_active = class_exists( '\Automattic\WooCommerce\Utilities\OrderUtil' )
+		&& \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
+
+	$status_map = array(
+		'processing' => array( 'Đang xử lý', 'ds-pill--info' ),
+		'on-hold'    => array( 'Chờ đối soát', 'ds-pill--warning' ),
+		'pending'    => array( 'Chờ thanh toán', 'ds-pill--warning' ),
+		'completed'  => array( 'Hoàn thành', 'ds-pill--success' ),
+		'cancelled'  => array( 'Đã hủy', 'ds-pill--danger' ),
+		'refunded'   => array( 'Đã hoàn tiền', 'ds-pill--neutral' ),
+		'failed'     => array( 'Thất bại', 'ds-pill--danger' ),
+	);
+	?>
+	<div class="wrap ds-cockpit-wrap">
+		<?php
+		despace_render_admin_cockpit_header(
+			'despace-hub',
+			'Tổng quan điều hành DeSpace',
+			'Theo dõi doanh thu 30 ngày, đơn hàng HPOS, tồn kho, tài sản 3D/AR và yêu cầu tư vấn showroom tại một bảng điều khiển duy nhất.'
+		);
+		?>
+
+		<!-- 5 Core Live KPI Cards -->
+		<section class="ds-kpi-grid" aria-label="Chỉ số điều hành chính">
+			<a class="ds-kpi-card ds-kpi-card--accent" href="<?php echo esc_url( $can_reports ? admin_url( 'admin.php?page=despace-reports' ) : '#' ); ?>">
+				<span class="ds-kpi-card__label">Doanh thu 30 ngày (HPOS)</span>
+				<div class="ds-kpi-card__value">
+					<?php echo function_exists( 'wc_price' ) ? wp_kses_post( wc_price( $revenue_30d, array( 'decimals' => 0 ) ) ) : esc_html( number_format_i18n( $revenue_30d ) . ' ₫' ); ?>
+				</div>
+				<span class="ds-kpi-card__meta"><?php echo esc_html( sprintf( '%s đơn hợp lệ (Hoàn thành + Đang xử lý)', number_format_i18n( $valid_orders_30d ) ) ); ?></span>
+			</a>
+
+			<a class="ds-kpi-card ds-kpi-card--warning" href="<?php echo esc_url( $can_manage ? despace_store_admin_orders_url() : admin_url( 'admin.php?page=despace-reports' ) ); ?>">
+				<span class="ds-kpi-card__label">Đơn hàng cần xử lý</span>
+				<div class="ds-kpi-card__value"><?php echo esc_html( number_format_i18n( $action_orders ) ); ?></div>
+				<span class="ds-kpi-card__meta">
+					<?php echo esc_html( sprintf( '%d đang xử lý · %d chờ đối soát · %d hoàn thành', $processing, $on_hold + $pending, $completed ) ); ?>
+				</span>
+			</a>
+
+			<a class="ds-kpi-card ds-kpi-card--success" href="<?php echo esc_url( $can_3d ? admin_url( 'admin.php?page=despace-3d-manager' ) : admin_url( 'edit.php?post_type=product' ) ); ?>">
+				<span class="ds-kpi-card__label">Sản phẩm &amp; Phủ 3D/AR</span>
+				<div class="ds-kpi-card__value"><?php echo esc_html( number_format_i18n( $product_count ) ); ?></div>
+				<span class="ds-kpi-card__meta">
+					<?php
+					echo esc_html( sprintf( '%d GLB · %d USDZ', $glb_count, $usdz_count ) );
+					if ( $low_stock > 0 ) {
+						echo esc_html( sprintf( ' · %d sắp hết kho', $low_stock ) );
+					}
+					?>
+				</span>
+			</a>
+
+			<a class="ds-kpi-card ds-kpi-card--info" href="<?php echo esc_url( $can_inventory ? admin_url( 'admin.php?page=despace-inventory-logs' ) : '#' ); ?>">
+				<span class="ds-kpi-card__label">Nhật ký Kiểm toán Kho</span>
+				<div class="ds-kpi-card__value"><?php echo esc_html( number_format_i18n( $log_count ) ); ?></div>
+				<span class="ds-kpi-card__meta"><?php echo esc_html( sprintf( '+%s biến động hôm nay · Truy vết M4', number_format_i18n( $logs_today ) ) ); ?></span>
+			</a>
+
+			<a class="ds-kpi-card" href="<?php echo esc_url( $can_manage ? admin_url( 'admin.php?page=despace-contact-settings&tab=leads' ) : '#' ); ?>">
+				<span class="ds-kpi-card__label">Khách đăng ký tư vấn</span>
+				<div class="ds-kpi-card__value"><?php echo esc_html( number_format_i18n( $lead_count ) ); ?></div>
+				<span class="ds-kpi-card__meta"><?php echo esc_html( sprintf( '★ %s/5.0 từ %s đánh giá đã duyệt', number_format( $avg_rating, 1 ), number_format_i18n( $review_count ) ) ); ?></span>
+			</a>
+		</section>
+
+		<!-- Main Operational Workspace -->
+		<div class="ds-cockpit-grid">
+			<!-- Left Column: Recent Orders & Low Stock -->
+			<div>
+				<section class="ds-panel" aria-labelledby="ds-recent-orders-heading">
+					<div class="ds-panel__header">
+						<div>
+							<h2 id="ds-recent-orders-heading" class="ds-panel__title">Đơn hàng mới nhất</h2>
+							<p class="ds-panel__desc">5 đơn hàng gần nhất từ WooCommerce HPOS — bấm mã đơn để xem chi tiết &amp; đối soát VietQR.</p>
+						</div>
+						<?php if ( $can_manage ) : ?>
+							<a href="<?php echo esc_url( despace_store_admin_orders_url() ); ?>" class="ds-btn ds-btn--outline">Xem tất cả đơn →</a>
+						<?php endif; ?>
+					</div>
+
+					<?php if ( ! empty( $recent_orders ) ) : ?>
+						<div class="ds-table-wrap">
+							<table class="ds-table">
+								<thead>
+									<tr>
+										<th>Mã đơn</th>
+										<th>Khách hàng</th>
+										<th>Ngày đặt</th>
+										<th>Tổng tiền</th>
+										<th>Trạng thái</th>
+									</tr>
+								</thead>
+								<tbody>
+									<?php foreach ( $recent_orders as $order ) : ?>
+										<?php
+										if ( ! ( $order instanceof WC_Order ) ) {
+											continue;
+										}
+										$st_key       = $order->get_status();
+										$st_label     = $status_map[ $st_key ][0] ?? wc_get_order_status_name( $st_key );
+										$st_class     = $status_map[ $st_key ][1] ?? 'ds-pill--neutral';
+										$date_created = $order->get_date_created();
+										$customer     = trim( (string) $order->get_formatted_billing_full_name() );
+										$edit_url     = $can_manage ? $order->get_edit_order_url() : '';
+										?>
+										<tr>
+											<td>
+												<?php if ( $edit_url ) : ?>
+													<a href="<?php echo esc_url( $edit_url ); ?>" style="font-weight:700; color:#8f3f21; text-decoration:none;">
+														#<?php echo esc_html( $order->get_order_number() ); ?>
+													</a>
+												<?php else : ?>
+													<strong>#<?php echo esc_html( $order->get_order_number() ); ?></strong>
+												<?php endif; ?>
+												<div style="font-size:12px; color:#57534e;"><?php echo esc_html( sprintf( '%d sản phẩm', $order->get_item_count() ) ); ?></div>
+											</td>
+											<td>
+												<strong><?php echo esc_html( $customer ?: 'Khách lẻ' ); ?></strong>
+												<?php if ( $order->get_billing_phone() ) : ?>
+													<div style="font-size:12px; color:#57534e;"><?php echo esc_html( $order->get_billing_phone() ); ?></div>
+												<?php endif; ?>
+											</td>
+											<td><?php echo $date_created ? esc_html( date_i18n( 'd/m/Y H:i', $date_created->getTimestamp() ) ) : '—'; ?></td>
+											<td><strong><?php echo wp_kses_post( $order->get_formatted_order_total() ); ?></strong></td>
+											<td><span class="ds-pill <?php echo esc_attr( $st_class ); ?>"><?php echo esc_html( $st_label ); ?></span></td>
+										</tr>
+									<?php endforeach; ?>
+								</tbody>
+							</table>
+						</div>
+					<?php else : ?>
+						<p style="margin:0; color:#57534e;">Chưa có đơn hàng nào trong hệ thống.</p>
+					<?php endif; ?>
+				</section>
+
+				<section class="ds-panel" aria-labelledby="ds-low-stock-heading">
+					<div class="ds-panel__header">
+						<div>
+							<h2 id="ds-low-stock-heading" class="ds-panel__title">Cảnh báo tồn kho thấp</h2>
+							<p class="ds-panel__desc">Các sản phẩm đang dưới ngưỡng tồn kho WooCommerce cần nhập bổ sung.</p>
+						</div>
+						<?php if ( $can_inventory ) : ?>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-inventory-logs' ) ); ?>" class="ds-btn ds-btn--outline">Mở Nhật ký Kho →</a>
+						<?php endif; ?>
+					</div>
+
+					<?php if ( ! empty( $low_stock_products ) ) : ?>
+						<div class="ds-table-wrap">
+							<table class="ds-table">
+								<thead>
+									<tr>
+										<th>Sản phẩm</th>
+										<th>SKU</th>
+										<th>Còn lại</th>
+										<th>Ngưỡng</th>
+									</tr>
+								</thead>
+								<tbody>
+									<?php foreach ( $low_stock_products as $stock_row ) : ?>
+										<?php
+										$prod = wc_get_product( (int) $stock_row['ID'] );
+										if ( ! $prod ) {
+											continue;
+										}
+										$edit_id   = $prod->is_type( 'variation' ) && $prod->get_parent_id() ? $prod->get_parent_id() : $prod->get_id();
+										$edit_link = $can_manage ? get_edit_post_link( $edit_id, '' ) : '';
+										$threshold = $prod->get_low_stock_amount();
+										if ( '' === $threshold ) {
+											$threshold = absint( max( get_option( 'woocommerce_notify_low_stock_amount', 2 ), 1 ) );
+										}
+										?>
+										<tr>
+											<td>
+												<?php if ( $edit_link ) : ?>
+													<a href="<?php echo esc_url( $edit_link ); ?>" style="font-weight:600; color:#1c1917; text-decoration:none;"><?php echo esc_html( $prod->get_name() ); ?></a>
+												<?php else : ?>
+													<strong><?php echo esc_html( $prod->get_name() ); ?></strong>
+												<?php endif; ?>
+											</td>
+											<td><code><?php echo esc_html( $prod->get_sku() ?: '—' ); ?></code></td>
+											<td><span class="ds-pill ds-pill--danger"><?php echo esc_html( (string) $prod->get_stock_quantity() ); ?></span></td>
+											<td><?php echo esc_html( (string) $threshold ); ?></td>
+										</tr>
+									<?php endforeach; ?>
+								</tbody>
+							</table>
+						</div>
+					<?php else : ?>
+						<div style="display:flex; align-items:center; gap:12px; padding:14px 16px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; color:#166534;">
+							<strong>✓ Tồn kho đang an toàn</strong> — Hiện không có sản phẩm nào xuống dưới ngưỡng cảnh báo.
+						</div>
+					<?php endif; ?>
+				</section>
+			</div>
+
+			<!-- Right Column: Quick Operations & Compact Health -->
+			<div>
+				<aside class="ds-panel" aria-labelledby="ds-quick-ops-heading">
+					<div class="ds-panel__header">
+						<div>
+							<h2 id="ds-quick-ops-heading" class="ds-panel__title">Lối tắt nghiệp vụ</h2>
+							<p class="ds-panel__desc">Truy cập nhanh các phân hệ quản trị cốt lõi theo quyền tài khoản.</p>
+						</div>
+					</div>
+					<div class="ds-action-list">
+						<?php if ( $can_manage ) : ?>
+							<a class="ds-action-item" href="<?php echo esc_url( admin_url( 'post-new.php?post_type=product' ) ); ?>">
+								<span><strong>+ Thêm sản phẩm nội thất</strong><small>Tạo SKU, giá bán, ảnh và biến thể gỗ</small></span>
+								<span aria-hidden="true">→</span>
+							</a>
+							<a class="ds-action-item" href="<?php echo esc_url( despace_store_admin_orders_url() ); ?>">
+								<span><strong>Quản lý Đơn hàng (HPOS)</strong><small>Xác nhận VietQR, cập nhật trạng thái giao hàng</small></span>
+								<span aria-hidden="true">→</span>
+							</a>
+						<?php endif; ?>
+						<?php if ( $can_reports ) : ?>
+							<a class="ds-action-item" href="<?php echo esc_url( admin_url( 'admin.php?page=despace-reports' ) ); ?>">
+								<span><strong>Báo cáo Doanh thu &amp; KPI</strong><small>Lọc theo ngày, AOV, Top 10 sản phẩm bán chạy</small></span>
+								<span aria-hidden="true">→</span>
+							</a>
+						<?php endif; ?>
+						<?php if ( $can_inventory ) : ?>
+							<a class="ds-action-item" href="<?php echo esc_url( admin_url( 'admin.php?page=despace-inventory-logs' ) ); ?>">
+								<span><strong>Nhật ký &amp; Kiểm toán Kho</strong><small>Truy vết biến động tồn kho &amp; xuất CSV</small></span>
+								<span aria-hidden="true">→</span>
+							</a>
+						<?php endif; ?>
+						<?php if ( $can_3d ) : ?>
+							<a class="ds-action-item" href="<?php echo esc_url( admin_url( 'admin.php?page=despace-3d-manager' ) ); ?>">
+								<span><strong>Xưởng 3D &amp; AR Studio</strong><small>Quản lý GLB/USDZ, Desktop Sync &amp; AI 3D</small></span>
+								<span aria-hidden="true">→</span>
+							</a>
+						<?php endif; ?>
+						<?php if ( $can_manage ) : ?>
+							<a class="ds-action-item" href="<?php echo esc_url( admin_url( 'admin.php?page=despace-contact-settings&tab=leads' ) ); ?>">
+								<span><strong>Tư vấn &amp; Showroom</strong><small>Theo dõi <?php echo esc_html( number_format_i18n( $lead_count ) ); ?> yêu cầu tư vấn &amp; sửa thông tin showroom</small></span>
+								<span aria-hidden="true">→</span>
+							</a>
+						<?php endif; ?>
+					</div>
+				</aside>
+
+				<section class="ds-panel" aria-labelledby="ds-sys-brief-heading">
+					<div class="ds-panel__header">
+						<h2 id="ds-sys-brief-heading" class="ds-panel__title">Tình trạng hạ tầng</h2>
+						<?php if ( $can_system ) : ?>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-system&tab=health' ) ); ?>" style="color:#8f3f21; font-weight:600; text-decoration:none; font-size:13px;">Chi tiết →</a>
+						<?php endif; ?>
+					</div>
+					<div>
+						<div class="ds-health-row">
+							<span class="ds-health-row__label">PHP / Memory</span>
+							<span class="ds-health-row__val"><?php echo esc_html( PHP_VERSION . ' · ' . ini_get( 'memory_limit' ) ); ?></span>
+						</div>
+						<div class="ds-health-row">
+							<span class="ds-health-row__label">WooCommerce HPOS</span>
+							<span class="ds-health-row__val">
+								<span class="ds-pill <?php echo $hpos_active ? 'ds-pill--success' : 'ds-pill--warning'; ?>">
+									<?php echo $hpos_active ? 'Đang bật ✓' : 'Legacy CPT'; ?>
+								</span>
+							</span>
+						</div>
+						<div class="ds-health-row">
+							<span class="ds-health-row__label">Mô hình 3D &amp; AR</span>
+							<span class="ds-health-row__val"><?php echo esc_html( sprintf( '%d GLB / %d USDZ', $glb_count, $usdz_count ) ); ?></span>
+						</div>
+						<div class="ds-health-row">
+							<span class="ds-health-row__label">Môi trường</span>
+							<span class="ds-health-row__val"><code><?php echo esc_html( function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production' ); ?></code></span>
+						</div>
+					</div>
+				</section>
+			</div>
+		</div>
+	</div>
+	<?php
+}
+
+/**
+ * Render Screen 6: Hệ thống & Phân quyền (Administrators only).
+ * Tabs: health | rbac | tools
+ */
+function despace_render_system_admin_page() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Bạn không có quyền truy cập trang Hệ thống & Phân quyền.', 403 );
+	}
+
+	global $wpdb;
+
+	$active_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'health';
+	if ( ! in_array( $active_tab, array( 'health', 'rbac', 'tools' ), true ) ) {
+		$active_tab = 'health';
+	}
+
+	$uploads_info    = wp_upload_dir();
 	$uploads_basedir = $uploads_info['basedir'];
-	$has_uploads_dir = is_dir( $uploads_basedir );
 	$has_3d_dir      = is_dir( $uploads_basedir . '/3d' );
 	$has_catalog_dir = is_dir( $uploads_basedir . '/despace-catalog' ) || is_dir( $uploads_basedir . '/furniva-real' );
-	
-	$models_count = 0;
-	if ( $has_3d_dir ) {
-		$subdirs = glob( $uploads_basedir . '/3d/*', GLOB_ONLYDIR );
-		$models_count = $subdirs ? count( $subdirs ) : 0;
-	}
+	$glb_files       = $has_3d_dir ? glob( $uploads_basedir . '/3d/*/model.glb' ) : array();
+	$usdz_files      = $has_3d_dir ? glob( $uploads_basedir . '/3d/*/model.usdz' ) : array();
+	$glb_count       = is_array( $glb_files ) ? count( $glb_files ) : 0;
+	$usdz_count      = is_array( $usdz_files ) ? count( $usdz_files ) : 0;
 
-	// Check if uploads.zip is detected on host
-	$candidates = array(
+	$theme_dir      = get_stylesheet_directory();
+	$has_mv_local   = file_exists( $theme_dir . '/assets/vendor/model-viewer/model-viewer.min.js' );
+	$has_three_local = file_exists( $theme_dir . '/assets/vendor/three/three.module.min.js' );
+	$hpos_active    = class_exists( '\Automattic\WooCommerce\Utilities\OrderUtil' )
+		&& \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
+	$has_vietqr_sec = ( defined( 'DESPACE_VIETQR_SECRET' ) && '' !== trim( (string) DESPACE_VIETQR_SECRET ) )
+		|| '' !== trim( (string) get_option( 'despace_vietqr_secret', '' ) );
+	$has_sync_key   = ( defined( 'DESPACE_DESKTOP_SYNC_KEY' ) && '' !== trim( (string) DESPACE_DESKTOP_SYNC_KEY ) )
+		|| '' !== trim( (string) get_option( 'despace_desktop_sync_key', '' ) );
+	$env_type       = function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production';
+
+	// Detect uploads.zip on server for Tools tab.
+	$zip_candidates = array(
 		dirname( ABSPATH ) . '/uploads.zip',
 		ABSPATH . 'uploads.zip',
 		WP_CONTENT_DIR . '/uploads.zip',
@@ -1191,715 +1942,400 @@ function despace_render_hub_overview_page() {
 		dirname( get_stylesheet_directory(), 4 ) . '/uploads.zip',
 	);
 	$detected_zip = null;
-	foreach ( $candidates as $candidate ) {
+	foreach ( $zip_candidates as $candidate ) {
 		if ( file_exists( $candidate ) && filesize( $candidate ) > 1000 ) {
 			$detected_zip = $candidate;
 			break;
 		}
 	}
 	?>
-	<div class="wrap despace-hub-wrap" style="max-width:1360px; margin:24px 20px 48px 0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-		
-		<!-- Alerts & Notifications -->
+	<div class="wrap ds-cockpit-wrap">
+		<?php
+		despace_render_admin_cockpit_header(
+			'despace-system',
+			'Hệ thống & Phân quyền',
+			'Kiểm tra sức khỏe hạ tầng, ma trận phân quyền thực tế theo WordPress RBAC và các công cụ khôi phục tài sản dành cho quản trị viên.',
+			array(
+				array(
+					'label' => 'Quản lý Người dùng',
+					'url'   => admin_url( 'users.php' ),
+					'style' => 'primary',
+				),
+				array(
+					'label' => 'WooCommerce Status',
+					'url'   => admin_url( 'admin.php?page=wc-status' ),
+					'style' => 'ghost',
+				),
+				array(
+					'label'  => 'Xem cửa hàng ↗',
+					'url'    => home_url( '/' ),
+					'style'  => 'ghost',
+					'target' => '_blank',
+				),
+			)
+		);
+		?>
+
 		<?php if ( isset( $_GET['unzipped'] ) && '1' === $_GET['unzipped'] ) : ?>
-			<div class="notice notice-success is-dismissible" style="padding:14px 18px; border-left:4px solid #10b981; background:#ecfdf5; margin-bottom:20px;">
-				<h3 style="margin:0 0 4px; color:#065f46; font-size:16px;">🎉 Khôi phục toàn bộ Hình ảnh & Mô hình 3D AR thành công!</h3>
-				<p style="margin:0; color:#047857; font-size:14px;">
-					Thư mục <code>wp-content/uploads/</code> đã được giải nén đầy đủ. Toàn bộ ảnh sản phẩm thực tế và 32 file 3D (.glb, .usdz) đã sẵn sàng hiển thị trên cửa hàng.
-				</p>
+			<div class="notice notice-success is-dismissible" style="margin:0 0 18px;">
+				<p><strong>Khôi phục tài sản thành công!</strong> Thư mục <code>wp-content/uploads/</code> đã được giải nén an toàn (chỉ cho phép tệp ảnh và mô hình 3D).</p>
 			</div>
 		<?php endif; ?>
 
 		<?php if ( isset( $_GET['repaired'] ) ) : ?>
-			<div class="notice notice-success is-dismissible" style="padding:14px 18px; border-left:4px solid #2563eb; background:#eff6ff; margin-bottom:20px;">
-				<h3 style="margin:0 0 4px; color:#1e40af; font-size:16px;">🔧 Đồng bộ đường dẫn liên kết thành công!</h3>
-				<p style="margin:0; color:#1d4ed8; font-size:14px;">
-					Đã quét và cập nhật <strong><?php echo intval( $_GET['repaired'] ); ?></strong> bản ghi liên kết hình ảnh và mô hình 3D khớp chuẩn xác với tên miền/cổng hiện tại: <code><?php echo esc_html( home_url() ); ?></code>.
-				</p>
+			<div class="notice notice-success is-dismissible" style="margin:0 0 18px;">
+				<p><strong>Đồng bộ đường dẫn hoàn tất!</strong> Đã cập nhật <strong><?php echo esc_html( number_format_i18n( absint( $_GET['repaired'] ) ) ); ?></strong> bản ghi khớp với <code><?php echo esc_html( home_url() ); ?></code>.</p>
 			</div>
 		<?php endif; ?>
 
-		<!-- Executive Brand Header -->
-		<div style="background:linear-gradient(135deg, #1C1917 0%, #2A1D16 100%); border-radius:18px; padding:32px 36px; color:#fff; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:24px; box-shadow:0 12px 32px rgba(42,29,22,0.18); margin-bottom:24px;">
-			<div>
-				<div style="display:flex; align-items:center; gap:16px; margin-bottom:12px;">
-					<img src="<?php echo esc_url( $logo_url ); ?>" alt="DeSpace" style="height:44px; filter:brightness(0) invert(1);" />
-					<span style="background:rgba(255,255,255,0.15); font-size:11px; font-weight:700; letter-spacing:1px; padding:4px 10px; border-radius:99px; text-transform:uppercase;">Admin Cockpit v2.5 Enterprise</span>
-				</div>
-				<h1 style="color:#FAF7F2; font-size:26px; font-weight:700; margin:0 0 6px;">Bảng Điều Khiển Quản Trị Cửa Hàng DeSpace</h1>
-				<p style="color:#D6CFC7; margin:0; font-size:14px; max-width:700px; line-height:1.5;">
-					Trung tâm vận hành thương mại điện tử cao cấp: Quản trị 40 sản phẩm, 32 mô hình 3D AR WebXR, tra cứu kho thời gian thực, ma trận phân quyền RBAC và quản lý đơn hàng HPOS.
-				</p>
-			</div>
-			<div style="display:flex; gap:12px; flex-wrap:wrap;">
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-reports' ) ); ?>" class="button button-primary" style="background:#2563EB; border-color:#2563EB; color:#fff; font-weight:600; padding:8px 18px; height:auto; border-radius:8px; font-size:13.5px;">
-					📈 Báo Cáo Doanh Thu (M5)
-				</a>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=assets' ) ); ?>" class="button button-primary" style="background:#10B981; border-color:#10B981; color:#fff; font-weight:600; padding:8px 18px; height:auto; border-radius:8px; font-size:13.5px;">
-					📦 Khôi Phục Ảnh & 3D
-				</a>
-				<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=product' ) ); ?>" class="button button-primary" style="background:#C25E3A; border-color:#C25E3A; color:#fff; font-weight:600; padding:8px 18px; height:auto; border-radius:8px; font-size:13.5px; box-shadow:0 4px 12px rgba(194,94,58,0.35);">
-					+ Thêm Sản Phẩm Mới
-				</a>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wc-orders' ) ); ?>" class="button" style="background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.2); color:#FAF7F2; font-weight:600; padding:8px 18px; height:auto; border-radius:8px; font-size:13.5px;">
-					Đơn Hàng (HPOS)
-				</a>
-				<a href="<?php echo esc_url( home_url( '/' ) ); ?>" target="_blank" class="button" style="background:transparent; border-color:rgba(255,255,255,0.3); color:#fff; font-weight:600; padding:8px 16px; height:auto; border-radius:8px; font-size:13.5px;">
-					Xem Website ↗
-				</a>
-			</div>
-		</div>
-
-		<!-- Navigation Tabs -->
-		<div style="display:flex; gap:8px; border-bottom:2px solid #E7E3DC; margin-bottom:28px; flex-wrap:wrap;">
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=overview' ) ); ?>" style="padding:12px 20px; font-weight:700; font-size:14px; text-decoration:none; border-bottom:3px solid <?php echo ( 'overview' === $current_tab ) ? '#C25E3A' : 'transparent'; ?>; color:<?php echo ( 'overview' === $current_tab ) ? '#C25E3A' : '#78716C'; ?>; margin-bottom:-2px;">
-				📊 Tổng Quan KPI & Hạ Tầng
+		<!-- Sub-navigation Tabs -->
+		<nav class="ds-subtabs" aria-label="Phân mục Hệ thống & Phân quyền">
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-system&tab=health' ) ); ?>" class="ds-subtabs__item <?php echo 'health' === $active_tab ? 'is-active' : ''; ?>">
+				Sức khỏe Hệ thống &amp; Trang chính sách
 			</a>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=assets' ) ); ?>" style="padding:12px 20px; font-weight:700; font-size:14px; text-decoration:none; border-bottom:3px solid <?php echo ( 'assets' === $current_tab ) ? '#10B981' : 'transparent'; ?>; color:<?php echo ( 'assets' === $current_tab ) ? '#10B981' : '#78716C'; ?>; margin-bottom:-2px;">
-				📦 Khôi Phục Ảnh & Mô Hình 3D <?php if ( ! $has_3d_dir || 0 === $models_count ) : ?><span style="background:#EF4444; color:#fff; padding:2px 7px; border-radius:99px; font-size:11px; margin-left:4px;">Cần xử lý</span><?php endif; ?>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-system&tab=rbac' ) ); ?>" class="ds-subtabs__item <?php echo 'rbac' === $active_tab ? 'is-active' : ''; ?>">
+				Ma trận Phân quyền (Live RBAC)
 			</a>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=3d' ) ); ?>" style="padding:12px 20px; font-weight:700; font-size:14px; text-decoration:none; border-bottom:3px solid <?php echo ( '3d' === $current_tab ) ? '#C25E3A' : 'transparent'; ?>; color:<?php echo ( '3d' === $current_tab ) ? '#C25E3A' : '#78716C'; ?>; margin-bottom:-2px;">
-				🧊 Trình Quản Lý 3D & WebXR AR
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-system&tab=tools' ) ); ?>" class="ds-subtabs__item <?php echo 'tools' === $active_tab ? 'is-active' : ''; ?>">
+				Công cụ Tài sản &amp; Bảo trì
 			</a>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=rbac' ) ); ?>" style="padding:12px 20px; font-weight:700; font-size:14px; text-decoration:none; border-bottom:3px solid <?php echo ( 'rbac' === $current_tab ) ? '#C25E3A' : 'transparent'; ?>; color:<?php echo ( 'rbac' === $current_tab ) ? '#C25E3A' : '#78716C'; ?>; margin-bottom:-2px;">
-				👥 Phân Quyền 5 Thành Viên (RBAC)
-			</a>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=inventory' ) ); ?>" style="padding:12px 20px; font-weight:700; font-size:14px; text-decoration:none; border-bottom:3px solid <?php echo ( 'inventory' === $current_tab ) ? '#C25E3A' : 'transparent'; ?>; color:<?php echo ( 'inventory' === $current_tab ) ? '#C25E3A' : '#78716C'; ?>; margin-bottom:-2px;">
-				📋 Kiểm Toán Tồn Kho (Audit Logs)
-			</a>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=showroom' ) ); ?>" style="padding:12px 20px; font-weight:700; font-size:14px; text-decoration:none; border-bottom:3px solid <?php echo ( 'showroom' === $current_tab ) ? '#C25E3A' : 'transparent'; ?>; color:<?php echo ( 'showroom' === $current_tab ) ? '#C25E3A' : '#78716C'; ?>; margin-bottom:-2px;">
-				🏢 Thông Tin Showroom DeSpace
-			</a>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-reports' ) ); ?>" style="padding:12px 20px; font-weight:700; font-size:14px; text-decoration:none; color:#2563EB; background:rgba(37,99,235,0.06); border-radius:8px 8px 0 0; margin-bottom:-2px;">
-				📈 Báo Cáo Doanh Thu (M5) ↗
-			</a>
-		</div>
+		</nav>
 
-		<!-- ========================================== -->
-		<!-- TAB 1: OVERVIEW & SYSTEM HEALTH -->
-		<!-- ========================================== -->
-		<?php if ( 'overview' === $current_tab ) : ?>
-			<!-- 5 Core KPI Metric Cards -->
-			<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:18px; margin-bottom:32px;">
-				
-				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:14px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
-					<div style="font-size:12px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;">Sản Phẩm Nội Thất</div>
-					<div style="font-size:32px; font-weight:800; color:#1C1917; margin:6px 0 2px;"><?php echo esc_html( number_format_i18n( $product_count ) ); ?></div>
-					<div style="font-size:12.5px; color:#059669; font-weight:600;">✓ <?php echo intval( $models_count ); ?>/<?php echo esc_html( max( 40, $product_count ) ); ?> Đã gắn Mô hình 3D AR</div>
-				</div>
-
-				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:14px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
-					<div style="font-size:12px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;">Đơn Cần Xử Lý</div>
-					<div style="font-size:32px; font-weight:800; color:#C25E3A; margin:6px 0 2px;"><?php echo esc_html( number_format_i18n( $processing + $pending ) ); ?></div>
-					<div style="font-size:12.5px; color:#78716C;">Đơn hàng Processing / Pending</div>
-				</div>
-
-				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:14px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
-					<div style="font-size:12px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;">Nhật Ký Tồn Kho</div>
-					<div style="font-size:32px; font-weight:800; color:#1C1917; margin:6px 0 2px;"><?php echo esc_html( number_format_i18n( $log_count ) ); ?></div>
-					<div style="font-size:12.5px; color:#2563EB; font-weight:600;">Audit Logs thời gian thực</div>
-				</div>
-
-				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:14px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
-					<div style="font-size:12px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;">Đánh Giá Khách Hàng</div>
-					<div style="font-size:32px; font-weight:800; color:#D97706; margin:6px 0 2px;"><?php echo esc_html( number_format_i18n( $review_count ) ); ?></div>
-					<div style="font-size:12.5px; color:#D97706; font-weight:600;">★ <?php echo esc_html( $avg_rating ); ?> / 5.0 (<?php echo esc_html( $review_count ); ?> Đánh giá xác thực)</div>
-				</div>
-
-				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:14px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
-					<div style="font-size:12px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;">Cảnh Báo Tồn Kho</div>
-					<div style="font-size:32px; font-weight:800; color:<?php echo ( $low_stock > 0 ) ? '#EF4444' : '#059669'; ?>; margin:6px 0 2px;"><?php echo esc_html( $low_stock ); ?></div>
-					<div style="font-size:12.5px; color:#78716C;">Sản phẩm số lượng &le; 5</div>
-				</div>
-
-			</div>
-
-			<!-- System Health Overview -->
-			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:24px 28px; margin-bottom:32px; box-shadow:0 2px 8px rgba(0,0,0,0.02);">
-				<h3 style="font-size:16px; font-weight:700; color:#1C1917; margin:0 0 16px;">Tình Trạng Sức Khỏe Máy Chủ & Môi Trường Hoạt Động</h3>
-				<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px;">
-					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:10px; padding:14px 16px;">
-						<div style="font-size:11.5px; color:#78716C; font-weight:600; text-transform:uppercase;">Phiên bản PHP & DB</div>
-						<div style="font-size:16px; font-weight:700; color:#1C1917; margin-top:4px;">PHP <?php echo esc_html( PHP_VERSION ); ?> · SQL <?php echo esc_html( substr( $wpdb->db_version(), 0, 8 ) ); ?></div>
+		<?php if ( 'health' === $active_tab ) : ?>
+			<div class="ds-cockpit-grid ds-cockpit-grid--equal">
+				<section class="ds-panel">
+					<div class="ds-panel__header">
+						<h2 class="ds-panel__title">Môi trường máy chủ &amp; WooCommerce</h2>
 					</div>
-					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:10px; padding:14px 16px;">
-						<div style="font-size:11.5px; color:#78716C; font-weight:600; text-transform:uppercase;">Bộ Nhớ Giới Hạn</div>
-						<div style="font-size:16px; font-weight:700; color:#1C1917; margin-top:4px;"><?php echo esc_html( ini_get( 'memory_limit' ) ); ?></div>
+					<div>
+						<div class="ds-health-row">
+							<span class="ds-health-row__label">Phiên bản PHP</span>
+							<span class="ds-health-row__val"><?php echo esc_html( PHP_VERSION ); ?></span>
+						</div>
+						<div class="ds-health-row">
+							<span class="ds-health-row__label">Giới hạn bộ nhớ (memory_limit)</span>
+							<span class="ds-health-row__val"><?php echo esc_html( (string) ini_get( 'memory_limit' ) ); ?></span>
+						</div>
+						<div class="ds-health-row">
+							<span class="ds-health-row__label">Tải tệp tối đa (upload / post)</span>
+							<span class="ds-health-row__val"><?php echo esc_html( ini_get( 'upload_max_filesize' ) . ' / ' . ini_get( 'post_max_size' ) ); ?></span>
+						</div>
+						<div class="ds-health-row">
+							<span class="ds-health-row__label">Cơ sở dữ liệu (MySQL)</span>
+							<span class="ds-health-row__val"><?php echo esc_html( $wpdb->db_version() ); ?></span>
+						</div>
+						<div class="ds-health-row">
+							<span class="ds-health-row__label">WordPress / WooCommerce</span>
+							<span class="ds-health-row__val">
+								<?php
+								$wc_ver = defined( 'WC_VERSION' ) ? WC_VERSION : 'N/A';
+								echo esc_html( get_bloginfo( 'version' ) . ' / ' . $wc_ver );
+								?>
+							</span>
+						</div>
+						<div class="ds-health-row">
+							<span class="ds-health-row__label">WooCommerce HPOS</span>
+							<span class="ds-health-row__val">
+								<span class="ds-pill <?php echo $hpos_active ? 'ds-pill--success' : 'ds-pill--warning'; ?>">
+									<?php echo $hpos_active ? 'Đang bật ✓' : 'Chưa bật'; ?>
+								</span>
+							</span>
+						</div>
+						<div class="ds-health-row">
+							<span class="ds-health-row__label">WP_ENVIRONMENT_TYPE</span>
+							<span class="ds-health-row__val"><code><?php echo esc_html( $env_type ); ?></code></span>
+						</div>
 					</div>
-					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:10px; padding:14px 16px;">
-						<div style="font-size:11.5px; color:#78716C; font-weight:600; text-transform:uppercase;">Kiến Trúc HPOS</div>
-						<div style="font-size:16px; font-weight:700; color:#059669; margin-top:4px;">Bật (Tốc độ cao) ✓</div>
+				</section>
+
+				<section class="ds-panel">
+					<div class="ds-panel__header">
+						<h2 class="ds-panel__title">Tài sản 3D/AR, Thư viện nội bộ &amp; Bảo mật</h2>
 					</div>
-					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:10px; padding:14px 16px;">
-						<div style="font-size:11.5px; color:#78716C; font-weight:600; text-transform:uppercase;">Đường Dẫn Hiện Tại</div>
-						<div style="font-size:14px; font-weight:700; color:#2563EB; margin-top:6px; word-break:break-all;"><?php echo esc_html( home_url() ); ?></div>
+					<div>
+						<div class="ds-health-row">
+							<span class="ds-health-row__label">Thư mục ảnh danh mục</span>
+							<span class="ds-health-row__val">
+								<span class="ds-pill <?php echo $has_catalog_dir ? 'ds-pill--success' : 'ds-pill--warning'; ?>">
+									<?php echo $has_catalog_dir ? 'Sẵn sàng ✓' : 'Chưa thấy thư mục'; ?>
+								</span>
+							</span>
+						</div>
+						<div class="ds-health-row">
+							<span class="ds-health-row__label">Tệp 3D Web (.glb) &amp; iOS AR (.usdz)</span>
+							<span class="ds-health-row__val">
+								<span class="ds-pill <?php echo ( $glb_count >= 30 && $usdz_count >= 30 ) ? 'ds-pill--success' : 'ds-pill--warning'; ?>">
+									<?php echo esc_html( sprintf( '%d GLB · %d USDZ', $glb_count, $usdz_count ) ); ?>
+								</span>
+							</span>
+						</div>
+						<div class="ds-health-row">
+							<span class="ds-health-row__label">Self-hosted model-viewer &amp; Three.js</span>
+							<span class="ds-health-row__val">
+								<span class="ds-pill <?php echo ( $has_mv_local && $has_three_local ) ? 'ds-pill--success' : 'ds-pill--danger'; ?>">
+									<?php echo ( $has_mv_local && $has_three_local ) ? 'Nội bộ (Không phụ thuộc CDN) ✓' : 'Thiếu tệp vendor'; ?>
+								</span>
+							</span>
+						</div>
+						<div class="ds-health-row">
+							<span class="ds-health-row__label">Khóa ký VietQR Webhook</span>
+							<span class="ds-health-row__val">
+								<span class="ds-pill <?php echo $has_vietqr_sec ? 'ds-pill--success' : 'ds-pill--warning'; ?>">
+									<?php echo $has_vietqr_sec ? 'Đã cấu hình ✓' : 'Chưa cấu hình'; ?>
+								</span>
+							</span>
+						</div>
+						<div class="ds-health-row">
+							<span class="ds-health-row__label">Khóa kết nối Desktop 3D Studio</span>
+							<span class="ds-health-row__val">
+								<span class="ds-pill <?php echo $has_sync_key ? 'ds-pill--success' : 'ds-pill--danger'; ?>">
+									<?php echo $has_sync_key ? 'Đã cấp khóa 64-hex ✓' : 'Chưa cấp khóa'; ?>
+								</span>
+							</span>
+						</div>
+						<div class="ds-health-row">
+							<span class="ds-health-row__label">Địa chỉ gốc website (home_url)</span>
+							<span class="ds-health-row__val"><code><?php echo esc_html( home_url() ); ?></code></span>
+						</div>
 					</div>
-				</div>
+				</section>
 			</div>
 
-			<!-- Direct Navigation Grid -->
-			<h2 style="font-size:18px; font-weight:700; color:#1C1917; margin:0 0 16px;">Các Chức Năng Quản Trị Cốt Lõi</h2>
-			<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap:20px;">
-				
-				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:24px 26px; box-shadow:0 2px 10px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between;">
+			<!-- 7 Canonical Policy & Info Pages Audit -->
+			<section class="ds-panel">
+				<div class="ds-panel__header">
 					<div>
-						<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-							<span style="background:#ECFDF5; color:#059669; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">📦</span>
-							<h3 style="font-size:17px; font-weight:700; margin:0; color:#1C1917;">Khôi Phục Hình Ảnh & 3D (Asset Auto-Recovery)</h3>
-						</div>
-						<p style="color:#6B635B; font-size:13.5px; line-height:1.6; margin:0 0 16px;">
-							Dành riêng cho thành viên mới kéo Git về máy: Công cụ 1-Click tự động giải nén tệp <code>uploads.zip</code> và sửa link ảnh/3D theo đúng cổng máy tính.
-						</p>
+						<h2 class="ds-panel__title">Kiểm tra 7 trang Chính sách &amp; Thông tin chuẩn</h2>
+						<p class="ds-panel__desc">Đảm bảo các liên kết footer và trang thanh toán luôn trả về HTTP 200 (không 404).</p>
 					</div>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=assets' ) ); ?>" class="button button-primary" style="align-self:flex-start; font-weight:600; border-radius:8px; background:#10B981; border-color:#10B981;">
-						Vào Trình Khôi Phục Assets →
-					</a>
+					<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=page' ) ); ?>" class="ds-btn ds-btn--outline">Tất cả Trang →</a>
 				</div>
-
-				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:24px 26px; box-shadow:0 2px 10px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between;">
-					<div>
-						<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-							<span style="background:#F4EDE4; color:#9A6745; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">✧</span>
-							<h3 style="font-size:17px; font-weight:700; margin:0; color:#1C1917;">Quản Lý Mô Hình 3D & WebXR AR</h3>
-						</div>
-						<p style="color:#6B635B; font-size:13.5px; line-height:1.6; margin:0 0 16px;">
-							Xem và quản lý toàn bộ mô hình PBR <code>.glb</code> và Apple Quick Look <code>.usdz</code>. Cung cấp mã QR quét trải nghiệm AR trực tiếp trong phòng thực tế.
-						</p>
-					</div>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=3d' ) ); ?>" class="button button-secondary" style="align-self:flex-start; font-weight:600; border-radius:8px;">
-						Quản Lý 3D & WebXR AR →
-					</a>
+				<?php
+				$canonical_slugs = array(
+					'gioi-thieu'                 => 'Giới thiệu DeSpace',
+					'lien-he'                    => 'Liên hệ & Showroom',
+					'chinh-sach-giao-hang'       => 'Chính sách giao hàng & lắp đặt',
+					'chinh-sach-doi-tra-bao-hanh'=> 'Chính sách đổi trả & bảo hành',
+					'chinh-sach-bao-mat'         => 'Chính sách bảo mật',
+					'dieu-khoan-mua-ban'         => 'Điều khoản mua bán',
+					'huong-dan-mua-hang-thanh-toan' => 'Hướng dẫn mua hàng & thanh toán',
+				);
+				?>
+				<div class="ds-table-wrap">
+					<table class="ds-table">
+						<thead>
+							<tr>
+								<th>Trang nội dung</th>
+								<th>Đường dẫn chuẩn</th>
+								<th>Trạng thái</th>
+								<th style="text-align:right;">Thao tác</th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $canonical_slugs as $slug => $label ) : ?>
+								<?php
+								$page_obj = get_page_by_path( $slug, OBJECT, 'page' );
+								$is_pub   = ( $page_obj instanceof WP_Post && 'publish' === $page_obj->post_status );
+								?>
+								<tr>
+									<td><strong><?php echo esc_html( $label ); ?></strong></td>
+									<td><code>/<?php echo esc_html( $slug ); ?>/</code></td>
+									<td>
+										<span class="ds-pill <?php echo $is_pub ? 'ds-pill--success' : 'ds-pill--danger'; ?>">
+											<?php echo $is_pub ? 'Đã xuất bản ✓' : 'Chưa có / Nháp'; ?>
+										</span>
+									</td>
+									<td style="text-align:right;">
+										<?php if ( $page_obj instanceof WP_Post ) : ?>
+											<a href="<?php echo esc_url( get_edit_post_link( $page_obj->ID, '' ) ); ?>" class="button button-small">Sửa</a>
+											<a href="<?php echo esc_url( get_permalink( $page_obj->ID ) ); ?>" target="_blank" rel="noopener noreferrer" class="button button-small">Xem ↗</a>
+										<?php else : ?>
+											<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=page' ) ); ?>" class="button button-small">Tạo mới</a>
+										<?php endif; ?>
+									</td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
 				</div>
-
-				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:24px 26px; box-shadow:0 2px 10px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between;">
-					<div>
-						<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-							<span style="background:#EFF6FF; color:#2563EB; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">👥</span>
-							<h3 style="font-size:17px; font-weight:700; margin:0; color:#1C1917;">Phân Quyền 5 Thành Viên Nhóm (RBAC)</h3>
-						</div>
-						<p style="color:#6B635B; font-size:13.5px; line-height:1.6; margin:0 0 16px;">
-							Xem phân chia trách nhiệm và ma trận phân quyền của Member 01 đến Member 05 theo đúng đồ án chuyển đổi nền tảng DeSpace.
-						</p>
-					</div>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=rbac' ) ); ?>" class="button button-secondary" style="align-self:flex-start; font-weight:600; border-radius:8px;">
-						Xem Ma Trận Phân Quyền →
-					</a>
-				</div>
-
-				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:24px 26px; box-shadow:0 2px 10px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between;">
-					<div>
-						<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-							<span style="background:#EEF2FF; color:#4F46E5; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">📈</span>
-							<h3 style="font-size:17px; font-weight:700; margin:0; color:#1C1917;">Báo Cáo Doanh Thu & KPI Kinh Doanh (M5)</h3>
-						</div>
-						<p style="color:#6B635B; font-size:13.5px; line-height:1.6; margin:0 0 16px;">
-							Thống kê doanh thu hợp lệ, quy đổi AOV, lọc theo khoảng ngày, phân tích trạng thái đơn hàng HPOS và xếp hạng Top 10 sản phẩm bán chạy nhất.
-						</p>
-					</div>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-reports' ) ); ?>" class="button button-primary" style="align-self:flex-start; font-weight:600; border-radius:8px; background:#4F46E5; border-color:#4338CA;">
-						Vào Bảng Báo Cáo Doanh Thu →
-					</a>
-				</div>
-
-				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:24px 26px; box-shadow:0 2px 10px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between;">
-					<div>
-						<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-							<span style="background:#FEF2F2; color:#DC2626; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">📋</span>
-							<h3 style="font-size:17px; font-weight:700; margin:0; color:#1C1917;">Nhật Ký Kiểm Toán Tồn Kho (Audit Logs)</h3>
-						</div>
-						<p style="color:#6B635B; font-size:13.5px; line-height:1.6; margin:0 0 16px;">
-							Truy vết thời gian thực mọi biến động tồn kho khi mua hàng hoặc cập nhật số lượng. Lưu trữ minh bạch, hỗ trợ xuất CSV.
-						</p>
-					</div>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=inventory' ) ); ?>" class="button button-secondary" style="align-self:flex-start; font-weight:600; border-radius:8px;">
-						Kiểm Toán Tồn Kho →
-					</a>
-				</div>
-
-			</div>
+			</section>
 		<?php endif; ?>
 
-		<!-- ========================================== -->
-		<!-- TAB 2: ASSET AUTO-RECOVERY & 3D FIX -->
-		<!-- ========================================== -->
-		<?php if ( 'assets' === $current_tab ) : ?>
-			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:32px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
-				
-				<div style="border-bottom:1px solid #ECE7E1; padding-bottom:20px; margin-bottom:28px;">
-					<h2 style="font-size:22px; font-weight:700; color:#1C1917; margin:0 0 8px;">Trình Quản Lý & Khôi Phục Hình Ảnh, Mô Hình 3D AR</h2>
-					<p style="font-size:14px; color:#6B635B; margin:0; line-height:1.6;">
-						Giải thích: Khi thành viên mới kéo code về qua Git, thư mục <code>wp-content/uploads/</code> (hơn 400MB) không lưu trên Git để tránh nặng kho chứa. Trang này giúp bạn khôi phục lại toàn bộ ảnh sản phẩm thực tế và file 3D chỉ với 1 cú click chuột!
-					</p>
+		<?php if ( 'rbac' === $active_tab ) : ?>
+			<?php
+			$wp_roles_obj = wp_roles();
+			$user_counts  = count_users();
+			$avail_roles  = $user_counts['avail_roles'] ?? array();
+			$tracked_caps = array(
+				'manage_options'              => 'Quản trị hệ thống',
+				'manage_woocommerce'          => 'Quản lý cửa hàng & Đơn',
+				'view_despace_reports'        => 'Báo cáo Doanh thu (M5)',
+				'view_despace_inventory_logs' => 'Nhật ký Kho (M4)',
+				'manage_despace_3d'           => 'Quản lý 3D & AR',
+				'edit_despace_products'       => 'Sửa dữ liệu SP DeSpace',
+			);
+			$role_order = array(
+				'administrator' => 'Quản trị viên cấp cao (Toàn quyền hệ thống, bảo mật, cài đặt API)',
+				'shop_manager'  => 'Quản lý cửa hàng WooCommerce (Sản phẩm, đơn hàng, showroom)',
+				'despace_staff' => 'Nhân viên vận hành DeSpace (Báo cáo M5, Nhật ký Kho M4, Danh mục 3D)',
+				'customer'      => 'Khách hàng (Chỉ truy cập tài khoản cá nhân & đơn đã mua)',
+			);
+			?>
+			<section class="ds-panel">
+				<div class="ds-panel__header">
+					<div>
+						<h2 class="ds-panel__title">Ma trận Phân quyền Thực tế (Đọc trực tiếp từ WordPress RBAC)</h2>
+						<p class="ds-panel__desc">Hiển thị vai trò, số lượng tài khoản thực tế và quyền hạn (capabilities) đang áp dụng trong cơ sở dữ liệu.</p>
+					</div>
+					<a href="<?php echo esc_url( admin_url( 'users.php' ) ); ?>" class="ds-btn ds-btn--primary">Quản lý &amp; Gán vai trò người dùng →</a>
 				</div>
 
-				<!-- Live Diagnostic Status -->
-				<h3 style="font-size:16px; font-weight:700; color:#1C1917; margin:0 0 16px;">1. Tình Trạng Thư Mục Assets Hiện Tại Trên Máy Bạn</h3>
-				<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:18px; margin-bottom:32px;">
-					
-					<div style="background:#FBF9F7; border:1px solid <?php echo $has_catalog_dir ? '#10B981' : '#F59E0B'; ?>; border-radius:12px; padding:18px 20px;">
-						<div style="font-size:13px; font-weight:700; color:#78716C; text-transform:uppercase;">Thư Mục Ảnh Sản Phẩm</div>
-						<div style="font-size:20px; font-weight:800; color:<?php echo $has_catalog_dir ? '#059669' : '#D97706'; ?>; margin:8px 0 4px;">
-							<?php echo $has_catalog_dir ? '✓ Đã Có Ảnh Đầy Đủ' : '⚠️ Chưa Có Thư Mục Ảnh'; ?>
-						</div>
-						<div style="font-size:12.5px; color:#78716C;">
-							<code>wp-content/uploads/despace-catalog/</code>
-						</div>
-					</div>
+				<div class="ds-table-wrap">
+					<table class="ds-table">
+						<thead>
+							<tr>
+								<th>Vai trò (Role)</th>
+								<th style="text-align:center;">Số tài khoản</th>
+								<?php foreach ( $tracked_caps as $cap_label ) : ?>
+									<th style="text-align:center;"><?php echo esc_html( $cap_label ); ?></th>
+								<?php endforeach; ?>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $role_order as $role_slug => $role_desc ) : ?>
+								<?php
+								$role_obj   = $wp_roles_obj ? $wp_roles_obj->get_role( $role_slug ) : null;
+								$role_name  = $wp_roles_obj->role_names[ $role_slug ] ?? $role_slug;
+								$role_count = (int) ( $avail_roles[ $role_slug ] ?? 0 );
+								?>
+								<tr>
+									<td>
+										<strong><?php echo esc_html( translate_user_role( $role_name ) ); ?></strong>
+										<code style="margin-left:6px; font-size:12px;"><?php echo esc_html( $role_slug ); ?></code>
+										<div style="font-size:12.5px; color:#57534e; margin-top:3px;"><?php echo esc_html( $role_desc ); ?></div>
+									</td>
+									<td style="text-align:center;">
+										<a href="<?php echo esc_url( admin_url( 'users.php?role=' . rawurlencode( $role_slug ) ) ); ?>" class="ds-pill ds-pill--neutral" style="text-decoration:none;">
+											<?php echo esc_html( number_format_i18n( $role_count ) ); ?> tài khoản
+										</a>
+									</td>
+									<?php foreach ( $tracked_caps as $cap_key => $cap_label ) : ?>
+										<?php
+										$has_cap = $role_obj && $role_obj->has_cap( $cap_key );
+										?>
+										<td style="text-align:center;">
+											<?php if ( $has_cap ) : ?>
+												<span class="ds-pill ds-pill--success" aria-label="Có quyền">✓ Có</span>
+											<?php else : ?>
+												<span style="color:#a8a29e;" aria-label="Không có quyền">—</span>
+											<?php endif; ?>
+										</td>
+									<?php endforeach; ?>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
+			</section>
+		<?php endif; ?>
 
-					<div style="background:#FBF9F7; border:1px solid <?php echo ( $has_3d_dir && $models_count >= 30 ) ? '#10B981' : '#EF4444'; ?>; border-radius:12px; padding:18px 20px;">
-						<div style="font-size:13px; font-weight:700; color:#78716C; text-transform:uppercase;">Thư Mục Mô Hình 3D AR</div>
-						<div style="font-size:20px; font-weight:800; color:<?php echo ( $has_3d_dir && $models_count >= 30 ) ? '#059669' : '#DC2626'; ?>; margin:8px 0 4px;">
-							<?php echo ( $has_3d_dir && $models_count >= 30 ) ? "✓ Đã Có $models_count Mô Hình 3D" : "⚠️ Đang Có $models_count/32 Mô Hình"; ?>
-						</div>
-						<div style="font-size:12.5px; color:#78716C;">
-							<code>wp-content/uploads/3d/</code>
-						</div>
+		<?php if ( 'tools' === $active_tab ) : ?>
+			<section class="ds-panel">
+				<div class="ds-panel__header">
+					<div>
+						<h2 class="ds-panel__title">1. Khôi phục Ảnh sản phẩm &amp; Mô hình 3D từ uploads.zip</h2>
+						<p class="ds-panel__desc">Giải nén an toàn vào <code>wp-content/uploads/</code> (chỉ cho phép tệp ảnh, GLB, USDZ; tự động chặn Zip Slip và mã thực thi).</p>
 					</div>
-
-					<div style="background:#FBF9F7; border:1px solid <?php echo $detected_zip ? '#10B981' : '#6B7280'; ?>; border-radius:12px; padding:18px 20px;">
-						<div style="font-size:13px; font-weight:700; color:#78716C; text-transform:uppercase;">Tệp Đóng Gói uploads.zip</div>
-						<div style="font-size:20px; font-weight:800; color:<?php echo $detected_zip ? '#059669' : '#4B5563'; ?>; margin:8px 0 4px;">
-							<?php echo $detected_zip ? '✓ Đã Tìm Thấy File Zip' : '❌ Chưa Tìm Thấy Zip'; ?>
-						</div>
-						<div style="font-size:12.5px; color:#78716C;">
-							<?php echo $detected_zip ? esc_html( basename( $detected_zip ) . ' (' . size_format( filesize( $detected_zip ) ) . ')' ) : 'Chưa có uploads.zip trên máy'; ?>
-						</div>
-					</div>
-
 				</div>
 
-				<!-- Action Section 1: Auto-Unzip -->
-				<h3 style="font-size:16px; font-weight:700; color:#1C1917; margin:0 0 16px;">2. Giải Nén Tự Động (1-Click Restore)</h3>
+				<div class="ds-kpi-grid" style="margin-bottom:18px;">
+					<div class="ds-kpi-card">
+						<span class="ds-kpi-card__label">Ảnh danh mục</span>
+						<div class="ds-kpi-card__value" style="font-size:20px;"><?php echo $has_catalog_dir ? 'Đã có đầy đủ ✓' : 'Chưa có thư mục'; ?></div>
+						<span class="ds-kpi-card__meta"><code>wp-content/uploads/despace-catalog/</code></span>
+					</div>
+					<div class="ds-kpi-card">
+						<span class="ds-kpi-card__label">Mô hình 3D &amp; AR</span>
+						<div class="ds-kpi-card__value" style="font-size:20px;"><?php echo esc_html( sprintf( '%d GLB · %d USDZ', $glb_count, $usdz_count ) ); ?></div>
+						<span class="ds-kpi-card__meta"><code>wp-content/uploads/3d/</code></span>
+					</div>
+					<div class="ds-kpi-card">
+						<span class="ds-kpi-card__label">Gói uploads.zip trên máy chủ</span>
+						<div class="ds-kpi-card__value" style="font-size:20px;"><?php echo $detected_zip ? 'Đã phát hiện ✓' : 'Chưa đặt sẵn'; ?></div>
+						<span class="ds-kpi-card__meta">
+							<?php echo $detected_zip ? esc_html( basename( $detected_zip ) . ' (' . size_format( filesize( $detected_zip ) ) . ')' ) : 'Có thể tải tệp .zip trực tiếp bên dưới'; ?>
+						</span>
+					</div>
+				</div>
+
 				<?php if ( $detected_zip ) : ?>
-					<div style="background:#ECFDF5; border:2px solid #10B981; border-radius:14px; padding:24px; margin-bottom:28px;">
-						<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
-							<div>
-								<h4 style="margin:0 0 6px; color:#065F46; font-size:17px; font-weight:700;">🚀 Phát Hiện Tệp Nén: <?php echo esc_html( basename( $detected_zip ) ); ?> (<?php echo size_format( filesize( $detected_zip ) ); ?>)</h4>
-								<p style="margin:0; color:#047857; font-size:14px; line-height:1.5;">
-									Tệp đóng gói chứa toàn bộ ảnh sản phẩm thực tế và 32 thư mục 3D model đã sẵn sàng trên hệ thống. Bấm nút bên phải để tự động giải nén vào <code>wp-content/uploads/</code>!
-								</p>
-							</div>
-							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-								<?php wp_nonce_field( 'despace_hub_unzip_nonce' ); ?>
-								<input type="hidden" name="action" value="despace_hub_unzip_uploads" />
-								<button type="submit" class="button button-primary" style="background:#059669; border-color:#047857; font-size:15px; font-weight:700; padding:10px 24px; height:auto; border-radius:8px;" onclick="this.innerHTML='⏳ Đang giải nén... vui lòng chờ khoảng 5-10 giây'; this.style.pointerEvents='none';">
-									⚡ BẤM GIẢI NÉN & NẠP ẢNH + 3D NGAY
-								</button>
-							</form>
+					<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; padding:18px 20px; background:#f0fdf4; border:1px solid #86efac; border-radius:10px; margin-bottom:16px;">
+						<div>
+							<strong style="color:#166534; font-size:15px;">Phát hiện gói tài sản: <?php echo esc_html( basename( $detected_zip ) ); ?> (<?php echo esc_html( size_format( filesize( $detected_zip ) ) ); ?>)</strong>
+							<p style="margin:4px 0 0; color:#15803d; font-size:13.5px;">Bấm nút bên phải để giải nén an toàn vào <code>wp-content/uploads/</code>.</p>
 						</div>
-					</div>
-				<?php else : ?>
-					<div style="background:#FFFBEB; border:1px solid #F59E0B; border-radius:14px; padding:20px; margin-bottom:28px;">
-						<h4 style="margin:0 0 6px; color:#92400E; font-size:15px; font-weight:700;">💡 Hướng Dẫn Tải Tệp uploads.zip Dành Cho Thành Viên:</h4>
-						<ol style="margin:8px 0 0 20px; color:#78350F; font-size:13.5px; line-height:1.6;">
-							<li>Nhận tệp <code>uploads.zip</code> (~250MB) từ Trưởng nhóm (qua Google Drive / Zalo).</li>
-							<li>Chép file <code>uploads.zip</code> vào thư mục gốc của dự án DeSpace hoặc tải trực tiếp lên bằng form dưới đây.</li>
-							<li>Tải lại trang này và bấm nút <strong>"Giải nén & Nạp ảnh + 3D ngay"</strong>!</li>
-						</ol>
-						
-						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data" style="margin-top:16px;">
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 							<?php wp_nonce_field( 'despace_hub_unzip_nonce' ); ?>
 							<input type="hidden" name="action" value="despace_hub_unzip_uploads" />
-							<input type="file" name="upload_zip_file" accept=".zip" style="margin-right:10px;" />
-							<button type="submit" class="button button-secondary" style="font-weight:600;">Tải Lên & Giải Nén</button>
+							<button type="submit" class="ds-btn ds-btn--primary" onclick="this.textContent='Đang giải nén...';">
+								Giải nén &amp; Nạp Tài sản ngay
+							</button>
 						</form>
 					</div>
+				<?php else : ?>
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:16px 18px; background:#faf8f5; border:1px solid #e7e3dc; border-radius:10px;">
+						<?php wp_nonce_field( 'despace_hub_unzip_nonce' ); ?>
+						<input type="hidden" name="action" value="despace_hub_unzip_uploads" />
+						<input type="file" name="upload_zip_file" accept=".zip" required />
+						<button type="submit" class="ds-btn ds-btn--dark">Tải lên &amp; Giải nén an toàn</button>
+					</form>
 				<?php endif; ?>
+			</section>
 
-				<!-- Action Section 2: URL Repair Tool -->
-				<h3 style="font-size:16px; font-weight:700; color:#1C1917; margin:0 0 16px;">3. Tự Động Sửa Đường Dẫn Link Ảnh & 3D Theo Cổng Máy Hiện Tại</h3>
-				<div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:14px; padding:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+			<section class="ds-panel">
+				<div class="ds-panel__header">
 					<div>
-						<h4 style="margin:0 0 4px; color:#1E40AF; font-size:15px; font-weight:700;">🔧 Khắc phục lỗi ảnh bị gãy link do lệch cổng (8088 / 8090 / 10016)</h4>
-						<p style="margin:0; color:#1D4ED8; font-size:13.5px; line-height:1.5;">
-							Công cụ này sẽ tự động quét cơ sở dữ liệu và thay thế toàn bộ link ảnh/3D cũ thành đúng cổng <code><?php echo esc_html( home_url() ); ?></code> trên máy bạn.
-						</p>
+						<h2 class="ds-panel__title">2. Đồng bộ đường dẫn URL sau khi đổi cổng / tên miền</h2>
+						<p class="ds-panel__desc">Quét và thay thế các URL localhost cũ (8088, 8090, 10016, 8080) về đúng tên miền hiện tại <code><?php echo esc_html( home_url() ); ?></code> (bảo toàn dữ liệu serialized).</p>
 					</div>
 					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 						<?php wp_nonce_field( 'despace_hub_repair_nonce' ); ?>
 						<input type="hidden" name="action" value="despace_hub_repair_urls" />
-						<button type="submit" class="button button-primary" style="background:#2563EB; border-color:#1D4ED8; font-weight:700; padding:8px 20px; height:auto; border-radius:8px;">
-							🔧 TỰ ĐỘNG SỬA ĐƯỜNG DẪN LINK
-						</button>
+						<button type="submit" class="ds-btn ds-btn--dark">Chạy đồng bộ đường dẫn</button>
 					</form>
 				</div>
+			</section>
 
-			</div>
+			<?php if ( 'local' === $env_type ) : ?>
+				<section class="ds-panel">
+					<div class="ds-panel__header">
+						<div>
+							<h2 class="ds-panel__title">3. Tiện ích Môi trường Local (Docker)</h2>
+							<p class="ds-panel__desc">Chỉ hiển thị khi <code>WP_ENVIRONMENT_TYPE === 'local'</code> — tự động ẩn trên môi trường Production.</p>
+						</div>
+					</div>
+					<div style="display:flex; gap:10px; flex-wrap:wrap;">
+						<a href="http://localhost:8026/" target="_blank" rel="noopener noreferrer" class="ds-btn ds-btn--outline">Mở Mailpit (Hộp thư test) ↗</a>
+						<a href="<?php echo esc_url( admin_url( 'site-health.php' ) ); ?>" class="ds-btn ds-btn--outline">WordPress Site Health</a>
+						<a href="<?php echo esc_url( admin_url( 'options-permalink.php' ) ); ?>" class="ds-btn ds-btn--outline">Làm mới Permalinks</a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wc-status&tab=tools' ) ); ?>" class="ds-btn ds-btn--outline">Công cụ WooCommerce</a>
+					</div>
+				</section>
+			<?php endif; ?>
 		<?php endif; ?>
-
-		<!-- ========================================== -->
-		<!-- TAB 3: 3D MODELS & WEBXR AR MATRIX -->
-		<!-- ========================================== -->
-		<?php if ( '3d' === $current_tab ) : ?>
-			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:32px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
-				<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
-					<div>
-						<h2 style="font-size:22px; font-weight:700; color:#1C1917; margin:0 0 6px;">Ma Trận Mô Hình 3D PBR & WebXR Augmented Reality (AR)</h2>
-						<p style="font-size:14px; color:#6B635B; margin:0;">
-							Tổng hợp mô hình không gian ba chiều được nhúng trực tiếp vào sản phẩm nội thất DeSpace và liên kết với Ứng Dụng Desktop 3D Builder.
-						</p>
-					</div>
-					<div style="display:flex; align-items:center; gap:10px;">
-						<span id="despace-hub-desktop-agent-pill" style="display:inline-flex; align-items:center; gap:6px; background:#F3F4F6; border:1px solid #D1D5DB; color:#374151; font-size:12px; font-weight:700; padding:6px 14px; border-radius:99px;">
-							<span style="width:8px; height:8px; border-radius:50%; background:#9CA3AF; display:inline-block;" class="status-dot"></span>
-							<span class="status-label">Đang kiểm tra Desktop App...</span>
-						</span>
-						<span style="background:#ECFDF5; color:#059669; font-weight:700; padding:6px 16px; border-radius:99px; font-size:13px;">
-							✓ <?php echo intval( $models_count ); ?>/40 Mô hình GLB Sẵn Sàng
-						</span>
-					</div>
-				</div>
-
-				<!-- Desktop 3D Studio Connection Banner -->
-				<div style="background:linear-gradient(135deg, #FAF7F2 0%, #F5EBE1 100%); border:1.5px solid #E2D3C4; border-radius:14px; padding:20px 24px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
-					<div>
-						<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-							<span style="font-size:18px;">🖥️</span>
-							<h3 style="margin:0; font-size:16px; font-weight:700; color:#1C1917;">Ứng Dụng Desktop Xây Dựng 3D Tự Động (DeSpace 3D Studio Desktop)</h3>
-						</div>
-						<p style="margin:0; font-size:13.5px; color:#69645D; line-height:1.5; max-width:780px;">
-							Khi thêm sản phẩm mới với <strong>3–5 ảnh nhiều góc</strong> (Mặt trước, Góc 45°, Mặt bên, Mặt sau, Mặt trên), bạn có thể gửi yêu cầu trực tiếp sang <strong>Phần mềm Desktop</strong>. Phần mềm sẽ tự động dựng mô hình 3D chi tiết chuẩn nhất và tải ngược lên website! Hỗ trợ cả <strong>file Excel hàng loạt</strong>.
-						</p>
-					</div>
-					<div style="display:flex; gap:10px; align-items:center;">
-						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=product' ) ); ?>" class="button button-primary" style="background:#C25E3A; border-color:#C25E3A; font-weight:700; border-radius:8px; padding:8px 16px; height:auto;">
-							+ Thêm Sản Phẩm Mới (3-5 Ảnh)
-						</a>
-					</div>
-				</div>
-
-				<script>
-				(function(){
-					fetch('http://127.0.0.1:58300/api/health')
-						.then(r => r.json())
-						.then(d => {
-							var pill = document.getElementById('despace-hub-desktop-agent-pill');
-							if (pill && d && d.status === 'online') {
-								pill.style.background = '#ECFDF5';
-								pill.style.borderColor = '#10B981';
-								pill.style.color = '#065F46';
-								pill.querySelector('.status-dot').style.background = '#10B981';
-								pill.querySelector('.status-label').textContent = '🟢 Desktop 3D Studio Đang Chạy (Port 58300)';
-							}
-						})
-						.catch(() => {
-							var pill = document.getElementById('despace-hub-desktop-agent-pill');
-							if (pill) {
-								pill.style.background = '#FEF3C7';
-								pill.style.borderColor = '#F59E0B';
-								pill.style.color = '#92400E';
-								pill.querySelector('.status-dot').style.background = '#F59E0B';
-								pill.querySelector('.status-label').textContent = '🟡 REST API Sync Queue (Desktop App Chưa Mở)';
-							}
-						});
-				})();
-				</script>
-
-				<table class="wp-list-table widefat fixed striped" style="border-radius:10px; overflow:hidden; border:1px solid #E7E3DC;">
-					<thead>
-						<tr style="background:#F9F8F6;">
-							<th style="width:70px; font-weight:700;">Ảnh</th>
-							<th style="width:110px; font-weight:700;">Mã SKU</th>
-							<th style="font-weight:700;">Tên Sản Phẩm</th>
-							<th style="font-weight:700;">File 3D (.glb / .usdz)</th>
-							<th style="width:130px; font-weight:700;">Trạng Thái 3D</th>
-							<th style="width:120px; font-weight:700; text-align:center;">Thao Tác</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						$products_3d = get_posts( array(
-							'post_type'      => 'product',
-							'posts_per_page' => 40,
-							'post_status'    => 'publish',
-							'orderby'        => 'ID',
-							'order'          => 'ASC',
-						) );
-
-						if ( $products_3d ) :
-							foreach ( $products_3d as $p ) :
-								$sku = get_post_meta( $p->ID, '_sku', true );
-								$thumb_id = get_post_thumbnail_id( $p->ID );
-								$thumb_url = $thumb_id ? wp_get_attachment_image_url( $thumb_id, 'woocommerce_thumbnail' ) : content_url( '/themes/despace-child/assets/images/despace-app-icon.png' );
-								$glb_rel = "/wp-content/uploads/3d/{$sku}/model.glb";
-								$glb_exists = file_exists( ABSPATH . ltrim( $glb_rel, '/' ) );
-								?>
-								<tr>
-									<td>
-										<img src="<?php echo esc_url( $thumb_url ); ?>" style="width:48px; height:48px; object-fit:cover; border-radius:6px; border:1px solid #E7E3DC;" alt="" />
-									</td>
-									<td><strong><?php echo esc_html( $sku ?: 'N/A' ); ?></strong></td>
-									<td>
-										<a href="<?php echo esc_url( get_edit_post_link( $p->ID ) ); ?>" style="font-weight:600; text-decoration:none; color:#1C1917;">
-											<?php echo esc_html( $p->post_title ); ?>
-										</a>
-									</td>
-									<td style="font-size:12.5px; color:#6B635B;">
-										<code><?php echo esc_html( $glb_rel ); ?></code>
-									</td>
-									<td>
-										<?php if ( $glb_exists ) : ?>
-											<span style="color:#059669; font-weight:700; font-size:12.5px;">✓ Đã gắn GLB & AR</span>
-										<?php else : ?>
-											<span style="color:#D97706; font-weight:600; font-size:12.5px;">Thiếu file uploads</span>
-										<?php endif; ?>
-									</td>
-									<td style="text-align:center;">
-										<a href="<?php echo esc_url( get_permalink( $p->ID ) ); ?>" target="_blank" class="button button-small" style="font-weight:600;">
-											Xem Web ↗
-										</a>
-									</td>
-								</tr>
-								<?php
-							endforeach;
-						endif;
-						?>
-					</tbody>
-				</table>
-			</div>
-		<?php endif; ?>
-
-		<!-- ========================================== -->
-		<!-- TAB 4: MEMBER RBAC MATRIX -->
-		<!-- ========================================== -->
-		<?php if ( 'rbac' === $current_tab ) : ?>
-			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:32px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
-				<div style="border-bottom:1px solid #ECE7E1; padding-bottom:16px; margin-bottom:24px;">
-					<h2 style="font-size:22px; font-weight:700; color:#1C1917; margin:0 0 6px;">Ma Trận Phân Quyền Bảo Mật 5 Thành Viên (RBAC Matrix)</h2>
-					<p style="font-size:14px; color:#6B635B; margin:0;">
-						Mỗi thành viên trong đồ án DeSpace được cấp vai trò độc lập theo đúng nguyên tắc Least Privilege (Đặc quyền tối thiểu) đảm bảo an toàn tuyệt đối cho hệ sinh thái.
-					</p>
-				</div>
-
-				<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap:20px;">
-					
-					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:14px; padding:20px 22px;">
-						<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-							<span style="background:#1C1917; color:#fff; font-size:12px; font-weight:700; padding:3px 10px; border-radius:99px;">LEADER / ADMIN</span>
-							<code style="font-size:12px;">administrator</code>
-						</div>
-						<h3 style="margin:0 0 6px; font-size:16px; font-weight:700; color:#1C1917;">Trưởng Nhóm & Tổng Kiến Trúc Sư</h3>
-						<p style="font-size:13px; color:#6B635B; line-height:1.5; margin:0 0 12px;">
-							Toàn quyền quản trị cơ sở dữ liệu, quản trị phân quyền RBAC, triển khai hosting, quản lý cấu trúc code plugin và theme.
-						</p>
-						<div style="font-size:12px; color:#059669; font-weight:600;">✓ Toàn quyền Super-Admin (manage_options)</div>
-					</div>
-
-					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:14px; padding:20px 22px;">
-						<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-							<span style="background:#7C3AED; color:#fff; font-size:12px; font-weight:700; padding:3px 10px; border-radius:99px;">MEMBER 01</span>
-							<code style="font-size:12px;">despace_3d_specialist</code>
-						</div>
-						<h3 style="margin:0 0 6px; font-size:16px; font-weight:700; color:#1C1917;">Chuyên Gia 3D AR & Showroom Ảo</h3>
-						<p style="font-size:13px; color:#6B635B; line-height:1.5; margin:0 0 12px;">
-							Chịu trách nhiệm 32 mô hình GLB/USDZ, cấu hình ánh sáng Studio/Warm, tối ưu WebXR AR và trang bài trí không gian sống AR Room Visualizer.
-						</p>
-						<div style="font-size:12px; color:#2563EB; font-weight:600;">Quyền: edit_despace_3d_models, view_showroom</div>
-					</div>
-
-					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:14px; padding:20px 22px;">
-						<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-							<span style="background:#059669; color:#fff; font-size:12px; font-weight:700; padding:3px 10px; border-radius:99px;">MEMBER 02</span>
-							<code style="font-size:12px;">despace_catalog_manager</code>
-						</div>
-						<h3 style="margin:0 0 6px; font-size:16px; font-weight:700; color:#1C1917;">Quản Lý Danh Mục & Trưng Bày</h3>
-						<p style="font-size:13px; color:#6B635B; line-height:1.5; margin:0 0 12px;">
-							Chịu trách nhiệm 40 sản phẩm, 5 danh mục phòng, 21 biến thể màu sắc vân gỗ chuẩn và bộ lọc AJAX Filter Sidebar.
-						</p>
-						<div style="font-size:12px; color:#059669; font-weight:600;">Quyền: edit_products, manage_product_terms</div>
-					</div>
-
-					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:14px; padding:20px 22px;">
-						<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-							<span style="background:#D97706; color:#fff; font-size:12px; font-weight:700; padding:3px 10px; border-radius:99px;">MEMBER 03</span>
-							<code style="font-size:12px;">despace_checkout_manager</code>
-						</div>
-						<h3 style="margin:0 0 6px; font-size:16px; font-weight:700; color:#1C1917;">Kiến Trúc Sư Thanh Toán & Đơn Hàng</h3>
-						<p style="font-size:13px; color:#6B635B; line-height:1.5; margin:0 0 12px;">
-							Chịu trách nhiệm giỏ hàng Mini-Cart, luồng thanh toán HPOS, chuẩn hóa 63 tỉnh thành Việt Nam 2025, cổng thanh toán BACS và mã vận đơn.
-						</p>
-						<div style="font-size:12px; color:#D97706; font-weight:600;">Quyền: manage_woocommerce_orders, view_hpos</div>
-					</div>
-
-					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:14px; padding:20px 22px;">
-						<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-							<span style="background:#DC2626; color:#fff; font-size:12px; font-weight:700; padding:3px 10px; border-radius:99px;">MEMBER 04</span>
-							<code style="font-size:12px;">despace_inventory_manager</code>
-						</div>
-						<h3 style="margin:0 0 6px; font-size:16px; font-weight:700; color:#1C1917;">Kiểm Soát Tồn Kho & Chuỗi Cung Ứng</h3>
-						<p style="font-size:13px; color:#6B635B; line-height:1.5; margin:0 0 12px;">
-							Chịu trách nhiệm bảo toàn kho hàng, ngăn chặn race condition khi nhiều người mua đồng thời, quản lý bảng kiểm toán <code>despace_inventory_logs</code>.
-						</p>
-						<div style="font-size:12px; color:#DC2626; font-weight:600;">Quyền: manage_inventory_logs, audit_stock</div>
-					</div>
-
-					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:14px; padding:20px 22px;">
-						<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-							<span style="background:#2563EB; color:#fff; font-size:12px; font-weight:700; padding:3px 10px; border-radius:99px;">MEMBER 05</span>
-							<code style="font-size:12px;">despace_staff</code>
-						</div>
-						<h3 style="margin:0 0 6px; font-size:16px; font-weight:700; color:#1C1917;">Báo Cáo Doanh Thu & Vận Hành Cửa Hàng</h3>
-						<p style="font-size:13px; color:#6B635B; line-height:1.5; margin:0 0 12px;">
-							Chịu trách nhiệm phân tích doanh số, hiệu suất bán hàng HPOS, bộ lọc thời gian thực tế, quản trị đánh giá và báo cáo KPI tài chính.
-						</p>
-						<div style="font-size:12px; color:#2563EB; font-weight:600;">Quyền: view_despace_reports, view_despace_inventory_logs, manage_despace_3d</div>
-					</div>
-
-				</div>
-			</div>
-		<?php endif; ?>
-
-		<!-- ========================================== -->
-		<!-- TAB 5: INVENTORY AUDIT LOGS -->
-		<!-- ========================================== -->
-		<?php if ( 'inventory' === $current_tab ) : ?>
-			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:32px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
-				<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
-					<div>
-						<h2 style="font-size:22px; font-weight:700; color:#1C1917; margin:0 0 6px;">Nhật Ký Kiểm Toán Tồn Kho Thời Gian Thực</h2>
-						<p style="font-size:14px; color:#6B635B; margin:0;">
-							Lưu trữ minh bạch mọi hành vi biến động số lượng sản phẩm (bán ra, nhập kho, chỉnh sửa quản trị).
-						</p>
-					</div>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-inventory-logs' ) ); ?>" class="button button-primary" style="background:#2563EB; border-color:#1D4ED8; font-weight:600; border-radius:8px;">
-						Xem Toàn Bộ <?php echo number_format_i18n( $log_count ); ?> Bản Ghi →
-					</a>
-				</div>
-
-				<table class="wp-list-table widefat fixed striped" style="border-radius:10px; overflow:hidden; border:1px solid #E7E3DC;">
-					<thead>
-						<tr style="background:#F9F8F6;">
-							<th style="width:140px; font-weight:700;">Thời Gian</th>
-							<th style="width:100px; font-weight:700;">Mã SP</th>
-							<th style="font-weight:700;">Tên Sản Phẩm</th>
-							<th style="width:120px; font-weight:700; text-align:center;">Biến Động</th>
-							<th style="width:110px; font-weight:700; text-align:center;">Tồn Sau</th>
-							<th style="font-weight:700;">Hành Động / Ghi Chú</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						$recent_logs = array();
-						if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $log_table ) ) ) {
-							$recent_logs = $wpdb->get_results( "SELECT * FROM {$log_table} ORDER BY id DESC LIMIT 10" );
-						}
-
-						if ( $recent_logs ) :
-							foreach ( $recent_logs as $log ) :
-								$delta = (int) ( $log->quantity_delta ?? 0 );
-								?>
-								<tr>
-									<td style="font-size:12.5px; color:#6B635B;"><?php echo esc_html( $log->created_at ?? '' ); ?></td>
-									<td><strong>#<?php echo esc_html( $log->product_id ?? '' ); ?></strong></td>
-									<td style="font-weight:600; color:#1C1917;"><?php echo esc_html( get_the_title( $log->product_id ?? 0 ) ?: 'N/A' ); ?></td>
-									<td style="text-align:center; font-weight:700; color:<?php echo ( $delta < 0 ) ? '#DC2626' : '#059669'; ?>;">
-										<?php echo ( $delta > 0 ) ? "+$delta" : "$delta"; ?>
-									</td>
-									<td style="text-align:center; font-weight:700;"><?php echo esc_html( $log->stock_after ?? $log->quantity_after ?? 0 ); ?></td>
-									<td style="font-size:13px; color:#4B5563;"><?php echo esc_html( $log->event_type ?? $log->action_type ?? 'Điều chỉnh hệ thống' ); ?></td>
-								</tr>
-								<?php
-							endforeach;
-						else :
-							?>
-							<tr>
-								<td colspan="6" style="text-align:center; padding:30px; color:#78716C;">
-									Chưa có bản ghi biến động tồn kho nào. Hệ thống sẽ tự động ghi nhật ký khi có đơn hàng hoặc điều chỉnh kho.
-								</td>
-							</tr>
-							<?php
-						endif;
-						?>
-					</tbody>
-				</table>
-			</div>
-		<?php endif; ?>
-
-		<!-- ========================================== -->
-		<!-- TAB 6: SHOWROOM & BRAND CONTACTS -->
-		<!-- ========================================== -->
-		<?php if ( 'showroom' === $current_tab ) : ?>
-			<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:32px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
-				<h2 style="font-size:22px; font-weight:700; color:#1C1917; margin:0 0 16px;">Thông Tin Thương Hiệu & Showroom Trải Nghiệm DeSpace</h2>
-				<table class="form-table" role="presentation">
-					<tbody>
-						<tr>
-							<th scope="row" style="font-weight:600; width:220px;">Tên thương hiệu:</th>
-							<td style="font-size:16px; font-weight:700; color:#1C1917;">DeSpace (Nội Thất Cao Cấp & Trải Nghiệm 3D AR)</td>
-						</tr>
-						<tr>
-							<th scope="row" style="font-weight:600;">Người đại diện:</th>
-							<td><strong>DeSpace Sáng lập & Giám đốc thiết kế</strong><br><span style="color:#78716C;">Tư vấn trực tiếp không gian sống & hoàn thiện nội thất cao cấp.</span></td>
-						</tr>
-						<tr>
-							<th scope="row" style="font-weight:600;">Địa chỉ Showroom:</th>
-							<td><strong>Số 20 ngách 21 ngõ 367, Phố Ngô Xuân Quảng, Xã Gia Lâm, Hà Nội</strong></td>
-						</tr>
-						<tr>
-							<th scope="row" style="font-weight:600;">Hotline tư vấn:</th>
-							<td><a href="tel:0332174590" style="font-size:16px; font-weight:700; color:#C25E3A; text-decoration:none;">0332 174 590</a></td>
-						</tr>
-						<tr>
-							<th scope="row" style="font-weight:600;">Email liên hệ:</th>
-							<td><a href="mailto:noithat@despace.vn" style="color:#2563EB; text-decoration:none;">noithat@despace.vn</a></td>
-						</tr>
-						<tr>
-							<th scope="row" style="font-weight:600;">Giờ mở cửa:</th>
-							<td><strong>08:30 – 21:30</strong> (Thứ 2 – Chủ Nhật hàng tuần)</td>
-						</tr>
-						<tr>
-							<th scope="row" style="font-weight:600;">Chính sách bảo hành:</th>
-							<td><strong>Bảo hành kết cấu 5 năm</strong> · 1 đổi 1 trong 30 ngày đối với lỗi từ nhà sản xuất.</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-		<?php endif; ?>
-
 	</div>
 	<?php
 }
 
-/** Render Showroom Information Page */
+/**
+ * Legacy fallback callback for despace-showroom-info (normal requests redirect via admin_init).
+ */
 function despace_render_showroom_info_page() {
-	?>
-	<div class="wrap" style="max-width:960px; margin:24px 20px 48px 0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-		<h1 style="font-size:24px; font-weight:700; color:#1C1917; margin-bottom:20px;">Thông Tin Thương Hiệu & Showroom DeSpace</h1>
-		
-		<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:32px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
-			<table class="form-table" role="presentation">
-				<tbody>
-					<tr>
-						<th scope="row" style="font-weight:600; width:220px;">Tên thương hiệu:</th>
-						<td style="font-size:16px; font-weight:700; color:#1C1917;">DeSpace (Nội Thất Cao Cấp & Trải Nghiệm 3D AR)</td>
-					</tr>
-					<tr>
-						<th scope="row" style="font-weight:600;">Người đại diện:</th>
-						<td><strong>DeSpace Sáng lập & Giám đốc thiết kế</strong><br><span style="color:#78716C;">Tư vấn trực tiếp không gian sống & hoàn thiện nội thất cao cấp.</span></td>
-					</tr>
-					<tr>
-						<th scope="row" style="font-weight:600;">Địa chỉ Showroom:</th>
-						<td><strong>Số 20 ngách 21 ngõ 367, Phố Ngô Xuân Quảng, Xã Gia Lâm, Hà Nội</strong></td>
-					</tr>
-					<tr>
-						<th scope="row" style="font-weight:600;">Hotline tư vấn:</th>
-						<td><a href="tel:0332174590" style="font-size:16px; font-weight:700; color:#C25E3A; text-decoration:none;">0332 174 590</a></td>
-					</tr>
-					<tr>
-						<th scope="row" style="font-weight:600;">Email liên hệ:</th>
-						<td><a href="mailto:noithat@despace.vn" style="color:#2563EB; text-decoration:none;">noithat@despace.vn</a></td>
-					</tr>
-					<tr>
-						<th scope="row" style="font-weight:600;">Giờ mở cửa:</th>
-						<td><strong>08:30 – 21:30</strong> (Thứ 2 – Chủ Nhật hàng tuần)</td>
-					</tr>
-					<tr>
-						<th scope="row" style="font-weight:600;">Chính sách bảo hành:</th>
-						<td><strong>Bảo hành kết cấu 5 năm</strong> · 1 đổi 1 trong 30 ngày đối với lỗi từ nhà sản xuất.</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-	</div>
-	<?php
+	if ( function_exists( 'despace_render_contact_admin_page' ) ) {
+		$_GET['tab'] = 'showroom';
+		despace_render_contact_admin_page();
+		return;
+	}
+	wp_safe_redirect( admin_url( 'admin.php?page=despace-contact-settings&tab=showroom' ) );
+	exit;
 }

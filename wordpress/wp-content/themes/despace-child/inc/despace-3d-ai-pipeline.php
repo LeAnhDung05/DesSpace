@@ -246,9 +246,12 @@ add_action( 'save_post_product', function( $post_id ) {
 } );
 
 /**
- * 3. Settings menu page in Settings -> DeSpace 3D AI
+ * 3. Settings menu page (standalone fallback when unified DeSpace Admin Cockpit is inactive).
  */
 add_action( 'admin_menu', function() {
+	if ( function_exists( 'despace_register_admin_hub_menu' ) ) {
+		return;
+	}
 	add_options_page(
 		'DeSpace 3D AI Settings',
 		'DeSpace 3D AI',
@@ -258,9 +261,9 @@ add_action( 'admin_menu', function() {
 	);
 } );
 
-function axgnud_3d_ai_settings_page() {
+function axgnud_3d_ai_settings_page( $embedded = false ) {
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( 'Bạn không có quyền truy cập trang cài đặt này.' );
+		wp_die( 'Bạn không có quyền truy cập trang cài đặt này.', 403 );
 	}
 	if ( isset( $_POST['axgnud_save_settings_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['axgnud_save_settings_nonce'] ) ), 'axgnud_save_settings' ) ) {
 		$key_fields = array(
@@ -275,15 +278,25 @@ function axgnud_3d_ai_settings_page() {
 				update_option( $opt_name, sanitize_text_field( wp_unslash( $_POST[ $opt_name ] ) ) );
 			}
 		}
-		echo '<div class="notice notice-success is-dismissible"><p>Đã lưu cấu hình AI Concierge & Cloud 3D thành công.</p></div>';
+		echo '<div class="notice notice-success is-dismissible" style="margin:0 0 18px;"><p>Đã lưu cấu hình AI Concierge &amp; Cloud 3D thành công.</p></div>';
 	}
 	$gemini_key = get_option( 'despace_gemini_api_key', '' );
 	$fal_key    = get_option( 'axgnud_fal_api_key', '' );
 	$tripo_key  = get_option( 'despace_tripo_api_key', '' );
 	?>
+	<?php if ( ! $embedded ) : ?>
 	<div class="wrap">
-		<h1>DeSpace Studio — AI Interior Concierge & Cloud 3D Settings</h1>
+		<h1>DeSpace Studio — AI Interior Concierge &amp; Cloud 3D Settings</h1>
 		<p>Cấu hình khóa API cho Trợ lý Nội thất AI (Gemini 2.5 Flash RAG) và hệ thống Cloud AI Image-to-3D (Fal.ai Trellis / Tripo3D v2).</p>
+	<?php else : ?>
+	<section class="ds-panel">
+		<div class="ds-panel__header">
+			<div>
+				<h2 class="ds-panel__title">Cài đặt AI Concierge &amp; Cloud Image-to-3D</h2>
+				<p class="ds-panel__desc">Cấu hình khóa API cho Trợ lý Nội thất AI (Gemini 2.5 Flash RAG) và hệ thống dựng 3D đám mây (Fal.ai Trellis / Tripo3D v2).</p>
+			</div>
+		</div>
+	<?php endif; ?>
 		<form method="post" action="">
 			<?php wp_nonce_field( 'axgnud_save_settings', 'axgnud_save_settings_nonce' ); ?>
 			<table class="form-table">
@@ -320,7 +333,11 @@ function axgnud_3d_ai_settings_page() {
 			</table>
 			<?php submit_button( 'Lưu Cài Đặt AI & 3D' ); ?>
 		</form>
+	<?php if ( ! $embedded ) : ?>
 	</div>
+	<?php else : ?>
+	</section>
+	<?php endif; ?>
 	<?php
 }
 

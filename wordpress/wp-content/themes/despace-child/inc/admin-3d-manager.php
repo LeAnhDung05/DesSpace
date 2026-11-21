@@ -13,14 +13,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * 1. Register Admin Menu Item
+ * Helper: Check whether the current user can manage 3D & AR catalog items.
+ */
+function axgnud_user_can_manage_3d() {
+	return current_user_can( 'manage_despace_3d' )
+		|| current_user_can( 'manage_woocommerce' )
+		|| current_user_can( 'manage_options' );
+}
+
+/**
+ * 1. Register Admin Menu Item (standalone fallback when unified DeSpace Cockpit is not active).
  */
 add_action( 'admin_menu', 'axgnud_register_3d_admin_menu' );
 function axgnud_register_3d_admin_menu() {
+	if ( function_exists( 'despace_register_admin_hub_menu' ) ) {
+		return;
+	}
+	$cap = current_user_can( 'manage_despace_3d' ) ? 'manage_despace_3d' : 'manage_woocommerce';
 	add_menu_page(
 		'3D & AR Management',
 		'3D & AR Studio',
-		'manage_woocommerce',
+		$cap,
 		'despace-3d-manager',
 		'axgnud_render_3d_manager_page',
 		'dashicons-visibility',
@@ -33,7 +46,7 @@ function axgnud_register_3d_admin_menu() {
  */
 add_action( 'admin_enqueue_scripts', 'axgnud_enqueue_3d_admin_assets' );
 function axgnud_enqueue_3d_admin_assets( $hook ) {
-	if ( 'toplevel_page_despace-3d-manager' !== $hook ) {
+	if ( false === strpos( (string) $hook, 'despace-3d-manager' ) ) {
 		return;
 	}
 
@@ -54,6 +67,29 @@ function axgnud_enqueue_3d_admin_assets( $hook ) {
 }
 
 /**
+ * Early permission guard for admin-only tabs inside Xưởng 3D & AR Studio
+ * so unauthorized requests receive a true HTTP 403 before admin headers are emitted.
+ */
+add_action( 'admin_init', 'axgnud_guard_3d_manager_tabs', 4 );
+function axgnud_guard_3d_manager_tabs() {
+	if ( ! is_admin() || wp_doing_ajax() ) {
+		return;
+	}
+	$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+	if ( 'despace-3d-manager' !== $page ) {
+		return;
+	}
+	$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'catalog';
+	if ( in_array( $tab, array( 'desktop', 'ai' ), true ) && ! current_user_can( 'manage_options' ) ) {
+		wp_die(
+			'Bạn cần quyền Quản trị viên (manage_options) để truy cập mục này.',
+			'Truy cập bị từ chối',
+			array( 'response' => 403 )
+		);
+	}
+}
+
+/**
  * 3. Handle CSV Export
  */
 add_action( 'admin_init', 'axgnud_handle_3d_csv_export' );
@@ -62,8 +98,8 @@ function axgnud_handle_3d_csv_export() {
 		return;
 	}
 
-	if ( ! current_user_can( 'manage_woocommerce' ) ) {
-		wp_die( 'Access denied' );
+	if ( ! axgnud_user_can_manage_3d() ) {
+		wp_die( 'Access denied', 403 );
 	}
 
 	check_admin_referer( 'axgnud_export_csv_nonce' );
@@ -121,8 +157,8 @@ add_action( 'wp_ajax_axgnud_save_product_3d', 'axgnud_ajax_save_product_3d' );
 function axgnud_ajax_save_product_3d() {
 	if ( ! check_ajax_referer( 'despace_3d_manager_nonce', 'nonce', false ) && ! check_ajax_referer( 'axgnud_3d_manager_nonce', 'nonce', false ) ) { wp_send_json_error( array( 'message' => 'Invalid security token' ) ); }
 
-	if ( ! current_user_can( 'manage_woocommerce' ) ) {
-		wp_send_json_error( array( 'message' => 'Quyền hạn không hợp lệ.' ) );
+	if ( ! axgnud_user_can_manage_3d() ) {
+		wp_send_json_error( array( 'message' => 'Quyền hạn không hợp lệ.' ), 403 );
 	}
 
 	global $wpdb;
@@ -222,8 +258,8 @@ add_action( 'wp_ajax_axgnud_sync_catalog_3d', 'axgnud_ajax_sync_catalog_3d' );
 function axgnud_ajax_sync_catalog_3d() {
 	if ( ! check_ajax_referer( 'despace_3d_manager_nonce', 'nonce', false ) && ! check_ajax_referer( 'axgnud_3d_manager_nonce', 'nonce', false ) ) { wp_send_json_error( array( 'message' => 'Invalid security token' ) ); }
 
-	if ( ! current_user_can( 'manage_woocommerce' ) ) {
-		wp_send_json_error( array( 'message' => 'Quyền hạn không hợp lệ.' ) );
+	if ( ! axgnud_user_can_manage_3d() ) {
+		wp_send_json_error( array( 'message' => 'Quyền hạn không hợp lệ.' ), 403 );
 	}
 
 	global $wpdb;
@@ -299,10 +335,222 @@ function axgnud_ajax_get_product_3d_dynamic() {
 }
 
 /**
- * 7. Render Admin Dashboard Page
+ * 7. Render Admin Dashboard Page (Xưởng 3D & AR Studio: 3 tabs — catalog | desktop | ai)
  */
 function axgnud_render_3d_manager_page() {
+	if ( ! axgnud_user_can_manage_3d() ) {
+		wp_die( 'Bạn không có quyền truy cập Xưởng 3D & AR Studio.', 403 );
+	}
+
 	global $wpdb;
+
+	$can_admin   = current_user_can( 'manage_options' );
+	$active_tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'catalog';
+	if ( ! in_array( $active_tab, array( 'catalog', 'desktop', 'ai' ), true ) ) {
+		$active_tab = 'catalog';
+	}
+	if ( in_array( $active_tab, array( 'desktop', 'ai' ), true ) && ! $can_admin ) {
+		wp_die( 'Bạn cần quyền Quản trị viên (manage_options) để truy cập mục này.', 403 );
+	}
+
+	$has_cockpit = function_exists( 'despace_render_admin_cockpit_header' );
+	$csv_url     = wp_nonce_url( admin_url( 'admin.php?page=despace-3d-manager&action=export_csv' ), 'axgnud_export_csv_nonce' );
+
+	$render_studio_shell = static function ( string $tab ) use ( $has_cockpit, $can_admin, $csv_url ) {
+		if ( $has_cockpit ) {
+			$actions = array();
+			if ( 'catalog' === $tab ) {
+				$actions[] = array(
+					'label' => 'Đồng Bộ Danh Mục',
+					'type'  => 'button',
+					'id'    => 'axBtnSyncCatalog',
+					'style' => 'primary',
+				);
+				$actions[] = array(
+					'label' => 'Xuất File CSV',
+					'url'   => $csv_url,
+					'style' => 'ghost',
+				);
+			} else {
+				$actions[] = array(
+					'label' => '← Danh mục 3D/AR',
+					'url'   => admin_url( 'admin.php?page=despace-3d-manager&tab=catalog' ),
+					'style' => 'ghost',
+				);
+			}
+			$actions[] = array(
+				'label'  => 'Xem cửa hàng ↗',
+				'url'    => home_url( '/' ),
+				'style'  => 'ghost',
+				'target' => '_blank',
+			);
+			despace_render_admin_cockpit_header(
+				'despace-3d-manager',
+				'Xưởng 3D & AR Studio',
+				'Quản trị toàn bộ tài sản 3D (.GLB), Apple AR Quick Look (.USDZ), kết nối Desktop 3D Studio và cấu hình Cloud AI Image-to-3D.',
+				$actions
+			);
+		}
+		?>
+		<nav class="ds-subtabs" aria-label="Phân mục Xưởng 3D & AR">
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-3d-manager&tab=catalog' ) ); ?>" class="ds-subtabs__item <?php echo 'catalog' === $tab ? 'is-active' : ''; ?>">
+				Danh mục 3D &amp; AR (GLB/USDZ)
+			</a>
+			<?php if ( $can_admin ) : ?>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-3d-manager&tab=desktop' ) ); ?>" class="ds-subtabs__item <?php echo 'desktop' === $tab ? 'is-active' : ''; ?>">
+					Kết nối Desktop 3D Studio
+				</a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-3d-manager&tab=ai' ) ); ?>" class="ds-subtabs__item <?php echo 'ai' === $tab ? 'is-active' : ''; ?>">
+					Cài đặt AI Concierge &amp; Cloud 3D
+				</a>
+			<?php endif; ?>
+		</nav>
+		<?php
+	};
+
+	// TAB 2: Desktop 3D Studio Connection & Sync Jobs (Admin only)
+	if ( 'desktop' === $active_tab ) {
+		$is_const_key = defined( 'DESPACE_DESKTOP_SYNC_KEY' ) && '' !== trim( (string) DESPACE_DESKTOP_SYNC_KEY );
+		$sync_key     = $is_const_key ? trim( (string) DESPACE_DESKTOP_SYNC_KEY ) : trim( (string) get_option( 'despace_desktop_sync_key', '' ) );
+		$rest_base    = rest_url( 'despace/v1/' );
+		$jobs_table   = $wpdb->prefix . 'despace_3d_sync_jobs';
+		$has_jobs_tbl = ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $jobs_table ) ) ) === $jobs_table );
+		$recent_jobs  = $has_jobs_tbl ? $wpdb->get_results( "SELECT * FROM {$jobs_table} ORDER BY id DESC LIMIT 15" ) : array();
+		?>
+		<div class="wrap <?php echo $has_cockpit ? 'ds-cockpit-wrap ' : ''; ?>ax-admin-wrap">
+			<?php $render_studio_shell( 'desktop' ); ?>
+
+			<?php if ( isset( $_GET['key_rotated'] ) && '1' === $_GET['key_rotated'] ) : ?>
+				<div class="notice notice-success is-dismissible" style="margin:0 0 18px;">
+					<p><strong>Đã tạo khóa kết nối mới!</strong> Hãy cập nhật khóa <code>X-DeSpace-Desktop-Key</code> mới này vào ứng dụng DeSpace 3D Studio Desktop.</p>
+				</div>
+			<?php endif; ?>
+
+			<section class="ds-panel">
+				<div class="ds-panel__header">
+					<div>
+						<h2 class="ds-panel__title">Thông số kết nối DeSpace 3D Studio Desktop</h2>
+						<p class="ds-panel__desc">Dùng URL và khóa 64-ký tự dưới đây để đồng bộ mô hình GLB/USDZ hai chiều giữa Desktop App và WordPress.</p>
+					</div>
+					<?php if ( ! $is_const_key ) : ?>
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" onsubmit="return confirm('Tạo khóa mới sẽ vô hiệu hóa khóa cũ ngay lập tức. Bạn chắc chắn muốn xoay khóa?');">
+							<?php wp_nonce_field( 'despace_rotate_desktop_key_nonce' ); ?>
+							<input type="hidden" name="action" value="despace_rotate_desktop_key" />
+							<button type="submit" class="ds-btn ds-btn--dark">Tạo khóa mới (Rotate Key)</button>
+						</form>
+					<?php endif; ?>
+				</div>
+
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><label for="ds-rest-base-url">REST API Base URL</label></th>
+						<td>
+							<div class="ds-copy-group">
+								<input type="text" id="ds-rest-base-url" value="<?php echo esc_attr( $rest_base ); ?>" readonly />
+								<button type="button" class="ds-btn ds-btn--outline" onclick="navigator.clipboard && navigator.clipboard.writeText(document.getElementById('ds-rest-base-url').value); this.textContent='Đã sao chép ✓';">Sao chép URL</button>
+							</div>
+							<p class="description">Health check: <code><?php echo esc_html( rest_url( 'despace/v1/desktop-3d/health' ) ); ?></code> · Jobs: <code><?php echo esc_html( rest_url( 'despace/v1/desktop-3d/jobs' ) ); ?></code></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="ds-sync-key-field">Sync API Key (Header <code>X-DeSpace-Desktop-Key</code>)</label></th>
+						<td>
+							<div class="ds-copy-group">
+								<input type="password" id="ds-sync-key-field" value="<?php echo esc_attr( $sync_key ); ?>" readonly autocomplete="off" />
+								<button type="button" class="ds-btn ds-btn--outline" onclick="var f=document.getElementById('ds-sync-key-field'); if(f.type==='password'){f.type='text';this.textContent='Ẩn khóa';}else{f.type='password';this.textContent='Hiện khóa';}">Hiện khóa</button>
+								<button type="button" class="ds-btn ds-btn--outline" onclick="navigator.clipboard && navigator.clipboard.writeText(document.getElementById('ds-sync-key-field').value); this.textContent='Đã sao chép ✓';">Sao chép khóa</button>
+							</div>
+							<?php if ( $is_const_key ) : ?>
+								<p class="description">Khóa đang được cấu hình cố định qua hằng số <code>DESPACE_DESKTOP_SYNC_KEY</code> trong <code>wp-config.php</code> / biến môi trường.</p>
+							<?php elseif ( '' === $sync_key ) : ?>
+								<p class="description" style="color:#b91c1c;">Chưa có khóa đồng bộ. Bấm <strong>Tạo khóa mới</strong> ở góc trên bên phải để khởi tạo ngay.</p>
+							<?php else : ?>
+								<p class="description">Khóa bảo mật 64 ký tự hex (256-bit) được lưu riêng trong tùy chọn không tự nạp (<code>autoload = false</code>).</p>
+							<?php endif; ?>
+						</td>
+					</tr>
+				</table>
+			</section>
+
+			<section class="ds-panel">
+				<div class="ds-panel__header">
+					<div>
+						<h2 class="ds-panel__title">Lịch sử đồng bộ Desktop 3D gần đây (15 job mới nhất)</h2>
+						<p class="ds-panel__desc">Theo dõi trạng thái dựng mesh, số đỉnh/mặt và kết quả xuất bản GLB/USDZ từ bảng <code><?php echo esc_html( $jobs_table ); ?></code>.</p>
+					</div>
+				</div>
+				<?php if ( ! empty( $recent_jobs ) ) : ?>
+					<div class="ds-table-wrap">
+						<table class="ds-table">
+							<thead>
+								<tr>
+									<th>Job UUID</th>
+									<th>Sản phẩm / SKU</th>
+									<th>Trạng thái</th>
+									<th>Tiến độ</th>
+									<th>Đỉnh / Mặt</th>
+									<th>Nguồn</th>
+									<th>Cập nhật</th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php foreach ( $recent_jobs as $job ) : ?>
+									<?php
+									$st     = (string) ( $job->status ?? 'pending' );
+									$st_cls = 'ds-pill--neutral';
+									if ( in_array( $st, array( 'completed', 'published' ), true ) ) {
+										$st_cls = 'ds-pill--success';
+									} elseif ( in_array( $st, array( 'failed', 'error' ), true ) ) {
+										$st_cls = 'ds-pill--danger';
+									} elseif ( in_array( $st, array( 'processing', 'running', 'reconstructing' ), true ) ) {
+										$st_cls = 'ds-pill--info';
+									} else {
+										$st_cls = 'ds-pill--warning';
+									}
+									?>
+									<tr>
+										<td><code><?php echo esc_html( substr( (string) ( $job->job_uuid ?? '' ), 0, 14 ) ); ?></code></td>
+										<td>
+											<strong><?php echo esc_html( $job->product_name ?: ( '#' . (int) $job->product_id ) ); ?></strong>
+											<div style="font-size:12px; color:#57534e;"><?php echo esc_html( $job->sku ?: '—' ); ?></div>
+										</td>
+										<td><span class="ds-pill <?php echo esc_attr( $st_cls ); ?>"><?php echo esc_html( $st ); ?></span></td>
+										<td><?php echo esc_html( (int) ( $job->progress ?? 0 ) . '%' ); ?></td>
+										<td><?php echo esc_html( number_format_i18n( (int) ( $job->vertex_count ?? 0 ) ) . ' / ' . number_format_i18n( (int) ( $job->face_count ?? 0 ) ) ); ?></td>
+										<td><code><?php echo esc_html( $job->source ?? 'web_admin' ); ?></code></td>
+										<td><?php echo esc_html( $job->updated_at ?? $job->created_at ?? '—' ); ?></td>
+									</tr>
+								<?php endforeach; ?>
+							</tbody>
+						</table>
+					</div>
+				<?php else : ?>
+					<p style="margin:0; color:#57534e;">Chưa có phiên đồng bộ nào từ DeSpace 3D Studio Desktop. Khi bạn gửi job từ trang chỉnh sửa sản phẩm hoặc đẩy mô hình từ ứng dụng Desktop, lịch sử sẽ hiển thị tại đây.</p>
+				<?php endif; ?>
+			</section>
+		</div>
+		<?php
+		return;
+	}
+
+	// TAB 3: AI Concierge & Cloud 3D Settings (Admin only)
+	if ( 'ai' === $active_tab ) {
+		?>
+		<div class="wrap <?php echo $has_cockpit ? 'ds-cockpit-wrap ' : ''; ?>ax-admin-wrap">
+			<?php $render_studio_shell( 'ai' ); ?>
+			<?php
+			if ( function_exists( 'axgnud_3d_ai_settings_page' ) ) {
+				axgnud_3d_ai_settings_page( true );
+			} else {
+				echo '<div class="notice notice-warning"><p>Không tìm thấy module cài đặt AI 3D.</p></div>';
+			}
+			?>
+		</div>
+		<?php
+		return;
+	}
+
+	// TAB 1: Catalog 3D & AR Manager (Default)
 	$t_despace = $wpdb->prefix . 'despace_product_3d_models'; $t_axgnud = $wpdb->prefix . 'axgnud_product_3d_models'; $table = ( $wpdb->get_var( "SHOW TABLES LIKE '$t_despace'" ) === $t_despace ) ? $t_despace : $t_axgnud;
 
 	// Filters
@@ -346,31 +594,34 @@ function axgnud_render_3d_manager_page() {
 
 	$nonce = wp_create_nonce( 'axgnud_3d_manager_nonce' );
 	?>
-	<div class="wrap ax-admin-wrap" style="max-width: 1300px; margin: 20px 20px 40px 0;">
-		
-		<!-- Header -->
-		<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
-			<div>
-				<h1 style="font-size:24px; font-weight:700; color:#1C1917; margin:0; display:flex; align-items:center; gap:10px;">
-					<span class="dashicons dashicons-visibility" style="font-size:28px; width:28px; height:28px; color:#9A6745;"></span>
-					DeSpace Studio — Quản Lý Mô Hình 3D &amp; Real AR
-				</h1>
-				<p style="margin:4px 0 0; color:#78716C; font-size:13.5px;">
-					Hệ thống quản lý tài sản 3D (GLB/glTF), Apple AR Quick Look (.USDZ) và kích thước thực tế cho toàn bộ danh mục sản phẩm.
-				</p>
-			</div>
+	<div class="wrap <?php echo $has_cockpit ? 'ds-cockpit-wrap ' : ''; ?>ax-admin-wrap">
+		<?php if ( $has_cockpit ) : ?>
+			<?php $render_studio_shell( 'catalog' ); ?>
+		<?php else : ?>
+			<!-- Standalone Header Fallback -->
+			<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+				<div>
+					<h1 style="font-size:24px; font-weight:700; color:#1C1917; margin:0; display:flex; align-items:center; gap:10px;">
+						<span class="dashicons dashicons-visibility" style="font-size:28px; width:28px; height:28px; color:#9A6745;"></span>
+						DeSpace Studio — Quản Lý Mô Hình 3D &amp; Real AR
+					</h1>
+					<p style="margin:4px 0 0; color:#57534E; font-size:13.5px;">
+						Hệ thống quản lý tài sản 3D (GLB/glTF), Apple AR Quick Look (.USDZ) và kích thước thực tế cho toàn bộ danh mục sản phẩm.
+					</p>
+				</div>
 
-			<div style="display:flex; gap:10px;">
-				<button type="button" class="button button-secondary" id="axBtnSyncCatalog" style="display:flex; align-items:center; gap:5px;">
-					<span class="dashicons dashicons-update" style="font-size:16px; width:16px; height:16px;"></span>
-					Đồng Bộ Danh Mục
-				</button>
-				<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=despace-3d-manager&action=export_csv' ), 'axgnud_export_csv_nonce' ) ); ?>" class="button button-secondary" style="display:flex; align-items:center; gap:5px;">
-					<span class="dashicons dashicons-download" style="font-size:16px; width:16px; height:16px;"></span>
-					Xuất File CSV
-				</a>
+				<div style="display:flex; gap:10px;">
+					<button type="button" class="button button-secondary" id="axBtnSyncCatalog" style="display:flex; align-items:center; gap:5px;">
+						<span class="dashicons dashicons-update" style="font-size:16px; width:16px; height:16px;"></span>
+						Đồng Bộ Danh Mục
+					</button>
+					<a href="<?php echo esc_url( $csv_url ); ?>" class="button button-secondary" style="display:flex; align-items:center; gap:5px;">
+						<span class="dashicons dashicons-download" style="font-size:16px; width:16px; height:16px;"></span>
+						Xuất File CSV
+					</a>
+				</div>
 			</div>
-		</div>
+		<?php endif; ?>
 
 		<!-- Top Statistics Metric Cards -->
 		<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:16px; margin-bottom:24px;">

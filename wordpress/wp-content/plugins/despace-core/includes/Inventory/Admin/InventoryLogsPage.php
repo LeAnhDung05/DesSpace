@@ -41,8 +41,8 @@ class InventoryLogsPage {
 			array( __CLASS__, 'render_page' )
 		);
 
-		// Also register under DeSpace Hub if available.
-		if ( isset( $GLOBALS['admin_page_hooks']['despace-hub'] ) ) {
+		// Also register under DeSpace Hub only if the unified Cockpit MU-plugin did not already register it.
+		if ( isset( $GLOBALS['admin_page_hooks']['despace-hub'] ) && ! function_exists( 'despace_register_admin_hub_menu' ) ) {
 			add_submenu_page(
 				'despace-hub',
 				__( 'Inventory Logs', 'despace-core' ),
@@ -53,11 +53,12 @@ class InventoryLogsPage {
 			);
 		}
 
-		// Ensure columns are properly registered for this screen.
+		// Ensure columns are properly registered for this screen across both parent hooks.
 		if ( $hook ) {
 			add_filter( "manage_{$hook}_columns", array( __CLASS__, 'get_table_columns' ) );
 		}
 		add_filter( 'manage_woocommerce_page_despace-inventory-logs_columns', array( __CLASS__, 'get_table_columns' ) );
+		add_filter( 'manage_despace_page_despace-inventory-logs_columns', array( __CLASS__, 'get_table_columns' ) );
 
 		// Handle CSV export action early before headers are sent.
 		add_action( 'admin_init', array( __CLASS__, 'handle_export' ) );
@@ -258,35 +259,60 @@ class InventoryLogsPage {
 			}
 		</style>
 
-		<div class="wrap despace-audit-wrap">
+		<?php $has_cockpit = function_exists( 'despace_render_admin_cockpit_header' ); ?>
+		<div class="wrap <?php echo $has_cockpit ? 'ds-cockpit-wrap ' : ''; ?>despace-audit-wrap">
 
-			<!-- 1. Executive Brand Header (Minimalist Luxury Studio Theme) -->
-			<div style="background:#1C1917; border-radius:14px; padding:28px 32px; color:#fff; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px; box-shadow:0 8px 24px rgba(28,25,23,0.12); margin-bottom:24px;">
-				<div>
-					<div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-						<span style="font-size:20px; font-weight:800; letter-spacing:-0.4px; color:#FAF7F2;">DeSpace</span>
-						<span style="border:1px solid rgba(255,255,255,0.2); font-size:10.5px; font-weight:600; letter-spacing:1px; padding:3px 10px; border-radius:99px; text-transform:uppercase; color:#D6CFC7;">Inventory Audit Engine</span>
+			<?php if ( $has_cockpit ) : ?>
+				<?php
+				$inv_actions = array();
+				if ( current_user_can( 'edit_products' ) || current_user_can( 'manage_woocommerce' ) ) {
+					$inv_actions[] = array(
+						'label' => '+ Cập nhật Kho',
+						'url'   => admin_url( 'edit.php?post_type=product' ),
+						'style' => 'primary',
+					);
+				}
+				$inv_actions[] = array(
+					'label' => 'Xuất File CSV',
+					'url'   => $export_url,
+					'style' => 'ghost',
+				);
+				despace_render_admin_cockpit_header(
+					'despace-inventory-logs',
+					__( 'Nhật ký & Kiểm toán Kho (Audit Logs)', 'despace-core' ),
+					__( 'Truy vết chi tiết mọi biến động số lượng tồn kho theo thời gian thực (đơn hàng mới, nhập xưởng, điều chỉnh, hoàn trả) chuẩn WooCommerce HPOS.', 'despace-core' ),
+					$inv_actions
+				);
+				?>
+			<?php else : ?>
+				<!-- 1. Executive Brand Header (Minimalist Luxury Studio Theme) -->
+				<div style="background:#1C1917; border-radius:14px; padding:28px 32px; color:#fff; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px; box-shadow:0 8px 24px rgba(28,25,23,0.12); margin-bottom:24px;">
+					<div>
+						<div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+							<span style="font-size:20px; font-weight:800; letter-spacing:-0.4px; color:#FAF7F2;">DeSpace</span>
+							<span style="border:1px solid rgba(255,255,255,0.2); font-size:10.5px; font-weight:600; letter-spacing:1px; padding:3px 10px; border-radius:99px; text-transform:uppercase; color:#D6CFC7;">Inventory Audit Engine</span>
+						</div>
+						<h1 style="color:#FAF7F2; font-size:24px; font-weight:700; margin:0 0 6px; padding:0;"><?php esc_html_e( 'Nhật Ký Kiểm Toán Tồn Kho (Audit Logs)', 'despace-core' ); ?></h1>
+						<p style="color:#A8A29E; margin:0; font-size:13.5px; max-width:680px; line-height:1.5;">
+							<?php esc_html_e( 'Truy vết chi tiết mọi biến động số lượng tồn kho theo thời gian thực (đơn hàng mới, nhập xưởng, điều chỉnh, hoàn trả) chuẩn WooCommerce HPOS.', 'despace-core' ); ?>
+						</p>
 					</div>
-					<h1 style="color:#FAF7F2; font-size:24px; font-weight:700; margin:0 0 6px; padding:0;"><?php esc_html_e( 'Nhật Ký Kiểm Toán Tồn Kho (Audit Logs)', 'despace-core' ); ?></h1>
-					<p style="color:#A8A29E; margin:0; font-size:13.5px; max-width:680px; line-height:1.5;">
-						<?php esc_html_e( 'Truy vết chi tiết mọi biến động số lượng tồn kho theo thời gian thực (đơn hàng mới, nhập xưởng, điều chỉnh, hoàn trả) chuẩn WooCommerce HPOS.', 'despace-core' ); ?>
-					</p>
+					<div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+						<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=product' ) ); ?>" class="despace-btn-terracotta">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+							<span>Cập Nhật Kho</span>
+						</a>
+						<a href="<?php echo esc_url( $export_url ); ?>" class="despace-btn-ghost">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+							<span>Xuất File CSV</span>
+						</a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub' ) ); ?>" class="despace-btn-ghost">
+							<span>DeSpace Hub</span>
+							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+						</a>
+					</div>
 				</div>
-				<div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-					<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=product' ) ); ?>" class="despace-btn-terracotta">
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-						<span>Cập Nhật Kho</span>
-					</a>
-					<a href="<?php echo esc_url( $export_url ); ?>" class="despace-btn-ghost">
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-						<span>Xuất File CSV</span>
-					</a>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub' ) ); ?>" class="despace-btn-ghost">
-						<span>DeSpace Hub</span>
-						<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-					</a>
-				</div>
-			</div>
+			<?php endif; ?>
 
 			<!-- 2. Core KPI Metric Cards (Clean Minimalism) -->
 			<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:24px;">

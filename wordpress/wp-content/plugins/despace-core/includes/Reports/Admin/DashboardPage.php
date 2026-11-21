@@ -128,21 +128,47 @@ class DashboardPage {
 
 		$today        = gmdate( 'Y-m-d' );
 		$thirty_days  = gmdate( 'Y-m-d', strtotime( '-30 days' ) );
+		$has_cockpit  = function_exists( 'despace_render_admin_cockpit_header' );
 		?>
-		<div class="wrap despace-dashboard-wrap">
-			<!-- Header -->
-			<div class="despace-dashboard-header">
-				<div class="despace-header-title">
-					<h1><?php esc_html_e( 'DeSpace — Báo Cáo & Dashboard', 'despace-core' ); ?></h1>
-					<p class="despace-header-subtitle">
-						<?php esc_html_e( 'Hệ thống báo cáo hiệu suất kinh doanh, tồn kho và danh mục nội thất 3D/AR tương thích chuẩn HPOS.', 'despace-core' ); ?>
-					</p>
+		<div class="wrap <?php echo $has_cockpit ? 'ds-cockpit-wrap ' : ''; ?>despace-dashboard-wrap">
+			<?php if ( $has_cockpit ) : ?>
+				<?php
+				$report_actions = array();
+				if ( current_user_can( 'manage_woocommerce' ) || current_user_can( 'manage_options' ) ) {
+					$report_actions[] = array(
+						'label' => 'Đơn hàng (HPOS)',
+						'url'   => function_exists( 'despace_store_admin_orders_url' ) ? despace_store_admin_orders_url() : admin_url( 'admin.php?page=wc-orders' ),
+						'style' => 'primary',
+					);
+				}
+				$report_actions[] = array(
+					'label'  => 'Xem cửa hàng ↗',
+					'url'    => home_url( '/' ),
+					'style'  => 'ghost',
+					'target' => '_blank',
+				);
+				despace_render_admin_cockpit_header(
+					'despace-reports',
+					__( 'Báo cáo Doanh thu & KPI', 'despace-core' ),
+					__( 'Hệ thống báo cáo hiệu suất kinh doanh, tồn kho và danh mục nội thất 3D/AR tương thích chuẩn HPOS.', 'despace-core' ),
+					$report_actions
+				);
+				?>
+			<?php else : ?>
+				<!-- Header -->
+				<div class="despace-dashboard-header">
+					<div class="despace-header-title">
+						<h1><?php esc_html_e( 'DeSpace — Báo Cáo & Dashboard', 'despace-core' ); ?></h1>
+						<p class="despace-header-subtitle">
+							<?php esc_html_e( 'Hệ thống báo cáo hiệu suất kinh doanh, tồn kho và danh mục nội thất 3D/AR tương thích chuẩn HPOS.', 'despace-core' ); ?>
+						</p>
+					</div>
+					<div class="despace-header-badge">
+						<span class="despace-badge-hpos">HPOS Verified</span>
+						<span class="despace-badge-role"><?php esc_html_e( 'Quyền: Báo cáo', 'despace-core' ); ?></span>
+					</div>
 				</div>
-				<div class="despace-header-badge">
-					<span class="despace-badge-hpos">HPOS Verified</span>
-					<span class="despace-badge-role"><?php esc_html_e( 'Quyền: Báo cáo', 'despace-core' ); ?></span>
-				</div>
-			</div>
+			<?php endif; ?>
 
 			<!-- Filter Controls Bar -->
 			<div class="despace-filter-card">
