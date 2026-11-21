@@ -548,7 +548,7 @@ function despace_render_admin_cockpit_header( string $active_slug, string $page_
 				<div class="ds-cockpit-brand-row">
 					<img src="<?php echo esc_url( $logo_url ); ?>" alt="DeSpace" class="ds-cockpit-logo" />
 					<span class="ds-cockpit-divider" aria-hidden="true"></span>
-					<span class="ds-cockpit-badge">Atelier Cockpit v3.2</span>
+					<span class="ds-cockpit-badge">Cockpit v4.0</span>
 					<span class="ds-cockpit-badge ds-cockpit-badge--live"><span class="ds-live-dot" aria-hidden="true"></span> Cửa hàng trực tuyến</span>
 					<?php if ( 'local' === $env_type ) : ?>
 						<span class="ds-cockpit-badge">Local Docker</span>
@@ -566,6 +566,11 @@ function despace_render_admin_cockpit_header( string $active_slug, string $page_
 			</div>
 
 			<div class="ds-cockpit-actions">
+				<button type="button" class="ds-cmd-trigger" id="ds-open-cmd" aria-label="Mở bảng điều hướng nhanh">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+					<span>Tìm nhanh...</span>
+					<kbd class="ds-kbd">⌘K</kbd>
+				</button>
 				<?php foreach ( $actions as $action ) : ?>
 					<?php
 					$style_class = 'ds-btn--ghost';
@@ -612,6 +617,111 @@ function despace_render_admin_cockpit_header( string $active_slug, string $page_
 			<?php endforeach; ?>
 		</nav>
 	</header>
+
+	<?php
+	// Build capability-gated Command Palette items (⌘K / Ctrl+K).
+	$cmd_items = array();
+	foreach ( $nav_items as $ni ) {
+		if ( ! empty( $ni['visible'] ) ) {
+			$cmd_items[] = array( 'label' => $ni['label'], 'group' => 'DeSpace Cockpit', 'url' => $ni['url'] );
+		}
+	}
+	if ( despace_store_admin_can_manage() ) {
+		$cmd_items[] = array( 'label' => 'Thêm sản phẩm nội thất mới', 'group' => 'Thao tác nhanh', 'url' => admin_url( 'post-new.php?post_type=product' ) );
+		$cmd_items[] = array( 'label' => 'Quản lý Đơn hàng (WooCommerce HPOS)', 'group' => 'Thao tác nhanh', 'url' => despace_store_admin_orders_url() );
+		$cmd_items[] = array( 'label' => 'Cấu hình Thông tin Showroom', 'group' => 'Tư vấn & Showroom', 'url' => admin_url( 'admin.php?page=despace-contact-settings&tab=showroom' ) );
+	}
+	if ( current_user_can( 'manage_options' ) ) {
+		$cmd_items[] = array( 'label' => 'Kết nối Desktop 3D Studio & Khóa API', 'group' => 'Xưởng 3D & AR', 'url' => admin_url( 'admin.php?page=despace-3d-manager&tab=desktop' ) );
+		$cmd_items[] = array( 'label' => 'Cài đặt AI Concierge & Cloud 3D', 'group' => 'Xưởng 3D & AR', 'url' => admin_url( 'admin.php?page=despace-3d-manager&tab=ai' ) );
+		$cmd_items[] = array( 'label' => 'Ma trận Phân quyền (Live RBAC)', 'group' => 'Hệ thống', 'url' => admin_url( 'admin.php?page=despace-system&tab=rbac' ) );
+		$cmd_items[] = array( 'label' => 'Công cụ Tài sản & Hàng đợi Action Scheduler', 'group' => 'Hệ thống', 'url' => admin_url( 'admin.php?page=despace-system&tab=tools' ) );
+	}
+	$cmd_items[] = array( 'label' => 'Mở cửa hàng Storefront', 'group' => 'Website', 'url' => home_url( '/' ) );
+	?>
+	<div id="ds-cmd-overlay" class="ds-cmd-overlay" role="dialog" aria-modal="true" aria-label="Điều hướng nhanh DeSpace">
+		<div class="ds-cmd-dialog">
+			<div class="ds-cmd-search">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+				<input type="text" id="ds-cmd-input" placeholder="Nhập tên màn hình hoặc thao tác (VD: Báo cáo, 3D, Showroom, Kho)..." autocomplete="off" />
+				<button type="button" id="ds-cmd-close" style="background:none; border:none; color:#64748b; cursor:pointer; font-size:12px; font-weight:700;">ESC</button>
+			</div>
+			<div class="ds-cmd-list" id="ds-cmd-list">
+				<?php foreach ( $cmd_items as $idx => $ci ) : ?>
+					<a href="<?php echo esc_url( $ci['url'] ); ?>" class="ds-cmd-item<?php echo 0 === $idx ? ' is-selected' : ''; ?>" data-search="<?php echo esc_attr( mb_strtolower( $ci['label'] . ' ' . $ci['group'] ) ); ?>">
+						<span><?php echo esc_html( $ci['label'] ); ?></span>
+						<small><?php echo esc_html( $ci['group'] ); ?></small>
+					</a>
+				<?php endforeach; ?>
+			</div>
+			<div class="ds-cmd-footer">
+				<span>↑↓ Di chuyển · Enter để mở</span>
+				<span>DeSpace Command Palette</span>
+			</div>
+		</div>
+	</div>
+	<script>
+	(function(){
+		if (window.__dsCmdInit) return;
+		window.__dsCmdInit = true;
+		var overlay = document.getElementById('ds-cmd-overlay');
+		var openBtn = document.getElementById('ds-open-cmd');
+		var closeBtn = document.getElementById('ds-cmd-close');
+		var input = document.getElementById('ds-cmd-input');
+		var list = document.getElementById('ds-cmd-list');
+		if (!overlay || !input || !list) return;
+		var items = Array.prototype.slice.call(list.querySelectorAll('.ds-cmd-item'));
+		var visible = items.slice();
+		var activeIdx = 0;
+
+		function renderSel() {
+			items.forEach(function(el){ el.classList.remove('is-selected'); });
+			if (visible[activeIdx]) {
+				visible[activeIdx].classList.add('is-selected');
+				visible[activeIdx].scrollIntoView({ block: 'nearest' });
+			}
+		}
+		function openCmd() {
+			overlay.classList.add('is-open');
+			input.value = '';
+			visible = items.slice();
+			items.forEach(function(el){ el.style.display = 'flex'; });
+			activeIdx = 0;
+			renderSel();
+			setTimeout(function(){ input.focus(); }, 20);
+		}
+		function closeCmd() { overlay.classList.remove('is-open'); }
+
+		if (openBtn) openBtn.addEventListener('click', openCmd);
+		if (closeBtn) closeBtn.addEventListener('click', closeCmd);
+		overlay.addEventListener('click', function(e){ if (e.target === overlay) closeCmd(); });
+
+		document.addEventListener('keydown', function(e){
+			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+				e.preventDefault();
+				overlay.classList.contains('is-open') ? closeCmd() : openCmd();
+				return;
+			}
+			if (!overlay.classList.contains('is-open')) return;
+			if (e.key === 'Escape') { closeCmd(); }
+			else if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = Math.min(visible.length - 1, activeIdx + 1); renderSel(); }
+			else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = Math.max(0, activeIdx - 1); renderSel(); }
+			else if (e.key === 'Enter' && visible[activeIdx]) { e.preventDefault(); window.location.href = visible[activeIdx].href; }
+		});
+
+		input.addEventListener('input', function(){
+			var q = input.value.trim().toLowerCase();
+			visible = [];
+			items.forEach(function(el){
+				var match = !q || (el.getAttribute('data-search') || '').indexOf(q) !== -1;
+				el.style.display = match ? 'flex' : 'none';
+				if (match) visible.push(el);
+			});
+			activeIdx = 0;
+			renderSel();
+		});
+	})();
+	</script>
 	<?php
 }
 
@@ -1139,74 +1249,129 @@ function despace_render_hub_overview_page() {
 			</a>
 		</section>
 
-		<!-- Visual Analytics Strip: 7-Day Revenue Trend + Order Status & 3D Coverage -->
+		<!-- Bento Visual Analytics Strip: Smooth SVG Area Chart + 3D/AR Circular Rings -->
+		<?php
+		$daily_list = array_values( $daily_7d );
+		$svg_w      = 560;
+		$svg_h      = 148;
+		$pad_x      = 24;
+		$pad_top    = 18;
+		$pad_bot    = 14;
+		$plot_h     = $svg_h - $pad_top - $pad_bot;
+		$step_x     = ( $svg_w - 2 * $pad_x ) / 6;
+		$pts        = array();
+		foreach ( $daily_list as $i => $drow ) {
+			$x     = round( $pad_x + $i * $step_x, 1 );
+			$ratio = $max_day_rev > 0 ? ( $drow['revenue'] / $max_day_rev ) : 0;
+			$y     = round( $pad_top + $plot_h * ( 1 - $ratio ), 1 );
+			$pts[] = array( 'x' => $x, 'y' => $y, 'row' => $drow );
+		}
+		$line_d = '';
+		foreach ( $pts as $i => $pt ) {
+			if ( 0 === $i ) {
+				$line_d .= "M {$pt['x']} {$pt['y']}";
+			} else {
+				$prev   = $pts[ $i - 1 ];
+				$cx     = round( ( $prev['x'] + $pt['x'] ) / 2, 1 );
+				$line_d .= " C {$cx} {$prev['y']}, {$cx} {$pt['y']}, {$pt['x']} {$pt['y']}";
+			}
+		}
+		$base_y = $svg_h - $pad_bot;
+		$area_d = $line_d . " L {$pts[6]['x']} {$base_y} L {$pts[0]['x']} {$base_y} Z";
+		$ring_c = 150.8; // 2 * pi * 24
+		$glb_off  = round( $ring_c * ( 1 - ( $glb_pct / 100 ) ), 1 );
+		$usdz_off = round( $ring_c * ( 1 - ( $usdz_pct / 100 ) ), 1 );
+		?>
 		<section class="ds-visual-strip" aria-label="Biểu đồ vận hành">
 			<div class="ds-panel" style="margin-bottom:0;">
-				<div class="ds-panel__header" style="margin-bottom:8px; padding-bottom:12px;">
+				<div class="ds-panel__header" style="margin-bottom:10px; padding-bottom:12px;">
 					<div>
 						<h2 class="ds-panel__title">Xu hướng doanh thu 7 ngày gần nhất</h2>
-						<p class="ds-panel__desc">Tính theo đơn hàng hợp lệ (Hoàn thành + Đang xử lý) từ WooCommerce HPOS.</p>
+						<p class="ds-panel__desc">Biểu đồ đường mượt theo đơn hàng hợp lệ từ WooCommerce HPOS.</p>
 					</div>
 					<?php if ( $can_reports ) : ?>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-reports' ) ); ?>" style="color:#8c3e1f; font-weight:600; font-size:13px; text-decoration:none;">Báo cáo M5 →</a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-reports' ) ); ?>" class="ds-btn ds-btn--outline ds-btn--sm">Báo cáo M5 →</a>
 					<?php endif; ?>
 				</div>
-				<div class="ds-chart-7d" role="img" aria-label="Biểu đồ doanh thu 7 ngày">
-					<?php foreach ( $daily_7d as $day_item ) : ?>
-						<?php
-						$bar_pct   = $max_day_rev > 0 ? max( 6, round( ( $day_item['revenue'] / $max_day_rev ) * 100 ) ) : 6;
-						$is_empty  = $day_item['revenue'] <= 0;
-						$short_val = $day_item['revenue'] >= 1000000
-							? number_format( $day_item['revenue'] / 1000000, 1 ) . 'tr'
-							: ( $day_item['revenue'] > 0 ? number_format( $day_item['revenue'] / 1000, 0 ) . 'k' : '0' );
-						$title_tip = sprintf( '%s: %s ₫ (%d đơn)', $day_item['label'], number_format_i18n( $day_item['revenue'] ), $day_item['orders'] );
-						?>
-						<div class="ds-chart-col" title="<?php echo esc_attr( $title_tip ); ?>">
-							<span class="ds-chart-col__val"><?php echo esc_html( $short_val ); ?></span>
-							<div class="ds-chart-col__bar <?php echo $is_empty ? 'ds-chart-col__bar--empty' : ''; ?>" style="height:<?php echo esc_attr( $is_empty ? 6 : $bar_pct ); ?>%;"></div>
-							<span class="ds-chart-col__day"><?php echo esc_html( $day_item['label'] ); ?></span>
-						</div>
-					<?php endforeach; ?>
+				<div class="ds-area-chart-wrap">
+					<svg class="ds-area-chart" viewBox="0 0 <?php echo esc_attr( $svg_w ); ?> <?php echo esc_attr( $svg_h ); ?>" preserveAspectRatio="none" role="img" aria-label="Biểu đồ doanh thu 7 ngày">
+						<defs>
+							<linearGradient id="dsAreaGrad" x1="0" y1="0" x2="0" y2="1">
+								<stop offset="0%" stop-color="#4f46e5" stop-opacity="0.28"/>
+								<stop offset="100%" stop-color="#4f46e5" stop-opacity="0.01"/>
+							</linearGradient>
+						</defs>
+						<line x1="<?php echo esc_attr( $pad_x ); ?>" y1="<?php echo esc_attr( $pad_top ); ?>" x2="<?php echo esc_attr( $svg_w - $pad_x ); ?>" y2="<?php echo esc_attr( $pad_top ); ?>" stroke="#e2e8f0" stroke-dasharray="4 4"/>
+						<line x1="<?php echo esc_attr( $pad_x ); ?>" y1="<?php echo esc_attr( round( $pad_top + $plot_h / 2, 1 ) ); ?>" x2="<?php echo esc_attr( $svg_w - $pad_x ); ?>" y2="<?php echo esc_attr( round( $pad_top + $plot_h / 2, 1 ) ); ?>" stroke="#e2e8f0" stroke-dasharray="4 4"/>
+						<line x1="<?php echo esc_attr( $pad_x ); ?>" y1="<?php echo esc_attr( $base_y ); ?>" x2="<?php echo esc_attr( $svg_w - $pad_x ); ?>" y2="<?php echo esc_attr( $base_y ); ?>" stroke="#e2e8f0"/>
+						<path d="<?php echo esc_attr( $area_d ); ?>" fill="url(#dsAreaGrad)"/>
+						<path d="<?php echo esc_attr( $line_d ); ?>" fill="none" stroke="#4f46e5" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+						<?php foreach ( $pts as $pt ) : ?>
+							<circle cx="<?php echo esc_attr( $pt['x'] ); ?>" cy="<?php echo esc_attr( $pt['y'] ); ?>" r="4.5" fill="#ffffff" stroke="#4f46e5" stroke-width="2.5">
+								<title><?php echo esc_html( sprintf( '%s: %s ₫ (%d đơn)', $pt['row']['label'], number_format_i18n( $pt['row']['revenue'] ), $pt['row']['orders'] ) ); ?></title>
+							</circle>
+						<?php endforeach; ?>
+					</svg>
+					<div class="ds-area-chart-labels">
+						<?php foreach ( $daily_list as $day_item ) : ?>
+							<?php
+							$short_val = $day_item['revenue'] >= 1000000
+								? number_format( $day_item['revenue'] / 1000000, 1 ) . 'tr'
+								: ( $day_item['revenue'] > 0 ? number_format( $day_item['revenue'] / 1000, 0 ) . 'k' : '0' );
+							?>
+							<div class="ds-area-chart-day">
+								<span class="ds-area-chart-val"><?php echo esc_html( $short_val ); ?></span>
+								<?php echo esc_html( $day_item['label'] ); ?>
+							</div>
+						<?php endforeach; ?>
+					</div>
 				</div>
 			</div>
 
 			<div class="ds-panel" style="margin-bottom:0;">
-				<div class="ds-panel__header" style="margin-bottom:12px; padding-bottom:12px;">
+				<div class="ds-panel__header" style="margin-bottom:14px; padding-bottom:12px;">
 					<div>
-						<h2 class="ds-panel__title">Phân bổ đơn hàng &amp; Tiến độ số hóa 3D</h2>
-						<p class="ds-panel__desc">Tỷ lệ trạng thái đơn HPOS và độ phủ mô hình WebXR (.GLB) / Apple AR (.USDZ).</p>
+						<h2 class="ds-panel__title">Độ phủ 3D/AR &amp; Trạng thái đơn</h2>
+						<p class="ds-panel__desc">Chỉ số số hóa sản phẩm WebXR / Apple AR và tỷ trọng đơn HPOS.</p>
 					</div>
 				</div>
-				<div class="ds-segmented-bar" role="img" aria-label="Biểu đồ tỷ lệ trạng thái đơn hàng" style="margin-top:4px;">
+
+				<div class="ds-rings-grid">
+					<div class="ds-ring-card">
+						<svg class="ds-ring-svg" viewBox="0 0 60 60" aria-hidden="true">
+							<circle class="ds-ring-track" cx="30" cy="30" r="24"/>
+							<circle class="ds-ring-progress" cx="30" cy="30" r="24" stroke-dasharray="<?php echo esc_attr( $ring_c ); ?>" stroke-dashoffset="<?php echo esc_attr( $glb_off ); ?>"/>
+						</svg>
+						<div>
+							<div class="ds-ring-pct"><?php echo esc_html( $glb_pct ); ?>%</div>
+							<div class="ds-ring-label">Web 3D (.GLB)</div>
+							<div class="ds-ring-sub"><?php echo esc_html( sprintf( '%d / %d sản phẩm', $glb_count, $product_count ) ); ?></div>
+						</div>
+					</div>
+					<div class="ds-ring-card">
+						<svg class="ds-ring-svg" viewBox="0 0 60 60" aria-hidden="true">
+							<circle class="ds-ring-track" cx="30" cy="30" r="24"/>
+							<circle class="ds-ring-progress ds-ring-progress--emerald" cx="30" cy="30" r="24" stroke-dasharray="<?php echo esc_attr( $ring_c ); ?>" stroke-dashoffset="<?php echo esc_attr( $usdz_off ); ?>"/>
+						</svg>
+						<div>
+							<div class="ds-ring-pct"><?php echo esc_html( $usdz_pct ); ?>%</div>
+							<div class="ds-ring-label">Apple AR (.USDZ)</div>
+							<div class="ds-ring-sub"><?php echo esc_html( sprintf( '%d / %d sản phẩm', $usdz_count, $product_count ) ); ?></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="ds-segmented-bar" role="img" aria-label="Biểu đồ tỷ lệ trạng thái đơn hàng">
 					<?php if ( $completed > 0 ) : ?><div class="ds-segmented-bar__seg ds-segmented-bar__seg--completed" style="width:<?php echo esc_attr( $pct_completed ); ?>%;" title="Hoàn thành: <?php echo esc_attr( $completed ); ?>"></div><?php endif; ?>
 					<?php if ( $processing > 0 ) : ?><div class="ds-segmented-bar__seg ds-segmented-bar__seg--processing" style="width:<?php echo esc_attr( $pct_processing ); ?>%;" title="Đang xử lý: <?php echo esc_attr( $processing ); ?>"></div><?php endif; ?>
 					<?php if ( $hold_total > 0 ) : ?><div class="ds-segmented-bar__seg ds-segmented-bar__seg--hold" style="width:<?php echo esc_attr( $pct_hold ); ?>%;" title="Chờ đối soát: <?php echo esc_attr( $hold_total ); ?>"></div><?php endif; ?>
 					<?php if ( $cancelled_orders > 0 ) : ?><div class="ds-segmented-bar__seg ds-segmented-bar__seg--cancelled" style="width:<?php echo esc_attr( $pct_cancelled ); ?>%;" title="Đã hủy: <?php echo esc_attr( $cancelled_orders ); ?>"></div><?php endif; ?>
 				</div>
-				<div class="ds-legend-row" style="margin-bottom:18px;">
-					<span class="ds-legend-item"><span class="ds-legend-dot" style="background:#15803d;"></span>Hoàn thành: <strong><?php echo esc_html( $completed ); ?></strong></span>
-					<span class="ds-legend-item"><span class="ds-legend-dot" style="background:#1d4ed8;"></span>Đang xử lý: <strong><?php echo esc_html( $processing ); ?></strong></span>
-					<span class="ds-legend-item"><span class="ds-legend-dot" style="background:#b45309;"></span>Chờ đối soát: <strong><?php echo esc_html( $hold_total ); ?></strong></span>
-					<span class="ds-legend-item"><span class="ds-legend-dot" style="background:#b91c1c;"></span>Đã hủy: <strong><?php echo esc_html( $cancelled_orders ); ?></strong></span>
-				</div>
-
-				<div class="ds-progress-row">
-					<div class="ds-progress-row__head">
-						<span><strong>Web 3D (.GLB)</strong> · Trình xoay 360° nội bộ</span>
-						<span><strong><?php echo esc_html( $glb_count ); ?></strong> / <?php echo esc_html( $product_count ); ?> (<?php echo esc_html( $glb_pct ); ?>%)</span>
-					</div>
-					<div class="ds-progress-track">
-						<div class="ds-progress-fill" style="width:<?php echo esc_attr( $glb_pct ); ?>%;"></div>
-					</div>
-				</div>
-				<div class="ds-progress-row">
-					<div class="ds-progress-row__head">
-						<span><strong>iOS AR Quick Look (.USDZ)</strong> · Đặt trong phòng thực</span>
-						<span><strong><?php echo esc_html( $usdz_count ); ?></strong> / <?php echo esc_html( $product_count ); ?> (<?php echo esc_html( $usdz_pct ); ?>%)</span>
-					</div>
-					<div class="ds-progress-track">
-						<div class="ds-progress-fill ds-progress-fill--emerald" style="width:<?php echo esc_attr( $usdz_pct ); ?>%;"></div>
-					</div>
+				<div class="ds-legend-row">
+					<span class="ds-legend-item"><span class="ds-legend-dot" style="background:#10b981;"></span>Hoàn thành: <strong><?php echo esc_html( $completed ); ?></strong></span>
+					<span class="ds-legend-item"><span class="ds-legend-dot" style="background:#3b82f6;"></span>Đang xử lý: <strong><?php echo esc_html( $processing ); ?></strong></span>
+					<span class="ds-legend-item"><span class="ds-legend-dot" style="background:#f59e0b;"></span>Chờ đối soát: <strong><?php echo esc_html( $hold_total ); ?></strong></span>
+					<span class="ds-legend-item"><span class="ds-legend-dot" style="background:#ef4444;"></span>Đã hủy: <strong><?php echo esc_html( $cancelled_orders ); ?></strong></span>
 				</div>
 			</div>
 		</section>
@@ -1255,19 +1420,29 @@ function despace_render_hub_overview_page() {
 										<tr>
 											<td>
 												<?php if ( $edit_url ) : ?>
-													<a href="<?php echo esc_url( $edit_url ); ?>" style="font-weight:700; color:#8c3e1f; text-decoration:none;">
+													<a href="<?php echo esc_url( $edit_url ); ?>" style="font-weight:700; color:#4f46e5; text-decoration:none;">
 														#<?php echo esc_html( $order->get_order_number() ); ?>
 													</a>
 												<?php else : ?>
 													<strong>#<?php echo esc_html( $order->get_order_number() ); ?></strong>
 												<?php endif; ?>
-												<div style="font-size:12px; color:#5c564e;"><?php echo esc_html( sprintf( '%d sản phẩm', $order->get_item_count() ) ); ?></div>
+												<div style="font-size:12px; color:#64748b;"><?php echo esc_html( sprintf( '%d sản phẩm', $order->get_item_count() ) ); ?></div>
 											</td>
 											<td>
-												<strong><?php echo esc_html( $customer ?: 'Khách lẻ' ); ?></strong>
-												<?php if ( $order->get_billing_phone() ) : ?>
-													<div style="font-size:12px; color:#5c564e;"><?php echo esc_html( $order->get_billing_phone() ); ?></div>
-												<?php endif; ?>
+												<?php
+												$cust_label = $customer ?: 'Khách lẻ';
+												$words      = preg_split( '/\s+/', trim( $cust_label ) );
+												$initials   = mb_substr( $words[0] ?? 'K', 0, 1 ) . mb_substr( end( $words ) ?: '', 0, 1 );
+												?>
+												<div class="ds-customer-cell">
+													<span class="ds-avatar" aria-hidden="true"><?php echo esc_html( $initials ); ?></span>
+													<div>
+														<strong><?php echo esc_html( $cust_label ); ?></strong>
+														<?php if ( $order->get_billing_phone() ) : ?>
+															<div style="font-size:12px; color:#64748b;"><?php echo esc_html( $order->get_billing_phone() ); ?></div>
+														<?php endif; ?>
+													</div>
+												</div>
 											</td>
 											<td><span class="ds-pill ds-pill--neutral"><?php echo esc_html( wp_trim_words( (string) $pay_title, 3, '' ) ?: '—' ); ?></span></td>
 											<td><?php echo $date_created ? esc_html( date_i18n( 'd/m/Y H:i', $date_created->getTimestamp() ) ) : '—'; ?></td>

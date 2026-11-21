@@ -651,7 +651,7 @@ function axgnud_render_3d_manager_page() {
 			</div>
 		<?php endif; ?>
 
-		<!-- Top Statistics Metric Cards (DeSpace Atelier Luxury) -->
+		<!-- Top Statistics Metric Cards (Modern SaaS v4.0) -->
 		<section class="ds-kpi-grid" aria-label="Thống kê mô hình 3D và AR">
 			<div class="ds-kpi-card">
 				<span class="ds-kpi-card__label">Tổng Sản Phẩm</span>
@@ -660,17 +660,17 @@ function axgnud_render_3d_manager_page() {
 			</div>
 			<div class="ds-kpi-card ds-kpi-card--success">
 				<span class="ds-kpi-card__label">3D Sẵn Sàng (Published)</span>
-				<div class="ds-kpi-card__value" style="color:#166534;"><?php echo esc_html( number_format_i18n( $published_count ) ); ?></div>
+				<div class="ds-kpi-card__value" style="color:#047857;"><?php echo esc_html( number_format_i18n( $published_count ) ); ?></div>
 				<span class="ds-kpi-card__meta">Mô hình PBR (.GLB) đã xuất bản</span>
 			</div>
 			<div class="ds-kpi-card ds-kpi-card--accent">
 				<span class="ds-kpi-card__label">Hỗ Trợ AR Thực Tế</span>
-				<div class="ds-kpi-card__value" style="color:#8c3e1f;"><?php echo esc_html( number_format_i18n( $ar_ready_count ) ); ?></div>
+				<div class="ds-kpi-card__value" style="color:#4f46e5;"><?php echo esc_html( number_format_i18n( $ar_ready_count ) ); ?></div>
 				<span class="ds-kpi-card__meta">Đầy đủ GLB + USDZ cho iOS &amp; Android</span>
 			</div>
 			<div class="ds-kpi-card ds-kpi-card--warning">
 				<span class="ds-kpi-card__label">Chưa Có Mô Hình (Missing)</span>
-				<div class="ds-kpi-card__value" style="color:#92400e;"><?php echo esc_html( number_format_i18n( $missing_count ) ); ?></div>
+				<div class="ds-kpi-card__value" style="color:#b45309;"><?php echo esc_html( number_format_i18n( $missing_count ) ); ?></div>
 				<span class="ds-kpi-card__meta">Đang chờ số hóa hoặc cập nhật</span>
 			</div>
 		</section>
