@@ -1163,6 +1163,11 @@ function despace_render_hub_overview_page() {
 	$log_table = $wpdb->prefix . 'despace_inventory_logs';
 	$log_count = $wpdb->get_var( "SHOW TABLES LIKE '$log_table'" ) ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM $log_table" ) : 0;
 	$review_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->comments} WHERE comment_type = 'review' AND comment_approved = '1'" );
+	$avg_rating   = 5.0;
+	if ( $review_count > 0 ) {
+		$rating_sum = (float) $wpdb->get_var( "SELECT SUM(meta_value) FROM {$wpdb->commentmeta} cm JOIN {$wpdb->comments} c ON c.comment_ID = cm.comment_id WHERE c.comment_type = 'review' AND c.comment_approved = '1' AND cm.meta_key = 'rating'" );
+		$avg_rating = $rating_sum > 0 ? round( $rating_sum / $review_count, 1 ) : 4.8;
+	}
 
 	// Inspect Uploads Directory Status
 	$uploads_info = wp_upload_dir();
@@ -1227,6 +1232,9 @@ function despace_render_hub_overview_page() {
 				</p>
 			</div>
 			<div style="display:flex; gap:12px; flex-wrap:wrap;">
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-reports' ) ); ?>" class="button button-primary" style="background:#2563EB; border-color:#2563EB; color:#fff; font-weight:600; padding:8px 18px; height:auto; border-radius:8px; font-size:13.5px;">
+					📈 Báo Cáo Doanh Thu (M5)
+				</a>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=assets' ) ); ?>" class="button button-primary" style="background:#10B981; border-color:#10B981; color:#fff; font-weight:600; padding:8px 18px; height:auto; border-radius:8px; font-size:13.5px;">
 					📦 Khôi Phục Ảnh & 3D
 				</a>
@@ -1262,6 +1270,9 @@ function despace_render_hub_overview_page() {
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=showroom' ) ); ?>" style="padding:12px 20px; font-weight:700; font-size:14px; text-decoration:none; border-bottom:3px solid <?php echo ( 'showroom' === $current_tab ) ? '#C25E3A' : 'transparent'; ?>; color:<?php echo ( 'showroom' === $current_tab ) ? '#C25E3A' : '#78716C'; ?>; margin-bottom:-2px;">
 				🏢 Thông Tin Showroom DeSpace
 			</a>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-reports' ) ); ?>" style="padding:12px 20px; font-weight:700; font-size:14px; text-decoration:none; color:#2563EB; background:rgba(37,99,235,0.06); border-radius:8px 8px 0 0; margin-bottom:-2px;">
+				📈 Báo Cáo Doanh Thu (M5) ↗
+			</a>
 		</div>
 
 		<!-- ========================================== -->
@@ -1274,7 +1285,7 @@ function despace_render_hub_overview_page() {
 				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:14px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
 					<div style="font-size:12px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;">Sản Phẩm Nội Thất</div>
 					<div style="font-size:32px; font-weight:800; color:#1C1917; margin:6px 0 2px;"><?php echo esc_html( number_format_i18n( $product_count ) ); ?></div>
-					<div style="font-size:12.5px; color:#059669; font-weight:600;">✓ <?php echo intval( $models_count ); ?>/40 Đã gắn Mô hình 3D AR</div>
+					<div style="font-size:12.5px; color:#059669; font-weight:600;">✓ <?php echo intval( $models_count ); ?>/<?php echo esc_html( max( 40, $product_count ) ); ?> Đã gắn Mô hình 3D AR</div>
 				</div>
 
 				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:14px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
@@ -1292,7 +1303,7 @@ function despace_render_hub_overview_page() {
 				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:14px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
 					<div style="font-size:12px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;">Đánh Giá Khách Hàng</div>
 					<div style="font-size:32px; font-weight:800; color:#D97706; margin:6px 0 2px;"><?php echo esc_html( number_format_i18n( $review_count ) ); ?></div>
-					<div style="font-size:12.5px; color:#D97706; font-weight:600;">★ 4.8 / 5.0 (100 Authentic Reviews)</div>
+					<div style="font-size:12.5px; color:#D97706; font-weight:600;">★ <?php echo esc_html( $avg_rating ); ?> / 5.0 (<?php echo esc_html( $review_count ); ?> Đánh giá xác thực)</div>
 				</div>
 
 				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:14px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
@@ -1308,8 +1319,8 @@ function despace_render_hub_overview_page() {
 				<h3 style="font-size:16px; font-weight:700; color:#1C1917; margin:0 0 16px;">Tình Trạng Sức Khỏe Máy Chủ & Môi Trường Hoạt Động</h3>
 				<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px;">
 					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:10px; padding:14px 16px;">
-						<div style="font-size:11.5px; color:#78716C; font-weight:600; text-transform:uppercase;">Phiên bản PHP</div>
-						<div style="font-size:16px; font-weight:700; color:#1C1917; margin-top:4px;">PHP <?php echo esc_html( PHP_VERSION ); ?> <span style="color:#059669; font-size:13px;">✓ Đạt chuẩn</span></div>
+						<div style="font-size:11.5px; color:#78716C; font-weight:600; text-transform:uppercase;">Phiên bản PHP & DB</div>
+						<div style="font-size:16px; font-weight:700; color:#1C1917; margin-top:4px;">PHP <?php echo esc_html( PHP_VERSION ); ?> · SQL <?php echo esc_html( substr( $wpdb->db_version(), 0, 8 ) ); ?></div>
 					</div>
 					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:10px; padding:14px 16px;">
 						<div style="font-size:11.5px; color:#78716C; font-weight:600; text-transform:uppercase;">Bộ Nhớ Giới Hạn</div>
@@ -1372,6 +1383,21 @@ function despace_render_hub_overview_page() {
 					</div>
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-hub&tab=rbac' ) ); ?>" class="button button-secondary" style="align-self:flex-start; font-weight:600; border-radius:8px;">
 						Xem Ma Trận Phân Quyền →
+					</a>
+				</div>
+
+				<div style="background:#fff; border:1px solid #E7E3DC; border-radius:16px; padding:24px 26px; box-shadow:0 2px 10px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between;">
+					<div>
+						<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+							<span style="background:#EEF2FF; color:#4F46E5; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">📈</span>
+							<h3 style="font-size:17px; font-weight:700; margin:0; color:#1C1917;">Báo Cáo Doanh Thu & KPI Kinh Doanh (M5)</h3>
+						</div>
+						<p style="color:#6B635B; font-size:13.5px; line-height:1.6; margin:0 0 16px;">
+							Thống kê doanh thu hợp lệ, quy đổi AOV, lọc theo khoảng ngày, phân tích trạng thái đơn hàng HPOS và xếp hạng Top 10 sản phẩm bán chạy nhất.
+						</p>
+					</div>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-reports' ) ); ?>" class="button button-primary" style="align-self:flex-start; font-weight:600; border-radius:8px; background:#4F46E5; border-color:#4338CA;">
+						Vào Bảng Báo Cáo Doanh Thu →
 					</a>
 				</div>
 
@@ -1710,13 +1736,13 @@ function despace_render_hub_overview_page() {
 					<div style="background:#FBF9F7; border:1px solid #ECE7E1; border-radius:14px; padding:20px 22px;">
 						<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
 							<span style="background:#2563EB; color:#fff; font-size:12px; font-weight:700; padding:3px 10px; border-radius:99px;">MEMBER 05</span>
-							<code style="font-size:12px;">despace_store_manager</code>
+							<code style="font-size:12px;">despace_staff</code>
 						</div>
 						<h3 style="margin:0 0 6px; font-size:16px; font-weight:700; color:#1C1917;">Báo Cáo Doanh Thu & Vận Hành Cửa Hàng</h3>
 						<p style="font-size:13px; color:#6B635B; line-height:1.5; margin:0 0 12px;">
-							Chịu trách nhiệm phân tích doanh số, hiệu suất bán hàng theo danh mục, quản trị đánh giá 5 sao của khách hàng và báo cáo tài chính.
+							Chịu trách nhiệm phân tích doanh số, hiệu suất bán hàng HPOS, bộ lọc thời gian thực tế, quản trị đánh giá và báo cáo KPI tài chính.
 						</p>
-						<div style="font-size:12px; color:#2563EB; font-weight:600;">Quyền: view_woocommerce_reports, moderate_reviews</div>
+						<div style="font-size:12px; color:#2563EB; font-weight:600;">Quyền: view_despace_reports, view_despace_inventory_logs, manage_despace_3d</div>
 					</div>
 
 				</div>
