@@ -19,6 +19,14 @@ services:
       timeout: 5s
       retries: 30
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: despace-mailpit
+    restart: unless-stopped
+    ports:
+      - "${DESPACE_MAILPIT_SMTP_PORT:-1026}:1025"
+      - "${DESPACE_MAILPIT_UI_PORT:-8026}:8025"
+
   wordpress:
     image: wordpress:7.1.4-php8.3-apache
     container_name: despace-wordpress
@@ -36,14 +44,22 @@ services:
       WORDPRESS_TABLE_PREFIX: wp_
       WORDPRESS_DEBUG: "1"
       DESPACE_SITE_URL: ${DESPACE_SITE_URL:-http://localhost:8090}
+      DESPACE_MAILPIT_HOST: ${DESPACE_MAILPIT_HOST:-despace-mailpit}
+      DESPACE_MAILPIT_PORT: ${DESPACE_MAILPIT_PORT:-1025}
       WORDPRESS_CONFIG_EXTRA: |
+        define('WP_ENVIRONMENT_TYPE', 'local');
+        define('DISALLOW_FILE_EDIT', true);
+        define('WP_MEMORY_LIMIT', '512M');
+        define('WP_MAX_MEMORY_LIMIT', '512M');
         define('WP_HOME', getenv('DESPACE_SITE_URL'));
         define('WP_SITEURL', getenv('DESPACE_SITE_URL'));
     volumes:
       - wordpress_data:/var/www/html
+      - ./docker/php-despace.ini:/usr/local/etc/php/conf.d/99-despace.ini:ro
       - ./wordpress/wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
       - ./wordpress/wp-content/plugins/despace-core:/var/www/html/wp-content/plugins/despace-core
       - ./wordpress/wp-content/themes/despace-child:/var/www/html/wp-content/themes/despace-child
+      - ./wordpress/wp-content/uploads:/var/www/html/wp-content/uploads
 
   wpcli:
     image: wordpress:cli-php8.3
@@ -60,9 +76,11 @@ services:
       WORDPRESS_TABLE_PREFIX: wp_
     volumes:
       - wordpress_data:/var/www/html
+      - ./docker/php-despace.ini:/usr/local/etc/php/conf.d/99-despace.ini:ro
       - ./wordpress/wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
       - ./wordpress/wp-content/plugins/despace-core:/var/www/html/wp-content/plugins/despace-core
       - ./wordpress/wp-content/themes/despace-child:/var/www/html/wp-content/themes/despace-child
+      - ./wordpress/wp-content/uploads:/var/www/html/wp-content/uploads
     entrypoint: ["wp"]
 
 volumes:

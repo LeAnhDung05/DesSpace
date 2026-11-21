@@ -52,8 +52,13 @@ Lần đầu Docker tải image và MySQL tạo database, có thể mất vài p
    docker compose run --rm wpcli plugin install translatepress-multilingual --version=3.3.7 --activate --path=/var/www/html
    ```
 
-5. SQL không chứa các tệp ảnh và mô hình 3D. Nếu ảnh/GLB bị thiếu, xin gói `uploads` từ leader và đồng bộ vào site Docker; không chép database Local vào volume Docker.
-6. Theme, plugin DeSpace và MU plugins được bind-mount từ repo nên thay đổi mã nguồn sẽ xuất hiện trong container ngay.
+5. Thư mục ảnh sản phẩm và 94 mô hình 3D (`wordpress/wp-content/uploads`) đã được bind-mount trực tiếp từ repo vào container WordPress (`compose.yaml`), đồng thời PHP đã được cấu hình sẵn `memory_limit=512M`, `upload_max_filesize=64M`, `WP_ENVIRONMENT_TYPE='local'` và hộp thư thử nghiệm Mailpit tại `http://localhost:8026/`.
+6. Theme, plugin DeSpace, MU plugins và `uploads` đều được bind-mount từ repo nên thay đổi mã nguồn hoặc tài nguyên 3D sẽ xuất hiện trong container ngay. Sau khi cài plugin, chạy thêm lệnh làm mới permalink:
+
+   ```powershell
+   docker compose run --rm wpcli plugin activate despace-core --path=/var/www/html
+   docker compose run --rm wpcli rewrite flush --hard --path=/var/www/html
+   ```
 
 ## Dừng và mở lại
 
