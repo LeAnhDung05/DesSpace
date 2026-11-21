@@ -113,6 +113,13 @@
     checkUrlParams();
   }
 
+  function getVendorBaseUrl() {
+    var base = (window.furnivaData && window.furnivaData.vendorUrl)
+      || (window.despaceData && window.despaceData.vendorUrl)
+      || '/wp-content/themes/despace-child/assets/vendor/';
+    return base.endsWith('/') ? base : (base + '/');
+  }
+
   function ensureModelViewerLibrary() {
     if (state.modelViewerEnsured || (typeof customElements !== 'undefined' && customElements.get('model-viewer'))) {
       state.modelViewerEnsured = true;
@@ -124,7 +131,7 @@
     }
     var script = document.createElement('script');
     script.type = 'module';
-    script.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js';
+    script.src = getVendorBaseUrl() + 'model-viewer/model-viewer.min.js';
     document.head.appendChild(script);
     state.modelViewerEnsured = true;
   }
@@ -325,19 +332,13 @@
       return Promise.resolve(interactive3D.deps);
     }
     if (!interactive3D.threePromise) {
+      var threeBase = getVendorBaseUrl() + 'three/';
       interactive3D.threePromise = Promise.all([
-        import('https://esm.sh/three@0.160.0'),
-        import('https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js'),
-        import('https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js'),
-        import('https://esm.sh/three@0.160.0/examples/jsm/environments/RoomEnvironment.js')
-      ]).catch(function () {
-        return Promise.all([
-          import('https://cdn.jsdelivr.net/npm/three@0.160.0/+esm'),
-          import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js/+esm'),
-          import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js/+esm'),
-          import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/environments/RoomEnvironment.js/+esm')
-        ]);
-      }).then(function (mods) {
+        import(threeBase + 'three.module.min.js'),
+        import(threeBase + 'controls/OrbitControls.js'),
+        import(threeBase + 'loaders/GLTFLoader.js'),
+        import(threeBase + 'environments/RoomEnvironment.js')
+      ]).then(function (mods) {
         interactive3D.deps = {
           THREE: mods[0],
           OrbitControls: mods[1].OrbitControls,

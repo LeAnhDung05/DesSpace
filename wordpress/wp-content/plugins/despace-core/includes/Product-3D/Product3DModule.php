@@ -269,15 +269,18 @@ class Product3DModule {
 			);
 		}
 
-		// Enqueue Google model-viewer on relevant pages
+		// Enqueue self-hosted <model-viewer> on relevant pages
 		if ( is_product() || is_page( 'ar-room-visualizer' ) || is_page_template( 'page-ar-visualizer.php' ) ) {
-			wp_enqueue_script(
-				'google-model-viewer',
-				'https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js',
-				array(),
-				'3.5.0',
-				true
-			);
+			$local_mv_path = get_stylesheet_directory() . '/assets/vendor/model-viewer/model-viewer.min.js';
+			if ( file_exists( $local_mv_path ) ) {
+				wp_enqueue_script(
+					'google-model-viewer',
+					get_stylesheet_directory_uri() . '/assets/vendor/model-viewer/model-viewer.min.js',
+					array(),
+					'3.5.0',
+					true
+				);
+			}
 			add_filter( 'script_loader_tag', function( $tag, $handle, $src ) {
 				if ( 'google-model-viewer' === $handle ) {
 					return '<script type="module" src="' . esc_url( $src ) . '"></script>';

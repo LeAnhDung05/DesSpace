@@ -56,7 +56,7 @@ database/backup_*
 
 
 # Dependencies and IDE / OS files
-vendor/
+/vendor/
 node_modules/
 coverage/
 .DS_Store

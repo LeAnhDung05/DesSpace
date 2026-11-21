@@ -328,13 +328,12 @@ function furniva_assets() {
 		}
 	}
 
-	// DeSpace Architectural 3D & AR Studio CSS & JS
-	// Google <model-viewer> (~350KB) is lazy-loaded on hover/click by ax-room-visualizer.js
-	// to avoid render-blocking <head> downloads on initial page loads (only eager on dedicated AR Visualizer page).
+	// DeSpace Architectural 3D & AR Studio CSS & JS (Self-hosted <model-viewer> 3.5.0)
+	// Lazy-loaded on hover/click by ax-room-visualizer.js to avoid render-blocking initial page loads (eager on dedicated AR Visualizer page).
 	if ( is_page_template( 'templates/page-ar-visualizer.php' ) || is_page_template( 'page-ar-visualizer.php' ) ) {
 		wp_enqueue_script(
 			'google-model-viewer',
-			'https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js',
+			get_stylesheet_directory_uri() . '/assets/vendor/model-viewer/model-viewer.min.js',
 			array(),
 			'3.5.0',
 			true
@@ -469,6 +468,7 @@ function furniva_assets() {
 	$despace_js_data = array(
 		'ajaxUrl'              => admin_url( 'admin-ajax.php' ),
 		'restUrl'              => esc_url_raw( rest_url( 'despace/v1' ) ),
+		'vendorUrl'            => get_stylesheet_directory_uri() . '/assets/vendor/',
 		'checkoutUrl'          => despace_safe_wc_page_url( 'checkout', '/thanh-toan/' ),
 		'cartUrl'              => despace_safe_wc_page_url( 'cart', '/gio-hang/' ),
 		'shopUrl'              => despace_safe_wc_page_url( 'shop', '/cua-hang/' ),

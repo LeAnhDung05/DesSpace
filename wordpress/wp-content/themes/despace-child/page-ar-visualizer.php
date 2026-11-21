@@ -649,10 +649,10 @@ window.addEventListener('DOMContentLoaded', function() {
         },
 
         addProductToCanvas: function(card) {
-            if (typeof customElements !== 'undefined' && !customElements.get('model-viewer')) {
+            if (typeof customElements !== 'undefined' && !customElements.get('model-viewer') && !document.querySelector('script[src*="model-viewer"]')) {
                 const mvScript = document.createElement('script');
                 mvScript.type = 'module';
-                mvScript.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js';
+                mvScript.src = '<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/vendor/model-viewer/model-viewer.min.js' ); ?>';
                 document.head.appendChild(mvScript);
             }
 

@@ -40,7 +40,7 @@ function axgnud_enqueue_3d_admin_assets( $hook ) {
 	wp_enqueue_media();
 	wp_enqueue_script(
 		'google-model-viewer',
-		'https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js',
+		get_stylesheet_directory_uri() . '/assets/vendor/model-viewer/model-viewer.min.js',
 		array(),
 		'3.5.0',
 		true

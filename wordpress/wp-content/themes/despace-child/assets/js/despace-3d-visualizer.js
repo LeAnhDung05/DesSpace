@@ -15,11 +15,18 @@ if (typeof navigator !== 'undefined' && !navigator.xr) {
   } catch (e) { }
 }
 
-// 1. Nạp thư viện Google <model-viewer> chỉ khi chạy file HTML tĩnh bên ngoài môi trường WordPress
-if (typeof customElements !== 'undefined' && !customElements.get('model-viewer') && !document.querySelector('script[src*="wp-content"]') && !document.querySelector('script[src*="wp-includes"]')) {
+function getVendorBaseUrl() {
+  var base = (window.furnivaData && window.furnivaData.vendorUrl)
+    || (window.despaceData && window.despaceData.vendorUrl)
+    || '/wp-content/themes/despace-child/assets/vendor/';
+  return base.endsWith('/') ? base : (base + '/');
+}
+
+// 1. Nạp thư viện self-hosted <model-viewer> chỉ khi chạy file HTML tĩnh bên ngoài môi trường WordPress
+if (typeof customElements !== 'undefined' && !customElements.get('model-viewer') && !document.querySelector('script[src*="model-viewer"]')) {
   var mvScript = document.createElement('script');
   mvScript.type = 'module';
-  mvScript.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js';
+  mvScript.src = getVendorBaseUrl() + 'model-viewer/model-viewer.min.js';
   document.head.appendChild(mvScript);
 }
 
@@ -30,20 +37,21 @@ var _blobCache = {};
 var _cutoutCache = {};
 
 /**
- * Lazy loader cho Three.js và GLTFExporter qua CDN ESM
+ * Lazy loader cho Three.js và GLTFExporter từ vendor tự host
  */
 async function loadThree() {
   if (_threeModule && _gltfExporterClass) {
     return { THREE: _threeModule, GLTFExporter: _gltfExporterClass };
   }
   try {
-    var threeMod = await import('https://esm.sh/three@0.160.0');
-    var exporterMod = await import('https://esm.sh/three@0.160.0/examples/jsm/exporters/GLTFExporter.js');
+    var threeBase = getVendorBaseUrl() + 'three/';
+    var threeMod = await import(threeBase + 'three.module.min.js');
+    var exporterMod = await import(threeBase + 'exporters/GLTFExporter.js');
     _threeModule = threeMod;
     _gltfExporterClass = exporterMod.GLTFExporter;
     return { THREE: _threeModule, GLTFExporter: _gltfExporterClass };
   } catch (err) {
-    console.warn('[DeSpace 3D] Failed to load Three.js via CDN:', err);
+    console.warn('[DeSpace 3D] Failed to load self-hosted Three.js:', err);
     return null;
   }
 }
