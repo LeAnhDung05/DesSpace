@@ -45,12 +45,13 @@ wordpress/wp-content/themes/*
 *.tar.gz
 !database/despace_seed_data.sql
 !database/despace_seed_data.sql.gz
-!wordpress/wp-content/themes/despace-child/inc/data/despace_seed_data.sql.gz
-/BTTTS_5/
 
-# Whitelist project seed data
+# Whitelist project database scripts & docs (never accidental raw dumps)
 !database/
-!database/*
+!database/*.sh
+!database/*.bat
+!database/*.md
+!database/*.csv
 
 
 # Dependencies and IDE / OS files

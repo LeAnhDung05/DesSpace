@@ -13,28 +13,16 @@
        ============================================================ */
 
     function initNativeLazyLoad() {
-        // Add loading="lazy" to all images below the fold
+        // Assign loading="lazy" upfront to below-the-fold images (never defer until intersecting)
+        const vh = window.innerHeight || document.documentElement.clientHeight || 800;
         const images = document.querySelectorAll('img:not([loading])');
-
-        // Only add lazy to images that aren't in the first viewport
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    if (!img.hasAttribute('loading')) {
-                        img.setAttribute('loading', 'lazy');
-                    }
-                    observer.unobserve(img);
-                }
-            });
-        }, { rootMargin: '100px' });
-
-        // Add to images without lazy loading
         images.forEach(img => {
-            if (!img.hasAttribute('loading') &&
-                !img.classList.contains('wp-post-image') &&
-                !img.hasAttribute('fetchpriority')) {
-                observer.observe(img);
+            if (img.classList.contains('wp-post-image') || img.hasAttribute('fetchpriority')) {
+                return;
+            }
+            const rect = img.getBoundingClientRect();
+            if (rect.top > vh) {
+                img.setAttribute('loading', 'lazy');
             }
         });
     }
@@ -165,18 +153,9 @@
     function init() {
         detectWebPSupport();
         addImageDecoding();
-
-        if (document.readyState === 'complete') {
-            preloadLCPImage();
-            initNativeLazyLoad();
-            initAnimationLazyLoad();
-        } else {
-            window.addEventListener('load', () => {
-                preloadLCPImage();
-                initNativeLazyLoad();
-                initAnimationLazyLoad();
-            });
-        }
+        preloadLCPImage();
+        initNativeLazyLoad();
+        initAnimationLazyLoad();
     }
 
     // Run on DOM ready

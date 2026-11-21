@@ -553,6 +553,8 @@ class DeSpaceAppWindow(tk.Tk):
             self.pub_custom_glb_var.set(fn)
 
     def _refresh_store_categories(self):
+        current_cat_val = self.pub_cat_var.get()
+
         def worker():
             cats = self.sync_client.fetch_categories()
             self.store_categories = cats
@@ -564,9 +566,9 @@ class DeSpaceAppWindow(tk.Tk):
                 mapping[lbl] = c.get("slug") or c.get("name") or "tu-giay-luu-tru"
             self.category_label_to_slug = mapping
             if labels:
-                self.after(0, lambda: self.pub_cat_cb.configure(values=labels))
-                if self.pub_cat_var.get() not in mapping:
-                    self.after(0, lambda: self.pub_cat_var.set(labels[0]))
+                self.after(0, lambda l=labels: self.pub_cat_cb.configure(values=l))
+                if current_cat_val not in mapping:
+                    self.after(0, lambda first=labels[0]: self.pub_cat_var.set(first))
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -613,14 +615,20 @@ class DeSpaceAppWindow(tk.Tk):
                 angles[k] = val
 
         short_desc = self.pub_desc_text.get("1.0", tk.END).strip()
+        # Snapshot all Tkinter variables on the main thread before spawning worker thread
+        auto_build_3d = bool(self.pub_auto_build_3d_var.get())
+        color_val = self.pub_color_var.get().strip()
+        custom_glb_val = self.pub_custom_glb_var.get().strip()
+        name_en_val = self.pub_name_en_var.get().strip()
+        badge_val = self.pub_badge_var.get().strip()
 
         self.btn_publish_now.config(state="disabled")
         self.btn_open_published.config(state="disabled")
 
         def update_ui_prog(pct: int, msg: str):
-            self.after(0, lambda: self.pub_prog_bar.config(value=pct))
-            self.after(0, lambda: self.pub_pct_lbl.config(text=f"{pct}%"))
-            self.after(0, lambda: self.pub_step_lbl.config(text=msg))
+            self.after(0, lambda p=pct: self.pub_prog_bar.config(value=p))
+            self.after(0, lambda p=pct: self.pub_pct_lbl.config(text=f"{p}%"))
+            self.after(0, lambda m=msg: self.pub_step_lbl.config(text=m))
             self._log(f"[Publish {sku}] [{pct}%] {msg}")
 
         def worker():
@@ -630,7 +638,7 @@ class DeSpaceAppWindow(tk.Tk):
                 thumb_path: Optional[Path] = None
                 build_meta: Dict[str, Any] = {}
 
-                if self.pub_auto_build_3d_var.get():
+                if auto_build_3d:
                     build_meta = self.engine.reconstruct(
                         product_id=0,
                         sku=sku,
@@ -639,28 +647,27 @@ class DeSpaceAppWindow(tk.Tk):
                         dimensions={"width": w, "depth": d, "height": h},
                         angles=angles,
                         progress_callback=lambda p, m: update_ui_prog(int(p * 0.72), m),
-                        description=f"{short_desc} {self.pub_color_var.get().strip()}",
+                        description=f"{short_desc} {color_val}",
                     )
                     glb_path = Path(build_meta["glb_path"])
                     usdz_path = Path(build_meta["usdz_path"])
                     thumb_path = Path(build_meta["thumbnail_path"])
                 else:
-                    custom_glb = self.pub_custom_glb_var.get().strip()
-                    if custom_glb and Path(custom_glb).exists():
-                        glb_path = Path(custom_glb)
+                    if custom_glb_val and Path(custom_glb_val).exists():
+                        glb_path = Path(custom_glb_val)
 
                 update_ui_prog(82, "Đang tải sản phẩm, bộ ảnh Gallery & mô hình 3D (.GLB + .USDZ) lên Shop...")
 
                 product_payload = {
                     "sku": sku,
                     "name": name,
-                    "name_en": self.pub_name_en_var.get().strip(),
+                    "name_en": name_en_val,
                     "regular_price": reg_price,
                     "sale_price": sale_price if sale_price > 0 else "",
                     "stock_quantity": stock_qty,
                     "category": cat_slug,
-                    "badge": self.pub_badge_var.get().strip(),
-                    "color": self.pub_color_var.get().strip(),
+                    "badge": badge_val,
+                    "color": color_val,
                     "short_description": short_desc,
                     "description": short_desc,
                     "dimensions": {"width": w, "depth": d, "height": h},
@@ -703,8 +710,9 @@ class DeSpaceAppWindow(tk.Tk):
                     self.after(0, lambda: messagebox.showerror("Lỗi Đăng Sản Phẩm", f"Máy chủ phản hồi lỗi:\n{err_msg}"))
 
             except Exception as e:
-                self._log(f"❌ Lỗi ngoại lệ khi đăng sản phẩm: {e}")
-                self.after(0, lambda: self.pub_result_lbl.config(text=f"Lỗi: {e}", fg="#DC2626"))
+                err_text = str(e)
+                self._log(f"❌ Lỗi ngoại lệ khi đăng sản phẩm: {err_text}")
+                self.after(0, lambda msg=err_text: self.pub_result_lbl.config(text=f"Lỗi: {msg}", fg="#DC2626"))
             finally:
                 self.after(0, lambda: self.btn_publish_now.config(state="normal"))
 
@@ -1088,7 +1096,8 @@ class DeSpaceAppWindow(tk.Tk):
                     ),
                 )
             except Exception as e:
-                self.after(0, lambda: self.manual_status_label.config(text=f"Lỗi: {e}", fg="#DC2626"))
+                err_text = str(e)
+                self.after(0, lambda msg=err_text: self.manual_status_label.config(text=f"Lỗi: {msg}", fg="#DC2626"))
 
         threading.Thread(target=task, daemon=True).start()
 
@@ -1177,6 +1186,10 @@ class DeSpaceAppWindow(tk.Tk):
         self.sync_client.site_url = Config.SITE_URL
         self.sync_client.api_base = f"{Config.SITE_URL}/wp-json/despace/v1/desktop-3d"
         self.sync_client.secret_key = Config.API_SECRET_KEY
+        if hasattr(self, "local_server") and self.local_server and self.local_server.port != Config.LOCAL_PORT:
+            self.local_server.stop()
+            self.local_server.port = Config.LOCAL_PORT
+            self.local_server.start()
         messagebox.showinfo("Thông Báo", "Đã lưu vĩnh viễn cài đặt kết nối thành công!")
         self._check_website_health()
         self._refresh_store_categories()

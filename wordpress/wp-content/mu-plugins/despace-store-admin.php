@@ -207,11 +207,23 @@ add_action( 'admin_menu', 'despace_store_admin_localize_menu', 9999 );
  * Translate the dashboard heading and browser title without changing the public site language.
  */
 function despace_store_admin_dashboard_heading( $translation, $text, $domain ) {
-	if ( despace_store_admin_can_manage() && 'index.php' === ( $GLOBALS['pagenow'] ?? '' ) && 'default' === $domain && 'Dashboard' === $text ) {
+	if ( 'default' !== $domain && 'woocommerce' !== $domain ) {
+		return $translation;
+	}
+
+	static $can_manage = null;
+	if ( null === $can_manage ) {
+		$can_manage = despace_store_admin_can_manage();
+	}
+	if ( ! $can_manage ) {
+		return $translation;
+	}
+
+	if ( 'index.php' === ( $GLOBALS['pagenow'] ?? '' ) && 'default' === $domain && 'Dashboard' === $text ) {
 		return 'Tổng quan cửa hàng';
 	}
 
-	if ( 'woocommerce' !== $domain || ! despace_store_admin_can_manage() || ! function_exists( 'get_current_screen' ) ) {
+	if ( 'woocommerce' !== $domain || ! function_exists( 'get_current_screen' ) ) {
 		return $translation;
 	}
 
@@ -263,7 +275,9 @@ function despace_store_admin_dashboard_heading( $translation, $text, $domain ) {
 
 	return $translation;
 }
-add_filter( 'gettext', 'despace_store_admin_dashboard_heading', 20, 3 );
+if ( is_admin() ) {
+	add_filter( 'gettext', 'despace_store_admin_dashboard_heading', 20, 3 );
+}
 
 /**
  * Apply the same admin labels to WooCommerce strings translated with context.
@@ -277,7 +291,9 @@ add_filter( 'gettext', 'despace_store_admin_dashboard_heading', 20, 3 );
 function despace_store_admin_dashboard_heading_with_context( $translation, $text, $context, $domain ) {
 	return despace_store_admin_dashboard_heading( $translation, $text, $domain );
 }
-add_filter( 'gettext_with_context', 'despace_store_admin_dashboard_heading_with_context', 20, 4 );
+if ( is_admin() ) {
+	add_filter( 'gettext_with_context', 'despace_store_admin_dashboard_heading_with_context', 20, 4 );
+}
 
 /**
  * Put the most useful WooCommerce product columns first without removing plugin columns.
@@ -438,6 +454,20 @@ add_action( 'wp_dashboard_setup', 'despace_store_admin_clean_dashboard', 100 );
  */
 function despace_store_admin_assets( $hook_suffix ) {
 	if ( ! despace_store_admin_can_manage() ) {
+		return;
+	}
+
+	$allowed_hooks = array(
+		'index.php',
+		'toplevel_page_despace-hub',
+		'edit.php',
+		'woocommerce_page_wc-orders',
+		'woocommerce_page_despace-reports',
+		'woocommerce_page_despace-inventory-logs',
+	);
+	$is_despace_screen = in_array( (string) $hook_suffix, $allowed_hooks, true )
+		|| false !== strpos( (string) $hook_suffix, 'despace' );
+	if ( ! $is_despace_screen ) {
 		return;
 	}
 
@@ -911,11 +941,16 @@ add_action( 'admin_menu', 'despace_register_admin_hub_menu', 8 );
  * @return int Number of extracted files.
  */
 function despace_safe_extract_zip_archive( ZipArchive $zip, string $target_dir ): int {
-	$allowed_exts = array( 'jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'glb', 'gltf', 'usdz', 'json', 'csv', 'txt', 'css' );
-	$extracted    = 0;
-	$target_base  = rtrim( wp_normalize_path( $target_dir ), '/' );
+	// Strictly disallow SVG/CSS/PHP/HTML to prevent stored XSS & RCE in uploads.
+	$allowed_exts   = array( 'jpg', 'jpeg', 'png', 'webp', 'gif', 'glb', 'gltf', 'usdz', 'json', 'csv', 'txt' );
+	$max_files      = 500;
+	$max_file_bytes = 25 * 1024 * 1024;  // 25 MB per file
+	$max_total      = 200 * 1024 * 1024; // 200 MB total uncompressed (Zip Bomb protection)
+	$total_bytes    = 0;
+	$extracted      = 0;
+	$target_base    = rtrim( wp_normalize_path( $target_dir ), '/' );
 
-	for ( $i = 0; $i < $zip->numFiles; $i++ ) {
+	for ( $i = 0; $i < $zip->numFiles && $extracted < $max_files; $i++ ) {
 		$entry_name = $zip->getNameIndex( $i );
 		if ( false === $entry_name ) {
 			continue;
@@ -945,6 +980,11 @@ function despace_safe_extract_zip_archive( ZipArchive $zip, string $target_dir )
 			continue;
 		}
 
+		$stat = $zip->statIndex( $i );
+		if ( is_array( $stat ) && (int) ( $stat['size'] ?? 0 ) > $max_file_bytes ) {
+			continue;
+		}
+
 		$dest_path = $target_base . '/' . $normalized;
 		$dest_dir  = dirname( $dest_path );
 		if ( ! is_dir( $dest_dir ) ) {
@@ -953,22 +993,48 @@ function despace_safe_extract_zip_archive( ZipArchive $zip, string $target_dir )
 
 		$stream = $zip->getStream( $entry_name );
 		if ( $stream ) {
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-			file_put_contents( $dest_path, stream_get_contents( $stream ) );
+			$out = fopen( $dest_path, 'wb' );
+			if ( $out ) {
+				$written = 0;
+				$aborted = false;
+				while ( ! feof( $stream ) ) {
+					$chunk = fread( $stream, 65536 );
+					if ( false === $chunk ) {
+						$aborted = true;
+						break;
+					}
+					$len = strlen( $chunk );
+					$written     += $len;
+					$total_bytes += $len;
+					if ( $written > $max_file_bytes || $total_bytes > $max_total ) {
+						$aborted = true;
+						break;
+					}
+					fwrite( $out, $chunk );
+				}
+				fclose( $out );
+				if ( $aborted ) {
+					@unlink( $dest_path );
+				} else {
+					$extracted++;
+				}
+			}
 			fclose( $stream );
-			$extracted++;
+			if ( $total_bytes > $max_total ) {
+				break;
+			}
 		}
 	}
 
 	return $extracted;
 }
 
-// Handle 1-Click Unzip Uploads in DeSpace Hub
+// Handle 1-Click Unzip Uploads in DeSpace Hub (Administrators only)
 add_action( 'admin_post_despace_hub_unzip_uploads', 'despace_handle_hub_unzip_uploads' );
 function despace_handle_hub_unzip_uploads() {
 	check_admin_referer( 'despace_hub_unzip_nonce' );
-	if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'manage_woocommerce' ) ) {
-		wp_die( 'Bạn không có quyền thực hiện thao tác này.' );
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Bạn không có quyền thực hiện thao tác này.', 403 );
 	}
 
 	$target_dir = WP_CONTENT_DIR . '/uploads';
@@ -1028,12 +1094,12 @@ function despace_handle_hub_unzip_uploads() {
 	}
 }
 
-// Handle Auto Repair Asset URLs
+// Handle Auto Repair Asset URLs (Administrators only)
 add_action( 'admin_post_despace_hub_repair_urls', 'despace_handle_hub_repair_urls' );
 function despace_handle_hub_repair_urls() {
 	check_admin_referer( 'despace_hub_repair_nonce' );
-	if ( ! despace_store_admin_can_manage() ) {
-		wp_die( 'Bạn không có quyền thực hiện thao tác này.' );
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Bạn không có quyền thực hiện thao tác này.', 403 );
 	}
 
 	global $wpdb;
@@ -1074,8 +1140,9 @@ function despace_handle_hub_repair_urls() {
 		if ( $r3 ) $updated_rows += (int) $r3;
 	}
 
-	clean_post_cache( 0 );
-	$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '%_transient_%'" );
+	wp_cache_flush();
+	$transient_like = '%' . $wpdb->esc_like( '_transient_' ) . '%';
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $transient_like ) );
 
 	wp_safe_redirect( admin_url( 'admin.php?page=despace-hub&tab=assets&repaired=' . intval( $updated_rows ) ) );
 	exit;

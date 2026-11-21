@@ -28,7 +28,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function despace_validate_registration_fields( $username, $email, $validation_errors ) {
 	// 1. First Name (Tên)
-	if ( isset( $_POST['billing_first_name'] ) && '' === trim( sanitize_text_field( wp_unslash( $_POST['billing_first_name'] ) ) ) ) {
+	$first_name = trim( sanitize_text_field( wp_unslash( $_POST['billing_first_name'] ?? '' ) ) );
+	if ( '' === $first_name ) {
 		$validation_errors->add(
 			'billing_first_name_error',
 			esc_html( furniva_t( 'Please enter your first name.', 'Vui lòng nhập Tên của bạn.' ) )
@@ -36,7 +37,8 @@ function despace_validate_registration_fields( $username, $email, $validation_er
 	}
 
 	// 2. Last Name (Họ và tên đệm)
-	if ( isset( $_POST['billing_last_name'] ) && '' === trim( sanitize_text_field( wp_unslash( $_POST['billing_last_name'] ) ) ) ) {
+	$last_name = trim( sanitize_text_field( wp_unslash( $_POST['billing_last_name'] ?? '' ) ) );
+	if ( '' === $last_name ) {
 		$validation_errors->add(
 			'billing_last_name_error',
 			esc_html( furniva_t( 'Please enter your last name.', 'Vui lòng nhập Họ và tên đệm của bạn.' ) )
@@ -44,21 +46,19 @@ function despace_validate_registration_fields( $username, $email, $validation_er
 	}
 
 	// 3. Phone Number (Số điện thoại)
-	if ( isset( $_POST['billing_phone'] ) ) {
-		$raw_phone   = sanitize_text_field( wp_unslash( $_POST['billing_phone'] ) );
-		$clean_phone = preg_replace( '/[^0-9]/', '', $raw_phone );
-		if ( empty( $clean_phone ) || strlen( $clean_phone ) < 9 || strlen( $clean_phone ) > 12 ) {
-			$validation_errors->add(
-				'billing_phone_error',
-				esc_html( furniva_t( 'Please enter a valid phone number (9-11 digits).', 'Vui lòng nhập số điện thoại hợp lệ (9 - 11 chữ số).' ) )
-			);
-		}
+	$raw_phone   = sanitize_text_field( wp_unslash( $_POST['billing_phone'] ?? '' ) );
+	$clean_phone = preg_replace( '/[^0-9]/', '', $raw_phone );
+	if ( empty( $clean_phone ) || strlen( $clean_phone ) < 9 || strlen( $clean_phone ) > 12 ) {
+		$validation_errors->add(
+			'billing_phone_error',
+			esc_html( furniva_t( 'Please enter a valid phone number (9-11 digits).', 'Vui lòng nhập số điện thoại hợp lệ (9 - 11 chữ số).' ) )
+		);
 	}
 
 	// 4. Password confirmation (if password generation is disabled)
 	if ( 'no' === get_option( 'woocommerce_registration_generate_password' ) ) {
-		$password         = isset( $_POST['password'] ) ? $_POST['password'] : '';
-		$password_confirm = isset( $_POST['password_confirm'] ) ? $_POST['password_confirm'] : '';
+		$password         = isset( $_POST['password'] ) ? (string) wp_unslash( $_POST['password'] ) : '';
+		$password_confirm = isset( $_POST['password_confirm'] ) ? (string) wp_unslash( $_POST['password_confirm'] ) : '';
 
 		if ( empty( $password ) ) {
 			$validation_errors->add(
@@ -213,13 +213,10 @@ add_filter( 'woocommerce_add_to_cart_validation', 'despace_require_login_for_add
  */
 function despace_preserve_auth_redirect( $redirect, $user = null ) {
 	if ( ! empty( $_REQUEST['redirect_to'] ) ) {
-		$target = esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) );
-		// Validate that target is an internal URL
-		$parsed_home   = wp_parse_url( home_url() );
-		$parsed_target = wp_parse_url( $target );
-
-		if ( empty( $parsed_target['host'] ) || ( isset( $parsed_home['host'] ) && $parsed_home['host'] === $parsed_target['host'] ) ) {
-			return $target;
+		$raw_target = trim( (string) wp_unslash( $_REQUEST['redirect_to'] ) );
+		// Reject backslash-based open redirects (e.g. /\evil.com) and delegate to wp_validate_redirect().
+		if ( '' !== $raw_target && false === strpos( $raw_target, '\\' ) ) {
+			return wp_validate_redirect( esc_url_raw( $raw_target ), $redirect );
 		}
 	}
 	return $redirect;

@@ -47,59 +47,32 @@
             threshold: 0.05
         };
 
-        // Create observer
-        const revealObserver = new IntersectionObserver(function(entries, observer) {
-            entries.forEach(function(entry) {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('fv-visible');
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, observerOptions);
-
-        // Scroll and visibility checker
-        function checkVisibility() {
-            const vh = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0, 900);
-            document.querySelectorAll('.fv-reveal:not(.fv-visible), .fv-stagger:not(.fv-visible)').forEach(function(el) {
-                const rect = el.getBoundingClientRect();
-                if (rect.top <= vh + 100 && rect.bottom >= -100) {
-                    el.classList.add('fv-visible');
-                }
-            });
-        }
-
-        // Run immediately and on scroll/resize
-        checkVisibility();
-        window.addEventListener('scroll', checkVisibility, { passive: true });
-        window.addEventListener('resize', checkVisibility, { passive: true });
-
-        // Safety fallback: reveal all elements after 1.5s so content is never stuck hidden
-        setTimeout(function() {
-            document.querySelectorAll('.fv-reveal, .fv-stagger').forEach(function(el) {
-                el.classList.add('fv-visible');
-            });
-        }, 1500);
-
-        // Also observe reveal elements with IntersectionObserver if available
+        // Single IntersectionObserver for both .fv-reveal and .fv-stagger (zero unthrottled scroll/resize reflow)
         if ('IntersectionObserver' in window) {
+            const revealObserver = new IntersectionObserver(function(entries, observer) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('fv-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
             document.querySelectorAll('.fv-reveal, .fv-stagger').forEach(function(el) {
                 revealObserver.observe(el);
             });
+        } else {
+            document.querySelectorAll('.fv-reveal, .fv-stagger').forEach(function(el) {
+                el.classList.add('fv-visible');
+            });
         }
 
-        // Stagger children when stagger container becomes visible
-        const staggerObserver = new IntersectionObserver(function(entries, observer) {
-            entries.forEach(function(entry) {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('fv-visible');
-                    observer.unobserve(entry.target);
-                }
+        // Safety fallback: reveal all elements after 1.5s so content is never stuck hidden
+        setTimeout(function() {
+            document.querySelectorAll('.fv-reveal:not(.fv-visible), .fv-stagger:not(.fv-visible)').forEach(function(el) {
+                el.classList.add('fv-visible');
             });
-        }, observerOptions);
-
-        document.querySelectorAll('.fv-stagger').forEach(function(el) {
-            staggerObserver.observe(el);
-        });
+        }, 1500);
     }
 
     /* ============================================================
@@ -107,6 +80,7 @@
        ============================================================ */
 
     function initParallax() {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
         const parallaxElements = document.querySelectorAll('.fv-parallax');
 
         if (parallaxElements.length === 0) return;
@@ -213,12 +187,18 @@
        ============================================================ */
 
     function initSmoothScroll() {
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
             anchor.addEventListener('click', function(e) {
                 const href = this.getAttribute('href');
-                if (href === '#') return;
+                if (!href || href === '#') return;
 
-                const target = document.querySelector(href);
+                let target = null;
+                try {
+                    target = document.querySelector(href);
+                } catch (err) {
+                    return;
+                }
                 if (target) {
                     e.preventDefault();
                     const headerHeight = document.querySelector('.fv-header')?.offsetHeight || 0;
@@ -226,7 +206,7 @@
 
                     window.scrollTo({
                         top: targetPosition,
-                        behavior: 'smooth'
+                        behavior: reduced ? 'auto' : 'smooth'
                     });
                 }
             });
@@ -238,17 +218,22 @@
        ============================================================ */
 
     function initMagneticButtons() {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
         if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
 
         const magneticBtns = document.querySelectorAll('.fv-magnetic');
 
         magneticBtns.forEach(function(btn) {
+            let rafId = 0;
             btn.addEventListener('mousemove', function(e) {
-                const rect = btn.getBoundingClientRect();
-                const x = e.clientX - rect.left - rect.width / 2;
-                const y = e.clientY - rect.top - rect.height / 2;
-
-                btn.style.transform = 'translate(' + x * 0.2 + 'px, ' + y * 0.2 + 'px)';
+                if (rafId) return;
+                rafId = window.requestAnimationFrame(function() {
+                    rafId = 0;
+                    const rect = btn.getBoundingClientRect();
+                    const x = e.clientX - rect.left - rect.width / 2;
+                    const y = e.clientY - rect.top - rect.height / 2;
+                    btn.style.transform = 'translate(' + x * 0.2 + 'px, ' + y * 0.2 + 'px)';
+                });
             });
 
             btn.addEventListener('mouseleave', function() {
@@ -262,21 +247,26 @@
        ============================================================ */
 
     function initTiltEffect() {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
         if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
 
         const tiltCards = document.querySelectorAll('.fv-tilt');
 
         tiltCards.forEach(function(card) {
+            let rafId = 0;
             card.addEventListener('mousemove', function(e) {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                const rotateX = (y - centerY) / 20;
-                const rotateY = (centerX - x) / 20;
-
-                card.style.transform = 'perspective(1000px) rotateX(' + rotateX + 'deg) rotateY(' + rotateY + 'deg) scale(1.02)';
+                if (rafId) return;
+                rafId = window.requestAnimationFrame(function() {
+                    rafId = 0;
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    const rotateX = (y - centerY) / 20;
+                    const rotateY = (centerX - x) / 20;
+                    card.style.transform = 'perspective(1000px) rotateX(' + rotateX + 'deg) rotateY(' + rotateY + 'deg) scale(1.02)';
+                });
             });
 
             card.addEventListener('mouseleave', function() {
@@ -286,25 +276,35 @@
     }
 
     /* ============================================================
-       10. Text Split Animation
+       10. Text Split Animation (respects reduced motion, screen readers & Vietnamese graphemes)
        ============================================================ */
 
     function initTextAnimation() {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
         const animatedTexts = document.querySelectorAll('.fv-text-animate');
+        if (!animatedTexts.length) return;
 
         animatedTexts.forEach(function(el) {
-            const text = el.textContent;
-            const chars = text.split('');
-            el.innerHTML = '';
+            const text = el.textContent || '';
+            if (!el.getAttribute('aria-label')) {
+                el.setAttribute('aria-label', text.trim());
+            }
+            const words = text.split(/(\s+)/);
+            el.textContent = '';
 
-            chars.forEach(function(char, i) {
+            words.forEach(function(word, i) {
+                if (/^\s+$/.test(word)) {
+                    el.appendChild(document.createTextNode(word));
+                    return;
+                }
                 const span = document.createElement('span');
-                span.textContent = char === ' ' ? ' ' : char;
+                span.setAttribute('aria-hidden', 'true');
+                span.textContent = word;
                 span.style.display = 'inline-block';
                 span.style.opacity = '0';
-                span.style.transform = 'translateY(20px)';
-                span.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                span.style.transitionDelay = (i * 30) + 'ms';
+                span.style.transform = 'translateY(14px)';
+                span.style.transition = 'opacity 0.45s ease, transform 0.45s ease';
+                span.style.transitionDelay = (i * 35) + 'ms';
                 el.appendChild(span);
             });
         });
@@ -328,27 +328,29 @@
     }
 
     /* ============================================================
-       11. Lazy Load with Fade
+       11. Lazy Load with Fade (always adds .fv-loaded/.loaded so images stay visible)
        ============================================================ */
 
     function initLazyLoad() {
+        const markLoaded = function(img) {
+            img.classList.add('fv-loaded', 'loaded');
+        };
         if ('loading' in HTMLImageElement.prototype) {
-            // Native lazy loading supported
             document.querySelectorAll('img[data-src]').forEach(function(img) {
+                if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
+                img.addEventListener('load', function() { markLoaded(img); }, { once: true });
                 img.src = img.dataset.src;
+                if (img.complete && img.naturalWidth > 0) markLoaded(img);
             });
         } else {
-            // Fallback with IntersectionObserver
             const lazyImages = document.querySelectorAll('img[data-src]');
-
             const lazyObserver = new IntersectionObserver(function(entries) {
                 entries.forEach(function(entry) {
                     if (entry.isIntersecting) {
                         const img = entry.target;
+                        img.addEventListener('load', function() { markLoaded(img); }, { once: true });
                         img.src = img.dataset.src;
-                        img.addEventListener('load', function() {
-                            img.classList.add('fv-loaded');
-                        });
+                        if (img.complete && img.naturalWidth > 0) markLoaded(img);
                         lazyObserver.unobserve(img);
                     }
                 });

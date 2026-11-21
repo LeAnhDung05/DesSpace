@@ -17,13 +17,29 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function ax_get_product_3d_info( $product_id ) {
 	global $wpdb;
-	$table_despace = $wpdb->prefix . 'despace_product_3d_models';
-	$table_axgnud  = $wpdb->prefix . 'axgnud_product_3d_models';
-	$table         = ( $wpdb->get_var( "SHOW TABLES LIKE '$table_despace'" ) === $table_despace ) ? $table_despace : $table_axgnud;
+	$product_id = absint( $product_id );
+	static $resolved_table = null;
+	static $row_cache      = array();
 
-	$row = null;
-	if ( $wpdb->get_var( "SHOW TABLES LIKE '$table'" ) === $table ) {
-		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table WHERE product_id = %d LIMIT 1", $product_id ) );
+	if ( null === $resolved_table ) {
+		$table_despace = $wpdb->prefix . 'despace_product_3d_models';
+		$table_axgnud  = $wpdb->prefix . 'axgnud_product_3d_models';
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table_despace ) ) ) === $table_despace ) {
+			$resolved_table = $table_despace;
+		} elseif ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table_axgnud ) ) ) === $table_axgnud ) {
+			$resolved_table = $table_axgnud;
+		} else {
+			$resolved_table = '';
+		}
+	}
+
+	if ( array_key_exists( $product_id, $row_cache ) ) {
+		$row = $row_cache[ $product_id ];
+	} else {
+		$row = '' !== $resolved_table
+			? $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$resolved_table} WHERE product_id = %d LIMIT 1", $product_id ) )
+			: null;
+		$row_cache[ $product_id ] = $row;
 	}
 
 	$glb = $row ? $row->glb_url : ( get_post_meta( $product_id, '_despace_model_glb', true ) ?: get_post_meta( $product_id, '_axgnud_model_glb', true ) );
@@ -112,6 +128,12 @@ function ax_get_product_3d_info( $product_id ) {
  * Auto-ensure AR Visualizer page exists with correct template
  */
 function ar_ensure_visualizer_page() {
+	if ( '1' === (string) get_option( 'despace_ar_page_provisioned_v1', '' ) ) {
+		return;
+	}
+	if ( ! is_admin() ) {
+		return;
+	}
 	$slug = 'ar-room-visualizer';
 	$page = get_page_by_path( $slug );
 	if ( ! $page ) {
@@ -125,15 +147,18 @@ function ar_ensure_visualizer_page() {
 		) );
 		if ( $page_id && ! is_wp_error( $page_id ) ) {
 			update_post_meta( $page_id, '_wp_page_template', 'page-ar-visualizer.php' );
+			update_option( 'despace_ar_page_provisioned_v1', '1', false );
 		}
 	} else {
 		$tpl = get_post_meta( $page->ID, '_wp_page_template', true );
 		if ( $tpl !== 'page-ar-visualizer.php' ) {
 			update_post_meta( $page->ID, '_wp_page_template', 'page-ar-visualizer.php' );
 		}
+		update_option( 'despace_ar_page_provisioned_v1', '1', false );
 	}
 }
-add_action( 'init', 'ar_ensure_visualizer_page' );
+add_action( 'after_switch_theme', 'ar_ensure_visualizer_page' );
+add_action( 'admin_init', 'ar_ensure_visualizer_page' );
 
 /**
  * 404 Fallback: Guarantee AR URL never throws 404 in any language (VI / EN)
@@ -335,12 +360,7 @@ function ar_add_footer_link() {
 			}
 		}
 	}
-	$http_host = ! empty( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
-	if ( $http_host && false !== strpos( $http_host, 'trycloudflare.com' ) ) {
-		$tunnel_base = 'https://' . $http_host;
-	} elseif ( $http_host && preg_match( '/^(?:192\.168\.|10\.|172\.)/', $http_host ) && empty( $lan_base ) ) {
-		$lan_base = 'http://' . $http_host;
-	}
+	// Derive fallback strictly from WordPress home_url() rather than untrusted HTTP_HOST headers.
 	if ( empty( $lan_base ) ) {
 		$lan_base = home_url();
 	}
@@ -350,7 +370,7 @@ function ar_add_footer_link() {
 		'arPageUrl'     => esc_url_raw( ax_get_ar_page_url() ),
 	);
 	echo '<script>';
-	echo 'window.AR_VISUALIZER_URL = ' . wp_json_encode( ax_get_ar_page_url() ) . ';';
-	echo 'window.DESPACE_AR_NETWORK = ' . wp_json_encode( $net_config ) . ';';
+	echo 'window.AR_VISUALIZER_URL = ' . wp_json_encode( ax_get_ar_page_url(), JSON_HEX_TAG | JSON_HEX_AMP ) . ';';
+	echo 'window.DESPACE_AR_NETWORK = ' . wp_json_encode( $net_config, JSON_HEX_TAG | JSON_HEX_AMP ) . ';';
 	echo '</script>';
 }

@@ -268,6 +268,14 @@ class ConciergeService {
 			return array();
 		}
 
+		$cache_key = 'despace_concierge_catalog_v1';
+		if ( function_exists( 'get_transient' ) ) {
+			$cached = get_transient( $cache_key );
+			if ( is_array( $cached ) ) {
+				return $cached;
+			}
+		}
+
 		$wc_items = wc_get_products(
 			array(
 				'status' => 'publish',
@@ -315,6 +323,10 @@ class ConciergeService {
 				'glb_url'    => $info_3d['glb_url'] ?? '',
 				'usdz_url'   => $info_3d['usdz_url'] ?? '',
 			);
+		}
+
+		if ( function_exists( 'set_transient' ) ) {
+			set_transient( $cache_key, $list, 300 );
 		}
 
 		return $list;
@@ -451,7 +463,7 @@ class ConciergeService {
 			? 'LIVE CATALOG CONTEXT: Không có sản phẩm nào khớp giới hạn kích thước/ngân sách này.'
 			: "LIVE CATALOG CONTEXT:\n" . implode( "\n", $catalog_lines );
 
-		$endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . rawurlencode( $api_key );
+		$endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 		$body = array(
 			'systemInstruction' => array(
@@ -473,7 +485,10 @@ class ConciergeService {
 			$endpoint,
 			array(
 				'timeout' => 10,
-				'headers' => array( 'Content-Type' => 'application/json' ),
+				'headers' => array(
+					'Content-Type'   => 'application/json',
+					'x-goog-api-key' => $api_key,
+				),
 				'body'    => wp_json_encode( $body ),
 			)
 		);

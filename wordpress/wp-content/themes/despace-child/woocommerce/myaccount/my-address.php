@@ -74,13 +74,7 @@ if ( ! wc_ship_to_billing_address_only() && wc_shipping_enabled() ) {
 				<a href="<?php echo esc_url( wc_get_endpoint_url( 'edit-address', $name ) ); ?>" class="ax-address-edit-btn">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
 					<span>
-						<?php
-						printf(
-							/* translators: %s: Address title */
-							$address ? furniva_t( 'Edit %s', 'Chỉnh sửa địa chỉ' ) : furniva_t( 'Add %s', 'Thêm địa chỉ' ),
-							''
-						);
-						?>
+						<?php echo esc_html( $address ? furniva_t( 'Edit address', 'Chỉnh sửa địa chỉ' ) : furniva_t( 'Add address', 'Thêm địa chỉ' ) ); ?>
 					</span>
 				</a>
 			</div>

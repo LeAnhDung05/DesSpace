@@ -221,11 +221,11 @@
     $('#axModalProductName').text(currentProduct.name);
     $('#axModalProductThumb').attr('src', currentProduct.image);
 
-    var priceHtml = '<span class="ax-modal-sale-price">' + (currentProduct.price || '') + '</span>';
+    var $priceWrap = $('#axModalProductPrice').empty();
+    $priceWrap.append($('<span class="ax-modal-sale-price"></span>').text(currentProduct.price || ''));
     if (currentProduct.regularPrice && currentProduct.regularPrice !== currentProduct.price) {
-      priceHtml += '<del class="ax-modal-reg-price">' + currentProduct.regularPrice + '</del>';
+      $priceWrap.append($('<del class="ax-modal-reg-price"></del>').text(currentProduct.regularPrice));
     }
-    $('#axModalProductPrice').html(priceHtml);
 
     if (currentProduct.dimensions) {
       $('#axModalProductDims').text(currentProduct.dimensions).show();
@@ -397,7 +397,11 @@
 
       var scene = new THREE.Scene();
       var pmrem = new THREE.PMREMGenerator(renderer);
-      scene.environment = pmrem.fromScene(new deps.RoomEnvironment(), 0.04).texture;
+      var roomEnv = new deps.RoomEnvironment();
+      var envRT = pmrem.fromScene(roomEnv, 0.04);
+      scene.environment = envRT.texture;
+      interactive3D.envRenderTarget = envRT;
+      if (typeof roomEnv.dispose === 'function') roomEnv.dispose();
       pmrem.dispose();
 
       var hemi = new THREE.HemisphereLight(0xfffaf2, 0xd8cfc4, 0.55);
@@ -462,19 +466,27 @@
     interactive3D.renderer.setSize(w, h);
   }
 
+  function disposeObjectTree(rootObj) {
+    if (!rootObj) return;
+    var texProps = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap', 'bumpMap', 'alphaMap', 'lightMap', 'envMap'];
+    rootObj.traverse(function (obj) {
+      if (obj.geometry) obj.geometry.dispose();
+      if (obj.material) {
+        var mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+        mats.forEach(function (m) {
+          texProps.forEach(function (k) {
+            if (m[k] && typeof m[k].dispose === 'function') m[k].dispose();
+          });
+          if (typeof m.dispose === 'function') m.dispose();
+        });
+      }
+    });
+  }
+
   function disposeInteractiveModel() {
     if (interactive3D.modelRoot && interactive3D.scene) {
       interactive3D.scene.remove(interactive3D.modelRoot);
-      interactive3D.modelRoot.traverse(function (obj) {
-        if (obj.geometry) obj.geometry.dispose();
-        if (obj.material) {
-          var mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-          mats.forEach(function (m) {
-            if (m.map) m.map.dispose();
-            m.dispose();
-          });
-        }
-      });
+      disposeObjectTree(interactive3D.modelRoot);
       interactive3D.modelRoot = null;
     }
   }
@@ -678,7 +690,10 @@
       loader.load(
         glbUrl,
         function (gltf) {
-          if (token !== interactive3D.loadToken) return;
+          if (token !== interactive3D.loadToken) {
+            disposeObjectTree(gltf.scene);
+            return;
+          }
           disposeInteractiveModel();
           interactive3D.parts = [];
           interactive3D.partMap = new Map();
@@ -696,7 +711,15 @@
               var partMeshes = [];
               obj.traverse(function (child) {
                 if (child.isMesh && child.material) {
-                  child.material = child.material.clone();
+                  var origMat = child.material;
+                  child.material = Array.isArray(origMat)
+                    ? origMat.map(function (m) { return m.clone(); })
+                    : origMat.clone();
+                  if (Array.isArray(origMat)) {
+                    origMat.forEach(function (m) { if (typeof m.dispose === 'function') m.dispose(); });
+                  } else if (typeof origMat.dispose === 'function') {
+                    origMat.dispose();
+                  }
                   partMeshes.push(child);
                 }
               });
@@ -1218,8 +1241,16 @@
       }
     };
 
+    state.cameraSessionId = (state.cameraSessionId || 0) + 1;
+    var reqSessionId = state.cameraSessionId;
+
     navigator.mediaDevices.getUserMedia(constraints)
       .then(function (stream) {
+        // Abort and immediately release hardware camera if modal was closed or mode changed while prompt was pending
+        if (reqSessionId !== state.cameraSessionId || !$('#ax-room-visualizer-modal').hasClass('is-open')) {
+          stream.getTracks().forEach(function (track) { track.stop(); });
+          return;
+        }
         state.cameraStream = stream;
         state.usingFallbackRoom = false;
         $fallbackBg.hide();
@@ -1228,8 +1259,10 @@
           video.style.display = 'block';
           video.play().catch(function () { });
           video.onloadeddata = function () {
+            if (reqSessionId !== state.cameraSessionId) return;
             startSpatialLoop();
             setTimeout(function () {
+              if (reqSessionId !== state.cameraSessionId) return;
               if (!state.autoSnapDone) {
                 state.autoSnapDone = true;
                 spatialAnalyzer.scanFloorPlane(true);
@@ -1241,10 +1274,15 @@
         }
       })
       .catch(function (err) {
+        if (reqSessionId !== state.cameraSessionId) return;
         console.warn('[DeSpace Live AR] Camera stream fallback to room backdrop:', err);
         enableFallbackRoomBackdrop();
         startSpatialLoop();
-        setTimeout(function () { spatialAnalyzer.scanFloorPlane(true); }, 350);
+        setTimeout(function () {
+          if (reqSessionId === state.cameraSessionId) {
+            spatialAnalyzer.scanFloorPlane(true);
+          }
+        }, 350);
       });
   }
 
@@ -1255,6 +1293,7 @@
   }
 
   function stopLiveCameraStream() {
+    state.cameraSessionId = (state.cameraSessionId || 0) + 1;
     stopSpatialLoop();
     if (state.cameraStream) {
       state.cameraStream.getTracks().forEach(function (track) {
@@ -1612,7 +1651,7 @@
   function buildMobileArUrl() {
     var net = window.DESPACE_AR_NETWORK || {};
     var tunnelBase = net.tunnelBaseUrl || '';
-    var lanBase = net.lanBaseUrl || 'http://192.168.1.123:8090';
+    var lanBase = net.lanBaseUrl || window.location.origin;
 
     // Update switcher button labels
     if (lanBase) {
@@ -1721,8 +1760,30 @@
    * Supports Byte Mode, Error Correction Level L, Versions 1 to 10 (up to 271 bytes)
    */
   function generateQRMatrixISO(text) {
-    var utf8 = unescape(encodeURIComponent(text));
+    var bytes;
+    if (typeof TextEncoder !== 'undefined') {
+      bytes = new TextEncoder().encode(String(text || ''));
+    } else {
+      var encoded = encodeURIComponent(String(text || ''));
+      var arr = [];
+      for (var bi = 0; bi < encoded.length; bi++) {
+        if (encoded[bi] === '%') {
+          arr.push(parseInt(encoded.substr(bi + 1, 2), 16));
+          bi += 2;
+        } else {
+          arr.push(encoded.charCodeAt(bi));
+        }
+      }
+      bytes = arr;
+    }
+    var utf8 = '';
+    for (var ui = 0; ui < bytes.length; ui++) {
+      utf8 += String.fromCharCode(bytes[ui]);
+    }
     var len = utf8.length;
+    if (len > 271) {
+      throw new Error('QR payload exceeds Version 10-L capacity (271 bytes)');
+    }
 
     var V_TABLE = [
       null,
@@ -2206,14 +2267,17 @@
   function checkUrlParams() {
     var urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('open_ar') === '1' || window.location.hash === '#ar') {
-      var prodId = urlParams.get('prod') || '';
+      var rawProdId = urlParams.get('prod') || '';
+      var prodId = /^\d+$/.test(rawProdId) ? rawProdId : '';
       if (Device.isMobile()) {
         state.arSubView = 'live-camera';
       }
       setTimeout(function () {
         var $btn = $('#arViewInRoomBtn').first();
         if (!$btn.length && prodId) {
-          $btn = $('.ax-open-ar-btn[data-product-id="' + prodId + '"], .ax-open-room-modal[data-product-id="' + prodId + '"]').first();
+          $btn = $('.ax-open-ar-btn, .ax-open-room-modal').filter(function () {
+            return String($(this).attr('data-product-id') || '') === prodId;
+          }).first();
         }
         if (!$btn.length) {
           $btn = $('.ax-open-ar-btn, .ax-open-room-modal').first();

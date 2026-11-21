@@ -9,26 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/**
- * 1. Cho phép tải file .glb và .usdz lên WordPress Media
- */
-add_filter( 'upload_mimes', function( $mimes ) {
-	$mimes['glb']  = 'model/gltf-binary';
-	$mimes['gltf'] = 'model/gltf+json';
-	$mimes['usdz'] = 'model/vnd.usdz+zip';
-	return $mimes;
-} );
-
-add_filter( 'wp_check_filetype_and_ext', function( $data, $file, $filename, $mimes ) {
-	$ext = strtolower( pathinfo( $filename, PATHINFO_EXTENSION ) );
-	if ( 'glb' === $ext ) {
-		return array( 'ext' => 'glb', 'type' => 'model/gltf-binary', 'proper_filename' => $filename );
-	}
-	if ( 'usdz' === $ext ) {
-		return array( 'ext' => 'usdz', 'type' => 'model/vnd.usdz+zip', 'proper_filename' => $filename );
-	}
-	return $data;
-}, 10, 4 );
+// 3D MIME types & magic-byte validation are enforced centrally by despace-core (Product3DModule).
+// Do NOT re-register permissive wp_check_filetype_and_ext filters in the theme.
 
 /**
  * Đảm bảo nạp wp.media trên trang sửa sản phẩm trong WP Admin
@@ -350,13 +332,21 @@ add_action( 'wp_ajax_axgnud_generate_3d_model', function() {
 	if ( ! current_user_can( 'edit_products' ) && ! current_user_can( 'manage_woocommerce' ) && ! current_user_can( 'manage_despace_3d' ) ) {
 		wp_send_json_error( array( 'message' => 'Bạn không có quyền thực hiện thao tác này.' ), 403 );
 	}
-	$product_id = intval( $_POST['product_id'] ?? 0 );
-	$api_key    = sanitize_text_field( wp_unslash( $_POST['api_key'] ?? '' ) );
+	$product_id = absint( $_POST['product_id'] ?? 0 );
+	if ( ! $product_id || 'product' !== get_post_type( $product_id ) ) {
+		wp_send_json_error( array( 'message' => 'Sản phẩm không hợp lệ.' ), 400 );
+	}
+	if ( ! current_user_can( 'edit_post', $product_id ) && ! current_user_can( 'manage_despace_3d' ) ) {
+		wp_send_json_error( array( 'message' => 'Bạn không có quyền chỉnh sửa sản phẩm này.' ), 403 );
+	}
 
-	if ( ! empty( $api_key ) && current_user_can( 'manage_options' ) ) {
+	$api_key = '';
+	if ( current_user_can( 'manage_options' ) && ! empty( $_POST['api_key'] ) ) {
+		$api_key = sanitize_text_field( wp_unslash( $_POST['api_key'] ) );
 		update_option( 'axgnud_fal_api_key', $api_key );
-	} elseif ( empty( $api_key ) ) {
-		$api_key = get_option( 'axgnud_fal_api_key', '' );
+	}
+	if ( '' === $api_key ) {
+		$api_key = (string) get_option( 'axgnud_fal_api_key', '' );
 	}
 
 	$thumb_id  = (int) get_post_thumbnail_id( $product_id );
@@ -404,37 +394,68 @@ add_action( 'wp_ajax_axgnud_generate_3d_model', function() {
 		wp_send_json_error( array( 'message' => 'Lỗi kết nối API: ' . $response->get_error_message() ) );
 	}
 
-	$body = json_decode( wp_remote_retrieve_body( $response ), true );
-	$remote_glb = $body['model_mesh']['url'] ?? ( $body['mesh']['url'] ?? '' );
+	$body       = json_decode( wp_remote_retrieve_body( $response ), true );
+	$remote_glb = esc_url_raw( (string) ( $body['model_mesh']['url'] ?? ( $body['mesh']['url'] ?? '' ) ) );
 
 	if ( empty( $remote_glb ) ) {
 		wp_send_json_error( array( 'message' => 'API không trả về file .glb (Kiểm tra lại URL ảnh phải là public HTTPS, không phải localhost).' ) );
 	}
 
-	// Tải file .glb về thư mục uploads của WordPress
+	// SSRF guard: strictly enforce HTTPS and allowlisted Fal.ai storage hosts before downloading.
+	$parsed_scheme = strtolower( (string) wp_parse_url( $remote_glb, PHP_URL_SCHEME ) );
+	$parsed_host   = strtolower( (string) wp_parse_url( $remote_glb, PHP_URL_HOST ) );
+	$is_fal_host   = (
+		'fal.media' === $parsed_host ||
+		str_ends_with( $parsed_host, '.fal.media' ) ||
+		'storage.googleapis.com' === $parsed_host
+	);
+	if ( 'https' !== $parsed_scheme || ! $is_fal_host ) {
+		wp_send_json_error( array( 'message' => 'URL mô hình 3D trả về từ API không nằm trong danh sách tên miền tin cậy.' ), 400 );
+	}
+
+	// Safely download remote GLB with SSRF protection & 50MB cap.
 	require_once ABSPATH . 'wp-admin/includes/file.php';
 	require_once ABSPATH . 'wp-admin/includes/media.php';
 	require_once ABSPATH . 'wp-admin/includes/image.php';
 
-	$tmp = download_url( $remote_glb );
-	if ( is_wp_error( $tmp ) ) {
-		update_post_meta( $product_id, '_axgnud_model_glb', esc_url_raw( $remote_glb ) );
-		wp_send_json_success( array( 'glb_url' => $remote_glb ) );
+	$dl_response = wp_safe_remote_get(
+		$remote_glb,
+		array(
+			'timeout'             => 60,
+			'reject_unsafe_urls'  => true,
+			'limit_response_size' => 50 * MB_IN_BYTES,
+		)
+	);
+	if ( is_wp_error( $dl_response ) || 200 !== (int) wp_remote_retrieve_response_code( $dl_response ) ) {
+		wp_send_json_error( array( 'message' => 'Không thể tải an toàn tệp .glb từ máy chủ Fal.ai.' ), 502 );
+	}
+
+	$glb_bytes = wp_remote_retrieve_body( $dl_response );
+	if ( ! is_string( $glb_bytes ) || strlen( $glb_bytes ) < 12 || 'glTF' !== substr( $glb_bytes, 0, 4 ) ) {
+		wp_send_json_error( array( 'message' => 'Tệp tải về không phải định dạng nhị phân glTF (.glb) hợp lệ.' ), 400 );
+	}
+
+	$tmp = wp_tempnam( 'axgnud-3d-product-' . $product_id . '.glb' );
+	if ( ! $tmp || false === file_put_contents( $tmp, $glb_bytes ) ) {
+		if ( $tmp ) {
+			@unlink( $tmp );
+		}
+		wp_send_json_error( array( 'message' => 'Không thể lưu tệp tạm .glb trên máy chủ.' ), 500 );
 	}
 
 	$file_array = array(
 		'name'     => 'axgnud-3d-product-' . $product_id . '.glb',
 		'tmp_name' => $tmp,
 	);
-	$attach_id = media_handle_sideload( $file_array, $product_id );
+	$attach_id  = media_handle_sideload( $file_array, $product_id );
 	if ( is_wp_error( $attach_id ) ) {
 		@unlink( $tmp );
-		update_post_meta( $product_id, '_axgnud_model_glb', esc_url_raw( $remote_glb ) );
-		wp_send_json_success( array( 'glb_url' => $remote_glb ) );
+		wp_send_json_error( array( 'message' => 'Không thể nhập tệp .glb vào Media Library.' ), 500 );
 	}
 
 	$local_glb_url = wp_get_attachment_url( $attach_id );
 	update_post_meta( $product_id, '_axgnud_model_glb', esc_url_raw( $local_glb_url ) );
+	update_post_meta( $product_id, '_despace_model_glb', esc_url_raw( $local_glb_url ) );
 	update_post_meta( $product_id, '_axgnud_3d_status', 'ai_glb_ready' );
 
 	wp_send_json_success( array( 'glb_url' => $local_glb_url ) );

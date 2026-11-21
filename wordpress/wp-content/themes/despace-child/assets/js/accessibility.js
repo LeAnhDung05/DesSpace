@@ -49,6 +49,19 @@
             '.ax-gallery-nav svg': 'Navigate gallery',
         };
 
+        // Apply icon button ARIA labels to parent interactive controls
+        Object.entries(iconButtons).forEach(([selector, label]) => {
+            document.querySelectorAll(selector).forEach(el => {
+                const target = el.closest('button, a') || el;
+                if (target && !target.getAttribute('aria-label') && !target.textContent.trim()) {
+                    target.setAttribute('aria-label', label);
+                }
+                if (el.tagName && el.tagName.toLowerCase() === 'svg') {
+                    el.setAttribute('aria-hidden', 'true');
+                }
+            });
+        });
+
         // Wishlist button labels
         document.querySelectorAll('.f-card-wish-btn, .ax-wishlist-btn').forEach(btn => {
             const svg = btn.querySelector('svg');
@@ -85,16 +98,35 @@
                 swatch.setAttribute('aria-label', 'Color: ' + title);
             }
 
-            // Add role="radio" for radio group behavior
+            // Add role="radio" & aria-checked for radio group behavior
             const group = swatch.closest('.ax-color-swatches, [role="radiogroup"]');
             if (group) {
                 if (!group.getAttribute('role')) {
                     group.setAttribute('role', 'radiogroup');
                     group.setAttribute('aria-label', 'Color options');
                 }
+                const isActive = swatch.classList.contains('active') || swatch.classList.contains('selected');
                 swatch.setAttribute('role', 'radio');
-                swatch.setAttribute('tabindex', swatch.classList.contains('active') ? '0' : '-1');
+                swatch.setAttribute('aria-checked', isActive ? 'true' : 'false');
+                swatch.setAttribute('tabindex', isActive ? '0' : '-1');
             }
+        });
+
+        // Ensure every radiogroup has at least one focusable radio & updates roving tabindex on click
+        document.querySelectorAll('.ax-color-swatches, [role="radiogroup"]').forEach(group => {
+            const swatches = Array.from(group.querySelectorAll('[role="radio"]'));
+            if (swatches.length && !swatches.some(s => s.getAttribute('tabindex') === '0')) {
+                swatches[0].setAttribute('tabindex', '0');
+            }
+            group.addEventListener('click', function(e) {
+                const clicked = e.target.closest('[role="radio"]');
+                if (!clicked) return;
+                swatches.forEach(s => {
+                    const active = s === clicked;
+                    s.setAttribute('aria-checked', active ? 'true' : 'false');
+                    s.setAttribute('tabindex', active ? '0' : '-1');
+                });
+            });
         });
 
         // Handle keyboard navigation for color swatches
@@ -283,9 +315,9 @@
                 }
 
                 // Close filter drawer
-                const filter = document.querySelector('.f-filter-drawer.is-open, .ax-filter-drawer.is-open');
+                const filter = document.querySelector('#furniva-filters.open, .f-filter-drawer.is-open, .ax-filter-drawer.is-open');
                 if (filter) {
-                    filter.classList.remove('is-open');
+                    filter.classList.remove('is-open', 'open');
                 }
 
                 // Close chat panel
@@ -299,8 +331,10 @@
             }
         });
 
-        // Enter/Space activates buttons
+        // Enter/Space activates non-native elements with role="button" (avoid double-click on native <button>)
         document.querySelectorAll('[role="button"]').forEach(btn => {
+            const tag = btn.tagName ? btn.tagName.toUpperCase() : '';
+            if (tag === 'BUTTON' || tag === 'A') return;
             btn.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
@@ -309,14 +343,18 @@
             });
         });
 
-        // Tab trap in modals
-        document.querySelectorAll('.ax-drawer, .f-cart-drawer, .fancybox-modal').forEach(modal => {
+        // Tab trap across all storefront drawers and modals (skipping disabled/hidden elements)
+        const modalSelector = '.ax-drawer, .f-cart-drawer, .fancybox-modal, #ax-room-visualizer-modal, #axAuthGateModal, #despace-3d-modal, #furniva-filters, #ax-chat-panel';
+        document.querySelectorAll(modalSelector).forEach(modal => {
             modal.addEventListener('keydown', function(e) {
                 if (e.key !== 'Tab') return;
 
-                const focusable = this.querySelectorAll(
-                    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-                );
+                const candidates = Array.from(this.querySelectorAll(
+                    'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                ));
+                const focusable = candidates.filter(el => el.offsetParent !== null && !el.hidden);
+                if (!focusable.length) return;
+
                 const first = focusable[0];
                 const last = focusable[focusable.length - 1];
 
@@ -370,9 +408,9 @@
     function validateImageAlt() {
         const images = document.querySelectorAll('img:not([alt])');
         if (images.length > 0) {
-            console.warn('DeSpace A11y: Found ' + images.length + ' images without alt text');
             images.forEach(img => {
-                img.setAttribute('alt', img.getAttribute('title') || 'Image');
+                // Use title if meaningful, otherwise empty decorative alt="" per WCAG 1.1.1 (never generic "Image").
+                img.setAttribute('alt', img.getAttribute('title') || '');
             });
         }
     }

@@ -53,13 +53,7 @@ class InventoryExportService {
 			$where_values[]  = $filters['date_to'] . ' 23:59:59';
 		}
 
-		$where_sql = implode( ' AND ', $where_clauses );
-		$query     = "SELECT * FROM {$table_name} WHERE {$where_sql} ORDER BY created_at DESC, id DESC LIMIT 5000";
-
-		$rows = ! empty( $where_values )
-			? $wpdb->get_results( $wpdb->prepare( $query, $where_values ), ARRAY_A )
-			: $wpdb->get_results( $query, ARRAY_A );
-
+		$where_sql        = implode( ' AND ', $where_clauses );
 		$is_direct_stream = null !== $output_stream && is_resource( $output_stream );
 		$output           = $is_direct_stream ? $output_stream : fopen( 'php://output', 'w' );
 
@@ -98,24 +92,52 @@ class InventoryExportService {
 			'Created At (UTC)',
 		) );
 
-		foreach ( (array) $rows as $row ) {
-			$escaped_row = array(
-				$row['id'],
-				self::escape_csv_cell( $row['event_key'] ),
-				self::escape_csv_cell( $row['event_type'] ),
-				self::escape_csv_cell( $row['event_source'] ),
-				$row['product_id'],
-				$row['variation_id'] ?? '',
-				$row['order_id'] ?? '',
-				$row['order_item_id'] ?? '',
-				$row['refund_id'] ?? '',
-				$row['actor_user_id'] ?? '',
-				$row['quantity_before'] ?? '',
-				$row['quantity_delta'],
-				$row['stock_after'] ?? '',
-				$row['created_at'],
-			);
-			fputcsv( $output, $escaped_row );
+		// Stream rows in cursor-paginated 500-row chunks to avoid memory exhaustion and silent 5,000-row truncation.
+		$chunk_size  = 500;
+		$last_id     = PHP_INT_MAX;
+		$max_chunks  = 200; // Up to 100,000 rows per export.
+		$chunk_index = 0;
+
+		while ( $chunk_index < $max_chunks ) {
+			$chunk_index++;
+			$chunk_where = $where_sql . ' AND id < %d';
+			$chunk_vals  = array_merge( $where_values, array( $last_id, $chunk_size ) );
+			$chunk_sql   = "SELECT * FROM {$table_name} WHERE {$chunk_where} ORDER BY id DESC LIMIT %d";
+			$rows        = $wpdb->get_results( $wpdb->prepare( $chunk_sql, $chunk_vals ), ARRAY_A );
+
+			if ( empty( $rows ) || ! is_array( $rows ) ) {
+				break;
+			}
+
+			$min_id_in_chunk = $last_id;
+			foreach ( $rows as $row ) {
+				$row_id = (int) ( $row['id'] ?? 0 );
+				if ( $row_id > 0 && $row_id < $min_id_in_chunk ) {
+					$min_id_in_chunk = $row_id;
+				}
+				$escaped_row = array(
+					$row['id'],
+					self::escape_csv_cell( $row['event_key'] ),
+					self::escape_csv_cell( $row['event_type'] ),
+					self::escape_csv_cell( $row['event_source'] ),
+					$row['product_id'],
+					$row['variation_id'] ?? '',
+					$row['order_id'] ?? '',
+					$row['order_item_id'] ?? '',
+					$row['refund_id'] ?? '',
+					$row['actor_user_id'] ?? '',
+					$row['quantity_before'] ?? '',
+					$row['quantity_delta'],
+					$row['stock_after'] ?? '',
+					$row['created_at'],
+				);
+				fputcsv( $output, $escaped_row );
+			}
+
+			if ( count( $rows ) < $chunk_size || $min_id_in_chunk >= $last_id ) {
+				break;
+			}
+			$last_id = $min_id_in_chunk;
 		}
 
 		if ( ! $is_direct_stream ) {

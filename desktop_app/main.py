@@ -13,6 +13,7 @@ Usage:
 
 import sys
 import time
+import threading
 import argparse
 from pathlib import Path
 
@@ -40,12 +41,16 @@ def run_headless():
     engine = ReconstructionEngine()
     client = DeSpaceSyncClient()
     in_flight = set()
+    in_flight_lock = threading.Lock()
 
     def on_task(task_data):
         uuid = task_data.get("job_uuid")
-        if not uuid or uuid in in_flight:
+        if not uuid:
             return
-        in_flight.add(uuid)
+        with in_flight_lock:
+            if uuid in in_flight:
+                return
+            in_flight.add(uuid)
         sku = task_data.get("sku")
         print(f"[Daemon] Nhận lệnh dựng 3D tức thì: {sku} ({uuid})")
         try:
@@ -65,7 +70,8 @@ def run_headless():
             print(f"[Daemon] ❌ Lỗi: {e}")
             client.update_progress(uuid, 0, f"Lỗi: {e}", status="failed")
         finally:
-            in_flight.discard(uuid)
+            with in_flight_lock:
+                in_flight.discard(uuid)
 
     server = DesktopLocalServer(port=Config.LOCAL_PORT, task_callback=on_task)
     server.start()

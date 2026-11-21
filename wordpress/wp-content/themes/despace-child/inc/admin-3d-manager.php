@@ -78,6 +78,14 @@ function axgnud_handle_3d_csv_export() {
 	$output = fopen( 'php://output', 'w' );
 	fputcsv( $output, array( 'product_id', 'sku', 'product_name', 'category', 'length', 'width', 'height', 'unit', 'glb_url', 'usdz_url', 'model_status', 'ar_enabled', 'version' ) );
 
+	$csv_safe = static function ( $val ) {
+		$s = (string) $val;
+		if ( '' !== $s && preg_match( '/^[=+\-@\t\r]/', $s ) ) {
+			return "'" . $s;
+		}
+		return $s;
+	};
+
 	foreach ( $rows as $r ) {
 		$prod = wc_get_product( $r->product_id );
 		$name = $prod ? $prod->get_name() : '';
@@ -86,18 +94,18 @@ function axgnud_handle_3d_csv_export() {
 
 		fputcsv( $output, array(
 			$r->product_id,
-			$r->sku,
-			$name,
-			$cat_str,
+			$csv_safe( $r->sku ),
+			$csv_safe( $name ),
+			$csv_safe( $cat_str ),
 			$r->width,  // width corresponds to length/face in db
 			$r->depth,
 			$r->height,
-			$r->unit,
-			$r->glb_url,
-			$r->usdz_url,
-			$r->model_status,
+			$csv_safe( $r->unit ),
+			$csv_safe( $r->glb_url ),
+			$csv_safe( $r->usdz_url ),
+			$csv_safe( $r->model_status ),
 			$r->ar_enabled,
-			$r->version
+			$csv_safe( $r->version )
 		) );
 	}
 
@@ -278,9 +286,12 @@ add_action( 'wp_ajax_axgnud_get_product_3d_dynamic', 'axgnud_ajax_get_product_3d
 add_action( 'wp_ajax_nopriv_despace_get_product_3d_dynamic', 'axgnud_ajax_get_product_3d_dynamic' );
 add_action( 'wp_ajax_nopriv_axgnud_get_product_3d_dynamic', 'axgnud_ajax_get_product_3d_dynamic' );
 function axgnud_ajax_get_product_3d_dynamic() {
-	$product_id = intval( $_GET['product_id'] ?? 0 );
-	if ( ! $product_id ) {
-		wp_send_json_error( array( 'message' => 'Missing product ID' ) );
+	$product_id = absint( $_GET['product_id'] ?? 0 );
+	if ( ! $product_id || 'product' !== get_post_type( $product_id ) ) {
+		wp_send_json_error( array( 'message' => 'Product not found' ), 404 );
+	}
+	if ( 'publish' !== get_post_status( $product_id ) && ! current_user_can( 'read_post', $product_id ) ) {
+		wp_send_json_error( array( 'message' => 'Product not found' ), 404 );
 	}
 
 	$data = function_exists( 'ax_get_product_3d_info' ) ? ax_get_product_3d_info( $product_id ) : array();
@@ -354,7 +365,7 @@ function axgnud_render_3d_manager_page() {
 					<span class="dashicons dashicons-update" style="font-size:16px; width:16px; height:16px;"></span>
 					Đồng Bộ Danh Mục
 				</button>
-				<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=axgnud-3d-manager&action=export_csv' ), 'axgnud_export_csv_nonce' ) ); ?>" class="button button-secondary" style="display:flex; align-items:center; gap:5px;">
+				<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=despace-3d-manager&action=export_csv' ), 'axgnud_export_csv_nonce' ) ); ?>" class="button button-secondary" style="display:flex; align-items:center; gap:5px;">
 					<span class="dashicons dashicons-download" style="font-size:16px; width:16px; height:16px;"></span>
 					Xuất File CSV
 				</a>
@@ -388,7 +399,7 @@ function axgnud_render_3d_manager_page() {
 		<!-- Filters & Search Toolbar -->
 		<div style="background:#fff; border:1px solid #E7E5E4; border-radius:8px; padding:16px; margin-bottom:20px; display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
 			<form method="GET" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; flex:1;">
-				<input type="hidden" name="page" value="axgnud-3d-manager" />
+				<input type="hidden" name="page" value="despace-3d-manager" />
 				
 				<input type="text" name="s_kw" value="<?php echo esc_attr( $search_kw ); ?>" placeholder="Tìm tên sản phẩm hoặc SKU..." style="min-width:220px; height:36px;" />
 				
@@ -409,7 +420,7 @@ function axgnud_render_3d_manager_page() {
 
 				<button type="submit" class="button button-primary" style="height:36px;">Lọc Sản Phẩm</button>
 				<?php if ( $search_kw || $filter_cat || $filter_st ) : ?>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=axgnud-3d-manager' ) ); ?>" class="button button-secondary" style="height:36px; line-height:34px;">Xóa bộ lọc</a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-3d-manager' ) ); ?>" class="button button-secondary" style="height:36px; line-height:34px;">Xóa bộ lọc</a>
 				<?php endif; ?>
 			</form>
 			

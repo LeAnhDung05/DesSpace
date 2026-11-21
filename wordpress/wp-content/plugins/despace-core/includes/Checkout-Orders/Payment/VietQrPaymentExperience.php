@@ -177,9 +177,13 @@ class VietQrPaymentExperience {
 			return;
 		}
 
-		$order_key = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : $order->get_order_key();
+		// Never synthesize order_key as fallback; let BacsInstructions enforce either supplied key or logged-in ownership.
+		$order_key = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
 		$instr     = BacsInstructions::get_order_instructions( $order, array( 'order_key' => $order_key ) );
 		if ( is_wp_error( $instr ) || empty( $instr['accounts'] ) ) {
+			return;
+		}
+		if ( method_exists( $order, 'get_currency' ) && 'VND' !== strtoupper( (string) $order->get_currency() ) ) {
 			return;
 		}
 
@@ -210,13 +214,8 @@ class VietQrPaymentExperience {
 			)
 			: '';
 
-		$poll_url = esc_url_raw(
-			add_query_arg(
-				'key',
-				$order->get_order_key(),
-				rest_url( 'despace/v1/orders/' . $oid . '/payment-status' )
-			)
-		);
+		$poll_url = esc_url_raw( rest_url( 'despace/v1/orders/' . $oid . '/payment-status' ) );
+		$poll_key = (string) $order->get_order_key();
 		?>
 		<section class="despace-vietqr-card" id="despace-vietqr-card" style="margin:24px 0; background:#FAF7F2; border:1.5px solid #D8C4AE; border-radius:18px; padding:24px; box-shadow:0 10px 30px rgba(28,25,23,0.06);">
 			<div id="despace-vietqr-paid-banner" style="<?php echo $is_paid ? '' : 'display:none;'; ?> background:#ECFDF5; border:1px solid #10B981; color:#065F46; padding:16px 20px; border-radius:12px; font-weight:600; font-size:15px;">
@@ -287,8 +286,16 @@ class VietQrPaymentExperience {
 			<script>
 			(function(){
 				var pollUrl = <?php echo wp_json_encode( $poll_url ); ?>;
+				var pollKey = <?php echo wp_json_encode( $poll_key ); ?>;
+				var attempts = 0;
+				var maxAttempts = 200; // Stop after ~15 minutes
 				var timer = setInterval(function(){
-					fetch(pollUrl, { credentials: 'same-origin' })
+					if (document.hidden) return;
+					if (++attempts > maxAttempts) { clearInterval(timer); return; }
+					fetch(pollUrl, {
+						credentials: 'same-origin',
+						headers: { 'X-Order-Key': pollKey }
+					})
 						.then(function(r){ return r.json(); })
 						.then(function(d){
 							if (d && d.is_paid) {
@@ -399,7 +406,9 @@ class VietQrPaymentExperience {
 		);
 
 		if ( is_wp_error( $res ) ) {
-			wp_send_json_error( array( 'message' => $res->get_error_message() ), 400 );
+			$err_data   = $res->get_error_data();
+			$err_status = ( is_array( $err_data ) && ! empty( $err_data['status'] ) ) ? (int) $err_data['status'] : 400;
+			wp_send_json_error( array( 'message' => $res->get_error_message() ), $err_status );
 		}
 
 		wp_send_json_success( $res );
@@ -436,20 +445,24 @@ class VietQrPaymentExperience {
 
 	public static function rest_get_payment_status( WP_REST_Request $request ): WP_REST_Response {
 		$order_id = absint( $request->get_param( 'id' ) );
-		$key      = sanitize_text_field( (string) ( $request->get_param( 'key' ) ?? '' ) );
+		$key      = sanitize_text_field( (string) ( $request->get_header( 'x-order-key' ) ?: $request->get_param( 'key' ) ?: '' ) );
 
 		if ( ! $order_id || '' === $key || ! function_exists( 'wc_get_order' ) ) {
-			return new WP_REST_Response( array( 'code' => 'forbidden' ), 403 );
+			$resp = new WP_REST_Response( array( 'code' => 'forbidden' ), 403 );
+			$resp->header( 'Cache-Control', 'no-store, private' );
+			return $resp;
 		}
 
 		$order = wc_get_order( $order_id );
 		if ( ! $order || ! hash_equals( (string) $order->get_order_key(), $key ) ) {
-			return new WP_REST_Response( array( 'code' => 'forbidden' ), 403 );
+			$resp = new WP_REST_Response( array( 'code' => 'forbidden' ), 403 );
+			$resp->header( 'Cache-Control', 'no-store, private' );
+			return $resp;
 		}
 
 		$is_paid = (bool) $order->is_paid() || in_array( $order->get_status(), array( 'processing', 'completed' ), true );
 
-		return new WP_REST_Response(
+		$resp = new WP_REST_Response(
 			array(
 				'order_id' => $order_id,
 				'status'   => $order->get_status(),
@@ -457,6 +470,8 @@ class VietQrPaymentExperience {
 			),
 			200
 		);
+		$resp->header( 'Cache-Control', 'no-store, private' );
+		return $resp;
 	}
 
 	/**
@@ -480,14 +495,48 @@ class VietQrPaymentExperience {
 			return new WP_REST_Response( array( 'code' => 'unauthorized_webhook' ), 401 );
 		}
 
-		$json    = $request->get_json_params();
-		$params  = is_array( $json ) && ! empty( $json ) ? $json : $request->get_params();
+		$json          = $request->get_json_params();
+		$params        = is_array( $json ) && ! empty( $json ) ? $json : $request->get_params();
+		$transfer_type = strtolower( trim( (string) ( $params['transferType'] ?? $request->get_param( 'transferType' ) ?? 'in' ) ) );
+		if ( 'in' !== $transfer_type ) {
+			return new WP_REST_Response( array( 'success' => false, 'reason' => 'ignored_non_incoming_transfer' ), 200 );
+		}
+
+		// Verify destination bank account matches configured merchant BACS account when supplied.
+		$incoming_acc = preg_replace( '/\s+/', '', (string) ( $params['accountNumber'] ?? $params['subAccount'] ?? $request->get_param( 'accountNumber' ) ?? '' ) );
+		if ( '' !== $incoming_acc ) {
+			$configured_accounts = (array) get_option( 'woocommerce_bacs_accounts', array() );
+			$valid_accounts      = array();
+			foreach ( $configured_accounts as $acc ) {
+				if ( is_array( $acc ) && ! empty( $acc['account_number'] ) ) {
+					$valid_accounts[] = preg_replace( '/\s+/', '', (string) $acc['account_number'] );
+				}
+			}
+			if ( ! empty( $valid_accounts ) && ! in_array( $incoming_acc, $valid_accounts, true ) ) {
+				return new WP_REST_Response( array( 'success' => false, 'reason' => 'account_mismatch' ), 200 );
+			}
+		}
+
 		$content = (string) ( $params['content'] ?? $params['description'] ?? $request->get_param( 'content' ) ?? '' );
 		$amount  = (int) round( floatval( $params['transferAmount'] ?? $params['amount'] ?? $request->get_param( 'transferAmount' ) ?? 0 ) );
-		$tx_ref  = sanitize_text_field( (string) ( $params['referenceCode'] ?? $params['id'] ?? $request->get_param( 'referenceCode' ) ?? 'VIETQR-WEBHOOK' ) );
+		$tx_ref  = sanitize_text_field( (string) ( $params['referenceCode'] ?? $params['id'] ?? $request->get_param( 'referenceCode' ) ?? '' ) );
+
+		if ( $amount <= 0 ) {
+			return new WP_REST_Response( array( 'success' => false, 'reason' => 'invalid_amount' ), 200 );
+		}
 
 		if ( ! preg_match( '/DESPACE[\-\s]*(\d+)/i', $content, $matches ) ) {
 			return new WP_REST_Response( array( 'success' => false, 'reason' => 'no_order_code_matched' ), 200 );
+		}
+
+		// Transaction replay guard: reject already-processed bank reference IDs.
+		if ( '' !== $tx_ref ) {
+			$replay_key = 'despace_vietqr_tx_' . md5( $tx_ref );
+			if ( function_exists( 'get_option' ) && get_option( $replay_key, false ) ) {
+				return new WP_REST_Response( array( 'success' => true, 'already_settled' => true, 'reason' => 'duplicate_tx_ref' ), 200 );
+			}
+		} else {
+			$tx_ref = 'VIETQR-WEBHOOK';
 		}
 
 		$order_id = absint( $matches[1] );
@@ -496,12 +545,16 @@ class VietQrPaymentExperience {
 			return new WP_REST_Response( array( 'success' => false, 'reason' => 'order_not_found_or_not_bacs' ), 200 );
 		}
 
+		if ( method_exists( $order, 'get_currency' ) && 'VND' !== strtoupper( (string) $order->get_currency() ) ) {
+			return new WP_REST_Response( array( 'success' => false, 'reason' => 'currency_mismatch' ), 200 );
+		}
+
 		if ( $order->is_paid() || 'on-hold' !== $order->get_status() ) {
 			return new WP_REST_Response( array( 'success' => true, 'already_settled' => true, 'order_id' => $order_id ), 200 );
 		}
 
 		$expected_total = (int) round( (float) $order->get_total() );
-		if ( $amount < $expected_total ) {
+		if ( $expected_total <= 0 || $amount < $expected_total ) {
 			$order->add_order_note( sprintf( '[VietQR Webhook] Nhận chuyển khoản thiếu (%s ₫ / cần %s ₫, mã GD: %s). Giữ trạng thái chờ đối soát.', number_format( $amount ), number_format( $expected_total ), $tx_ref ) );
 			return new WP_REST_Response( array( 'success' => false, 'reason' => 'underpaid' ), 200 );
 		}
@@ -511,18 +564,30 @@ class VietQrPaymentExperience {
 			return new WP_REST_Response( array( 'success' => false, 'reason' => 'locked' ), 409 );
 		}
 
+		$settled = false;
 		try {
 			$fresh = wc_get_order( $order_id );
 			if ( $fresh && ! $fresh->is_paid() && 'on-hold' === $fresh->get_status() ) {
-				$fresh->payment_complete( $tx_ref );
-				$fresh->update_meta_data( '_despace_bacs_confirmed_at', gmdate( 'c' ) );
-				$fresh->add_order_note( sprintf( '[VietQR Auto-Settlement] Đã tự động xác nhận nhận đủ %s ₫ qua Webhook (Mã tham chiếu: %s).', number_format( $amount ), $tx_ref ) );
-				$fresh->save();
+				$already_confirmed = (string) $fresh->get_meta( '_despace_bacs_confirmed_at', true );
+				$fresh_total       = (int) round( (float) $fresh->get_total() );
+				if ( '' === $already_confirmed && $fresh_total > 0 && $amount >= $fresh_total ) {
+					$completed = $fresh->payment_complete( $tx_ref );
+					if ( false !== $completed ) {
+						$fresh->update_meta_data( '_despace_bacs_confirmed_at', gmdate( 'c' ) );
+						$fresh->update_meta_data( '_despace_vietqr_tx_ref', $tx_ref );
+						$fresh->add_order_note( sprintf( '[VietQR Auto-Settlement] Đã tự động xác nhận nhận đủ %s ₫ qua Webhook (Mã tham chiếu: %s).', number_format( $amount ), $tx_ref ) );
+						$fresh->save();
+						if ( 'VIETQR-WEBHOOK' !== $tx_ref && function_exists( 'add_option' ) ) {
+							add_option( 'despace_vietqr_tx_' . md5( $tx_ref ), (string) $order_id, '', false );
+						}
+						$settled = true;
+					}
+				}
 			}
 		} finally {
-			delete_option( $lock['key'] );
+			PaymentStatusGuard::release_bacs_lock( $lock );
 		}
 
-		return new WP_REST_Response( array( 'success' => true, 'settled' => true, 'order_id' => $order_id ), 200 );
+		return new WP_REST_Response( array( 'success' => $settled, 'settled' => $settled, 'order_id' => $order_id ), $settled ? 200 : 409 );
 	}
 }

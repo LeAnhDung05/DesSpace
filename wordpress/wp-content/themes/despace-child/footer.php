@@ -27,7 +27,7 @@ if ( function_exists( 'yith_wcwl_count_all_products' ) ) {
 $footer_categories = get_terms( array( 'taxonomy' => 'product_cat', 'hide_empty' => true, 'parent' => 0, 'number' => 5 ) );
 if ( is_wp_error( $footer_categories ) ) $footer_categories = array();
 ?>
-<?php if ( ! is_front_page() ) : ?></main><?php else : ?></main><?php endif; ?>
+<?php if ( ! is_front_page() ) : ?></main><?php endif; ?>
 
 <!-- DeSpace Core Brand Commitments / Trust Bar (From Official Brand Identity) -->
 <section class="fv-trust-bar" aria-label="<?php echo esc_attr( furniva_t( 'DeSpace Commitments', 'Cam kết thương hiệu DeSpace' ) ); ?>">

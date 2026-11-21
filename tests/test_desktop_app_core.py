@@ -15,6 +15,8 @@ import sys
 import time
 import json
 import struct
+import tempfile
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -34,7 +36,7 @@ print("  DeSpace 3D Studio Desktop — Core Engine Test Suite (TC-PY01 - TC-PY10
 print("=" * 72)
 
 passed = 0
-total = 16
+total = 17
 
 def check(name: str, condition: bool):
     global passed
@@ -44,7 +46,9 @@ def check(name: str, condition: bool):
     else:
         print(f"[FAIL] {name}")
 
-engine = ReconstructionEngine()
+_tmp_dir_ctx = tempfile.TemporaryDirectory(prefix="despace_py_tests_")
+TMP_OUT_DIR = Path(_tmp_dir_ctx.name)
+engine = ReconstructionEngine(output_dir=TMP_OUT_DIR)
 
 # TC-PY01: GLTF 2.0 Binary Header
 res_sofa = engine.reconstruct(
@@ -112,8 +116,8 @@ check(
     len(tex_bytes) > 500 and tex_bytes[:8] == b"\x89PNG\r\n\x1a\n"
 )
 
-# TC-PY06: Excel template generation
-tpl_path = ExcelProcessor.generate_template()
+# TC-PY06: Excel template generation (isolated in temp dir so Git tree stays clean)
+tpl_path = ExcelProcessor.generate_template(output_path=TMP_OUT_DIR / "test_template.xlsx")
 check(
     "TC-PY06: Generates valid openpyxl Excel template file (.xlsx)",
     tpl_path.exists() and tpl_path.stat().st_size > 1000
@@ -276,8 +280,56 @@ check(
     zero_drawer_res.get("interactive_parts") == 3 and book_zero_res.get("interactive_parts") == 0
 )
 
+# TC-PY17: Local HTTP server enforces X-DeSpace-Desktop-Key auth & rejects wildcard CORS
+auth_port = 58321
+auth_received = []
+orig_key = Config.API_SECRET_KEY
+Config.API_SECRET_KEY = "test-local-server-secret-key-2026"
+auth_srv = DesktopLocalServer(port=auth_port, task_callback=lambda t: auth_received.append(t))
+auth_srv.start()
+time.sleep(0.25)
+
+unauth_status = 0
+auth_status = 0
+evil_cors_header = None
+try:
+    bad_req = urllib.request.Request(
+        f"http://127.0.0.1:{auth_port}/api/task",
+        data=json.dumps({"job_uuid": "UNAUTH-1"}).encode("utf-8"),
+        headers={"Content-Type": "application/json", "Origin": "https://evil.example"},
+        method="POST",
+    )
+    try:
+        urllib.request.urlopen(bad_req, timeout=3)
+    except urllib.error.HTTPError as he:
+        unauth_status = he.code
+        evil_cors_header = he.headers.get("Access-Control-Allow-Origin")
+
+    good_req = urllib.request.Request(
+        f"http://127.0.0.1:{auth_port}/api/task",
+        data=json.dumps({"job_uuid": "AUTH-1"}).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "X-DeSpace-Desktop-Key": "test-local-server-secret-key-2026",
+        },
+        method="POST",
+    )
+    with urllib.request.urlopen(good_req, timeout=3) as ok_resp:
+        auth_status = ok_resp.status
+    time.sleep(0.15)
+finally:
+    auth_srv.stop()
+    Config.API_SECRET_KEY = orig_key
+    _tmp_dir_ctx.cleanup()
+
+check(
+    "TC-PY17: Local HTTP server rejects unauth POST (401), blocks evil CORS & accepts valid key (200)",
+    unauth_status == 401 and evil_cors_header is None and auth_status == 200 and len(auth_received) == 1
+)
+
+pct = round((passed / total) * 100, 1) if total else 0.0
 print("=" * 72)
-print(f"RESULT: {passed}/{total} PYTHON CORE TESTS PASSED (100% Success Rate)")
+print(f"RESULT: {passed}/{total} PYTHON CORE TESTS PASSED ({pct}% Success Rate)")
 print("=" * 72)
 
 if passed != total:

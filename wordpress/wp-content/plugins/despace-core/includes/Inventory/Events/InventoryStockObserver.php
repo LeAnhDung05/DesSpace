@@ -359,7 +359,8 @@ class InventoryStockObserver {
 		} elseif ( $order instanceof \WC_Order ) {
 			$refunds = $order->get_refunds();
 			if ( ! empty( $refunds ) && is_array( $refunds ) ) {
-				$latest_refund = end( $refunds );
+				// WooCommerce returns refunds newest-first (DESC); use reset() for the latest refund.
+				$latest_refund = reset( $refunds );
 				if ( $latest_refund instanceof \WC_Order_Refund ) {
 					$refund_id = absint( $latest_refund->get_id() );
 				}

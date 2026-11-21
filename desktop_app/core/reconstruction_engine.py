@@ -18,11 +18,29 @@ import zlib
 import base64
 import struct
 import urllib.request
+from urllib.parse import urlparse
 from pathlib import Path
-from typing import Dict, Any, Tuple, List, Optional
-from PIL import Image, ImageDraw, ImageFilter, ImageEnhance
+from typing import Dict, Any, Tuple, List, Optional, Callable
+from PIL import Image, ImageDraw
 
 from desktop_app.config import Config
+
+MAX_REMOTE_GLB_BYTES = 50 * 1024 * 1024   # 50 MB cap
+MAX_REMOTE_IMG_BYTES = 15 * 1024 * 1024   # 15 MB cap
+
+
+def _safe_http_read(url_or_req, timeout: int = 30, max_bytes: int = MAX_REMOTE_GLB_BYTES, https_only: bool = False) -> bytes:
+    """Safely download remote URL with strict scheme check (blocks file:// SSRF) and byte limit."""
+    raw_url = url_or_req.full_url if isinstance(url_or_req, urllib.request.Request) else str(url_or_req)
+    parsed = urlparse(raw_url)
+    allowed_schemes = ("https",) if https_only else ("http", "https")
+    if parsed.scheme.lower() not in allowed_schemes:
+        raise ValueError(f"Blocked disallowed URL scheme: {parsed.scheme!r}")
+    with urllib.request.urlopen(url_or_req, timeout=timeout) as resp:
+        data = resp.read(max_bytes + 1)
+    if len(data) > max_bytes:
+        raise ValueError(f"Remote response exceeded maximum allowed size ({max_bytes} bytes)")
+    return data
 
 
 class ReconstructionEngine:
@@ -43,7 +61,7 @@ class ReconstructionEngine:
         category: str,
         dimensions: Dict[str, Any],
         angles: Dict[str, Any],
-        progress_callback: Optional[callable] = None,
+        progress_callback: Optional[Callable[[int, str], None]] = None,
         description: str = "",
     ) -> Dict[str, Any]:
         """
@@ -213,8 +231,7 @@ class ReconstructionEngine:
                 )
                 if mesh_url:
                     update_progress(72, "Đang tải lưới 3D từ Fal.ai & hiệu chuẩn kích thước thực 1:1...")
-                    with urllib.request.urlopen(mesh_url, timeout=60) as m_resp:
-                        raw_glb = m_resp.read()
+                    raw_glb = _safe_http_read(mesh_url, timeout=60, max_bytes=MAX_REMOTE_GLB_BYTES, https_only=True)
                     calibrated_glb, v_cnt, f_cnt = self._calibrate_glb_scale(raw_glb, dim_w, dim_d, dim_h)
                     return calibrated_glb, v_cnt, f_cnt, "cloud_fal_trellis"
             except Exception as exc:
@@ -278,8 +295,7 @@ class ReconstructionEngine:
                             out_info = p_data.get("output") or {}
                             glb_url = out_info.get("pbr_model") or out_info.get("model") or ""
                             if glb_url:
-                                with urllib.request.urlopen(glb_url, timeout=60) as g_resp:
-                                    raw_glb = g_resp.read()
+                                raw_glb = _safe_http_read(glb_url, timeout=60, max_bytes=MAX_REMOTE_GLB_BYTES, https_only=True)
                                 calibrated_glb, v_cnt, f_cnt = self._calibrate_glb_scale(raw_glb, dim_w, dim_d, dim_h)
                                 return calibrated_glb, v_cnt, f_cnt, "cloud_tripo3d"
                             break
@@ -424,12 +440,14 @@ class ReconstructionEngine:
                         if url_or_path.startswith("http://") or url_or_path.startswith("https://"):
                             req = urllib.request.Request(
                                 url_or_path,
-                                headers={"User-Agent": "DeSpace-3D-Studio-Desktop/3.0"}
+                                headers={"User-Agent": "DeSpace-3D-Studio-Desktop/3.1"}
                             )
-                            with urllib.request.urlopen(req, timeout=12) as resp:
-                                img = Image.open(io.BytesIO(resp.read())).convert("RGBA")
+                            img_bytes = _safe_http_read(req, timeout=12, max_bytes=MAX_REMOTE_IMG_BYTES, https_only=False)
+                            with Image.open(io.BytesIO(img_bytes)) as im:
+                                img = im.convert("RGBA")
                         elif os.path.exists(url_or_path):
-                            img = Image.open(url_or_path).convert("RGBA")
+                            with Image.open(url_or_path) as im:
+                                img = im.convert("RGBA")
                     except Exception as e:
                         print(f"Warning: Failed to load image for angle '{key}': {e}")
 
@@ -2124,8 +2142,9 @@ def Xform "Root"
             out.extend(local_header)
             out.extend(fname_bytes)
             out.extend(extra)
-            # Guarantee 64-byte alignment invariant
-            assert len(out) % 64 == 0, f"USDZ alignment error at {filename}: {len(out)}"
+            # Guarantee 64-byte alignment invariant (never stripped by python -O)
+            if len(out) % 64 != 0:
+                raise ValueError(f"USDZ alignment error at {filename}: {len(out)}")
             out.extend(data)
 
             cd_header = struct.pack(

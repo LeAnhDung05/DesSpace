@@ -7,6 +7,7 @@ and create/update products directly on the DeSpace shop.
 """
 
 import csv
+import re
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Callable
 import openpyxl
@@ -161,9 +162,12 @@ class ExcelProcessor:
 
     @classmethod
     def _parse_xlsx(cls, filepath: Path) -> List[Dict[str, Any]]:
-        wb = openpyxl.load_workbook(filepath, data_only=True)
-        ws = wb.active
-        rows = list(ws.iter_rows(values_only=True))
+        wb = openpyxl.load_workbook(filepath, data_only=True, read_only=True)
+        try:
+            ws = wb.active
+            rows = list(ws.iter_rows(values_only=True))
+        finally:
+            wb.close()
         if not rows:
             return []
 
@@ -205,7 +209,12 @@ class ExcelProcessor:
             if val is None or str(val).strip() == "":
                 return fallback
             try:
-                cleaned = str(val).replace(",", "").replace("₫", "").replace("đ", "").strip()
+                cleaned = str(val).replace("₫", "").replace("đ", "").replace("VND", "").replace(" ", "").strip()
+                # Handle Vietnamese dot-grouped thousands (e.g. "2.700.000" or "12.500.000")
+                if re.fullmatch(r"\d{1,3}(?:\.\d{3})+", cleaned):
+                    cleaned = cleaned.replace(".", "")
+                else:
+                    cleaned = cleaned.replace(",", "")
                 return float(cleaned)
             except Exception:
                 return fallback
@@ -304,6 +313,7 @@ class ExcelProcessor:
 
                 synced = False
                 permalink = ""
+                sync_error = ""
                 if sync_client:
                     pub_res = sync_client.publish_product_with_3d(
                         product_data=item,
@@ -314,11 +324,18 @@ class ExcelProcessor:
                     )
                     synced = bool(pub_res.get("success", False))
                     permalink = pub_res.get("permalink", "")
+                    if not synced:
+                        sync_error = str(pub_res.get("message") or pub_res.get("error") or "Web publish failed")
 
                 build_result["synced_to_web"] = synced
                 build_result["permalink"] = permalink
+                if sync_client and not synced:
+                    build_result["success"] = False
+                    build_result["error"] = sync_error
+                    failures += 1
+                else:
+                    successes += 1
                 results.append(build_result)
-                successes += 1
 
             except Exception as e:
                 failures += 1

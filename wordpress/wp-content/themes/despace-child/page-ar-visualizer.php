@@ -234,6 +234,9 @@ $shop_url = wc_get_page_permalink( 'shop' );
                             'hide_empty' => true,
                             'parent'     => 0,
                         ) );
+                        if ( is_wp_error( $categories ) || ! is_array( $categories ) ) {
+                            $categories = array();
+                        }
                         foreach ( array_slice( $categories, 0, 5 ) as $cat ) :
                         ?>
                         <button type="button" class="ar-category-btn" data-category="<?php echo esc_attr( $cat->slug ); ?>">
@@ -260,7 +263,7 @@ $shop_url = wc_get_page_permalink( 'shop' );
                             // Get categories
                             $product_cats = get_the_terms( $product_id, 'product_cat' );
                             $cat_slugs = array();
-                            if ( $product_cats ) {
+                            if ( is_array( $product_cats ) && ! is_wp_error( $product_cats ) ) {
                                 foreach ( $product_cats as $cat ) {
                                     $cat_slugs[] = $cat->slug;
                                 }
@@ -1084,12 +1087,14 @@ window.addEventListener('DOMContentLoaded', function() {
         },
 
         saveLayout: function() {
-            // Save layout to localStorage
+            // Save layout to localStorage safely
             const layoutData = {
                 products: this.placedProducts,
                 scale: this.scale
             };
-            localStorage.setItem('ar_layout', JSON.stringify(layoutData));
+            try {
+                localStorage.setItem('ar_layout', JSON.stringify(layoutData));
+            } catch (e) { }
 
             // Show toast
             if (window.furnivaToast) {
@@ -1102,13 +1107,41 @@ window.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // Helper function
+    // Wire Add-to-Cart button inside AR product modal
+    const modalAddBtn = document.getElementById('arModalAddToCart');
+    if (modalAddBtn) {
+        modalAddBtn.addEventListener('click', function() {
+            const selected = ARVisualizer.selectedProduct;
+            const pid = (selected && selected.id) || modalAddBtn.getAttribute('data-product-id') || '';
+            if (!pid) return;
+            modalAddBtn.disabled = true;
+            const ajaxBase = (window.wc_add_to_cart_params && window.wc_add_to_cart_params.wc_ajax_url)
+                ? window.wc_add_to_cart_params.wc_ajax_url.replace('%%endpoint%%', 'add_to_cart')
+                : (window.location.origin + '/?wc-ajax=add_to_cart');
+            const body = new URLSearchParams({ product_id: String(pid), quantity: '1' });
+            fetch(ajaxBase, { method: 'POST', credentials: 'same-origin', body: body })
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    if (res && res.error && res.product_url) {
+                        window.location.href = res.product_url;
+                        return;
+                    }
+                    if (window.furnivaToast) {
+                        window.furnivaToast('<?php echo esc_js( furniva_t( 'Added to your cart!', 'Đã thêm sản phẩm vào giỏ hàng!' ) ); ?>');
+                    }
+                })
+                .catch(function() {})
+                .finally(function() { modalAddBtn.disabled = false; });
+        });
+    }
+
+    // Helper function (always format real VND amount without artificial *25000 distortion)
     function formatPrice(price) {
         var num = parseFloat(price) || 0;
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
             currency: 'VND'
-        }).format(num < 10000 ? num * 25000 : num);
+        }).format(num);
     }
 
     // Initialize

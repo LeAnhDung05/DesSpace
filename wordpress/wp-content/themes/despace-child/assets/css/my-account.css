@@ -325,8 +325,8 @@
 
 .ax-input-wrap input:focus {
 	border-color: var(--ax-account-border-focus) !important;
-	outline: none !important;
-	box-shadow: 0 0 0 3px rgba(201, 147, 63, 0.15) !important;
+	outline: 2px solid transparent;
+	box-shadow: 0 0 0 3px rgba(201, 147, 63, 0.25) !important;
 }
 
 .ax-input-wrap input:focus ~ .ax-input-icon {

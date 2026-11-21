@@ -77,11 +77,14 @@ class Desktop3DSyncModule {
 	 * Ensure table schema for 3D sync jobs.
 	 */
 	public function ensure_tables(): void {
+		if ( function_exists( 'get_option' ) && '1' === (string) get_option( 'despace_3d_jobs_table_ready_v1', '' ) ) {
+			return;
+		}
 		global $wpdb;
 		$table_name      = self::get_jobs_table_name();
 		$charset_collate = $wpdb->get_charset_collate();
 
-		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name ) ) !== $table_name ) {
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table_name ) ) ) !== $table_name ) {
 			$sql = "CREATE TABLE {$table_name} (
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   job_uuid varchar(64) NOT NULL,
@@ -122,6 +125,9 @@ class Desktop3DSyncModule {
 			} else {
 				$wpdb->query( $sql );
 			}
+		}
+		if ( function_exists( 'update_option' ) ) {
+			update_option( 'despace_3d_jobs_table_ready_v1', '1', false );
 		}
 	}
 
@@ -510,7 +516,8 @@ class Desktop3DSyncModule {
 				pollingInterval = setInterval(function(){
 					$.get(ajaxurl, {
 						action: 'despace_check_job_status',
-						job_uuid: jobUuid
+						job_uuid: jobUuid,
+						nonce: nonce
 					}, function(resp){
 						if (resp && resp.success && resp.data) {
 							const job = resp.data;
@@ -578,11 +585,24 @@ class Desktop3DSyncModule {
 		$auto_sync = isset( $_POST['despace_3d_auto_sync'] ) ? 'yes' : 'no';
 		update_post_meta( $post_id, '_despace_3d_auto_sync', $auto_sync );
 
-		// If auto-sync is enabled and product has at least 1 image, automatically dispatch 3D job
+		// If auto-sync is enabled, only dispatch when 3D inputs changed and no active job is already running.
 		if ( 'yes' === $auto_sync ) {
 			$angles_data = self::get_product_multi_angles( $post_id );
 			if ( self::count_valid_angles( $angles_data ) >= 1 ) {
-				self::dispatch_sync_job( $post_id, 'auto_save' );
+				$input_sig = md5( wp_json_encode( array(
+					'angles' => wp_list_pluck( $angles_data, 'url' ),
+					'w'      => get_post_meta( $post_id, 'axgnud_dim_width', true ) ?: get_post_meta( $post_id, '_length', true ),
+					'd'      => get_post_meta( $post_id, 'axgnud_dim_depth', true ) ?: get_post_meta( $post_id, '_width', true ),
+					'h'      => get_post_meta( $post_id, 'axgnud_dim_height', true ) ?: get_post_meta( $post_id, '_height', true ),
+				) ) );
+				$prev_sig      = (string) get_post_meta( $post_id, '_despace_3d_input_hash', true );
+				$cur_status    = (string) get_post_meta( $post_id, '_despace_3d_sync_status', true );
+				$is_in_flight  = in_array( $cur_status, array( 'dispatched', 'processing' ), true );
+
+				if ( ! $is_in_flight && $input_sig !== $prev_sig ) {
+					update_post_meta( $post_id, '_despace_3d_input_hash', $input_sig );
+					self::dispatch_sync_job( $post_id, 'auto_save' );
+				}
 			}
 		}
 	}
@@ -616,10 +636,10 @@ class Desktop3DSyncModule {
 		$sku  = $product ? $product->get_sku() : ( get_post_meta( $product_id, '_sku', true ) ?: 'DESPACE-' . $product_id );
 		$name = $product ? $product->get_name() : get_the_title( $product_id );
 
-		// Gather dimensions (prioritize explicit axgnud_dim_* before WC _width/_length)
+		// Gather dimensions (prioritize explicit axgnud_dim_* before WC _length/_width)
 		$dimensions = array(
-			'width'  => floatval( get_post_meta( $product_id, 'axgnud_dim_width', true ) ?: ( get_post_meta( $product_id, '_width', true ) ?: 100 ) ),
-			'depth'  => floatval( get_post_meta( $product_id, 'axgnud_dim_depth', true ) ?: ( get_post_meta( $product_id, '_length', true ) ?: 80 ) ),
+			'width'  => floatval( get_post_meta( $product_id, 'axgnud_dim_width', true ) ?: ( get_post_meta( $product_id, '_length', true ) ?: 100 ) ),
+			'depth'  => floatval( get_post_meta( $product_id, 'axgnud_dim_depth', true ) ?: ( get_post_meta( $product_id, '_width', true ) ?: 80 ) ),
 			'height' => floatval( get_post_meta( $product_id, 'axgnud_dim_height', true ) ?: ( get_post_meta( $product_id, '_height', true ) ?: 75 ) ),
 			'unit'   => 'cm',
 		);
@@ -937,7 +957,8 @@ class Desktop3DSyncModule {
 				$wc_product->set_regular_price( '2500000' );
 			}
 
-			if ( $sale_price > 0 && ( 0.0 === $reg_price || $sale_price < $reg_price ) ) {
+			$effective_reg = $reg_price > 0 ? $reg_price : (float) $wc_product->get_regular_price();
+			if ( $sale_price > 0 && ( $effective_reg <= 0.0 || $sale_price < $effective_reg ) ) {
 				$wc_product->set_sale_price( (string) $sale_price );
 			}
 
@@ -1067,47 +1088,51 @@ class Desktop3DSyncModule {
 			$att_url   = '';
 
 			if ( ! empty( $img_item['data_base64'] ) ) {
+				if ( count( $attachment_ids ) >= 10 ) {
+					continue;
+				}
 				$raw_bytes = base64_decode( (string) $img_item['data_base64'], true );
-				if ( $raw_bytes && strlen( $raw_bytes ) > 32 ) {
-					$orig_name = sanitize_file_name( $img_item['filename'] ?? ( $raw_sku . '-' . $angle_key . '.jpg' ) );
-					$ext       = strtolower( pathinfo( $orig_name, PATHINFO_EXTENSION ) );
-					if ( ! in_array( $ext, array( 'jpg', 'jpeg', 'png', 'webp' ), true ) ) {
-						$ext       = 'jpg';
-						$orig_name .= '.jpg';
-					}
-					$img_dir = $upload_dir['basedir'] . '/despace-desktop-products';
+				$max_img   = 5 * 1024 * 1024;
+				$img_info  = ( false !== $raw_bytes && strlen( $raw_bytes ) > 32 && strlen( $raw_bytes ) <= $max_img && function_exists( 'getimagesizefromstring' ) )
+					? @getimagesizefromstring( $raw_bytes )
+					: false;
+				$img_mime  = is_array( $img_info ) ? (string) ( $img_info['mime'] ?? '' ) : '';
+				$mime_ext  = array(
+					'image/jpeg' => 'jpg',
+					'image/png'  => 'png',
+					'image/webp' => 'webp',
+				);
+				if ( isset( $mime_ext[ $img_mime ] ) ) {
+					$ext         = $mime_ext[ $img_mime ];
+					$img_dir     = $upload_dir['basedir'] . '/despace-desktop-products';
 					wp_mkdir_p( $img_dir );
-					$unique_name = sanitize_file_name( $raw_sku . '-' . $angle_key . '-' . time() . '-' . $idx . '.' . $ext );
+					$safe_prefix = preg_replace( '/[^A-Za-z0-9_-]/', '', sanitize_file_name( (string) $raw_sku ) ) ?: ( 'product-' . $product_id );
+					$unique_name = sanitize_file_name( $safe_prefix . '-' . $angle_key . '-' . time() . '-' . $idx . '.' . $ext );
 					$dest_path   = $img_dir . '/' . $unique_name;
 					// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-					file_put_contents( $dest_path, $raw_bytes );
-					$att_url = $upload_dir['baseurl'] . '/despace-desktop-products/' . $unique_name;
+					if ( false !== file_put_contents( $dest_path, $raw_bytes ) ) {
+						$att_url = $upload_dir['baseurl'] . '/despace-desktop-products/' . $unique_name;
 
-					if ( function_exists( 'wp_insert_attachment' ) ) {
-						$mime_map = array(
-							'jpg'  => 'image/jpeg',
-							'jpeg' => 'image/jpeg',
-							'png'  => 'image/png',
-							'webp' => 'image/webp',
-						);
-						$att_id = (int) wp_insert_attachment(
-							array(
-								'guid'           => $att_url,
-								'post_mime_type' => $mime_map[ $ext ] ?? 'image/jpeg',
-								'post_title'     => $name . ' (' . strtoupper( $angle_key ) . ')',
-								'post_content'   => '',
-								'post_status'    => 'inherit',
-							),
-							$dest_path,
-							$product_id
-						);
-						if ( $att_id > 0 ) {
-							if ( ! function_exists( 'wp_generate_attachment_metadata' ) && defined( 'ABSPATH' ) && file_exists( ABSPATH . 'wp-admin/includes/image.php' ) ) {
-								require_once ABSPATH . 'wp-admin/includes/image.php';
-							}
-							if ( function_exists( 'wp_generate_attachment_metadata' ) && function_exists( 'wp_update_attachment_metadata' ) ) {
-								$meta_data = wp_generate_attachment_metadata( $att_id, $dest_path );
-								wp_update_attachment_metadata( $att_id, $meta_data );
+						if ( function_exists( 'wp_insert_attachment' ) ) {
+							$att_id = (int) wp_insert_attachment(
+								array(
+									'guid'           => $att_url,
+									'post_mime_type' => $img_mime,
+									'post_title'     => $name . ' (' . strtoupper( $angle_key ) . ')',
+									'post_content'   => '',
+									'post_status'    => 'inherit',
+								),
+								$dest_path,
+								$product_id
+							);
+							if ( $att_id > 0 ) {
+								if ( ! function_exists( 'wp_generate_attachment_metadata' ) && defined( 'ABSPATH' ) && file_exists( ABSPATH . 'wp-admin/includes/image.php' ) ) {
+									require_once ABSPATH . 'wp-admin/includes/image.php';
+								}
+								if ( function_exists( 'wp_generate_attachment_metadata' ) && function_exists( 'wp_update_attachment_metadata' ) ) {
+									$meta_data = wp_generate_attachment_metadata( $att_id, $dest_path );
+									wp_update_attachment_metadata( $att_id, $meta_data );
+								}
 							}
 						}
 					}
@@ -1137,9 +1162,12 @@ class Desktop3DSyncModule {
 		}
 
 		// 4. Save Auto-Constructed 3D Assets (.GLB + .USDZ + Thumbnail) & Complete Job
-		$safe_sku      = sanitize_file_name( $raw_sku );
+		$safe_sku      = preg_replace( '/[^A-Za-z0-9_-]/', '', sanitize_file_name( (string) $raw_sku ) ) ?: ( 'product-' . $product_id );
 		$target_3d_dir = $upload_dir['basedir'] . '/3d/' . $safe_sku;
 		wp_mkdir_p( $target_3d_dir );
+
+		$max_model_bytes = 25 * 1024 * 1024;
+		$max_thumb_bytes = 5 * 1024 * 1024;
 
 		$glb_url   = '';
 		$usdz_url  = '';
@@ -1148,12 +1176,13 @@ class Desktop3DSyncModule {
 
 		if ( ! empty( $data['glb_base64'] ) ) {
 			$glb_bin = base64_decode( (string) $data['glb_base64'], true );
-			if ( $glb_bin && strlen( $glb_bin ) >= 12 && 'glTF' === substr( $glb_bin, 0, 4 ) ) {
+			if ( false !== $glb_bin && strlen( $glb_bin ) >= 12 && strlen( $glb_bin ) <= $max_model_bytes && 'glTF' === substr( $glb_bin, 0, 4 ) ) {
 				$glb_file = $target_3d_dir . '/model.glb';
 				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-				file_put_contents( $glb_file, $glb_bin );
-				$glb_url  = $upload_dir['baseurl'] . '/3d/' . $safe_sku . '/model.glb';
-				$glb_size = strlen( $glb_bin );
+				if ( false !== file_put_contents( $glb_file, $glb_bin ) ) {
+					$glb_url  = $upload_dir['baseurl'] . '/3d/' . $safe_sku . '/model.glb';
+					$glb_size = strlen( $glb_bin );
+				}
 			}
 		} elseif ( ! empty( $data['glb_url'] ) ) {
 			$glb_url = esc_url_raw( (string) $data['glb_url'] );
@@ -1161,23 +1190,31 @@ class Desktop3DSyncModule {
 
 		if ( ! empty( $data['usdz_base64'] ) ) {
 			$usdz_bin = base64_decode( (string) $data['usdz_base64'], true );
-			if ( $usdz_bin && strlen( $usdz_bin ) >= 30 && "PK\x03\x04" === substr( $usdz_bin, 0, 4 ) ) {
+			if ( false !== $usdz_bin && strlen( $usdz_bin ) >= 30 && strlen( $usdz_bin ) <= $max_model_bytes && "PK\x03\x04" === substr( $usdz_bin, 0, 4 ) ) {
 				$usdz_file = $target_3d_dir . '/model.usdz';
 				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-				file_put_contents( $usdz_file, $usdz_bin );
-				$usdz_url = $upload_dir['baseurl'] . '/3d/' . $safe_sku . '/model.usdz';
+				if ( false !== file_put_contents( $usdz_file, $usdz_bin ) ) {
+					$usdz_url = $upload_dir['baseurl'] . '/3d/' . $safe_sku . '/model.usdz';
+				}
 			}
 		} elseif ( ! empty( $data['usdz_url'] ) ) {
 			$usdz_url = esc_url_raw( (string) $data['usdz_url'] );
 		}
 
 		if ( ! empty( $data['thumbnail_base64'] ) ) {
-			$thumb_bin = base64_decode( (string) $data['thumbnail_base64'], true );
-			if ( $thumb_bin && strlen( $thumb_bin ) > 32 ) {
-				$thumb_file = $target_3d_dir . '/thumb.png';
+			$thumb_bin  = base64_decode( (string) $data['thumbnail_base64'], true );
+			$thumb_info = ( false !== $thumb_bin && strlen( $thumb_bin ) > 32 && strlen( $thumb_bin ) <= $max_thumb_bytes && function_exists( 'getimagesizefromstring' ) )
+				? @getimagesizefromstring( $thumb_bin )
+				: false;
+			$thumb_mime = is_array( $thumb_info ) ? (string) ( $thumb_info['mime'] ?? '' ) : '';
+			$thumb_exts = array( 'image/png' => 'png', 'image/jpeg' => 'jpg', 'image/webp' => 'webp' );
+			if ( isset( $thumb_exts[ $thumb_mime ] ) ) {
+				$thumb_name = 'thumb.' . $thumb_exts[ $thumb_mime ];
+				$thumb_file = $target_3d_dir . '/' . $thumb_name;
 				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-				file_put_contents( $thumb_file, $thumb_bin );
-				$thumb_url = $upload_dir['baseurl'] . '/3d/' . $safe_sku . '/thumb.png';
+				if ( false !== file_put_contents( $thumb_file, $thumb_bin ) ) {
+					$thumb_url = $upload_dir['baseurl'] . '/3d/' . $safe_sku . '/' . $thumb_name;
+				}
 			}
 		}
 
@@ -1230,8 +1267,11 @@ class Desktop3DSyncModule {
 		}
 
 		$product_id = absint( $_POST['product_id'] ?? 0 );
-		if ( ! $product_id ) {
-			wp_send_json_error( array( 'message' => __( 'Product ID không hợp lệ.', 'despace-core' ) ) );
+		if ( ! $product_id || ( function_exists( 'get_post_type' ) && 'product' !== get_post_type( $product_id ) ) ) {
+			wp_send_json_error( array( 'message' => __( 'Product ID không hợp lệ.', 'despace-core' ) ), 400 );
+		}
+		if ( ! current_user_can( 'edit_post', $product_id ) && ! current_user_can( 'manage_despace_3d' ) && ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Bạn không có quyền chỉnh sửa sản phẩm này.', 'despace-core' ) ), 403 );
 		}
 
 		$angles = self::get_product_multi_angles( $product_id );
@@ -1248,14 +1288,13 @@ class Desktop3DSyncModule {
 	 * AJAX Handler: Check job progress.
 	 */
 	public function ajax_check_job_status(): void {
-		if ( ! empty( $_GET['nonce'] ) ) {
-			check_ajax_referer( 'despace_dispatch_3d_action', 'nonce' );
-		}
+		check_ajax_referer( 'despace_dispatch_3d_action', 'nonce' );
+
 		if ( ! current_user_can( 'edit_products' ) && ! current_user_can( 'manage_woocommerce' ) && ! current_user_can( 'manage_despace_3d' ) && ! current_user_can( 'edit_despace_products' ) ) {
 			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
-		$job_uuid = sanitize_text_field( $_GET['job_uuid'] ?? '' );
+		$job_uuid = sanitize_text_field( wp_unslash( $_GET['job_uuid'] ?? '' ) );
 		if ( ! $job_uuid ) {
 			wp_send_json_error( array( 'message' => 'Missing job_uuid' ) );
 		}

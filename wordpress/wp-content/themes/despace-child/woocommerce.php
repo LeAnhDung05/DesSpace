@@ -20,11 +20,12 @@ if ( is_singular( 'product' ) ) {
 	$shop_url           = wc_get_page_permalink( 'shop' );
 	$total_all_products = wp_count_posts( 'product' )->publish ?? 0;
 
-	$top_cats = get_terms( array(
+	$default_cat_id = (int) get_option( 'default_product_cat', 0 );
+	$top_cats       = get_terms( array(
 		'taxonomy'   => 'product_cat',
 		'hide_empty' => true,
 		'parent'     => 0,
-		'exclude'    => array( wc_get_page_id( 'shop' ) ),
+		'exclude'    => $default_cat_id ? array( $default_cat_id ) : array(),
 	) );
 	?>
 	<?php

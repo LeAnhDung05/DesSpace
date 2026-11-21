@@ -8,11 +8,13 @@
  * @package DeSpace\Tests
  */
 
-// Find active WordPress environment.
-$possible_paths = array(
-	'C:/xampp/htdocs/despace/wp-load.php',
+// Find active WordPress environment (env override or repository-relative path).
+$env_wp_load    = getenv( 'WP_LOAD_PATH' );
+$possible_paths = array_filter( array(
+	is_string( $env_wp_load ) && '' !== $env_wp_load ? $env_wp_load : null,
 	__DIR__ . '/../wordpress/wp-load.php',
-);
+	'/var/www/html/wp-load.php',
+) );
 
 $wp_load = null;
 foreach ( $possible_paths as $path ) {

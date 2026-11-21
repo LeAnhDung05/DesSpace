@@ -60,13 +60,18 @@
 			var card = document.createElement("div");
 			card.className = "ax-chat-product-card";
 
+			var safeHttpUrl = function (u) {
+				var raw = String(u || "").trim();
+				return (raw.startsWith("/") || /^https?:\/\//i.test(raw)) ? raw : "#";
+			};
+
 			var link = document.createElement("a");
 			link.className = "ax-chat-product";
-			link.href = product.url || "#";
+			link.href = safeHttpUrl(product.url);
 
-			if (product.image) {
+			if (product.image && safeHttpUrl(product.image) !== "#") {
 				var image = document.createElement("img");
-				image.src = product.image;
+				image.src = safeHttpUrl(product.image);
 				image.alt = "";
 				image.loading = "lazy";
 				link.appendChild(image);

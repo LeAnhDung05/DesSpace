@@ -1,5 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # DeSpace Database Synchronization Script for macOS / Linux
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "=============================================================================="
 echo "               DESPACE - DATABASE AUTO-SYNC SCRIPT"
@@ -12,17 +15,22 @@ if ! command -v wp &> /dev/null; then
     exit 1
 fi
 
-read -p "Enter your LocalWP port (Default 10016, or press Enter): " PORT
-PORT=${PORT:-10016}
+read -r -p "Enter your LocalWP port (Default 10016, or press Enter): " PORT
+PORT="${PORT:-10016}"
+
+if ! [[ "${PORT}" =~ ^[0-9]+$ ]] || (( PORT < 1 || PORT > 65535 )); then
+    echo "❌ Error: Invalid port '${PORT}'. Must be an integer between 1 and 65535."
+    exit 1
+fi
 
 echo ""
-echo "[1/3] Importing despace_seed_data.sql into MySQL..."
-if [ -f "database/despace_seed_data.sql" ]; then
-    wp db import database/despace_seed_data.sql
-elif [ -f "../database/despace_seed_data.sql" ]; then
-    wp db import ../database/despace_seed_data.sql
+echo "[1/3] Importing seed data into MySQL..."
+if [ -f "${SCRIPT_DIR}/despace_seed_data.sql.gz" ] && command -v gzip &> /dev/null; then
+    gzip -dc "${SCRIPT_DIR}/despace_seed_data.sql.gz" | wp db import -
+elif [ -f "${SCRIPT_DIR}/despace_seed_data.sql" ]; then
+    wp db import "${SCRIPT_DIR}/despace_seed_data.sql"
 else
-    echo "❌ Error: database/despace_seed_data.sql not found!"
+    echo "❌ Error: Seed SQL not found in ${SCRIPT_DIR}!"
     exit 1
 fi
 

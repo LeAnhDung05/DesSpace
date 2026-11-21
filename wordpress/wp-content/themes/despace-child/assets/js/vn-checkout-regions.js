@@ -184,7 +184,14 @@
 		var provCode = getStateValue(group);
 		var select = ensureSelectElement(group, cityInput, cityRow);
 
-		if (userChangedProvince) {
+		if (!syncGroup.lastProvince) {
+			syncGroup.lastProvince = { billing: "", shipping: "" };
+		}
+		var prevProv = syncGroup.lastProvince[group] || "";
+		var actuallyChanged = userChangedProvince && prevProv !== "" && provCode !== prevProv;
+		syncGroup.lastProvince[group] = provCode;
+
+		if (actuallyChanged) {
 			cityInput.value = "";
 			if (codeInput) codeInput.value = "";
 		}

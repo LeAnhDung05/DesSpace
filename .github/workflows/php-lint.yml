@@ -1,11 +1,11 @@
-name: PHP lint
+name: DeSpace CI Checks
 
 on:
   push:
   pull_request:
 
 jobs:
-  lint:
+  php-lint-and-unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,9 +15,38 @@ jobs:
       - name: Lint DeSpace PHP files
         run: |
           find wordpress/wp-content/plugins/despace-core wordpress/wp-content/themes/despace-child wordpress/wp-content/mu-plugins tests -name '*.php' -print0 | xargs -0 -n1 php -l
-      - name: Run Standalone Unit Test Suites
+      - name: Run Standalone PHP Unit Test Suites
         run: |
           php tests/test-rbac-matrix.php
           php tests/test-inventory-matrix.php
           php tests/test-desktop-3d-sync.php
           for f in tests/test-*-unit.php; do php "$f"; done
+
+  js-shell-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Check JS syntax
+        run: |
+          find wordpress/wp-content/plugins/despace-core wordpress/wp-content/themes/despace-child -name '*.js' -print0 | xargs -0 -n1 node --check
+      - name: Check Shell script syntax
+        run: |
+          find . -maxdepth 3 -name '*.sh' -not -path '*/.git/*' -print0 | xargs -0 -n1 bash -n
+
+  python-desktop-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Desktop App dependencies
+        run: pip install -r desktop_app/requirements.txt
+      - name: Compile Python files
+        run: |
+          find desktop_app tests -name '*.py' -print0 | xargs -0 -n1 python3 -m py_compile
+      - name: Run Python Core Tests
+        run: python3 tests/test_desktop_app_core.py

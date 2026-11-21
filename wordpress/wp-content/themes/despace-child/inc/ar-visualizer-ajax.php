@@ -3,32 +3,38 @@
  * AJAX Handlers for AR Room Visualizer
  */
 
-// Save AR Layout
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+// Save AR Layout (authenticated users only to prevent unauthenticated wp_options transient bloat)
 add_action('wp_ajax_ar_save_layout', 'ar_save_layout');
-add_action('wp_ajax_nopriv_ar_save_layout', 'ar_save_layout');
 
 function ar_get_guest_layout_key() {
     if ( function_exists( 'WC' ) && WC()->session && method_exists( WC()->session, 'get_customer_id' ) ) {
         return 'ar_guest_layout_' . md5( (string) WC()->session->get_customer_id() );
     }
-    $ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : 'guest';
-    $ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
-    return 'ar_guest_layout_' . substr( md5( $ip . '|' . $ua ), 0, 16 );
+    return '';
 }
 
 function ar_save_layout() {
     check_ajax_referer('ar_security', 'nonce');
 
     $user_id = get_current_user_id();
+    if ( ! $user_id ) {
+        wp_send_json_error( array( 'message' => 'Please sign in to save AR room layouts to your account.' ), 401 );
+        return;
+    }
+
     $raw_json = isset($_POST['layout_data']) ? wp_unslash($_POST['layout_data']) : '';
-    if ( strlen( $raw_json ) > 524288 ) {
-        wp_send_json_error(array('message' => 'Layout payload too large'));
+    if ( strlen( $raw_json ) > 262144 ) {
+        wp_send_json_error(array('message' => 'Layout payload too large'), 413);
         return;
     }
     $layout_data = ! empty( $raw_json ) ? json_decode($raw_json, true) : array();
 
     if (empty($layout_data) || ! is_array($layout_data)) {
-        wp_send_json_error(array('message' => 'No layout data provided'));
+        wp_send_json_error(array('message' => 'No layout data provided'), 400);
         return;
     }
 
@@ -53,37 +59,39 @@ function ar_save_layout() {
         }
     }
 
+    $raw_room_image = isset($layout_data['room_image']) ? trim((string) $layout_data['room_image']) : '';
+    $safe_room_img  = '';
+    if ( '' !== $raw_room_image ) {
+        if ( 0 === strpos( $raw_room_image, 'data:image/' ) && strlen( $raw_room_image ) <= 200000 ) {
+            $safe_room_img = preg_replace( '/[^a-zA-Z0-9\/+,;=:\-]/', '', $raw_room_image );
+        } elseif ( preg_match( '#^https?://#i', $raw_room_image ) ) {
+            $safe_room_img = esc_url_raw( $raw_room_image );
+        }
+    }
+
     $layout = array(
         'user_id'    => $user_id,
         'products'   => $sanitized_products,
-        'room_image' => isset($layout_data['room_image']) ? sanitize_text_field($layout_data['room_image']) : '',
+        'room_image' => $safe_room_img,
         'created_at' => current_time('mysql'),
     );
 
-    // Save to user meta if logged in
-    if ($user_id) {
-        $saved_layouts = get_user_meta($user_id, '_ar_saved_layouts', true);
-        if (!is_array($saved_layouts)) {
-            $saved_layouts = array();
-        }
-        $layout_id = uniqid('ar_layout_');
-        $saved_layouts[$layout_id] = $layout;
-        update_user_meta($user_id, '_ar_saved_layouts', $saved_layouts);
-
-        wp_send_json_success(array(
-            'layout_id' => $layout_id,
-            'message' => 'Layout saved successfully'
-        ));
-    } else {
-        // Save to session/localStorage key
-        $guest_key = ar_get_guest_layout_key();
-        set_transient($guest_key, $layout, 7 * DAY_IN_SECONDS);
-
-        wp_send_json_success(array(
-            'layout_id' => $guest_key,
-            'message' => 'Layout saved as guest'
-        ));
+    $saved_layouts = get_user_meta($user_id, '_ar_saved_layouts', true);
+    if (!is_array($saved_layouts)) {
+        $saved_layouts = array();
     }
+    $layout_id = uniqid('ar_layout_');
+    $saved_layouts[$layout_id] = $layout;
+    // Cap saved layouts per user to 10 most recent entries to prevent unbounded usermeta growth.
+    if ( count( $saved_layouts ) > 10 ) {
+        $saved_layouts = array_slice( $saved_layouts, -10, 10, true );
+    }
+    update_user_meta($user_id, '_ar_saved_layouts', $saved_layouts);
+
+    wp_send_json_success(array(
+        'layout_id' => $layout_id,
+        'message' => 'Layout saved successfully'
+    ));
 }
 
 // Get Saved Layouts

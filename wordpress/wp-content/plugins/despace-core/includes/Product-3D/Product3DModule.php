@@ -85,21 +85,45 @@ class Product3DModule {
 		if ( ! current_user_can( 'manage_woocommerce' ) && ! current_user_can( 'upload_files' ) && ! current_user_can( 'manage_despace_3d' ) ) {
 			return $data;
 		}
-		$ext = strtolower( pathinfo( $filename, PATHINFO_EXTENSION ) );
+		if ( ! is_string( $file ) || ! is_readable( $file ) ) {
+			return $data;
+		}
+
+		$ext   = strtolower( pathinfo( $filename, PATHINFO_EXTENSION ) );
+		$fsize = (int) filesize( $file );
+
 		if ( 'glb' === $ext ) {
-			if ( is_string( $file ) && is_readable( $file ) && filesize( $file ) >= 4 ) {
-				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-				$magic = file_get_contents( $file, false, null, 0, 4 );
-				if ( 'glTF' !== $magic ) {
-					return $data;
-				}
+			if ( $fsize < 12 ) {
+				return $data;
+			}
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+			$magic = file_get_contents( $file, false, null, 0, 4 );
+			if ( 'glTF' !== $magic ) {
+				return $data;
 			}
 			$data['ext']  = 'glb';
 			$data['type'] = 'model/gltf-binary';
 		} elseif ( 'gltf' === $ext ) {
+			if ( $fsize < 2 || $fsize > 10 * 1024 * 1024 ) {
+				return $data;
+			}
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+			$raw     = file_get_contents( $file );
+			$decoded = is_string( $raw ) ? json_decode( $raw, true ) : null;
+			if ( ! is_array( $decoded ) || ! isset( $decoded['asset'] ) ) {
+				return $data;
+			}
 			$data['ext']  = 'gltf';
 			$data['type'] = 'model/gltf+json';
 		} elseif ( 'usdz' === $ext ) {
+			if ( $fsize < 30 ) {
+				return $data;
+			}
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+			$magic = file_get_contents( $file, false, null, 0, 4 );
+			if ( "PK\x03\x04" !== $magic ) {
+				return $data;
+			}
 			$data['ext']  = 'usdz';
 			$data['type'] = 'model/vnd.usdz+zip';
 		}
@@ -264,22 +288,96 @@ class Product3DModule {
 	}
 
 	/**
+	 * Per-request memoized table existence and preloaded 3D row cache (eliminates N+1 SHOW TABLES/SELECT storms).
+	 *
+	 * @var array<string, bool>
+	 */
+	private static array $table_exists_cache = array();
+
+	/**
+	 * @var array<int, array|null>
+	 */
+	private static array $row_cache = array();
+
+	/**
+	 * Check once per request whether a 3D table exists.
+	 */
+	private static function table_exists_cached( string $table_name ): bool {
+		if ( array_key_exists( $table_name, self::$table_exists_cache ) ) {
+			return self::$table_exists_cache[ $table_name ];
+		}
+		global $wpdb;
+		$like = method_exists( $wpdb, 'esc_like' ) ? $wpdb->esc_like( $table_name ) : $table_name;
+		$ok   = ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $like ) ) === $table_name );
+		self::$table_exists_cache[ $table_name ] = $ok;
+		return $ok;
+	}
+
+	/**
+	 * Batch-preload 3D rows for a list of product IDs in a single SQL query.
+	 *
+	 * @param int[] $product_ids
+	 */
+	public static function preload_products_3d_info( array $product_ids ): void {
+		global $wpdb;
+		$ids = array_values( array_unique( array_filter( array_map( 'absint', $product_ids ) ) ) );
+		$ids = array_values( array_diff( $ids, array_keys( self::$row_cache ) ) );
+		if ( empty( $ids ) ) {
+			return;
+		}
+
+		foreach ( $ids as $id ) {
+			self::$row_cache[ $id ] = null;
+		}
+
+		$table_despace = $wpdb->prefix . 'despace_product_3d_models';
+		$table_axgnud  = $wpdb->prefix . 'axgnud_product_3d_models';
+		$placeholders  = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+
+		if ( self::table_exists_cached( $table_despace ) ) {
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table_despace} WHERE product_id IN ({$placeholders})", $ids ), ARRAY_A );
+			foreach ( (array) $rows as $r ) {
+				$pid = absint( $r['product_id'] ?? 0 );
+				if ( $pid && null === self::$row_cache[ $pid ] ) {
+					self::$row_cache[ $pid ] = $r;
+				}
+			}
+		}
+
+		$missing = array_values( array_filter( $ids, static fn( $id ) => null === self::$row_cache[ $id ] ) );
+		if ( ! empty( $missing ) && self::table_exists_cached( $table_axgnud ) ) {
+			$ph2  = implode( ',', array_fill( 0, count( $missing ), '%d' ) );
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table_axgnud} WHERE product_id IN ({$ph2})", $missing ), ARRAY_A );
+			foreach ( (array) $rows as $r ) {
+				$pid = absint( $r['product_id'] ?? 0 );
+				if ( $pid && null === self::$row_cache[ $pid ] ) {
+					self::$row_cache[ $pid ] = $r;
+				}
+			}
+		}
+	}
+
+	/**
 	 * Retrieve 3D model info with fallback hierarchy.
 	 */
 	public static function get_product_3d_info( int $product_id ): array {
 		global $wpdb;
 
-		// 1. Check custom 3D tables: check wp_despace_product_3d_models first, then wp_axgnud_product_3d_models
+		// 1. Check custom 3D tables (cached per request to avoid N+1 SHOW TABLES / SELECT)
 		$table_despace = $wpdb->prefix . 'despace_product_3d_models';
 		$table_axgnud  = $wpdb->prefix . 'axgnud_product_3d_models';
 
-		$row = null;
-		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_despace ) ) === $table_despace ) {
-			$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table_despace} WHERE product_id = %d LIMIT 1", $product_id ), ARRAY_A );
-		}
-
-		if ( ! $row && $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_axgnud ) ) === $table_axgnud ) {
-			$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table_axgnud} WHERE product_id = %d LIMIT 1", $product_id ), ARRAY_A );
+		if ( array_key_exists( $product_id, self::$row_cache ) ) {
+			$row = self::$row_cache[ $product_id ];
+		} else {
+			$row = null;
+			if ( self::table_exists_cached( $table_despace ) ) {
+				$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table_despace} WHERE product_id = %d LIMIT 1", $product_id ), ARRAY_A );
+			}
+			if ( ! $row && self::table_exists_cached( $table_axgnud ) ) {
+				$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table_axgnud} WHERE product_id = %d LIMIT 1", $product_id ), ARRAY_A );
+			}
+			self::$row_cache[ $product_id ] = $row ?: null;
 		}
 
 		$resolve_asset_url = static function( string $raw ): string {
@@ -449,12 +547,17 @@ class Product3DModule {
 			return '';
 		}
 
+		$height = trim( (string) $atts['height'] );
+		if ( ! preg_match( '/^\d+(?:\.\d+)?(?:px|%|vh|rem|em)$/', $height ) ) {
+			$height = '450px';
+		}
+
 		return sprintf(
 			'<div class="despace-shortcode-viewer">
 				<model-viewer src="%s" auto-rotate camera-controls ar style="width:100%%; height:%s; background-color:#faf8f5; border-radius:16px;"></model-viewer>
 			</div>',
 			esc_url( $src ),
-			esc_attr( $atts['height'] )
+			esc_attr( $height )
 		);
 	}
 
@@ -462,12 +565,15 @@ class Product3DModule {
 	 * Ensure wp_despace_product_3d_models exists or is synchronized from wp_axgnud_product_3d_models.
 	 */
 	public function ensure_3d_table(): void {
+		if ( function_exists( 'get_option' ) && '1' === (string) get_option( 'despace_3d_table_ready_v1', '' ) ) {
+			return;
+		}
 		global $wpdb;
 		$table_despace = $wpdb->prefix . 'despace_product_3d_models';
 		$table_axgnud  = $wpdb->prefix . 'axgnud_product_3d_models';
 
 		// If despace table doesn't exist, create it matching axgnud schema
-		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_despace ) ) !== $table_despace ) {
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table_despace ) ) ) !== $table_despace ) {
 			$charset_collate = $wpdb->get_charset_collate();
 			$sql = "CREATE TABLE `{$table_despace}` (
 				`id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -499,12 +605,15 @@ class Product3DModule {
 			dbDelta( $sql );
 
 			// If source table axgnud exists and has data, copy over to despace table
-			if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_axgnud ) ) === $table_axgnud ) {
+			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table_axgnud ) ) ) === $table_axgnud ) {
 				$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table_despace}`" );
 				if ( 0 === $count ) {
 					$wpdb->query( "INSERT IGNORE INTO `{$table_despace}` SELECT * FROM `{$table_axgnud}`" );
 				}
 			}
+		}
+		if ( function_exists( 'update_option' ) ) {
+			update_option( 'despace_3d_table_ready_v1', '1', false );
 		}
 	}
 }

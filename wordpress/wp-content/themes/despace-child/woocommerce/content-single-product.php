@@ -11,6 +11,13 @@ global $product;
 if ( ! $product ) {
     $product = wc_get_product( get_the_ID() );
 }
+if ( ! $product ) {
+    return;
+}
+if ( post_password_required() ) {
+    echo get_the_password_form(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    return;
+}
 
 $id       = $product->get_id();
 $regular  = (float) $product->get_regular_price();
@@ -73,6 +80,9 @@ if ( ! empty( $finish_attr_val ) ) {
 ?>
 
 <div class="ax-product-page">
+    <div class="ax-container">
+        <?php do_action( 'woocommerce_before_single_product' ); ?>
+    </div>
 
     <!-- Breadcrumb -->
     <div class="ax-breadcrumb">

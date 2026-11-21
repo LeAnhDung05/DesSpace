@@ -259,28 +259,13 @@ function furniva_assets() {
 		);
 	}
 
-	$ax_3d_js = get_stylesheet_directory() . '/assets/js/despace-3d-visualizer.js';
-	if ( ! file_exists( $ax_3d_js ) ) {
-		$ax_3d_js = get_stylesheet_directory() . '/assets/js/axgnud-3d-visualizer.js';
-	}
-	if ( file_exists( $ax_3d_js ) ) {
-		wp_enqueue_script(
-			'despace-3d-visualizer',
-			get_stylesheet_directory_uri() . '/assets/js/' . basename( $ax_3d_js ),
-			array(),
-			filemtime( $ax_3d_js ),
-			true
-		);
-		wp_register_script( 'furniva-ax-3d-visualizer', false, array( 'despace-3d-visualizer' ) );
-		wp_enqueue_script( 'furniva-ax-3d-visualizer' );
-	}
-
+	// Do NOT globally enqueue dead despace-3d-visualizer.js (which eagerly injects 350KB model-viewer on every page).
 	$ax_room_js = get_stylesheet_directory() . '/assets/js/ax-room-visualizer.js';
-	if ( file_exists( $ax_room_js ) ) {
+	if ( file_exists( $ax_room_js ) && ! is_checkout() && ! is_account_page() ) {
 		wp_enqueue_script(
 			'despace-ax-room-visualizer',
 			get_stylesheet_directory_uri() . '/assets/js/ax-room-visualizer.js',
-			array( 'jquery', 'despace-3d-visualizer' ),
+			array( 'jquery' ),
 			filemtime( $ax_room_js ),
 			true
 		);
@@ -715,9 +700,9 @@ function furniva_ajax_filter() {
 		$query_args['post__in'] = $sale_ids;
 	}
 
-	// Price range
-	$min = isset( $_POST['price_min'] ) ? floatval( $_POST['price_min'] ) : null;
-	$max = isset( $_POST['price_max'] ) ? floatval( $_POST['price_max'] ) : null;
+	// Price range (ignore empty strings so unset price_max does not cast to 0.0)
+	$min = ( isset( $_POST['price_min'] ) && '' !== trim( (string) wp_unslash( $_POST['price_min'] ) ) ) ? floatval( wp_unslash( $_POST['price_min'] ) ) : null;
+	$max = ( isset( $_POST['price_max'] ) && '' !== trim( (string) wp_unslash( $_POST['price_max'] ) ) ) ? floatval( wp_unslash( $_POST['price_max'] ) ) : null;
 	if ( null !== $min || null !== $max ) {
 		$price_query = array( 'relation' => 'AND' );
 		if ( null !== $min ) { $price_query[] = array( 'key' => '_price', 'value' => $min, 'compare' => '>=', 'type' => 'NUMERIC' ); }
@@ -727,7 +712,7 @@ function furniva_ajax_filter() {
 	}
 
 	// Respect a base category (current archive) or one passed from JS
-	$base = sanitize_title( $_POST['base'] ?? '' );
+	$base = sanitize_title( wp_unslash( $_POST['base'] ?? '' ) );
 	if ( empty( $cats ) && $base ) {
 		$query_args['tax_query'][] = array( 'taxonomy' => 'product_cat', 'field' => 'slug', 'terms' => $base );
 	}
@@ -745,6 +730,7 @@ function furniva_ajax_filter() {
 			wc_get_template_part( 'content', 'product' );
 		}
 		echo '</ul>';
+		wp_reset_postdata();
 	} else {
 		echo '<div class="f-no-results">' .
 			'<div class="f-no-results-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg></div>' .
@@ -791,6 +777,16 @@ function furniva_ajax_buy_now() {
 	$passed = apply_filters( 'woocommerce_add_to_cart_validation', true, $product_id, $qty, $variation_id, $attributes );
 	if ( ! $passed ) {
 		wp_send_json_error( furniva_t( 'Please choose product options first.', 'Vui lòng chọn các tùy chọn sản phẩm trước.' ) );
+	}
+
+	if ( ! function_exists( 'WC' ) ) {
+		wp_send_json_error( furniva_t( 'Cart is currently unavailable.', 'Giỏ hàng hiện không khả dụng.' ) );
+	}
+	if ( is_null( WC()->cart ) && function_exists( 'wc_load_cart' ) ) {
+		wc_load_cart();
+	}
+	if ( is_null( WC()->cart ) ) {
+		wp_send_json_error( furniva_t( 'Cart is currently unavailable.', 'Giỏ hàng hiện không khả dụng.' ) );
 	}
 
 	$added = WC()->cart->add_to_cart( $product_id, max( 1, $qty ), $variation_id, $attributes );
@@ -1049,13 +1045,13 @@ function furniva_product_schema_jsonld() {
 	$schema = array(
 		'@context'    => 'https://schema.org/',
 		'@type'       => 'Product',
-		'name'        => $product->get_name(),
+		'name'        => wp_strip_all_tags( $product->get_name() ),
 		'image'       => wp_get_attachment_url( $product->get_image_id() ),
 		'description' => wp_strip_all_tags( $product->get_short_description() ?: $product->get_description() ),
-		'sku'         => $product->get_sku() ?: 'FUR-' . $product->get_id(),
+		'sku'         => wp_strip_all_tags( $product->get_sku() ?: 'FUR-' . $product->get_id() ),
 		'brand'       => array(
 			'@type' => 'Brand',
-		'name'  => $product->get_attribute( 'Brand' ) ?: 'DeSpace',
+			'name'  => wp_strip_all_tags( $product->get_attribute( 'Brand' ) ?: 'DeSpace' ),
 		),
 		'offers'      => array(
 			'@type'         => 'Offer',
@@ -1075,7 +1071,7 @@ function furniva_product_schema_jsonld() {
 		);
 	}
 
-	echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT ) . '</script>' . "\n";
+	echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT ) . '</script>' . "\n";
 }
 add_action( 'wp_head', 'furniva_product_schema_jsonld' );
 
@@ -1262,7 +1258,15 @@ function furniva_ajax_wishlist_add_to_cart() {
 		wp_send_json_error( array( 'message' => 'Invalid product' ) );
 	}
 
-	$cart_count = 1;
+	$passed = apply_filters( 'woocommerce_add_to_cart_validation', true, $product_id, 1 );
+	if ( ! $passed ) {
+		wp_send_json_error( array(
+			'message' => furniva_t( 'Please sign in or check product availability before adding to cart.', 'Vui lòng đăng nhập hoặc kiểm tra tình trạng sản phẩm trước khi thêm vào giỏ.' ),
+		), 400 );
+	}
+
+	$cart_count = 0;
+	$added      = false;
 	if ( function_exists( 'WC' ) ) {
 		if ( is_null( WC()->session ) ) {
 			$session_class = apply_filters( 'woocommerce_session_handler', 'WC_Session_Handler' );
@@ -1278,9 +1282,17 @@ function furniva_ajax_wishlist_add_to_cart() {
 		if ( is_null( WC()->cart ) ) {
 			WC()->cart = new WC_Cart();
 		}
-		WC()->cart->add_to_cart( $product_id, 1 );
-		WC()->cart->calculate_totals();
-		$cart_count = WC()->cart->get_cart_contents_count();
+		$added = WC()->cart->add_to_cart( $product_id, 1 );
+		if ( $added ) {
+			WC()->cart->calculate_totals();
+			$cart_count = WC()->cart->get_cart_contents_count();
+		}
+	}
+
+	if ( ! $added ) {
+		wp_send_json_error( array(
+			'message' => furniva_t( 'Could not add this product to your cart.', 'Không thể thêm sản phẩm này vào giỏ hàng.' ),
+		), 400 );
 	}
 
 	wp_send_json_success( array(

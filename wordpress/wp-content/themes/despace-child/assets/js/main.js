@@ -289,9 +289,12 @@ jQuery(function ($) {
 	}
 
 	function escapeHtml(str) {
-		var div = document.createElement('div');
-		div.textContent = str;
-		return div.innerHTML;
+		return String(str == null ? "" : str)
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;")
+			.replace(/'/g, "&#39;");
 	}
 
 	function updateActiveFilterTags() {
@@ -316,7 +319,10 @@ jQuery(function ($) {
 		var min = $("#f-price-min").val(), max = $("#f-price-max").val();
 		if ((min !== "" && !isNaN(min)) || (max !== "" && !isNaN(max))) {
 			count++;
-			var priceLabel = "$" + escapeHtml(min || "0") + " – $" + escapeHtml(max || "∞");
+			var fmtVnd = function (n) {
+				return Number(n).toLocaleString("vi-VN") + " ₫";
+			};
+			var priceLabel = escapeHtml(min !== "" ? fmtVnd(min) : "0 ₫") + " – " + escapeHtml(max !== "" ? fmtVnd(max) : "∞");
 			tags.push('<button type="button" class="f-active-tag" data-filter-type="price">' +
 				'<span class="f-active-tag-group">' + escapeHtml(furnivaData.strings.priceLabel) + ':</span> ' +
 				'<span class="f-active-tag-val">' + priceLabel + '</span>' +
@@ -353,8 +359,13 @@ jQuery(function ($) {
 		applyGridCols($(this).data("cols"));
 	});
 
+	var activeFilterXhr = null;
 	function runFilter(append, skipHistory) {
-		if (fetching) return;
+		if (!append && activeFilterXhr && activeFilterXhr.readyState !== 4) {
+			activeFilterXhr.abort();
+		} else if (append && fetching) {
+			return;
+		}
 		fetching = true;
 		currentPage = append ? currentPage : 1;
 
@@ -383,7 +394,7 @@ jQuery(function ($) {
 			$("#furniva-load-more").prop("disabled", true);
 		}
 
-		$.post(furnivaData.ajaxUrl, $.param(data)).done(function (res) {
+		activeFilterXhr = $.post(furnivaData.ajaxUrl, $.param(data)).done(function (res) {
 			if (!res || !res.success) {
 				$results.find(".ds-sk-append-item").remove();
 				return;
@@ -414,7 +425,7 @@ jQuery(function ($) {
 			}
 			$count.text(res.data.text);
 			if (res.data.range) {
-				$count.append(" · <span style='opacity:.7'>" + res.data.range + "</span>");
+				$count.append(" · ").append($("<span style='opacity:.7'></span>").text(res.data.range));
 			}
 
 			// preserve grid columns selection on dynamic content
@@ -451,8 +462,10 @@ jQuery(function ($) {
 		if (type === "price") {
 			$("#f-price-min, #f-price-max").val("");
 		} else {
-			var name = $(this).data("name"), val = $(this).data("val");
-			$('#furniva-filter-form input[name="' + name + '"][value="' + val + '"]').prop("checked", false);
+			var name = String($(this).attr("data-name") || ""), val = String($(this).attr("data-val") || "");
+			$("#furniva-filter-form input[type=checkbox]").filter(function () {
+				return $(this).attr("name") === name && String($(this).val()) === val;
+			}).prop("checked", false);
 		}
 		runFilter(false);
 	});
@@ -485,21 +498,28 @@ jQuery(function ($) {
 		runFilter(true);
 	});
 
-	// helper to restore filters from URL query parameters
+	// helper to restore filters from URL query parameters (safe against selector injection)
 	function restoreFiltersFromUrl() {
-		var qs = new URLSearchParams(window.location.search);
-		$("#furniva-filter-form input[type=checkbox]").prop("checked", false);
-		$("#f-price-min, #f-price-max").val("");
-		$.each(["category", "brand", "color", "size", "availability"], function (i, key) {
-			var v = qs.get(key);
-			if (v) {
-				v.split(",").forEach(function (slug) {
-					$('#furniva-filter-form input[name="' + key + '"][value="' + slug + '"]').prop("checked", true);
-				});
-			}
-		});
-		if (qs.get("price_min")) $("#f-price-min").val(qs.get("price_min"));
-		if (qs.get("price_max")) $("#f-price-max").val(qs.get("price_max"));
+		try {
+			var qs = new URLSearchParams(window.location.search);
+			$("#furniva-filter-form input[type=checkbox]").prop("checked", false);
+			$("#f-price-min, #f-price-max").val("");
+			$.each(["category", "brand", "color", "size", "availability"], function (i, key) {
+				var v = qs.get(key);
+				if (v) {
+					var allowedSlugs = v.split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+					if (allowedSlugs.length) {
+						$("#furniva-filter-form input[type=checkbox]").filter(function () {
+							return $(this).attr("name") === key && allowedSlugs.indexOf(String($(this).val())) !== -1;
+						}).prop("checked", true);
+					}
+				}
+			});
+			if (qs.get("price_min")) $("#f-price-min").val(qs.get("price_min"));
+			if (qs.get("price_max")) $("#f-price-max").val(qs.get("price_max"));
+		} catch (err) {
+			// Ignore malformed query string rather than aborting main.js initialization
+		}
 	}
 
 	// Browser back/forward navigation support
@@ -618,14 +638,23 @@ jQuery(function ($) {
 				var $sel = $(this), attr = $sel.attr("name") || "";
 				if (!attr.startsWith("attribute_")) return;
 				var isColor = attr.indexOf("pa_color") !== -1;
-				var $ui = $('<div class="f-swatch-ui" data-attr="' + attr + '" role="group" aria-label="' + attr.replace("attribute_", "") + '"></div>');
+				var $ui = $('<div class="f-swatch-ui" role="group"></div>')
+					.attr("data-attr", attr)
+					.attr("aria-label", attr.replace("attribute_", ""));
 				$sel.find("option").each(function () {
 					var val = $(this).val();
 					if (!val) return;
 					var label = $(this).text().trim();
-					var $b = isColor
-						? $('<button type="button" class="f-swatch-color-btn" title="' + label + '" data-value="' + val + '" aria-label="' + label + '"><span class="f-color-dot" style="background:' + (FURNIVA_HEX[val.toLowerCase()] || "#ddd") + '"></span></button>')
-						: $('<button type="button" class="f-swatch-chip-btn" data-value="' + val + '" aria-label="' + label + '">' + label + "</button>");
+					var $b;
+					if (isColor) {
+						$b = $('<button type="button" class="f-swatch-color-btn"></button>')
+							.attr({ title: label, "data-value": val, "aria-label": label })
+							.append($('<span class="f-color-dot"></span>').css("background", FURNIVA_HEX[val.toLowerCase()] || "#ddd"));
+					} else {
+						$b = $('<button type="button" class="f-swatch-chip-btn"></button>')
+							.attr({ "data-value": val, "aria-label": label })
+							.text(label);
+					}
 					if ($sel.val() === val) $b.addClass("selected").attr("aria-pressed", "true");
 					else $b.attr("aria-pressed", "false");
 					$ui.append($b);
@@ -735,19 +764,21 @@ jQuery(function ($) {
 					var stockText = variation.is_in_stock ? (rawStock || furnivaData.strings.inStock) : furnivaData.strings.outOfStock;
 					var isAvail = variation.is_in_stock;
 
-					$summary.html(
-						'<span class="f-summary-pill-selection">' + (attrsText || furnivaData.strings.selected) + '</span>' +
-						'<span class="f-summary-pill-stock' + (isAvail ? " in-stock" : " out-of-stock") + '">' +
-						(isAvail ? "✓ " : "✕ ") + (stockText || furnivaData.strings.inStock) +
-						'</span>'
-					).fadeIn(200);
+					$summary.empty()
+						.append($('<span class="f-summary-pill-selection"></span>').text(attrsText || furnivaData.strings.selected))
+						.append(
+							$('<span class="f-summary-pill-stock"></span>')
+								.addClass(isAvail ? "in-stock" : "out-of-stock")
+								.text((isAvail ? "✓ " : "✕ ") + (stockText || furnivaData.strings.inStock))
+						)
+						.fadeIn(200);
 
 					$form.find(".reset_variations").each(function () {
 						var $r = $(this);
 						if (!$r.data("enhanced-icon")) {
 							$r.data("enhanced-icon", true);
 							var t = $r.text().trim();
-							$r.html('<span class="f-reset-icon" aria-hidden="true">↺</span> ' + (t || "Đặt lại"));
+							$r.empty().append('<span class="f-reset-icon" aria-hidden="true">↺</span> ').append(document.createTextNode(t || "Đặt lại"));
 						}
 					});
 				}
@@ -810,7 +841,8 @@ jQuery(function ($) {
 
 	// Click header or bottom nav cart button: open drawer instead of redirecting if on other pages
 	$(document).on("click", ".f-cart-btn, .f-bnav-cart-trigger", function (e) {
-		if (window.location.pathname.indexOf("/cart") !== -1 || window.location.pathname.indexOf("/checkout") !== -1) {
+		var p = window.location.pathname;
+		if (p.indexOf("/cart") !== -1 || p.indexOf("/checkout") !== -1 || p.indexOf("/gio-hang") !== -1 || p.indexOf("/thanh-toan") !== -1) {
 			return true;
 		}
 		e.preventDefault();
@@ -980,7 +1012,9 @@ jQuery(function ($) {
 			timer = setTimeout(refreshCartHeader, 400);
 			polishEmptyCartBlock();
 		});
-		observer.observe(document.body, { childList: true, subtree: true });
+		$zone.each(function () {
+			observer.observe(this, { childList: true, subtree: true });
+		});
 	}
 	watchBlockCart();
 
@@ -1008,16 +1042,18 @@ jQuery(function ($) {
 	}
 	polishEmptyCartBlock();
 
-	/* ---------------------------------------------------------------- sticky header scroll effect */
+	/* ---------------------------------------------------------------- sticky header scroll effect (rAF + passive) */
 	var $header = $(".fv-header");
 	if ($header.length) {
-		$(window).on("scroll", function () {
-			if ($(window).scrollTop() > 15) {
-				$header.addClass("is-scrolled");
-			} else {
-				$header.removeClass("is-scrolled");
-			}
-		});
+		var headerScrollTicking = false;
+		window.addEventListener("scroll", function () {
+			if (headerScrollTicking) return;
+			headerScrollTicking = true;
+			window.requestAnimationFrame(function () {
+				$header.toggleClass("is-scrolled", window.scrollY > 15);
+				headerScrollTicking = false;
+			});
+		}, { passive: true });
 	}
 
 	/* -------------------------------------------------------- homepage category recommendations */
@@ -1062,6 +1098,8 @@ jQuery(function ($) {
 		if (navigator.clipboard && navigator.clipboard.writeText) {
 			navigator.clipboard.writeText(url).then(function () {
 				showAxToast(furnivaData && furnivaData.language === 'vi' ? 'Đã sao chép liên kết danh sách yêu thích!' : 'Wishlist link copied to clipboard!');
+			}).catch(function () {
+				showAxToast(furnivaData && furnivaData.language === 'vi' ? 'Không thể sao chép liên kết tự động.' : 'Could not copy link automatically.');
 			});
 		} else {
 			showAxToast(furnivaData && furnivaData.language === 'vi' ? 'Đã sao chép liên kết!' : 'Link copied!');
@@ -1080,7 +1118,8 @@ jQuery(function ($) {
 
 		$.post(furnivaData ? furnivaData.ajaxUrl : '/wp-admin/admin-ajax.php', {
 			action: 'furniva_wishlist_add_to_cart',
-			product_id: pid
+			product_id: pid,
+			nonce: furnivaData ? furnivaData.nonce : ''
 		}, function (res) {
 			$btn.find("span").text(origText);
 			$btn.prop("disabled", false);
@@ -1090,12 +1129,13 @@ jQuery(function ($) {
 					$(".f-cart-count, .fv-cart-count, .ax-cart-badge").text(res.data.cart_count);
 				}
 			} else {
-				showAxToast(furnivaData && furnivaData.language === 'vi' ? 'Đã thêm vào giỏ hàng!' : 'Added to cart!');
+				var errMsg = (res && res.data && res.data.message) ? res.data.message : (furnivaData && furnivaData.language === 'vi' ? 'Không thể thêm vào giỏ hàng.' : 'Could not add to cart.');
+				showAxToast(errMsg);
 			}
 		}).fail(function () {
 			$btn.find("span").text(origText);
 			$btn.prop("disabled", false);
-			showAxToast(furnivaData && furnivaData.language === 'vi' ? 'Đã thêm vào giỏ hàng!' : 'Added to cart!');
+			showAxToast(furnivaData && furnivaData.language === 'vi' ? 'Lỗi kết nối. Vui lòng thử lại.' : 'Connection error. Please try again.');
 		});
 	});
 

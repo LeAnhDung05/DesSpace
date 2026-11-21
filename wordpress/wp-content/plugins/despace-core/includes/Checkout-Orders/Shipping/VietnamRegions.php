@@ -156,6 +156,25 @@ class VietnamRegions {
 			);
 		}
 
+		// Fast-path persistent cache keyed by path + filemtime to avoid re-parsing 3,321 communes per request.
+		$mtime     = (int) @filemtime( $file_path );
+		$cache_key = 'despace_vn_regions_v2_' . md5( $file_path . '|' . $mtime );
+		if ( function_exists( 'wp_cache_get' ) ) {
+			$cached = wp_cache_get( $cache_key, 'despace_regions' );
+			if ( is_array( $cached ) && isset( $cached['dataset'], $cached['status'] ) ) {
+				self::$dataset        = $cached['dataset'];
+				self::$dataset_status = $cached['status'];
+				return self::$dataset_status;
+			}
+		} elseif ( function_exists( 'get_transient' ) ) {
+			$cached = get_transient( $cache_key );
+			if ( is_array( $cached ) && isset( $cached['dataset'], $cached['status'] ) ) {
+				self::$dataset        = $cached['dataset'];
+				self::$dataset_status = $cached['status'];
+				return self::$dataset_status;
+			}
+		}
+
 		$ext = strtolower( pathinfo( $file_path, PATHINFO_EXTENSION ) );
 		if ( 'json' === $ext ) {
 			$raw     = file_get_contents( $file_path );
@@ -176,7 +195,19 @@ class VietnamRegions {
 			);
 		}
 
-		return self::load_dataset( $decoded );
+		$result = self::load_dataset( $decoded );
+		if ( ! is_wp_error( $result ) && is_array( self::$dataset ) && is_array( self::$dataset_status ) ) {
+			$payload = array(
+				'dataset' => self::$dataset,
+				'status'  => self::$dataset_status,
+			);
+			if ( function_exists( 'wp_cache_set' ) ) {
+				wp_cache_set( $cache_key, $payload, 'despace_regions', 86400 );
+			} elseif ( function_exists( 'set_transient' ) ) {
+				set_transient( $cache_key, $payload, 86400 );
+			}
+		}
+		return $result;
 	}
 
 	/**

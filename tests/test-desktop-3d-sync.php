@@ -343,10 +343,22 @@ $has_desktop_routes = isset(
 );
 assert_test( "TC09: Registers /desktop-3d/ REST API endpoints", $has_desktop_routes, $pass_count );
 
-// TC10: REST API permission validation (Secret key verification)
-$req_with_key = new WP_REST_Request( array(), array( 'x_despace_desktop_key' => 'despace-desktop-studio-secret-2026' ) );
-$perm_key = $rest->check_desktop_api_permission( $req_with_key );
-assert_test( "TC10: Validates X-DeSpace-Desktop-Key secret authentication", $perm_key === true, $pass_count );
+// TC10: REST API permission validation (Fail-closed when unset + reject wrong key + accept configured key)
+unset( $GLOBALS['mock_options']['despace_desktop_sync_key'] );
+$req_old_default = new WP_REST_Request( array(), array( 'x_despace_desktop_key' => 'despace-desktop-studio-secret-2026' ) );
+$perm_unset      = $rest->check_desktop_api_permission( $req_old_default );
+
+$test_secret_key = 'test-despace-sync-secret-9f8e7d6c5b4a3210';
+update_option( 'despace_desktop_sync_key', $test_secret_key );
+$req_wrong_key = new WP_REST_Request( array(), array( 'x_despace_desktop_key' => 'wrong-secret-key-00000000' ) );
+$perm_wrong    = $rest->check_desktop_api_permission( $req_wrong_key );
+$req_with_key  = new WP_REST_Request( array(), array( 'x_despace_desktop_key' => $test_secret_key ) );
+$perm_key      = $rest->check_desktop_api_permission( $req_with_key );
+assert_test(
+	"TC10: Validates X-DeSpace-Desktop-Key fail-closed & configured secret auth",
+	( $perm_unset instanceof WP_Error ) && ( $perm_wrong instanceof WP_Error ) && $perm_key === true,
+	$pass_count
+);
 
 // TC11: REST API health check response format
 $health_resp = $rest->desktop_health_check();
@@ -364,7 +376,7 @@ $batch_payload = array(
 	)
 );
 $GLOBALS['mock_postmeta'][1001]['_sku'] = 'DESPACE-BATCH-001';
-$batch_req = new WP_REST_Request( $batch_payload, array( 'x_despace_desktop_key' => 'despace-desktop-studio-secret-2026' ) );
+$batch_req = new WP_REST_Request( $batch_payload, array( 'x_despace_desktop_key' => $test_secret_key ) );
 $batch_resp = $rest->desktop_batch_sync_excel( $batch_req );
 assert_test( "TC12: Excel batch sync endpoint processes items & queues jobs", $batch_resp->status === 200 && $batch_resp->data['success'] === true && $batch_resp->data['queued_count'] >= 1, $pass_count );
 
@@ -383,7 +395,7 @@ $pub_payload = array(
 	'vertex_count'  => 480,
 	'face_count'    => 240,
 );
-$pub_req  = new WP_REST_Request( $pub_payload, array( 'x_despace_desktop_key' => 'despace-desktop-studio-secret-2026' ) );
+$pub_req  = new WP_REST_Request( $pub_payload, array( 'x_despace_desktop_key' => $test_secret_key ) );
 $pub_resp = $rest->desktop_publish_product( $pub_req );
 assert_test(
 	"TC13: /desktop-3d/products/publish creates product & attaches GLB + USDZ",
@@ -396,8 +408,9 @@ assert_test(
 	$pass_count
 );
 
+$pct = $total_tests > 0 ? round( ( $pass_count / $total_tests ) * 100, 1 ) : 0;
 echo "========================================================================\n";
-echo sprintf( "RESULT: %d/%d TESTS PASSED (100%% Success Rate)\n", $pass_count, $total_tests );
+echo sprintf( "RESULT: %d/%d TESTS PASSED (%.1f%% Success Rate)\n", $pass_count, $total_tests, $pct );
 echo "========================================================================\n";
 
 if ( $pass_count !== $total_tests ) {

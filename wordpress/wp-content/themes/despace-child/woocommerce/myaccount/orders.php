@@ -23,11 +23,15 @@ do_action( 'woocommerce_before_account_orders', $has_orders ); ?>
 		<div class="ax-orders-list">
 			<?php
 			foreach ( $customer_orders->orders as $customer_order ) {
-				$order      = wc_get_order( $customer_order );
-				$item_count = $order->get_item_count() - $order->get_item_count_refunded();
-				$status     = $order->get_status();
-				$status_name = wc_get_order_status_name( $status );
-				$actions    = wc_get_account_orders_actions( $order );
+				$order = wc_get_order( $customer_order );
+				if ( ! $order ) {
+					continue;
+				}
+				$item_count   = $order->get_item_count() - $order->get_item_count_refunded();
+				$status       = $order->get_status();
+				$status_name  = wc_get_order_status_name( $status );
+				$actions      = wc_get_account_orders_actions( $order );
+				$date_created = $order->get_date_created();
 				?>
 				<div class="ax-order-row-card">
 					<div class="ax-order-row-top">
@@ -39,9 +43,11 @@ do_action( 'woocommerce_before_account_orders', $has_orders ); ?>
 						</div>
 						<div class="ax-order-date">
 							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align: -2px; margin-right: 4px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-							<time datetime="<?php echo esc_attr( $order->get_date_created()->date( 'c' ) ); ?>">
-								<?php echo esc_html( wc_format_datetime( $order->get_date_created() ) ); ?>
+							<?php if ( $date_created ) : ?>
+							<time datetime="<?php echo esc_attr( $date_created->date( 'c' ) ); ?>">
+								<?php echo esc_html( wc_format_datetime( $date_created ) ); ?>
 							</time>
+							<?php endif; ?>
 						</div>
 					</div>
 

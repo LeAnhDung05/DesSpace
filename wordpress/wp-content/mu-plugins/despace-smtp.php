@@ -1,32 +1,43 @@
 <?php
 /**
  * Plugin Name: DeSpace Mailpit SMTP
- * Description: Routes all WordPress and WooCommerce transactional emails to Mailpit for local staging testing.
+ * Description: Routes WordPress and WooCommerce transactional emails to Mailpit in non-production environments only.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-add_filter( 'wp_mail_from', function( $from ) {
+add_filter( 'wp_mail_from', static function ( $from ) {
 	return 'noreply@despace.vn';
 } );
 
-add_filter( 'wp_mail_from_name', function( $name ) {
-	return 'DeSpace Staging';
+add_filter( 'wp_mail_from_name', static function ( $name ) {
+	$env = function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production';
+	return 'production' === $env ? 'DeSpace' : 'DeSpace Staging';
 } );
 
-add_action( 'phpmailer_init', function( $phpmailer ) {
-	$mailpit_host = getenv( 'DESPACE_MAILPIT_HOST' ) ?: 'despace-mailpit';
-	$mailpit_port = (int) ( getenv( 'DESPACE_MAILPIT_PORT' ) ?: 1025 );
+add_action( 'phpmailer_init', static function ( $phpmailer ) {
+	$env = function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production';
+	if ( 'production' === $env ) {
+		return;
+	}
 
-	// Only route through Mailpit when its container hostname resolves in the current environment.
-	if ( gethostbyname( $mailpit_host ) === $mailpit_host && ! filter_var( $mailpit_host, FILTER_VALIDATE_IP ) ) {
+	static $resolved_host = null;
+	$mailpit_host         = getenv( 'DESPACE_MAILPIT_HOST' ) ?: 'despace-mailpit';
+	$mailpit_port         = (int) ( getenv( 'DESPACE_MAILPIT_PORT' ) ?: 1025 );
+
+	if ( null === $resolved_host ) {
+		$is_ip         = (bool) filter_var( $mailpit_host, FILTER_VALIDATE_IP );
+		$resolved_host = ( $is_ip || gethostbyname( $mailpit_host ) !== $mailpit_host ) ? $mailpit_host : '';
+	}
+
+	if ( '' === $resolved_host ) {
 		return;
 	}
 
 	$phpmailer->isSMTP();
-	$phpmailer->Host       = $mailpit_host;
+	$phpmailer->Host       = $resolved_host;
 	$phpmailer->Port       = $mailpit_port;
 	$phpmailer->SMTPAuth   = false;
 	$phpmailer->SMTPSecure = '';

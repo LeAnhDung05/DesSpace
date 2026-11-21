@@ -287,10 +287,13 @@ class RestApiModule {
 			return true;
 		}
 
-		// 2. Secret Key Header verification (sync_client.py always sends X-DeSpace-Desktop-Key)
-		$header_key = $request->get_header( 'x_despace_desktop_key' ) ?: $request->get_header( 'x-despace-desktop-key' );
-		$stored_key = get_option( 'despace_desktop_sync_key', 'despace-desktop-studio-secret-2026' );
-		if ( ! empty( $header_key ) && hash_equals( (string) $stored_key, (string) $header_key ) ) {
+		// 2. Secret Key Header verification (fail-closed: never fall back to a hardcoded default secret)
+		$header_key = (string) ( $request->get_header( 'x_despace_desktop_key' ) ?: $request->get_header( 'x-despace-desktop-key' ) ?: '' );
+		$stored_key = defined( 'DESPACE_DESKTOP_SYNC_KEY' ) && '' !== trim( (string) DESPACE_DESKTOP_SYNC_KEY )
+			? trim( (string) DESPACE_DESKTOP_SYNC_KEY )
+			: trim( (string) get_option( 'despace_desktop_sync_key', '' ) );
+
+		if ( '' !== $stored_key && strlen( $stored_key ) >= 16 && '' !== $header_key && hash_equals( $stored_key, $header_key ) ) {
 			return true;
 		}
 
@@ -446,41 +449,67 @@ class RestApiModule {
 		$glb_url   = '';
 		$files     = $request->get_file_params();
 
+		$safe_sku = preg_replace( '/[^A-Za-z0-9_-]/', '', sanitize_file_name( (string) $sku ) );
+		if ( '' === $safe_sku ) {
+			return new WP_REST_Response( array(
+				'code'    => 'invalid_sku',
+				'message' => 'A valid alphanumeric SKU is required.',
+			), 400 );
+		}
+
+		$max_model_bytes = 25 * 1024 * 1024; // 25 MB cap
+		$max_image_bytes = 5 * 1024 * 1024;  // 5 MB cap
+
 		$upload_dir    = wp_upload_dir();
-		$target_3d_dir = $upload_dir['basedir'] . '/3d/' . sanitize_file_name( $sku );
+		$target_3d_dir = $upload_dir['basedir'] . '/3d/' . $safe_sku;
 		if ( ! is_dir( $target_3d_dir ) ) {
 			wp_mkdir_p( $target_3d_dir );
 		}
 
-		// Option A: Multipart uploaded file (validate glTF binary magic header)
+		// Option A: Multipart uploaded file (strictly require real HTTP upload & 12-byte glTF binary header)
 		if ( ! empty( $files['file'] ) && ! empty( $files['file']['tmp_name'] ) ) {
 			$uploaded    = $files['file'];
+			$tmp_name    = (string) $uploaded['tmp_name'];
 			$target_file = $target_3d_dir . '/model.glb';
-			if ( is_readable( $uploaded['tmp_name'] ) && filesize( $uploaded['tmp_name'] ) >= 4 ) {
-				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-				$magic = file_get_contents( $uploaded['tmp_name'], false, null, 0, 4 );
-				if ( 'glTF' !== $magic ) {
-					return new WP_REST_Response( array(
-						'code'    => 'invalid_glb_header',
-						'message' => 'Uploaded file is not a valid binary glTF (.glb) model.',
-					), 400 );
-				}
+			$fsize       = is_readable( $tmp_name ) ? (int) filesize( $tmp_name ) : 0;
+
+			if ( ! is_uploaded_file( $tmp_name ) || $fsize < 12 || $fsize > $max_model_bytes ) {
+				return new WP_REST_Response( array(
+					'code'    => 'invalid_glb_upload',
+					'message' => 'Uploaded file is missing, invalid, or exceeds the 25MB limit.',
+				), 400 );
 			}
-			if ( move_uploaded_file( $uploaded['tmp_name'], $target_file ) || copy( $uploaded['tmp_name'], $target_file ) ) {
-				$glb_url = $upload_dir['baseurl'] . '/3d/' . sanitize_file_name( $sku ) . '/model.glb';
+
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+			$magic = file_get_contents( $tmp_name, false, null, 0, 4 );
+			if ( 'glTF' !== $magic ) {
+				return new WP_REST_Response( array(
+					'code'    => 'invalid_glb_header',
+					'message' => 'Uploaded file is not a valid binary glTF (.glb) model.',
+				), 400 );
+			}
+
+			if ( move_uploaded_file( $tmp_name, $target_file ) ) {
+				$glb_url = $upload_dir['baseurl'] . '/3d/' . $safe_sku . '/model.glb';
 			}
 		} elseif ( ! empty( $request->get_param( 'glb_base64' ) ) ) {
 			// Option B: Base64 payload
 			$binary_data = base64_decode( (string) $request->get_param( 'glb_base64' ), true );
-			if ( $binary_data && strlen( $binary_data ) >= 4 && 'glTF' === substr( $binary_data, 0, 4 ) ) {
+			if ( false !== $binary_data && strlen( $binary_data ) >= 12 && strlen( $binary_data ) <= $max_model_bytes && 'glTF' === substr( $binary_data, 0, 4 ) ) {
 				$target_file = $target_3d_dir . '/model.glb';
 				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-				file_put_contents( $target_file, $binary_data );
-				$glb_url = $upload_dir['baseurl'] . '/3d/' . sanitize_file_name( $sku ) . '/model.glb';
+				if ( false !== file_put_contents( $target_file, $binary_data ) ) {
+					$glb_url = $upload_dir['baseurl'] . '/3d/' . $safe_sku . '/model.glb';
+				}
 			}
 		} elseif ( ! empty( $request->get_param( 'glb_url' ) ) ) {
-			// Option C: Direct external/internal URL
-			$glb_url = esc_url_raw( $request->get_param( 'glb_url' ) );
+			// Option C: Validated http(s) URL pointing to a .glb/.gltf resource
+			$candidate_url = esc_url_raw( (string) $request->get_param( 'glb_url' ) );
+			$parsed_path   = (string) wp_parse_url( $candidate_url, PHP_URL_PATH );
+			$parsed_scheme = strtolower( (string) wp_parse_url( $candidate_url, PHP_URL_SCHEME ) );
+			if ( in_array( $parsed_scheme, array( 'http', 'https' ), true ) && preg_match( '/\.(?:glb|gltf)$/i', $parsed_path ) ) {
+				$glb_url = $candidate_url;
+			}
 		}
 
 		if ( empty( $glb_url ) ) {
@@ -494,22 +523,30 @@ class RestApiModule {
 		$usdz_url = esc_url_raw( (string) ( $request->get_param( 'usdz_url' ) ?? '' ) );
 		if ( ! empty( $request->get_param( 'usdz_base64' ) ) ) {
 			$usdz_data = base64_decode( (string) $request->get_param( 'usdz_base64' ), true );
-			if ( $usdz_data && strlen( $usdz_data ) >= 30 && "PK\x03\x04" === substr( $usdz_data, 0, 4 ) ) {
+			if ( false !== $usdz_data && strlen( $usdz_data ) >= 30 && strlen( $usdz_data ) <= $max_model_bytes && "PK\x03\x04" === substr( $usdz_data, 0, 4 ) ) {
 				$target_usdz = $target_3d_dir . '/model.usdz';
 				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-				file_put_contents( $target_usdz, $usdz_data );
-				$usdz_url = $upload_dir['baseurl'] . '/3d/' . sanitize_file_name( $sku ) . '/model.usdz';
+				if ( false !== file_put_contents( $target_usdz, $usdz_data ) ) {
+					$usdz_url = $upload_dir['baseurl'] . '/3d/' . $safe_sku . '/model.usdz';
+				}
 			}
 		}
 
 		$thumb_url = esc_url_raw( (string) ( $request->get_param( 'thumbnail_url' ) ?? '' ) );
 		if ( ! empty( $request->get_param( 'thumbnail_base64' ) ) ) {
 			$thumb_data = base64_decode( (string) $request->get_param( 'thumbnail_base64' ), true );
-			if ( $thumb_data && strlen( $thumb_data ) > 32 ) {
-				$target_thumb = $target_3d_dir . '/thumb.png';
+			$img_info   = ( false !== $thumb_data && strlen( $thumb_data ) > 32 && strlen( $thumb_data ) <= $max_image_bytes && function_exists( 'getimagesizefromstring' ) )
+				? @getimagesizefromstring( $thumb_data )
+				: false;
+			$img_mime   = is_array( $img_info ) ? (string) ( $img_info['mime'] ?? '' ) : '';
+			$ext_map    = array( 'image/png' => 'png', 'image/jpeg' => 'jpg', 'image/webp' => 'webp' );
+			if ( isset( $ext_map[ $img_mime ] ) ) {
+				$thumb_file   = 'thumb.' . $ext_map[ $img_mime ];
+				$target_thumb = $target_3d_dir . '/' . $thumb_file;
 				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-				file_put_contents( $target_thumb, $thumb_data );
-				$thumb_url = $upload_dir['baseurl'] . '/3d/' . sanitize_file_name( $sku ) . '/thumb.png';
+				if ( false !== file_put_contents( $target_thumb, $thumb_data ) ) {
+					$thumb_url = $upload_dir['baseurl'] . '/3d/' . $safe_sku . '/' . $thumb_file;
+				}
 			}
 		}
 
@@ -613,10 +650,11 @@ class RestApiModule {
 			$result = Desktop3DSyncModule::publish_product_from_desktop( $payload );
 			return new WP_REST_Response( $result, 201 );
 		} catch ( \Throwable $e ) {
+			error_log( '[DeSpace Desktop Publish] ' . $e->getMessage() );
 			return new WP_REST_Response( array(
 				'success' => false,
 				'code'    => 'publish_failed',
-				'message' => $e->getMessage(),
+				'message' => 'Failed to publish product due to an internal server error.',
 			), 500 );
 		}
 	}
@@ -630,6 +668,13 @@ class RestApiModule {
 			return new WP_REST_Response( array(
 				'code'    => 'invalid_payload',
 				'message' => 'Array of items is required.',
+			), 400 );
+		}
+
+		if ( count( $items ) > 100 ) {
+			return new WP_REST_Response( array(
+				'code'    => 'batch_too_large',
+				'message' => 'Maximum 100 items allowed per batch request.',
 			), 400 );
 		}
 
@@ -666,14 +711,21 @@ class RestApiModule {
 					update_post_meta( $product_id, '_despace_3d_angle_top_url', esc_url_raw( $item['top_url'] ) );
 				}
 
+				// Standardize physical dimension mapping consistently across Desktop Publish & Concierge
 				if ( ! empty( $item['width'] ) ) {
-					update_post_meta( $product_id, '_width', floatval( $item['width'] ) );
+					$w = (string) floatval( $item['width'] );
+					update_post_meta( $product_id, '_length', $w );
+					update_post_meta( $product_id, 'axgnud_dim_width', $w );
 				}
 				if ( ! empty( $item['depth'] ) ) {
-					update_post_meta( $product_id, '_length', floatval( $item['depth'] ) );
+					$d = (string) floatval( $item['depth'] );
+					update_post_meta( $product_id, '_width', $d );
+					update_post_meta( $product_id, 'axgnud_dim_depth', $d );
 				}
 				if ( ! empty( $item['height'] ) ) {
-					update_post_meta( $product_id, '_height', floatval( $item['height'] ) );
+					$h = (string) floatval( $item['height'] );
+					update_post_meta( $product_id, '_height', $h );
+					update_post_meta( $product_id, 'axgnud_dim_height', $h );
 				}
 
 				$job           = Desktop3DSyncModule::dispatch_sync_job( $product_id, 'excel_batch' );
@@ -689,11 +741,24 @@ class RestApiModule {
 	}
 
 	/**
-	 * Retrieve 3D model metadata for a product.
+	 * Retrieve 3D model metadata for a published product.
 	 */
 	public function get_product_3d( WP_REST_Request $request ): WP_REST_Response {
 		$product_id = absint( $request->get_param( 'id' ) );
-		$info       = Product3DModule::get_product_3d_info( $product_id );
+		if ( ! $product_id ) {
+			return new WP_REST_Response( array( 'code' => 'not_found', 'message' => 'Product not found.' ), 404 );
+		}
+
+		if ( function_exists( 'get_post_type' ) && function_exists( 'get_post_status' ) ) {
+			$post_type   = get_post_type( $product_id );
+			$post_status = get_post_status( $product_id );
+			$can_read    = function_exists( 'current_user_can' ) && current_user_can( 'read_post', $product_id );
+			if ( 'product' !== $post_type || ( 'publish' !== $post_status && ! $can_read ) ) {
+				return new WP_REST_Response( array( 'code' => 'not_found', 'message' => 'Product not found.' ), 404 );
+			}
+		}
+
+		$info = Product3DModule::get_product_3d_info( $product_id );
 
 		return new WP_REST_Response( array(
 			'product_id' => $product_id,
@@ -713,6 +778,20 @@ class RestApiModule {
 			), 400 );
 		}
 
+		if ( function_exists( 'get_post_type' ) && 'product' !== get_post_type( $product_id ) ) {
+			return new WP_REST_Response( array(
+				'code'    => 'despace_invalid_product',
+				'message' => 'Product not found.',
+			), 404 );
+		}
+
+		if ( function_exists( 'current_user_can' ) && ! current_user_can( 'edit_post', $product_id ) && ! current_user_can( 'manage_despace_3d' ) && ! current_user_can( 'manage_woocommerce' ) ) {
+			return new WP_REST_Response( array(
+				'code'    => 'despace_rest_forbidden',
+				'message' => 'Insufficient permissions for this product.',
+			), 403 );
+		}
+
 		$model_id = absint( $request->get_param( 'model_attachment_id' ) ?? 0 );
 		if ( $model_id ) {
 			update_post_meta( $product_id, '_despace_glb_attachment_id', $model_id );
@@ -730,6 +809,29 @@ class RestApiModule {
 			update_post_meta( $product_id, '_ar_enabled', $ar_enabled ? 'yes' : 'no' );
 		}
 
+		// Sync custom 3D table so updates are not shadowed by stale rows.
+		global $wpdb;
+		if ( isset( $wpdb ) ) {
+			$table_3d = $wpdb->prefix . 'despace_product_3d_models';
+			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table_3d ) ) ) === $table_3d ) {
+				$update_fields = array();
+				$update_fmt    = array();
+				if ( $glb_url ) {
+					$update_fields['glb_url']      = $glb_url;
+					$update_fmt[]                  = '%s';
+					$update_fields['model_status'] = 'published';
+					$update_fmt[]                  = '%s';
+				}
+				if ( null !== $ar_enabled ) {
+					$update_fields['ar_enabled'] = $ar_enabled ? 1 : 0;
+					$update_fmt[]                = '%d';
+				}
+				if ( ! empty( $update_fields ) ) {
+					$wpdb->update( $table_3d, $update_fields, array( 'product_id' => $product_id ), $update_fmt, array( '%d' ) );
+				}
+			}
+		}
+
 		return new WP_REST_Response( array(
 			'product_id' => $product_id,
 			'updated'    => true,
@@ -743,8 +845,15 @@ class RestApiModule {
 	public function filter_products( WP_REST_Request $request ): WP_REST_Response {
 		$keyword   = sanitize_text_field( (string) ( $request->get_param( 'q' ) ?? $request->get_param( 'keyword' ) ?? '' ) );
 		$category  = sanitize_text_field( (string) ( $request->get_param( 'category' ) ?? '' ) );
+		$material  = sanitize_text_field( (string) ( $request->get_param( 'material' ) ?? '' ) );
+		$color     = sanitize_text_field( (string) ( $request->get_param( 'color' ) ?? '' ) );
+		$size      = sanitize_text_field( (string) ( $request->get_param( 'size' ) ?? '' ) );
+		$has_3d    = $request->get_param( 'has_3d' );
 		$min_price = floatval( $request->get_param( 'min_price' ) ?? 0 );
 		$max_price = floatval( $request->get_param( 'max_price' ) ?? 0 );
+		$orderby   = sanitize_key( (string) ( $request->get_param( 'orderby' ) ?? 'date' ) );
+		$order     = strtoupper( sanitize_key( (string) ( $request->get_param( 'order' ) ?? 'DESC' ) ) );
+		$order     = in_array( $order, array( 'ASC', 'DESC' ), true ) ? $order : 'DESC';
 		$page      = max( 1, absint( $request->get_param( 'page' ) ?: 1 ) );
 		$per_page  = min( 48, max( 1, absint( $request->get_param( 'per_page' ) ?: 20 ) ) );
 
@@ -753,56 +862,139 @@ class RestApiModule {
 			'post_status'    => 'publish',
 			'posts_per_page' => $per_page,
 			'paged'          => $page,
+			'order'          => $order,
 		);
+
+		// Whitelisted sorting options
+		switch ( $orderby ) {
+			case 'price':
+				$args['meta_key'] = '_price';
+				$args['orderby']  = 'meta_value_num';
+				break;
+			case 'title':
+				$args['orderby'] = 'title';
+				break;
+			case 'popularity':
+				$args['meta_key'] = 'total_sales';
+				$args['orderby']  = 'meta_value_num';
+				break;
+			default:
+				$orderby         = 'date';
+				$args['orderby'] = 'date';
+				break;
+		}
 
 		if ( $keyword ) {
 			$args['s'] = $keyword;
 		}
 
+		$tax_query = array();
 		if ( $category ) {
-			$args['tax_query'] = array(
-				array(
-					'taxonomy' => 'product_cat',
-					'field'    => 'slug',
-					'terms'    => $category,
-				),
+			$tax_query[] = array(
+				'taxonomy' => 'product_cat',
+				'field'    => 'slug',
+				'terms'    => array_filter( array_map( 'sanitize_title', explode( ',', $category ) ) ),
 			);
 		}
+		if ( $material ) {
+			$tax_query[] = array(
+				'taxonomy' => 'pa_material',
+				'field'    => 'slug',
+				'terms'    => array_filter( array_map( 'sanitize_title', explode( ',', $material ) ) ),
+			);
+		}
+		if ( $color ) {
+			$tax_query[] = array(
+				'taxonomy' => 'pa_color',
+				'field'    => 'slug',
+				'terms'    => array_filter( array_map( 'sanitize_title', explode( ',', $color ) ) ),
+			);
+		}
+		if ( $size ) {
+			$tax_query[] = array(
+				'taxonomy' => 'pa_size',
+				'field'    => 'slug',
+				'terms'    => array_filter( array_map( 'sanitize_title', explode( ',', $size ) ) ),
+			);
+		}
+		if ( ! empty( $tax_query ) ) {
+			$args['tax_query'] = count( $tax_query ) > 1 ? array_merge( array( 'relation' => 'AND' ), $tax_query ) : $tax_query;
+		}
 
+		$meta_query = array();
 		if ( $min_price > 0 || $max_price > 0 ) {
-			$args['meta_query'] = array(
-				array(
-					'key'     => '_price',
-					'value'   => array( $min_price, $max_price > 0 ? $max_price : 999999999 ),
-					'type'    => 'NUMERIC',
-					'compare' => 'BETWEEN',
-				),
+			$meta_query[] = array(
+				'key'     => '_price',
+				'value'   => array( $min_price, $max_price > 0 ? $max_price : 999999999 ),
+				'type'    => 'NUMERIC',
+				'compare' => 'BETWEEN',
 			);
 		}
+		if ( null !== $has_3d && '' !== (string) $has_3d ) {
+			$want_3d = filter_var( $has_3d, FILTER_VALIDATE_BOOLEAN );
+			if ( $want_3d ) {
+				$meta_query[] = array(
+					'relation' => 'OR',
+					array( 'key' => '_despace_model_glb', 'value' => '', 'compare' => '!=' ),
+					array( 'key' => '_despace_glb_url', 'value' => '', 'compare' => '!=' ),
+					array( 'key' => '_axgnud_model_glb', 'value' => '', 'compare' => '!=' ),
+				);
+			}
+		}
+		if ( ! empty( $meta_query ) ) {
+			$args['meta_query'] = count( $meta_query ) > 1 ? array_merge( array( 'relation' => 'AND' ), $meta_query ) : $meta_query;
+		}
 
-		$query   = new \WP_Query( $args );
+		$query    = new \WP_Query( $args );
+		$post_ids = wp_list_pluck( $query->posts, 'ID' );
+		if ( ! empty( $post_ids ) && method_exists( Product3DModule::class, 'preload_products_3d_info' ) ) {
+			Product3DModule::preload_products_3d_info( array_map( 'absint', $post_ids ) );
+		}
+
 		$results = array();
-
 		foreach ( $query->posts as $post ) {
 			$prod = function_exists( 'wc_get_product' ) ? wc_get_product( $post->ID ) : null;
 			if ( $prod ) {
+				$info_3d = Product3DModule::get_product_3d_info( (int) $prod->get_id() );
+				$terms   = function_exists( 'get_the_terms' ) ? get_the_terms( $prod->get_id(), 'product_cat' ) : array();
+				$cats    = ( is_array( $terms ) && ! is_wp_error( $terms ) )
+					? array_map( static fn( $t ) => array( 'slug' => $t->slug, 'name' => $t->name ), $terms )
+					: array();
 				$results[] = array(
-					'id'        => $prod->get_id(),
-					'name'      => $prod->get_name(),
-					'price'     => (float) $prod->get_price(),
-					'sku'       => $prod->get_sku(),
-					'permalink' => $prod->get_permalink(),
-					'link'      => $prod->get_permalink(),
-					'image'     => wp_get_attachment_image_url( $prod->get_image_id(), 'medium' ),
+					'id'           => $prod->get_id(),
+					'name'         => $prod->get_name(),
+					'price'        => (float) $prod->get_price(),
+					'sku'          => $prod->get_sku(),
+					'stock_status' => $prod->get_stock_status(),
+					'categories'   => $cats,
+					'has_3d'       => ! empty( $info_3d['glb_url'] ),
+					'ar_enabled'   => ! empty( $info_3d['ar_enabled'] ),
+					'model_url'    => $info_3d['glb_url'] ?? '',
+					'permalink'    => $prod->get_permalink(),
+					'link'         => $prod->get_permalink(),
+					'image'        => wp_get_attachment_image_url( $prod->get_image_id(), 'medium' ),
+					'image_url'    => wp_get_attachment_image_url( $prod->get_image_id(), 'medium' ),
 				);
 			}
 		}
 
 		return new WP_REST_Response( array(
-			'found'      => (int) $query->found_posts,
-			'results'    => $results,
-			'items'      => $results,
-			'pagination' => array(
+			'found'           => (int) $query->found_posts,
+			'applied_filters' => array(
+				'q'         => $keyword,
+				'category'  => $category,
+				'material'  => $material,
+				'color'     => $color,
+				'size'      => $size,
+				'has_3d'    => null !== $has_3d ? filter_var( $has_3d, FILTER_VALIDATE_BOOLEAN ) : null,
+				'min_price' => $min_price,
+				'max_price' => $max_price,
+				'orderby'   => $orderby,
+				'order'     => $order,
+			),
+			'results'         => $results,
+			'items'           => $results,
+			'pagination'      => array(
 				'page'        => $page,
 				'per_page'    => $per_page,
 				'total_items' => (int) $query->found_posts,
@@ -816,17 +1008,31 @@ class RestApiModule {
 	 */
 	public function get_reports_overview( WP_REST_Request $request ): WP_REST_Response {
 		global $wpdb;
+		$date_from      = sanitize_text_field( (string) ( $request->get_param( 'date_from' ) ?? '' ) );
+		$date_to        = sanitize_text_field( (string) ( $request->get_param( 'date_to' ) ?? '' ) );
 		$total_products = (int) ( wp_count_posts( 'product' )->publish ?? 0 );
 		$table_logs     = $wpdb->prefix . 'despace_inventory_logs';
 		$total_logs     = 0;
-		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_logs ) ) === $table_logs ) {
-			$total_logs = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table_logs}" );
+
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table_logs ) ) ) === $table_logs ) {
+			$where = array( '1=1' );
+			$vals  = array();
+			if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date_from ) ) {
+				$where[] = 'created_at >= %s';
+				$vals[]  = $date_from . ' 00:00:00';
+			}
+			if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date_to ) ) {
+				$where[] = 'created_at <= %s';
+				$vals[]  = $date_to . ' 23:59:59';
+			}
+			$sql        = "SELECT COUNT(*) FROM {$table_logs} WHERE " . implode( ' AND ', $where );
+			$total_logs = (int) ( ! empty( $vals ) ? $wpdb->get_var( $wpdb->prepare( $sql, $vals ) ) : $wpdb->get_var( $sql ) );
 		}
 
 		return new WP_REST_Response( array(
 			'range'   => array(
-				'date_from' => sanitize_text_field( (string) ( $request->get_param( 'date_from' ) ?? '' ) ),
-				'date_to'   => sanitize_text_field( (string) ( $request->get_param( 'date_to' ) ?? '' ) ),
+				'date_from' => $date_from,
+				'date_to'   => $date_to,
 			),
 			'metrics' => array(
 				'total_products' => $total_products,
@@ -839,10 +1045,69 @@ class RestApiModule {
 	 * Reports top products endpoint (GET /reports/top-products).
 	 */
 	public function get_reports_top_products( WP_REST_Request $request ): WP_REST_Response {
-		$limit = min( 50, max( 1, absint( $request->get_param( 'limit' ) ?: 10 ) ) );
+		global $wpdb;
+		$limit     = min( 50, max( 1, absint( $request->get_param( 'limit' ) ?: 10 ) ) );
+		$date_from = sanitize_text_field( (string) ( $request->get_param( 'date_from' ) ?? '' ) );
+		$date_to   = sanitize_text_field( (string) ( $request->get_param( 'date_to' ) ?? '' ) );
+		$items     = array();
+
+		$lookup_table = $wpdb->prefix . 'wc_order_product_lookup';
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $lookup_table ) ) ) === $lookup_table ) {
+			$where = array( '1=1' );
+			$vals  = array();
+			if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date_from ) ) {
+				$where[] = 'date_created >= %s';
+				$vals[]  = $date_from . ' 00:00:00';
+			}
+			if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date_to ) ) {
+				$where[] = 'date_created <= %s';
+				$vals[]  = $date_to . ' 23:59:59';
+			}
+			$vals[] = $limit;
+			$sql    = "SELECT product_id, SUM(product_qty) AS units_sold, SUM(product_net_revenue) AS net_revenue
+				FROM {$lookup_table}
+				WHERE " . implode( ' AND ', $where ) . '
+				GROUP BY product_id
+				ORDER BY units_sold DESC, net_revenue DESC
+				LIMIT %d';
+			$rows = $wpdb->get_results( $wpdb->prepare( $sql, $vals ), ARRAY_A );
+			foreach ( (array) $rows as $row ) {
+				$pid  = absint( $row['product_id'] ?? 0 );
+				$prod = ( $pid && function_exists( 'wc_get_product' ) ) ? wc_get_product( $pid ) : null;
+				$items[] = array(
+					'product_id'  => $pid,
+					'sku'         => $prod ? $prod->get_sku() : '',
+					'name'        => $prod ? $prod->get_name() : get_the_title( $pid ),
+					'units_sold'  => (int) ( $row['units_sold'] ?? 0 ),
+					'net_revenue' => round( (float) ( $row['net_revenue'] ?? 0 ), 2 ),
+				);
+			}
+		} else {
+			// Fallback to total_sales postmeta when WC analytics lookup table is absent
+			$q = new \WP_Query( array(
+				'post_type'      => 'product',
+				'post_status'    => 'publish',
+				'posts_per_page' => $limit,
+				'meta_key'       => 'total_sales',
+				'orderby'        => 'meta_value_num',
+				'order'          => 'DESC',
+			) );
+			foreach ( $q->posts as $p ) {
+				$prod    = function_exists( 'wc_get_product' ) ? wc_get_product( $p->ID ) : null;
+				$sold    = (int) get_post_meta( $p->ID, 'total_sales', true );
+				$items[] = array(
+					'product_id'  => (int) $p->ID,
+					'sku'         => $prod ? $prod->get_sku() : '',
+					'name'        => $prod ? $prod->get_name() : $p->post_title,
+					'units_sold'  => $sold,
+					'net_revenue' => $prod ? round( (float) $prod->get_price() * $sold, 2 ) : 0.0,
+				);
+			}
+		}
+
 		return new WP_REST_Response( array(
 			'limit' => $limit,
-			'items' => array(),
+			'items' => $items,
 		), 200 );
 	}
 
@@ -880,7 +1145,7 @@ class RestApiModule {
 	 * POST /despace/v1/concierge/chat — Grounded AI Interior Design Concierge.
 	 */
 	public function concierge_chat( WP_REST_Request $request ): WP_REST_Response {
-		$message = sanitize_text_field( (string) ( $request->get_param( 'message' ) ?? '' ) );
+		$message = trim( sanitize_text_field( (string) ( $request->get_param( 'message' ) ?? '' ) ) );
 		$lang    = sanitize_key( (string) ( $request->get_param( 'language' ) ?? 'vi' ) );
 
 		if ( '' === $message ) {
@@ -888,6 +1153,26 @@ class RestApiModule {
 				'code'    => 'empty_message',
 				'message' => 'Message is required.',
 			), 400 );
+		}
+
+		if ( function_exists( 'mb_substr' ) ) {
+			$message = mb_substr( $message, 0, 500, 'UTF-8' );
+		} else {
+			$message = substr( $message, 0, 500 );
+		}
+
+		// Per-IP rate limiting (15 requests / 60s) to protect Gemini quota and MySQL.
+		if ( function_exists( 'get_transient' ) && function_exists( 'set_transient' ) ) {
+			$ip        = trim( (string) ( $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0' ) );
+			$rate_key  = 'despace_concierge_rl_' . md5( $ip );
+			$rate_hits = (int) get_transient( $rate_key );
+			if ( $rate_hits >= 15 ) {
+				return new WP_REST_Response( array(
+					'code'    => 'rate_limited',
+					'message' => 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau 1 phút.',
+				), 429 );
+			}
+			set_transient( $rate_key, $rate_hits + 1, 60 );
 		}
 
 		if ( ! class_exists( 'DeSpace\\Catalog\\ConciergeService' ) ) {

@@ -228,9 +228,9 @@ class AddressValidator {
 			return false;
 		}
 
-		// Explicit check for Vietnam domestic mobile / landline prefix when country prefix is 0 or 84.
+		// Explicit check for Vietnam domestic mobile (10 digits / 11 with 84) & landline (11 digits / 12 with 84).
 		if ( 0 === strpos( $digits_only, '84' ) ) {
-			return strlen( $digits_only ) >= 10 && strlen( $digits_only ) <= 11;
+			return strlen( $digits_only ) >= 10 && strlen( $digits_only ) <= 12;
 		}
 		if ( 0 === strpos( $digits_only, '0' ) ) {
 			return strlen( $digits_only ) >= 10 && strlen( $digits_only ) <= 11;

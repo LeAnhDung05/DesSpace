@@ -140,6 +140,22 @@ class DeSpaceCatalog {
     }
   }
 
+  escapeHtml(str) {
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  safeUrl(url) {
+    const raw = String(url || '').trim();
+    if (!raw) return '#';
+    if (raw.startsWith('/') || /^https?:\/\//i.test(raw)) return this.escapeHtml(raw);
+    return '#';
+  }
+
   renderItems(items, pagination) {
     if (!this.container) return;
 
@@ -147,7 +163,7 @@ class DeSpaceCatalog {
       this.container.innerHTML = `
         <div style="text-align: center; padding: 60px 20px; color: #888;">
           <p style="font-size: 18px; margin-bottom: 15px;">Không tìm thấy sản phẩm nào phù hợp với bộ lọc đã chọn.</p>
-          <a href="${this.shopUrl}" class="ds-btn ds-btn--outline" style="color: #111 !important; border-color: #ccc;">Xóa tất cả bộ lọc</a>
+          <a href="${this.safeUrl(this.shopUrl)}" class="ds-btn ds-btn--outline" style="color: #111 !important; border-color: #ccc;">Xóa tất cả bộ lọc</a>
         </div>
       `;
       return;
@@ -155,11 +171,19 @@ class DeSpaceCatalog {
 
     const html = `
       <div class="ds-product-grid">
-        ${items.map(item => `
+        ${items.map(item => {
+          const safeLink = this.safeUrl(item.permalink);
+          const safeImg = this.safeUrl(item.image_url);
+          const safeName = this.escapeHtml(item.name);
+          const safeCat = this.escapeHtml(item.categories && item.categories.length > 0 ? item.categories[0].name : 'DeSpace');
+          const safeModel = this.safeUrl(item.model_url);
+          const safePoster = this.safeUrl(item.poster_url);
+          const safeId = this.escapeHtml(item.id);
+          return `
           <div class="ds-card">
             <div class="ds-card__thumb">
-              <a href="${item.permalink}">
-                <img src="${item.image_url}" alt="${item.name}" loading="lazy" />
+              <a href="${safeLink}">
+                <img src="${safeImg}" alt="${safeName}" loading="lazy" />
               </a>
               ${item.has_3d ? `
                 <span class="ds-badge-3d-tag">
@@ -171,29 +195,30 @@ class DeSpaceCatalog {
               ` : ''}
             </div>
             <div class="ds-card__body">
-              <div class="ds-card__category">${item.categories && item.categories.length > 0 ? item.categories[0].name : 'DeSpace'}</div>
+              <div class="ds-card__category">${safeCat}</div>
               <h3 class="ds-card__title">
-                <a href="${item.permalink}">${item.name}</a>
+                <a href="${safeLink}">${safeName}</a>
               </h3>
               <div class="ds-card__price-row">
-                ${item.price_html}
+                ${this.escapeHtml(item.price_text || String(item.price_html || '').replace(/<[^>]*>/g, ''))}
               </div>
               <div class="ds-card__actions">
                 ${item.has_3d ? `
-                  <button type="button" class="ds-btn-view-3d-card despace-btn-open-3d" data-product-id="${item.id}" data-model="${item.model_url}" data-poster="${item.poster_url}" data-ar="${item.enable_ar ? '1' : '0'}" data-name="${item.name}">
+                  <button type="button" class="ds-btn-view-3d-card despace-btn-open-3d" data-product-id="${safeId}" data-model="${safeModel}" data-poster="${safePoster}" data-ar="${item.enable_ar ? '1' : '0'}" data-name="${safeName}">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                     </svg>
                     Xem 3D
                   </button>
                 ` : ''}
-                <a href="${item.permalink}" class="ds-btn-view-3d-card" style="background:var(--ds-dark);color:#FAF9F6;border-color:var(--ds-dark);">
+                <a href="${safeLink}" class="ds-btn-view-3d-card" style="background:var(--ds-dark);color:#FAF9F6;border-color:var(--ds-dark);">
                   Chi tiết &rarr;
                 </a>
               </div>
             </div>
           </div>
-        `).join('')}
+        `;
+        }).join('')}
       </div>
     `;
 

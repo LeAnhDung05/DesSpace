@@ -15,7 +15,7 @@ SETTINGS_FILE = BASE_DIR / "settings.json"
 
 class Config:
     SITE_URL = os.environ.get("DESPACE_SITE_URL", "http://localhost:8090").rstrip("/")
-    API_SECRET_KEY = os.environ.get("DESPACE_DESKTOP_KEY", "despace-desktop-studio-secret-2026")
+    API_SECRET_KEY = os.environ.get("DESPACE_DESKTOP_KEY", "")
     LOCAL_PORT = int(os.environ.get("DESPACE_LOCAL_PORT", 58300))
     POLL_INTERVAL = float(os.environ.get("DESPACE_POLL_INTERVAL", 3.0))
 
@@ -52,8 +52,8 @@ class Config:
                     cls.FAL_API_KEY = str(data.get("fal_api_key") or "")
                 if "TRIPO_API_KEY" not in os.environ and "DESPACE_TRIPO_API_KEY" not in os.environ and "tripo_api_key" in data:
                     cls.TRIPO_API_KEY = str(data.get("tripo_api_key") or "")
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"Warning: Could not read settings.json: {e}")
 
     @classmethod
     def save_persisted_settings(
@@ -72,19 +72,23 @@ class Config:
         if tripo_api_key is not None:
             cls.TRIPO_API_KEY = tripo_api_key.strip()
         try:
-            SETTINGS_FILE.write_text(
-                json.dumps(
-                    {
-                        "site_url": cls.SITE_URL,
-                        "api_secret_key": cls.API_SECRET_KEY,
-                        "local_port": cls.LOCAL_PORT,
-                        "fal_api_key": cls.FAL_API_KEY,
-                        "tripo_api_key": cls.TRIPO_API_KEY,
-                    },
-                    indent=2,
-                ),
-                encoding="utf-8",
+            payload = json.dumps(
+                {
+                    "site_url": cls.SITE_URL,
+                    "api_secret_key": cls.API_SECRET_KEY,
+                    "local_port": cls.LOCAL_PORT,
+                    "fal_api_key": cls.FAL_API_KEY,
+                    "tripo_api_key": cls.TRIPO_API_KEY,
+                },
+                indent=2,
             )
+            fd = os.open(str(SETTINGS_FILE), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(payload)
+            try:
+                os.chmod(SETTINGS_FILE, 0o600)
+            except OSError:
+                pass
         except Exception as e:
             print(f"Warning: Could not persist settings.json: {e}")
 

@@ -361,9 +361,12 @@ class OrderAccessGuard {
 		if ( ! empty( $trusted_proxies ) && in_array( $remote, $trusted_proxies, true ) ) {
 			$forwarded = trim( (string) ( $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '' ) );
 			if ( '' !== $forwarded ) {
-				$first_ip = trim( explode( ',', $forwarded )[0] );
-				if ( false !== filter_var( $first_ip, FILTER_VALIDATE_IP ) ) {
-					return $first_ip;
+				// Walk right-to-left skipping trusted proxies to avoid spoofing leftmost X-Forwarded-For entries.
+				$hops = array_reverse( array_map( 'trim', explode( ',', $forwarded ) ) );
+				foreach ( $hops as $hop ) {
+					if ( false !== filter_var( $hop, FILTER_VALIDATE_IP ) && ! in_array( $hop, $trusted_proxies, true ) ) {
+						return $hop;
+					}
 				}
 			}
 		}

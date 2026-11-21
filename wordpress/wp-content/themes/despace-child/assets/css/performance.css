@@ -249,7 +249,6 @@ body.fv-loaded .fv-stagger > * {
 /* Product Card Hover */
 .f-product-card,
 .woocommerce ul.products li.product,
-.product,
 .ax-product-card {
     transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
                 box-shadow 0.35s ease;
@@ -257,7 +256,6 @@ body.fv-loaded .fv-stagger > * {
 
 .f-product-card:hover,
 .woocommerce ul.products li.product:hover,
-.product:hover,
 .ax-product-card:hover {
     transform: translateY(-6px);
     box-shadow: 0 16px 40px rgba(43, 29, 22, 0.12);
@@ -266,7 +264,6 @@ body.fv-loaded .fv-stagger > * {
 /* Product Image Zoom on Hover */
 .f-product-card__image img,
 .woocommerce ul.products li.product a img,
-.product a img,
 .ax-product-card img,
 .f-product-image img {
     transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1) !important;
@@ -274,7 +271,6 @@ body.fv-loaded .fv-stagger > * {
 
 .f-product-card:hover .f-product-card__image img,
 .woocommerce ul.products li.product:hover a img,
-.product:hover a img,
 .ax-product-card:hover img,
 .f-product-image:hover img {
     transform: scale(1.06) !important;

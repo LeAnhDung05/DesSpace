@@ -104,13 +104,13 @@ if ( function_exists( 'yith_wcwl_count_all_products' ) ) {
 		</aside>
 
 		<!-- Right: Account Content Area -->
-		<main class="woocommerce-MyAccount-content" role="main">
+		<div class="woocommerce-MyAccount-content">
 			<?php
 			/**
 			 * My Account content hook.
 			 */
 			do_action( 'woocommerce_account_content' );
 			?>
-		</main>
+		</div>
 	</div>
 </div>

@@ -138,9 +138,10 @@ input[type="radio"]:focus-visible {
 }
 
 /* --------------------------------------------------
-   5. Live Regions (for dynamic content)
+   5. Live Regions (only visually hide explicit .sr-only regions)
    -------------------------------------------------- */
-[role="status"][aria-live] {
+.sr-only[role="status"][aria-live],
+.ds-sk-sr-only[role="status"][aria-live] {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -230,7 +231,7 @@ button:not(.f-filter-close-drawer):not(.f-filter-reset-link) {
     position: relative;
 }
 
-[aria-busy="true"]::before {
+[aria-busy="true"]:not(.ds-sk-active):not(.ds-sk-grid):not(.ax-chat-messages):not(.f-drawer-content)::before {
     content: '';
     position: absolute;
     top: 50%;

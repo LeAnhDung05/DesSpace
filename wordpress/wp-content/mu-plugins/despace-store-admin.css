@@ -841,3 +841,21 @@ body.woocommerce_page_wc-orders .wp-list-table mark.order-status.status-on-hold 
 		gap: 7px;
 	}
 }
+
+/* WCAG 2.1 AA contrast & reduced motion hardening */
+.despace-admin-muted,
+.despace-hub-muted,
+.despace-hub-card small {
+	color: #5c5851 !important;
+	font-size: max(11px, 0.75rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+}

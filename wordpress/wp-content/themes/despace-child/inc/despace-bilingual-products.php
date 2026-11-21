@@ -149,10 +149,13 @@ add_filter( 'posts_where', function( $where, $query ) {
     if ( despace_is_product_search( $query ) ) {
         $s = trim( (string) $query->get( 's' ) );
         if ( ! empty( $s ) ) {
-            $like = '%' . $wpdb->esc_like( $s ) . '%';
-            $where = preg_replace(
+            $like          = '%' . $wpdb->esc_like( $s ) . '%';
+            $prepared_meta = $wpdb->prepare( 'axg_search_meta.meta_value LIKE %s', $like );
+            $where         = preg_replace_callback(
                 "/\(\s*{$wpdb->posts}\.post_title\s+LIKE\s*(\'[^\']+\')\s*\)/",
-                "({$wpdb->posts}.post_title LIKE $1 OR axg_search_meta.meta_value LIKE '" . esc_sql( $like ) . "')",
+                static function ( $matches ) use ( $wpdb, $prepared_meta ) {
+                    return "({$wpdb->posts}.post_title LIKE {$matches[1]} OR {$prepared_meta})";
+                },
                 $where
             );
         }

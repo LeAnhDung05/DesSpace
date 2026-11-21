@@ -73,7 +73,7 @@ $colors       = wc_get_product_terms( $id, 'pa_color' );
 				?>
 			</div>
 
-			<a href="<?php echo esc_url( $link ); ?>" aria-label="<?php the_title(); ?>" class="f-card-img-link">
+			<a href="<?php echo esc_url( $link ); ?>" aria-label="<?php echo esc_attr( $product->get_name() ); ?>" class="f-card-img-link">
 				<?php
 				echo $product->get_image( 'woocommerce_thumbnail', array( 'class' => 'f-card-img' ) );
 				if ( $hover_img ) {
@@ -86,7 +86,7 @@ $colors       = wc_get_product_terms( $id, 'pa_color' );
 		<div class="f-card-body">
 			<!-- 4. Category (Clean uppercase text) -->
 			<?php if ( $cat_name ) : ?>
-				<div class="f-card-cat"><?php echo esc_html( strtoupper( $cat_name ) ); ?></div>
+				<div class="f-card-cat"><?php echo esc_html( function_exists( 'mb_strtoupper' ) ? mb_strtoupper( $cat_name, 'UTF-8' ) : strtoupper( $cat_name ) ); ?></div>
 			<?php endif; ?>
 
 			<!-- 5. Product Name -->

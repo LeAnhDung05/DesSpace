@@ -53,11 +53,13 @@ echo "   DeSpace M3 Phase 6C — REAL CONCURRENT BACS PAYMENT CONFIRMATION      
 echo "========================================================================\n\n";
 
 // 1. Create shop manager or admin user
+$created_test_admin = false;
 $admin_user = get_user_by( 'email', 'admin_test@despace.vn' );
 if ( ! $admin_user ) {
 	$admin_id = wp_create_user( 'admin_test_' . time(), wp_generate_password( 16, true ), 'admin_test@despace.vn' );
 	$admin_user = get_user_by( 'id', $admin_id );
 	$admin_user->set_role( 'administrator' );
+	$created_test_admin = true;
 } else {
 	$admin_id = $admin_user->ID;
 }
@@ -170,9 +172,17 @@ echo "Legitimate worker release attempt with active token: " . ( $release_b ? "S
 $option_after = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $lock_key ) );
 echo "Lock key in MySQL after cleanup: " . ( null === $option_after ? "CLEANED_UP (PASS)" : "DIRTY: $option_after" ) . "\n";
 
-// Cleanup test order
+// Cleanup test order & temporary test admin user
 $fresh_order->delete( true );
 delete_option( $lock_key );
+if ( $created_test_admin && ! empty( $admin_id ) ) {
+	if ( ! function_exists( 'wp_delete_user' ) && defined( 'ABSPATH' ) && file_exists( ABSPATH . 'wp-admin/includes/user.php' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+	}
+	if ( function_exists( 'wp_delete_user' ) ) {
+		wp_delete_user( (int) $admin_id );
+	}
+}
 
 if ( 1 === $success_count && $fresh_order->is_paid() && 1 === count( $settlement_notes ) && ! $release_a && $release_b && null === $option_after ) {
 	echo "\n========================================================================\n";

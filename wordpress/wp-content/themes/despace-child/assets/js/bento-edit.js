@@ -20,7 +20,8 @@ document.addEventListener('DOMContentLoaded', function () {
     currentSlide = (index + totalSlides) % totalSlides;
     if (counter) {
       var displayNum = String(currentSlide + 1).padStart(2, '0');
-      counter.textContent = displayNum + ' / 06';
+      var totalNum = String(totalSlides).padStart(2, '0');
+      counter.textContent = displayNum + ' / ' + totalNum;
     }
     progressBars.forEach(function (bar, idx) {
       if (idx === currentSlide) {

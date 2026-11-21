@@ -8,8 +8,18 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 get_header();
 
-// Get cart
-$cart = WC()->cart;
+// Get cart safely
+if ( ! function_exists( 'WC' ) || is_null( WC()->cart ) ) {
+	if ( function_exists( 'wc_load_cart' ) ) {
+		wc_load_cart();
+	}
+}
+$cart = ( function_exists( 'WC' ) && WC()->cart ) ? WC()->cart : null;
+if ( ! $cart ) {
+	echo '<div class="ax-cart-page"><div class="ax-container" style="padding:48px 16px;text-align:center;"><p>' . esc_html( furniva_t( 'Your cart is currently unavailable.', 'Giỏ hàng hiện không khả dụng.' ) ) . '</p></div></div>';
+	get_footer();
+	return;
+}
 $cart_items = $cart->get_cart();
 $subtotal = $cart->get_subtotal();
 $total = $cart->get_total('raw');
@@ -225,7 +235,7 @@ $progress_percent = $needs_shipping ? min(100, ($subtotal / $shipping_threshold)
                         <?php foreach ( $cart->get_coupons() as $code => $coupon ) : ?>
                         <div class="ax-summary-row ax-coupon-row">
                             <span><?php echo esc_html( furniva_t( 'Coupon', 'Mã giảm giá' ) ); ?>: <strong><?php echo esc_html( $code ); ?></strong></span>
-                            <span class="ax-coupon-amount">−<?php echo wp_kses_post( $cart->get_coupon_discount_amount( $code ) ); ?></span>
+                            <span class="ax-coupon-amount">−<?php echo wp_kses_post( wc_price( $cart->get_coupon_discount_amount( $code, $cart->display_cart_ex_tax ) ) ); ?></span>
                         </div>
                         <?php endforeach; ?>
 
@@ -252,6 +262,7 @@ $progress_percent = $needs_shipping ? min(100, ($subtotal / $shipping_threshold)
 
                     <!-- Coupon Form -->
                     <form class="ax-coupon-form" method="post">
+                        <?php wp_nonce_field( 'woocommerce-cart', 'woocommerce-cart-nonce' ); ?>
                         <div class="ax-coupon-input-wrap">
                             <input type="text" name="coupon_code" class="ax-coupon-input"
                                    placeholder="<?php echo esc_attr( furniva_t( 'Enter coupon code', 'Nhập mã giảm giá' ) ); ?>" />

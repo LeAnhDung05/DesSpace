@@ -27,10 +27,17 @@ class DeSpaceSyncClient:
         self.site_url = (site_url or Config.SITE_URL).rstrip("/")
         self.secret_key = secret_key or Config.API_SECRET_KEY
         self.api_base = f"{self.site_url}/wp-json/despace/v1/desktop-3d"
+        self.session = requests.Session()
+
+    def close(self):
+        try:
+            self.session.close()
+        except Exception:
+            pass
 
     def _get_headers(self) -> Dict[str, str]:
         return {
-            "User-Agent": "DeSpace-3D-Studio-Desktop/3.0",
+            "User-Agent": "DeSpace-3D-Studio-Desktop/3.1",
             "X-DeSpace-Desktop-Key": self.secret_key,
         }
 
@@ -40,7 +47,7 @@ class DeSpaceSyncClient:
         """
         url = f"{self.api_base}/health"
         try:
-            resp = requests.get(url, headers=self._get_headers(), timeout=5)
+            resp = self.session.get(url, headers=self._get_headers(), timeout=5)
             if resp.status_code == 200:
                 data = resp.json()
                 return {"online": True, "data": data, "message": "Kết nối thành công"}
@@ -58,7 +65,7 @@ class DeSpaceSyncClient:
         """
         url = f"{self.api_base}/categories"
         try:
-            resp = requests.get(url, headers=self._get_headers(), timeout=8)
+            resp = self.session.get(url, headers=self._get_headers(), timeout=8)
             if resp.status_code == 200:
                 data = resp.json()
                 cats = data.get("categories", [])
@@ -87,7 +94,7 @@ class DeSpaceSyncClient:
         url = f"{self.api_base}/jobs"
         params = {"status": "dispatched", "limit": limit}
         try:
-            resp = requests.get(url, headers=self._get_headers(), params=params, timeout=10)
+            resp = self.session.get(url, headers=self._get_headers(), params=params, timeout=10)
             if resp.status_code == 200:
                 data = resp.json()
                 return data.get("jobs", [])
@@ -102,7 +109,7 @@ class DeSpaceSyncClient:
         """
         url = f"{self.api_base}/jobs/{job_uuid}"
         try:
-            resp = requests.get(url, headers=self._get_headers(), timeout=10)
+            resp = self.session.get(url, headers=self._get_headers(), timeout=10)
             if resp.status_code == 200:
                 return resp.json()
             return None
@@ -123,7 +130,7 @@ class DeSpaceSyncClient:
             "status": status,
         }
         try:
-            resp = requests.post(url, headers=self._get_headers(), json=payload, timeout=8)
+            resp = self.session.post(url, headers=self._get_headers(), json=payload, timeout=8)
             return resp.status_code == 200
         except Exception as e:
             print(f"Error updating progress for {job_uuid}: {e}")
@@ -168,7 +175,7 @@ class DeSpaceSyncClient:
                 "thumbnail_url": metadata.get("thumbnail_url", ""),
             }
 
-            resp = requests.post(url, headers=self._get_headers(), json=payload, timeout=45)
+            resp = self.session.post(url, headers=self._get_headers(), json=payload, timeout=45)
             if resp.status_code == 200:
                 return resp.json()
             return {
@@ -198,6 +205,7 @@ class DeSpaceSyncClient:
         encoded_images: List[Dict[str, Any]] = []
         raw_angles = product_data.get("angles") or product_data.get("images") or {}
 
+        allowed_img_exts = {".jpg", ".jpeg", ".png", ".webp"}
         if isinstance(raw_angles, dict):
             for angle_key in ["front", "perspective", "side", "back", "top"]:
                 entry = raw_angles.get(angle_key)
@@ -208,11 +216,11 @@ class DeSpaceSyncClient:
                     continue
                 if path_or_url.startswith("http://") or path_or_url.startswith("https://"):
                     encoded_images.append({"angle": angle_key, "url": path_or_url})
-                elif os.path.exists(path_or_path := path_or_url):
-                    with open(path_or_path, "rb") as img_f:
+                elif os.path.exists(path_or_url) and Path(path_or_url).suffix.lower() in allowed_img_exts:
+                    with open(path_or_url, "rb") as img_f:
                         encoded_images.append({
                             "angle": angle_key,
-                            "filename": Path(path_or_path).name,
+                            "filename": Path(path_or_url).name,
                             "data_base64": base64.b64encode(img_f.read()).decode("utf-8"),
                         })
         elif isinstance(raw_angles, list):
@@ -224,7 +232,7 @@ class DeSpaceSyncClient:
                 elif isinstance(item, str) and item:
                     if item.startswith("http://") or item.startswith("https://"):
                         encoded_images.append({"angle": akey, "url": item})
-                    elif os.path.exists(item):
+                    elif os.path.exists(item) and Path(item).suffix.lower() in allowed_img_exts:
                         with open(item, "rb") as img_f:
                             encoded_images.append({
                                 "angle": akey,
@@ -273,7 +281,7 @@ class DeSpaceSyncClient:
         }
 
         try:
-            resp = requests.post(url, headers=self._get_headers(), json=payload, timeout=60)
+            resp = self.session.post(url, headers=self._get_headers(), json=payload, timeout=60)
             if resp.status_code in (200, 201):
                 return resp.json()
             return {
@@ -290,7 +298,7 @@ class DeSpaceSyncClient:
         """
         url = f"{self.api_base}/batch-sync"
         try:
-            resp = requests.post(url, headers=self._get_headers(), json={"items": items}, timeout=20)
+            resp = self.session.post(url, headers=self._get_headers(), json={"items": items}, timeout=20)
             if resp.status_code == 200:
                 return resp.json()
             return {"success": False, "status_code": resp.status_code, "message": resp.text}

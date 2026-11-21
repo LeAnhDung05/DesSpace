@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 get_header(); ?>
 
-<main id="content" class="site-main ax-404-page">
+<div class="site-main ax-404-page">
 	<div class="fv-wrap ax-404-container">
 		<div class="ax-404-content">
 			<span class="ax-404-badge">404 ERROR</span>
@@ -55,6 +55,6 @@ get_header(); ?>
 			</div>
 		</div>
 	</div>
-</main>
+</div>
 
 <?php get_footer(); ?>

@@ -108,6 +108,9 @@ function furniva_english_titles() {
 }
 
 function furniva_translate_object_title( $title, $post_id ) {
+	if ( is_admin() && ! wp_doing_ajax() ) {
+		return $title;
+	}
 	if ( ! in_array( furniva_current_language(), array( 'en', 'en_US', 'en_GB' ), true ) ) {
 		return $title;
 	}
@@ -532,7 +535,9 @@ function despace_language_switcher_html() {
 	$current_lang = despace_current_language();
 	$is_vi        = in_array( $current_lang, array( 'vi', 'vi_VN' ), true );
 
-	$uri         = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/';
+	// Preserve percent-encoded UTF-8 Vietnamese slugs (do NOT run sanitize_text_field on REQUEST_URI).
+	$raw_uri     = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '/';
+	$uri         = '/' . ltrim( str_replace( array( "\r", "\n" ), '', $raw_uri ), '/' );
 	$current_url = esc_url_raw( home_url( $uri ) );
 
 	$vi_url = home_url( '/' );

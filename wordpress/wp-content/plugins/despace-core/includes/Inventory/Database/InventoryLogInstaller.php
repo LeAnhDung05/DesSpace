@@ -112,7 +112,8 @@ class InventoryLogInstaller {
   KEY variation_id (variation_id),
   KEY order_id (order_id),
   KEY created_at (created_at),
-  KEY event_type_created_at (event_type, created_at)
+  KEY event_type_created_at (event_type, created_at),
+  KEY product_var_created (product_id, variation_id, created_at, id)
 ) {$charset_collate};";
 
 		if ( ! function_exists( 'dbDelta' ) ) {
@@ -137,7 +138,8 @@ class InventoryLogInstaller {
 	public static function verify_table_exists(): bool {
 		global $wpdb;
 		$table_name = self::get_table_name();
-		$query      = $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name );
+		$like       = method_exists( $wpdb, 'esc_like' ) ? $wpdb->esc_like( $table_name ) : $table_name;
+		$query      = $wpdb->prepare( 'SHOW TABLES LIKE %s', $like );
 		return $wpdb->get_var( $query ) === $table_name;
 	}
 }

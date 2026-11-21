@@ -185,11 +185,12 @@ $announcements = array(
 					<span><?php echo esc_html( furniva_t( 'All Collections', 'Tất cả sản phẩm' ) ); ?></span>
 				</a>
 				<?php
-				$subnav_cats = get_terms( array(
+				$default_cat_id = (int) get_option( 'default_product_cat', 0 );
+				$subnav_cats    = get_terms( array(
 					'taxonomy'   => 'product_cat',
 					'hide_empty' => true,
 					'parent'     => 0,
-					'exclude'    => array( wc_get_page_id( 'shop' ) ),
+					'exclude'    => $default_cat_id ? array( $default_cat_id ) : array(),
 				) );
 				if ( ! empty( $subnav_cats ) && ! is_wp_error( $subnav_cats ) ) :
 					foreach ( $subnav_cats as $scat ) :
@@ -245,4 +246,4 @@ $announcements = array(
 	<div class="f-header-search"><?php echo do_shortcode( '[fibosearch]' ); ?></div>
 </dialog>
 
-<?php if ( ! is_front_page() ) : ?><main id="content"><?php endif; ?>
+<?php if ( ! is_front_page() ) : ?><main id="main-content" class="site-main"><?php endif; ?>

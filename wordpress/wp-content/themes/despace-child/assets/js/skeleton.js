@@ -672,6 +672,8 @@
 		}
 	}
 
+	var safetyClearTimer = null;
+
 	function triggerRoutePreview(routeType) {
 		ensureNavElements();
 		var header = document.querySelector(".fv-header");
@@ -682,6 +684,8 @@
 		window.requestAnimationFrame(function () {
 			routeOverlayEl.classList.add("is-visible");
 		});
+		if (safetyClearTimer) window.clearTimeout(safetyClearTimer);
+		safetyClearTimer = window.setTimeout(clearNavigationSkeleton, 7000);
 	}
 
 	function initNavigationSkeleton() {
@@ -733,10 +737,14 @@
 			}, 85);
 		}, false);
 
-		// Restore cleanly when returning via browser Back/Forward Cache (bfcache)
+		// Restore cleanly when returning via browser Back/Forward Cache (bfcache) or pressing Escape
 		window.addEventListener("pageshow", clearNavigationSkeleton);
+		document.addEventListener("keydown", function (e) {
+			if (e.key === "Escape") clearNavigationSkeleton();
+		});
 		window.addEventListener("pagehide", function () {
 			if (routeTimer) window.clearTimeout(routeTimer);
+			if (safetyClearTimer) window.clearTimeout(safetyClearTimer);
 		});
 	}
 
@@ -745,13 +753,23 @@
 	   ------------------------------------------------------------------ */
 	function observeDynamicContainers() {
 		if (!("MutationObserver" in window)) return;
-		var targets = ["#furniva-results", "#furniva-drawer-content", "#ax-chat-messages", ".ds-woocommerce-content"];
+		var targets = ["#furniva-shop-results", "#furniva-results", "#furniva-drawer-content", "#ax-chat-messages", ".ds-woocommerce-content"];
+		var pendingTargets = new Set();
+		var rafPending = false;
 		var observer = new MutationObserver(function (mutations) {
 			mutations.forEach(function (m) {
 				if (m.addedNodes && m.addedNodes.length) {
-					hydrateMedia(m.target);
+					pendingTargets.add(m.target);
 				}
 			});
+			if (pendingTargets.size && !rafPending) {
+				rafPending = true;
+				window.requestAnimationFrame(function () {
+					pendingTargets.forEach(function (t) { hydrateMedia(t); });
+					pendingTargets.clear();
+					rafPending = false;
+				});
+			}
 		});
 
 		targets.forEach(function (sel) {

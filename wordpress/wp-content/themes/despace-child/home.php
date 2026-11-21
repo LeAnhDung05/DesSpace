@@ -110,7 +110,22 @@ $all_cats = get_categories( array( 'hide_empty' => true, 'orderby' => 'count', '
 				<?php if ( $blog->max_num_pages > 1 ) : ?>
 					<nav class="f-blog-pagination" aria-label="<?php echo esc_attr( furniva_t( 'Blog pages', 'Các trang bài viết' ) ); ?>">
 						<?php
-						$pagination_base = add_query_arg( 'journal_page', 999999999, get_permalink( get_option( 'page_for_posts' ) ) );
+						$base_archive_url = get_permalink( get_option( 'page_for_posts' ) );
+						if ( is_category() ) {
+							$cat_link = get_category_link( get_queried_object_id() );
+							if ( ! is_wp_error( $cat_link ) ) {
+								$base_archive_url = $cat_link;
+							}
+						} elseif ( is_tag() ) {
+							$tag_link = get_tag_link( get_queried_object_id() );
+							if ( ! is_wp_error( $tag_link ) ) {
+								$base_archive_url = $tag_link;
+							}
+						}
+						if ( is_search() && get_search_query() ) {
+							$base_archive_url = add_query_arg( 's', get_search_query(), $base_archive_url );
+						}
+						$pagination_base = add_query_arg( 'journal_page', 999999999, $base_archive_url );
 						echo paginate_links( array(
 							'total'     => $blog->max_num_pages,
 							'current'   => $paged,

@@ -62,7 +62,12 @@
         var attachment = posterFrame.state().get('selection').first().toJSON();
         var url = attachment.sizes && attachment.sizes.medium ? attachment.sizes.medium.url : attachment.url;
         $('#despace_poster_attachment_id').val(attachment.id);
-        $('#despace_poster_preview').html('<img src="' + url + '" style="max-height:100px;border-radius:4px;border:1px solid #ddd;"/>').show();
+        var $img = $('<img>', { src: url }).css({
+          maxHeight: '100px',
+          borderRadius: '4px',
+          border: '1px solid #ddd'
+        });
+        $('#despace_poster_preview').empty().append($img).show();
         $('#despace_remove_poster_btn').show();
         $('#despace_select_poster_btn').text('Thay ảnh Poster');
       });

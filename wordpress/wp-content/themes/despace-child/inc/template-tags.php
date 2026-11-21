@@ -17,12 +17,13 @@ class DeSpace_Mega_Walker extends Walker_Nav_Menu {
 	}
 
 	public static function mega_panel() {
-		$panel = '<div class="f-mega">';
-		$cats  = get_terms( array(
+		$panel          = '<div class="f-mega">';
+		$default_cat_id = (int) get_option( 'default_product_cat', 0 );
+		$cats           = get_terms( array(
 			'taxonomy'   => 'product_cat',
 			'hide_empty' => true,
 			'parent'     => 0,
-			'exclude'    => array( wc_get_page_id( 'shop' ) ),
+			'exclude'    => $default_cat_id ? array( $default_cat_id ) : array(),
 		) );
 		if ( ! is_wp_error( $cats ) && $cats ) {
 			$panel .= '<h4>' . esc_html( furniva_t( 'Product Categories', 'Danh mục sản phẩm' ) ) . '</h4><ul>';
@@ -118,12 +119,19 @@ function despace_filter_sidebar() {
 		}
 	}
 
-	$cat_terms = get_terms( array( 'taxonomy' => 'product_cat', 'hide_empty' => true, 'parent' => 0, 'exclude' => array( wc_get_page_id( 'shop' ) ) ) );
+	$default_cat_id = (int) get_option( 'default_product_cat', 0 );
+	$cat_terms      = get_terms( array( 'taxonomy' => 'product_cat', 'hide_empty' => true, 'parent' => 0, 'exclude' => $default_cat_id ? array( $default_cat_id ) : array() ) );
+	if ( is_wp_error( $cat_terms ) || ! is_array( $cat_terms ) ) {
+		$cat_terms = array();
+	}
 	$brands    = get_terms( array( 'taxonomy' => 'pa_brand', 'hide_empty' => true ) );
 	$colors    = get_terms( array( 'taxonomy' => 'pa_color', 'hide_empty' => true ) );
 	$sizes     = get_terms( array( 'taxonomy' => 'pa_size', 'hide_empty' => true ) );
 
-	$price_range = despace_get_price_range_data();
+	$price_range   = despace_get_price_range_data();
+	$min_price_lbl = number_format( (float) ( $price_range['min'] ?? 0 ), 0, ',', '.' ) . ' ₫';
+	$max_price_lbl = number_format( (float) ( $price_range['max'] ?? 20000000 ), 0, ',', '.' ) . ' ₫';
+	$instock_count = (int) ( wp_count_posts( 'product' )->publish ?? 0 );
 	?>
 	<aside class="f-filters" id="furniva-filters">
 		<div class="f-filters-header">
@@ -226,8 +234,8 @@ function despace_filter_sidebar() {
 				<div class="f-filter-body">
 					<div class="f-price-slider-box">
 						<div class="f-price-labels-row">
-							<span class="f-price-lbl" id="f-price-min-val">$0</span>
-							<span class="f-price-lbl" id="f-price-max-val">$2,000</span>
+							<span class="f-price-lbl" id="f-price-min-val"><?php echo esc_html( $min_price_lbl ); ?></span>
+							<span class="f-price-lbl" id="f-price-max-val"><?php echo esc_html( $max_price_lbl ); ?></span>
 						</div>
 						<div class="f-price-slider-track">
 							<div class="f-price-slider-fill"></div>
@@ -249,7 +257,7 @@ function despace_filter_sidebar() {
 					<label class="f-filter-check">
 						<input type="checkbox" name="availability" value="instock" data-name="<?php echo esc_attr( furniva_t( 'In stock', 'Còn hàng' ) ); ?>" />
 						<span><?php echo esc_html( furniva_t( 'In stock', 'Còn hàng' ) ); ?></span>
-						<span class="f-count">(40)</span>
+						<span class="f-count">(<?php echo (int) $instock_count; ?>)</span>
 					</label>
 				</div>
 			</details>
