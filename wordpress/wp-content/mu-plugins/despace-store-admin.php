@@ -629,7 +629,12 @@ function despace_render_admin_cockpit_header( string $active_slug, string $page_
 	if ( despace_store_admin_can_manage() ) {
 		$cmd_items[] = array( 'label' => 'Thêm sản phẩm nội thất mới', 'group' => 'Thao tác nhanh', 'url' => admin_url( 'post-new.php?post_type=product' ) );
 		$cmd_items[] = array( 'label' => 'Quản lý Đơn hàng (WooCommerce HPOS)', 'group' => 'Thao tác nhanh', 'url' => despace_store_admin_orders_url() );
+		$cmd_items[] = array( 'label' => 'Đơn hàng chờ đối soát VietQR (On-hold)', 'group' => 'Bộ lọc nhanh', 'url' => despace_store_admin_orders_status_url( 'on-hold' ) );
+		$cmd_items[] = array( 'label' => 'Đơn hàng đang chờ giao (Processing)', 'group' => 'Bộ lọc nhanh', 'url' => despace_store_admin_orders_status_url( 'processing' ) );
 		$cmd_items[] = array( 'label' => 'Cấu hình Thông tin Showroom', 'group' => 'Tư vấn & Showroom', 'url' => admin_url( 'admin.php?page=despace-contact-settings&tab=showroom' ) );
+	}
+	if ( despace_store_admin_can_manage_3d() ) {
+		$cmd_items[] = array( 'label' => 'Sản phẩm chưa có mô hình 3D (Missing)', 'group' => 'Bộ lọc nhanh', 'url' => admin_url( 'admin.php?page=despace-3d-manager&f_status=missing' ) );
 	}
 	if ( current_user_can( 'manage_options' ) ) {
 		$cmd_items[] = array( 'label' => 'Kết nối Desktop 3D Studio & Khóa API', 'group' => 'Xưởng 3D & AR', 'url' => admin_url( 'admin.php?page=despace-3d-manager&tab=desktop' ) );
@@ -639,11 +644,16 @@ function despace_render_admin_cockpit_header( string $active_slug, string $page_
 	}
 	$cmd_items[] = array( 'label' => 'Mở cửa hàng Storefront', 'group' => 'Website', 'url' => home_url( '/' ) );
 	?>
+	<div id="ds-toast-stack" class="ds-toast-stack" aria-live="polite" aria-atomic="true"></div>
+	<button type="button" id="ds-scroll-top" class="ds-scroll-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+		<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
+	</button>
+
 	<div id="ds-cmd-overlay" class="ds-cmd-overlay" role="dialog" aria-modal="true" aria-label="Điều hướng nhanh DeSpace">
 		<div class="ds-cmd-dialog">
 			<div class="ds-cmd-search">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-				<input type="text" id="ds-cmd-input" placeholder="Nhập tên màn hình hoặc thao tác (VD: Báo cáo, 3D, Showroom, Kho)..." autocomplete="off" />
+				<input type="text" id="ds-cmd-input" placeholder="Nhập tên màn hình hoặc thao tác (VD: VietQR, Báo cáo, 3D, Showroom, Kho)..." autocomplete="off" />
 				<button type="button" id="ds-cmd-close" style="background:none; border:none; color:#64748b; cursor:pointer; font-size:12px; font-weight:700;">ESC</button>
 			</div>
 			<div class="ds-cmd-list" id="ds-cmd-list">
@@ -655,7 +665,7 @@ function despace_render_admin_cockpit_header( string $active_slug, string $page_
 				<?php endforeach; ?>
 			</div>
 			<div class="ds-cmd-footer">
-				<span>↑↓ Di chuyển · Enter để mở</span>
+				<span>↑↓ Di chuyển · Enter để mở · ⌘K Bật/tắt</span>
 				<span>DeSpace Command Palette</span>
 			</div>
 		</div>
@@ -664,6 +674,66 @@ function despace_render_admin_cockpit_header( string $active_slug, string $page_
 	(function(){
 		if (window.__dsCmdInit) return;
 		window.__dsCmdInit = true;
+
+		// 1. Non-blocking Toast Notification System
+		window.dsToast = function(message, type) {
+			var stack = document.getElementById('ds-toast-stack');
+			if (!stack) return;
+			var el = document.createElement('div');
+			el.className = 'ds-toast ds-toast--' + (type || 'info');
+			var span = document.createElement('span');
+			span.textContent = String(message || '');
+			var close = document.createElement('button');
+			close.type = 'button';
+			close.className = 'ds-toast__close';
+			close.setAttribute('aria-label', 'Đóng thông báo');
+			close.textContent = '×';
+			close.addEventListener('click', function(){ el.remove(); });
+			el.appendChild(span);
+			el.appendChild(close);
+			stack.appendChild(el);
+			setTimeout(function(){
+				if (el.parentNode) el.remove();
+			}, 3600);
+		};
+
+		// 2. Reusable 1-Click Copy Helper with auto-resetting label + Toast
+		window.dsCopyText = function(text, label, btnEl) {
+			if (!text) return;
+			var done = function() {
+				window.dsToast('Đã sao chép ' + (label || 'nội dung'), 'success');
+				if (btnEl) {
+					var orig = btnEl.getAttribute('data-orig-label') || btnEl.textContent;
+					btnEl.setAttribute('data-orig-label', orig);
+					btnEl.textContent = '✓ Đã sao chép';
+					setTimeout(function(){ btnEl.textContent = orig; }, 1800);
+				}
+			};
+			if (navigator.clipboard && navigator.clipboard.writeText) {
+				navigator.clipboard.writeText(text).then(done).catch(done);
+			} else {
+				var ta = document.createElement('textarea');
+				ta.value = text;
+				document.body.appendChild(ta);
+				ta.select();
+				try { document.execCommand('copy'); } catch (e) {}
+				ta.remove();
+				done();
+			}
+		};
+
+		// 3. Smooth Back-to-Top Floating Button
+		var topBtn = document.getElementById('ds-scroll-top');
+		if (topBtn) {
+			window.addEventListener('scroll', function(){
+				topBtn.classList.toggle('is-visible', window.scrollY > 360);
+			}, { passive: true });
+			topBtn.addEventListener('click', function(){
+				window.scrollTo({ top: 0, behavior: 'smooth' });
+			});
+		}
+
+		// 4. Command Palette (⌘K / Ctrl+K)
 		var overlay = document.getElementById('ds-cmd-overlay');
 		var openBtn = document.getElementById('ds-open-cmd');
 		var closeBtn = document.getElementById('ds-cmd-close');
@@ -1092,10 +1162,10 @@ function despace_render_hub_overview_page() {
 		$avg_rating = $rating_sum > 0 ? round( $rating_sum / $review_count, 1 ) : 5.0;
 	}
 
-	// Recent 5 orders & Low-stock list.
+	// Recent 10 orders & Low-stock list.
 	$recent_orders      = function_exists( 'wc_get_orders' ) ? wc_get_orders(
 		array(
-			'limit'   => 5,
+			'limit'   => 10,
 			'orderby' => 'date',
 			'order'   => 'DESC',
 		)
@@ -1293,7 +1363,8 @@ function despace_render_hub_overview_page() {
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-reports' ) ); ?>" class="ds-btn ds-btn--outline ds-btn--sm">Báo cáo M5 →</a>
 					<?php endif; ?>
 				</div>
-				<div class="ds-area-chart-wrap">
+				<div class="ds-area-chart-wrap" id="ds-area-chart-wrap">
+					<div id="ds-chart-tooltip" class="ds-chart-tooltip" aria-hidden="true"></div>
 					<svg class="ds-area-chart" viewBox="0 0 <?php echo esc_attr( $svg_w ); ?> <?php echo esc_attr( $svg_h ); ?>" preserveAspectRatio="none" role="img" aria-label="Biểu đồ doanh thu 7 ngày">
 						<defs>
 							<linearGradient id="dsAreaGrad" x1="0" y1="0" x2="0" y2="1">
@@ -1307,9 +1378,7 @@ function despace_render_hub_overview_page() {
 						<path d="<?php echo esc_attr( $area_d ); ?>" fill="url(#dsAreaGrad)"/>
 						<path d="<?php echo esc_attr( $line_d ); ?>" fill="none" stroke="#4f46e5" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
 						<?php foreach ( $pts as $pt ) : ?>
-							<circle cx="<?php echo esc_attr( $pt['x'] ); ?>" cy="<?php echo esc_attr( $pt['y'] ); ?>" r="4.5" fill="#ffffff" stroke="#4f46e5" stroke-width="2.5">
-								<title><?php echo esc_html( sprintf( '%s: %s ₫ (%d đơn)', $pt['row']['label'], number_format_i18n( $pt['row']['revenue'] ), $pt['row']['orders'] ) ); ?></title>
-							</circle>
+							<circle class="ds-chart-dot" tabindex="0" cx="<?php echo esc_attr( $pt['x'] ); ?>" cy="<?php echo esc_attr( $pt['y'] ); ?>" r="5" fill="#ffffff" stroke="#4f46e5" stroke-width="2.5" data-tip="<?php echo esc_attr( sprintf( '%s · %s ₫ · %d đơn', $pt['row']['label'], number_format_i18n( $pt['row']['revenue'] ), $pt['row']['orders'] ) ); ?>" data-px="<?php echo esc_attr( round( ( $pt['x'] / $svg_w ) * 100, 1 ) ); ?>" data-py="<?php echo esc_attr( round( ( $pt['y'] / $svg_h ) * 100, 1 ) ); ?>" />
 						<?php endforeach; ?>
 					</svg>
 					<div class="ds-area-chart-labels">
@@ -1326,6 +1395,26 @@ function despace_render_hub_overview_page() {
 						<?php endforeach; ?>
 					</div>
 				</div>
+				<script>
+				(function(){
+					var wrap = document.getElementById('ds-area-chart-wrap');
+					var tip = document.getElementById('ds-chart-tooltip');
+					if (!wrap || !tip) return;
+					wrap.querySelectorAll('.ds-chart-dot').forEach(function(dot){
+						var show = function(){
+							tip.textContent = dot.getAttribute('data-tip') || '';
+							tip.style.left = (dot.getAttribute('data-px') || 50) + '%';
+							tip.style.top = Math.max(12, parseFloat(dot.getAttribute('data-py') || 40) * 1.45) + 'px';
+							tip.classList.add('is-visible');
+						};
+						var hide = function(){ tip.classList.remove('is-visible'); };
+						dot.addEventListener('mouseenter', show);
+						dot.addEventListener('focus', show);
+						dot.addEventListener('mouseleave', hide);
+						dot.addEventListener('blur', hide);
+					});
+				})();
+				</script>
 			</div>
 
 			<div class="ds-panel" style="margin-bottom:0;">
@@ -1383,16 +1472,23 @@ function despace_render_hub_overview_page() {
 					<div class="ds-panel__header">
 						<div>
 							<h2 id="ds-recent-orders-heading" class="ds-panel__title">Đơn hàng mới nhất</h2>
-							<p class="ds-panel__desc">5 đơn hàng gần nhất từ WooCommerce HPOS — bấm mã đơn để xem chi tiết &amp; đối soát thanh toán.</p>
+							<p class="ds-panel__desc">Lọc nhanh tức thì theo trạng thái — bấm số điện thoại để sao chép nhanh.</p>
 						</div>
-						<?php if ( $can_manage ) : ?>
-							<a href="<?php echo esc_url( despace_store_admin_orders_url() ); ?>" class="ds-btn ds-btn--outline ds-btn--sm">Xem tất cả đơn →</a>
-						<?php endif; ?>
+						<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+							<div class="ds-inline-tabs" id="ds-order-filter-tabs" role="tablist" aria-label="Lọc nhanh đơn hàng">
+								<button type="button" class="ds-inline-tab is-active" data-filter="all">Tất cả</button>
+								<button type="button" class="ds-inline-tab" data-filter="action">Cần xử lý</button>
+								<button type="button" class="ds-inline-tab" data-filter="completed">Hoàn thành</button>
+							</div>
+							<?php if ( $can_manage ) : ?>
+								<a href="<?php echo esc_url( despace_store_admin_orders_url() ); ?>" class="ds-btn ds-btn--outline ds-btn--sm">Tất cả →</a>
+							<?php endif; ?>
+						</div>
 					</div>
 
 					<?php if ( ! empty( $recent_orders ) ) : ?>
 						<div class="ds-table-wrap">
-							<table class="ds-table">
+							<table class="ds-table" id="ds-recent-orders-table">
 								<thead>
 									<tr>
 										<th>Mã đơn</th>
@@ -1410,14 +1506,16 @@ function despace_render_hub_overview_page() {
 											continue;
 										}
 										$st_key       = $order->get_status();
+										$st_group     = in_array( $st_key, array( 'processing', 'on-hold', 'pending' ), true ) ? 'action' : ( 'completed' === $st_key ? 'completed' : 'other' );
 										$st_label     = $status_map[ $st_key ][0] ?? wc_get_order_status_name( $st_key );
 										$st_class     = $status_map[ $st_key ][1] ?? 'ds-pill--neutral';
 										$date_created = $order->get_date_created();
 										$customer     = trim( (string) $order->get_formatted_billing_full_name() );
 										$edit_url     = $can_manage ? $order->get_edit_order_url() : '';
 										$pay_title    = $order->get_payment_method_title() ?: strtoupper( (string) $order->get_payment_method() );
+										$cust_phone   = (string) $order->get_billing_phone();
 										?>
-										<tr>
+										<tr data-status-group="<?php echo esc_attr( $st_group ); ?>">
 											<td>
 												<?php if ( $edit_url ) : ?>
 													<a href="<?php echo esc_url( $edit_url ); ?>" style="font-weight:700; color:#4f46e5; text-decoration:none;">
@@ -1438,8 +1536,12 @@ function despace_render_hub_overview_page() {
 													<span class="ds-avatar" aria-hidden="true"><?php echo esc_html( $initials ); ?></span>
 													<div>
 														<strong><?php echo esc_html( $cust_label ); ?></strong>
-														<?php if ( $order->get_billing_phone() ) : ?>
-															<div style="font-size:12px; color:#64748b;"><?php echo esc_html( $order->get_billing_phone() ); ?></div>
+														<?php if ( '' !== $cust_phone ) : ?>
+															<div>
+																<button type="button" class="ds-copy-inline" onclick="window.dsCopyText && window.dsCopyText(<?php echo esc_attr( wp_json_encode( $cust_phone ) ); ?>, 'SĐT ' + <?php echo esc_attr( wp_json_encode( $cust_phone ) ); ?>);" title="Bấm để sao chép SĐT">
+																	<?php echo esc_html( $cust_phone ); ?> ⧉
+																</button>
+															</div>
 														<?php endif; ?>
 													</div>
 												</div>
@@ -1453,8 +1555,25 @@ function despace_render_hub_overview_page() {
 								</tbody>
 							</table>
 						</div>
+						<script>
+						(function(){
+							var tabs = document.getElementById('ds-order-filter-tabs');
+							var tbl = document.getElementById('ds-recent-orders-table');
+							if (!tabs || !tbl) return;
+							tabs.querySelectorAll('.ds-inline-tab').forEach(function(btn){
+								btn.addEventListener('click', function(){
+									tabs.querySelectorAll('.ds-inline-tab').forEach(function(b){ b.classList.remove('is-active'); });
+									btn.classList.add('is-active');
+									var f = btn.getAttribute('data-filter');
+									tbl.querySelectorAll('tbody tr').forEach(function(tr){
+										tr.style.display = (f === 'all' || tr.getAttribute('data-status-group') === f) ? '' : 'none';
+									});
+								});
+							});
+						})();
+						</script>
 					<?php else : ?>
-						<p style="margin:0; color:#5c564e;">Chưa có đơn hàng nào trong hệ thống.</p>
+						<p style="margin:0; color:#64748b;">Chưa có đơn hàng nào trong hệ thống.</p>
 					<?php endif; ?>
 				</section>
 

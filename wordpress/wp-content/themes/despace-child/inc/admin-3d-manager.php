@@ -447,7 +447,7 @@ function axgnud_render_3d_manager_page() {
 						<td>
 							<div class="ds-copy-group">
 								<input type="text" id="ds-rest-base-url" value="<?php echo esc_attr( $rest_base ); ?>" readonly />
-								<button type="button" class="ds-btn ds-btn--outline" onclick="navigator.clipboard && navigator.clipboard.writeText(document.getElementById('ds-rest-base-url').value); this.textContent='Đã sao chép ✓';">Sao chép URL</button>
+								<button type="button" class="ds-btn ds-btn--outline" onclick="window.dsCopyText ? window.dsCopyText(document.getElementById('ds-rest-base-url').value, 'REST API Base URL', this) : (navigator.clipboard && navigator.clipboard.writeText(document.getElementById('ds-rest-base-url').value));">Sao chép URL</button>
 								<button type="button" class="ds-btn ds-btn--dark" id="ds-test-desktop-health">Kiểm tra kết nối</button>
 							</div>
 							<div id="ds-desktop-health-result" style="margin-top:8px; font-size:13px;"></div>
@@ -486,7 +486,7 @@ function axgnud_render_3d_manager_page() {
 							<div class="ds-copy-group">
 								<input type="password" id="ds-sync-key-field" value="<?php echo esc_attr( $sync_key ); ?>" readonly autocomplete="off" />
 								<button type="button" class="ds-btn ds-btn--outline" onclick="var f=document.getElementById('ds-sync-key-field'); if(f.type==='password'){f.type='text';this.textContent='Ẩn khóa';}else{f.type='password';this.textContent='Hiện khóa';}">Hiện khóa</button>
-								<button type="button" class="ds-btn ds-btn--outline" onclick="navigator.clipboard && navigator.clipboard.writeText(document.getElementById('ds-sync-key-field').value); this.textContent='Đã sao chép ✓';">Sao chép khóa</button>
+								<button type="button" class="ds-btn ds-btn--outline" onclick="window.dsCopyText ? window.dsCopyText(document.getElementById('ds-sync-key-field').value, 'Sync API Key', this) : (navigator.clipboard && navigator.clipboard.writeText(document.getElementById('ds-sync-key-field').value));">Sao chép khóa</button>
 							</div>
 							<?php if ( $is_const_key ) : ?>
 								<p class="description">Khóa đang được cấu hình cố định qua hằng số <code>DESPACE_DESKTOP_SYNC_KEY</code> trong <code>wp-config.php</code> / biến môi trường.</p>
@@ -680,7 +680,7 @@ function axgnud_render_3d_manager_page() {
 			<form method="GET" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; flex:1;">
 				<input type="hidden" name="page" value="despace-3d-manager" />
 				
-				<input type="text" name="s_kw" value="<?php echo esc_attr( $search_kw ); ?>" placeholder="Tìm tên sản phẩm hoặc SKU..." style="min-width:230px; height:38px;" />
+				<input type="text" id="axSearch3DInput" name="s_kw" value="<?php echo esc_attr( $search_kw ); ?>" placeholder="Gõ để lọc nhanh tên sản phẩm hoặc SKU..." style="min-width:250px; height:38px;" autocomplete="off" />
 				
 				<select name="f_cat" style="height:38px;">
 					<option value="">Tất cả danh mục</option>
@@ -935,7 +935,8 @@ function axgnud_render_3d_manager_page() {
 					</div>
 					<button type="button" class="ax-close-preview" style="background:none; border:none; font-size:20px; cursor:pointer; color:#78716C;">✕</button>
 				</div>
-				<div style="flex:1; position:relative; background:#EAE5DF;">
+				<div style="flex:1; position:relative; background:radial-gradient(circle at 50% 40%, #f8fafc 0%, #e2e8f0 100%);">
+					<div id="axPreviewLoader" class="ds-mv-loader">Đang nạp mô hình 3D (.GLB)...</div>
 					<model-viewer id="axAdminModelViewer" style="width:100%; height:100%;"
 						camera-controls
 						auto-rotate
@@ -943,6 +944,10 @@ function axgnud_render_3d_manager_page() {
 						exposure="1.0"
 						interaction-prompt="auto">
 					</model-viewer>
+					<div class="ds-mv-toolbar">
+						<button type="button" class="ds-btn ds-btn--outline ds-btn--sm" id="axToggleRotate">Tạm dừng xoay</button>
+						<button type="button" class="ds-btn ds-btn--outline ds-btn--sm" id="axResetCamera">Đặt lại góc nhìn</button>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -995,7 +1000,19 @@ function axgnud_render_3d_manager_page() {
 			frame.open();
 		});
 
-		// Submit Edit Form
+		// Instant 0ms client-side filter as user types in SKU/Product Search
+		$('#axSearch3DInput').on('input', function() {
+			var q = ($(this).val() || '').toLowerCase().trim();
+			var visibleCount = 0;
+			$('tr[id^="row-prod-"]').each(function() {
+				var txt = $(this).text().toLowerCase();
+				var show = !q || txt.indexOf(q) !== -1;
+				$(this).toggle(show);
+				if (show) visibleCount++;
+			});
+		});
+
+		// Submit Edit Form (non-blocking Toast feedback)
 		$('#axFormEdit3D').on('submit', function(e) {
 			e.preventDefault();
 			var $btn = $('#axBtnSave3D');
@@ -1005,15 +1022,20 @@ function axgnud_render_3d_manager_page() {
 			$.post(ajaxurl, data, function(res) {
 				$btn.prop('disabled', false).text('Lưu Cấu Hình');
 				if (res.success) {
-					alert(res.data.message);
-					location.reload();
+					$('#axEdit3DModal').hide();
+					if (window.dsToast) {
+						window.dsToast(res.data.message || 'Đã lưu cấu hình 3D thành công!', 'success');
+					}
+					setTimeout(function() { location.reload(); }, 650);
 				} else {
-					alert(res.data.message || 'Lỗi lưu dữ liệu.');
+					if (window.dsToast) {
+						window.dsToast(res.data.message || 'Lỗi lưu dữ liệu.', 'error');
+					}
 				}
 			});
 		});
 
-		// Sync Catalog Button
+		// Sync Catalog Button (non-blocking Toast feedback)
 		$('#axBtnSyncCatalog').on('click', function() {
 			if (!confirm('Bạn có muốn đồng bộ lại toàn bộ sản phẩm WooCommerce vào bảng quản lý 3D?')) return;
 			var $btn = $(this);
@@ -1024,13 +1046,41 @@ function axgnud_render_3d_manager_page() {
 			}, function(res) {
 				$btn.prop('disabled', false).text('Đồng Bộ Danh Mục');
 				if (res.success) {
-					alert(res.data.message);
-					location.reload();
+					if (window.dsToast) {
+						window.dsToast(res.data.message || 'Đồng bộ danh mục thành công!', 'success');
+					}
+					setTimeout(function() { location.reload(); }, 750);
+				} else if (window.dsToast) {
+					window.dsToast((res.data && res.data.message) || 'Đồng bộ thất bại.', 'error');
 				}
 			});
 		});
 
-		// Preview 3D Button
+		// Preview 3D Button + Loading Indicator & Camera Controls
+		var mvEl = document.getElementById('axAdminModelViewer');
+		var mvLoader = document.getElementById('axPreviewLoader');
+		if (mvEl && mvLoader) {
+			mvEl.addEventListener('load', function() {
+				mvLoader.classList.add('is-hidden');
+			});
+		}
+		$('#axToggleRotate').on('click', function() {
+			if (!mvEl) return;
+			if (mvEl.hasAttribute('auto-rotate')) {
+				mvEl.removeAttribute('auto-rotate');
+				$(this).text('Tiếp tục xoay');
+			} else {
+				mvEl.setAttribute('auto-rotate', '');
+				$(this).text('Tạm dừng xoay');
+			}
+		});
+		$('#axResetCamera').on('click', function() {
+			if (!mvEl) return;
+			mvEl.cameraOrbit = 'auto auto auto';
+			mvEl.fieldOfView = 'auto';
+			if (window.dsToast) window.dsToast('Đã đặt lại góc nhìn 3D', 'info');
+		});
+
 		$('.ax-btn-preview-model').on('click', function() {
 			var glb = $(this).data('glb');
 			var name = $(this).data('name');
@@ -1038,9 +1088,12 @@ function axgnud_render_3d_manager_page() {
 
 			$('#axPreviewTitle').text(name);
 			$('#axPreviewDims').text(dims);
-			var mv = document.getElementById('axAdminModelViewer');
-			if (mv) {
-				mv.src = glb;
+			if (mvLoader) mvLoader.classList.remove('is-hidden');
+			if (mvEl) {
+				if (mvEl.src === glb && mvEl.loaded && mvLoader) {
+					mvLoader.classList.add('is-hidden');
+				}
+				mvEl.src = glb;
 			}
 			$('#axPreview3DModal').css('display', 'flex');
 		});

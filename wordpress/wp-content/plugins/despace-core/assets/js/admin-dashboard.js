@@ -68,12 +68,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${y}-${m}-${d}`;
     };
 
+    const dashboardWrap = document.querySelector('.despace-dashboard-wrap');
+    const filterRow = document.querySelector('.despace-filter-row');
+    let hasLoadedOnce = false;
+    let lastUpdatedEl = null;
+
+    if (filterRow) {
+        lastUpdatedEl = document.createElement('span');
+        lastUpdatedEl.className = 'despace-last-updated';
+        lastUpdatedEl.setAttribute('aria-live', 'polite');
+        filterRow.appendChild(lastUpdatedEl);
+    }
+
     /**
-     * Show or hide loading state.
+     * Show or hide loading state (with smooth KPI shimmer skeleton).
      *
      * @param {boolean} isLoading
      */
     const setLoading = (isLoading) => {
+        if (dashboardWrap) {
+            dashboardWrap.classList.toggle('is-loading', isLoading);
+        }
         if (loadingEl) {
             loadingEl.style.display = isLoading ? 'flex' : 'none';
         }
@@ -136,6 +151,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             renderDashboard(data);
+            if (lastUpdatedEl) {
+                const now = new Date();
+                const hh = String(now.getHours()).padStart(2, '0');
+                const mm = String(now.getMinutes()).padStart(2, '0');
+                const ss = String(now.getSeconds()).padStart(2, '0');
+                lastUpdatedEl.textContent = `Cập nhật lúc ${hh}:${mm}:${ss}`;
+            }
+            if (hasLoadedOnce && typeof window.dsToast === 'function') {
+                window.dsToast(`Đã cập nhật báo cáo (${fromDate} → ${toDate})`, 'success');
+            }
+            hasLoadedOnce = true;
         } catch (err) {
             console.error('DeSpace Dashboard Fetch Error:', err);
             showError(err.message || settings.i18n.error);

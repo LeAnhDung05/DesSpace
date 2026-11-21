@@ -452,7 +452,7 @@ function despace_render_contact_admin_page() {
 					<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
 						<input type="hidden" name="page" value="despace-contact-settings" />
 						<input type="hidden" name="tab" value="leads" />
-						<input type="search" name="lead_q" value="<?php echo esc_attr( $lead_query ); ?>" placeholder="Tìm tên, SĐT, dịch vụ..." style="min-width:220px; height:38px;" />
+						<input type="search" id="ds-lead-live-search" name="lead_q" value="<?php echo esc_attr( $lead_query ); ?>" placeholder="Gõ để lọc nhanh tên, SĐT, dịch vụ..." style="min-width:230px; height:38px;" autocomplete="off" />
 						<button type="submit" class="ds-btn ds-btn--dark" style="min-height:38px;">Tìm kiếm</button>
 						<?php if ( '' !== $lead_query ) : ?>
 							<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-contact-settings&tab=leads' ) ); ?>" class="ds-btn ds-btn--outline" style="min-height:38px;">Xóa lọc</a>
@@ -488,10 +488,13 @@ function despace_render_contact_admin_page() {
 										<td><strong><?php echo esc_html( $inq['name'] ?? '—' ); ?></strong></td>
 										<td>
 											<?php if ( '' !== $phone ) : ?>
-												<div><a href="tel:<?php echo esc_attr( preg_replace( '/[^0-9+]/', '', $phone ) ); ?>" style="font-weight:600; color:#8c3e1f; text-decoration:none;"><?php echo esc_html( $phone ); ?></a></div>
+												<div style="display:flex; align-items:center; gap:6px;">
+													<a href="tel:<?php echo esc_attr( preg_replace( '/[^0-9+]/', '', $phone ) ); ?>" style="font-weight:600; color:#4f46e5; text-decoration:none;"><?php echo esc_html( $phone ); ?></a>
+													<button type="button" class="ds-copy-inline" onclick="window.dsCopyText && window.dsCopyText(<?php echo esc_attr( wp_json_encode( $phone ) ); ?>, 'SĐT ' + <?php echo esc_attr( wp_json_encode( $phone ) ); ?>);" title="Sao chép SĐT">⧉</button>
+												</div>
 											<?php endif; ?>
 											<?php if ( '' !== $email ) : ?>
-												<div style="font-size:12.5px;"><a href="mailto:<?php echo esc_attr( $email ); ?>" style="color:#5c564e;"><?php echo esc_html( $email ); ?></a></div>
+												<div style="font-size:12.5px;"><a href="mailto:<?php echo esc_attr( $email ); ?>" style="color:#64748b;"><?php echo esc_html( $email ); ?></a></div>
 											<?php endif; ?>
 										</td>
 										<td><span class="ds-pill ds-pill--info"><?php echo esc_html( $inq['service'] ?? 'Tư vấn chung' ); ?></span></td>
@@ -508,6 +511,19 @@ function despace_render_contact_admin_page() {
 							</tbody>
 						</table>
 					</div>
+					<script>
+					(function(){
+						var inp = document.getElementById('ds-lead-live-search');
+						if (!inp) return;
+						var rows = document.querySelectorAll('.ds-cockpit-wrap .ds-table tbody tr');
+						inp.addEventListener('input', function(){
+							var q = (inp.value || '').toLowerCase().trim();
+							rows.forEach(function(tr){
+								tr.style.display = (!q || tr.textContent.toLowerCase().indexOf(q) !== -1) ? '' : 'none';
+							});
+						});
+					})();
+					</script>
 				<?php endif; ?>
 			</section>
 		<?php else : ?>
@@ -516,11 +532,12 @@ function despace_render_contact_admin_page() {
 					<div class="ds-panel__header">
 						<div>
 							<h2 class="ds-panel__title">Thông tin Thương hiệu &amp; Showroom DeSpace</h2>
-							<p class="ds-panel__desc">Cập nhật tại đây sẽ đồng bộ ngay ra Footer, trang Liên hệ và các trang chính sách của cửa hàng.</p>
+							<p class="ds-panel__desc">Gõ chỉnh sửa để xem trước tức thì ở khung bên phải, sau đó bấm Lưu Cấu Hình.</p>
 						</div>
+						<span id="ds-showroom-unsaved" class="ds-unsaved-pill">● Có thay đổi chưa lưu</span>
 					</div>
 
-					<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=despace-contact-settings&tab=showroom' ) ); ?>">
+					<form id="ds-showroom-form" method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=despace-contact-settings&tab=showroom' ) ); ?>">
 						<?php wp_nonce_field( 'despace_save_contact_action' ); ?>
 						<table class="form-table" role="presentation">
 							<tr>
@@ -588,28 +605,63 @@ function despace_render_contact_admin_page() {
 
 				<aside>
 					<div class="ds-showroom-preview">
-						<p class="ds-showroom-preview__eyebrow">Xem trước hiển thị Storefront</p>
+						<p class="ds-showroom-preview__eyebrow">Xem trước trực tiếp (Live Preview)</p>
 						<h3>DeSpace Luxury Flagship</h3>
 						<div class="ds-showroom-preview__item">
 							<small>Địa chỉ Showroom</small>
-							<?php echo esc_html( $info['address'] ); ?>
+							<span id="ds-prev-address"><?php echo esc_html( $info['address'] ); ?></span>
 						</div>
 						<div class="ds-showroom-preview__item">
 							<small>Hotline &amp; Email</small>
-							<div><strong><?php echo esc_html( $info['hotline'] ); ?></strong></div>
-							<div style="color:#d6cec4;"><?php echo esc_html( $info['email'] ); ?></div>
+							<div><strong id="ds-prev-hotline"><?php echo esc_html( $info['hotline'] ); ?></strong></div>
+							<div style="color:#cbd5e1;" id="ds-prev-email"><?php echo esc_html( $info['email'] ); ?></div>
 						</div>
 						<div class="ds-showroom-preview__item">
 							<small>Giờ mở cửa</small>
-							<?php echo esc_html( $info['hours'] ); ?>
+							<span id="ds-prev-hours"><?php echo esc_html( $info['hours'] ); ?></span>
 						</div>
 						<div class="ds-showroom-preview__item">
 							<small>Tiện ích đón tiếp</small>
-							<?php echo esc_html( $info['parking_note'] ); ?>
+							<span id="ds-prev-parking"><?php echo esc_html( $info['parking_note'] ); ?></span>
 						</div>
 					</div>
 				</aside>
 			</div>
+			<script>
+			(function(){
+				var form = document.getElementById('ds-showroom-form');
+				var badge = document.getElementById('ds-showroom-unsaved');
+				if (!form) return;
+				var dirty = false;
+				var bindings = [
+					['address', 'ds-prev-address'],
+					['hotline', 'ds-prev-hotline'],
+					['email', 'ds-prev-email'],
+					['hours', 'ds-prev-hours'],
+					['parking_note', 'ds-prev-parking']
+				];
+				bindings.forEach(function(pair){
+					var input = document.getElementById(pair[0]);
+					var target = document.getElementById(pair[1]);
+					if (input && target) {
+						input.addEventListener('input', function(){
+							target.textContent = input.value || '—';
+						});
+					}
+				});
+				form.addEventListener('input', function(){
+					dirty = true;
+					if (badge) badge.classList.add('is-visible');
+				});
+				form.addEventListener('submit', function(){ dirty = false; });
+				window.addEventListener('beforeunload', function(e){
+					if (dirty) {
+						e.preventDefault();
+						e.returnValue = '';
+					}
+				});
+			})();
+			</script>
 		<?php endif; ?>
 	</div>
 	<?php
