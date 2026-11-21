@@ -82,6 +82,17 @@ class Plugin {
 		if ( class_exists( 'DeSpace\\Inventory\\Database\\InventoryLogInstaller' ) ) {
 			\DeSpace\Inventory\Database\InventoryLogInstaller::install();
 		}
+
+		// Provision a unique per-site Desktop 3D Studio API key (never hardcoded, autoload=false).
+		$existing_key = trim( (string) get_option( 'despace_desktop_sync_key', '' ) );
+		if ( strlen( $existing_key ) < 32 ) {
+			try {
+				$generated_key = bin2hex( random_bytes( 32 ) );
+			} catch ( \Throwable $e ) {
+				$generated_key = wp_generate_password( 64, false, false );
+			}
+			update_option( 'despace_desktop_sync_key', $generated_key, false );
+		}
 	}
 
 	/**

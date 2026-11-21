@@ -746,11 +746,15 @@ class ReconstructionEngine:
                 # Default to 1 if title mentions drawer without count (never invent 2!)
                 drawer_count = 1 if has_drawer_kw else 0
 
-        # Only extrude drawers on top outside doors if >=2 drawers OR tall compartment (>=1.12m like Zest Chic)
+        # External visible drawer(s) for shoe cabinets unless explicitly marked as concealed/hidden
+        has_hidden_drawer_kw = any(
+            k in combined_no_zero_drawer
+            for k in ["ngăn kéo ẩn", "ngan keo an", "hidden drawer", "bảo mật", "vault"]
+        )
         external_drawer = (
             arch == "shoe_cabinet"
             and drawer_count > 0
-            and (drawer_count >= 2 or h >= 1.12)
+            and not has_hidden_drawer_kw
         )
         open_center_niche = (
             arch in ("shoe_cabinet", "wardrobe", "cabinet")
@@ -1290,41 +1294,13 @@ class ReconstructionEngine:
         usable_d = max(0.10, d - 0.06)
         shelf_zc = -0.022
 
-        # Upper compartment shelf + metallic clothes hanging rail inside!
-        top_shelf_y = plinth_h + body_h * 0.78
-        self._add_box(cp, cn, cuv, cidx, (0.0, top_shelf_y, shelf_zc), (usable_w, 0.018, usable_d), self.UV_INTERIOR)
-
         door_count = max(2, spec.get("door_count", 3 if w >= 1.08 else 2))
         door_style = spec.get("door_style", "smooth")
         open_center_niche = bool(spec.get("open_center_niche", False))
+        drawer_count = int(spec.get("drawer_count", 0) or 0)
 
-        if door_count >= 2:
-            part_x = usable_w * 0.08 if door_count == 2 else -usable_w * 0.16
-            self._add_box(cp, cn, cuv, cidx, (part_x, plinth_h + body_h / 2.0, shelf_zc), (0.018, body_h - side_t, usable_d), self.UV_INTERIOR)
-            rail_w = (part_x - (-usable_w / 2.0)) - 0.03 if door_count == 2 else (usable_w / 2.0 - part_x) - 0.04
-            rail_cx = (-usable_w / 2.0 + part_x) / 2.0 if door_count == 2 else (part_x + usable_w / 2.0) / 2.0
-            self._add_box(cp, cn, cuv, cidx, (rail_cx, top_shelf_y - 0.065, 0.0), (max(0.15, rail_w), 0.022, 0.022), self.UV_METAL)
-            fold_cx = (part_x + usable_w / 2.0) / 2.0 if door_count == 2 else (-usable_w / 2.0 + part_x) / 2.0
-            fold_w = abs(usable_w - abs(rail_w)) - 0.04
-            for frac in (0.34, 0.56):
-                self._add_box(cp, cn, cuv, cidx, (fold_cx, plinth_h + body_h * frac, shelf_zc), (max(0.14, fold_w), 0.016, usable_d), self.UV_INTERIOR)
-        else:
-            self._add_box(cp, cn, cuv, cidx, (0.0, top_shelf_y - 0.065, 0.0), (usable_w * 0.92, 0.022, 0.022), self.UV_METAL)
-
-        if spec.get("drawer_count", 0) > 0:
-            parts.append(
-                self._add_sliding_drawer_part(
-                    1,
-                    "Ngăn kéo ẩn",
-                    0.0,
-                    plinth_h + body_h * 0.12,
-                    d / 2.0 - 0.036,
-                    usable_w * 0.44,
-                    body_h * 0.10,
-                    d * 0.85,
-                )
-            )
-
+        # 4-door tall storage wardrobe with open center display niche (e.g. DeSpace Tower):
+        # pure 2x2 hinged doors + horizontal shelves + open center niche, zero intersecting rods/drawers.
         if door_count == 4 and open_center_niche:
             self._build_door_pair_or_row(
                 parts,
@@ -1343,6 +1319,60 @@ class ReconstructionEngine:
                 open_center_niche=True,
             )
             return parts
+
+        if door_count == 2 and drawer_count > 0:
+            # 2-door wardrobe with full-width mid-height hidden locking drawer (e.g. DeSpace Vault):
+            # upper clothes hanging compartment, mid-height full-width shelf + locking drawer, lower shelves.
+            top_rail_y = plinth_h + body_h * 0.88
+            mid_shelf_y = plinth_h + body_h * 0.50
+            low_shelf_y = plinth_h + body_h * 0.22
+            drawer_h = body_h * 0.13
+            drawer_cy = mid_shelf_y - drawer_h / 2.0 - 0.016
+            self._add_box(cp, cn, cuv, cidx, (0.0, top_rail_y, 0.0), (usable_w * 0.92, 0.022, 0.022), self.UV_METAL)
+            self._add_box(cp, cn, cuv, cidx, (0.0, mid_shelf_y, shelf_zc), (usable_w, 0.018, usable_d), self.UV_INTERIOR)
+            self._add_box(cp, cn, cuv, cidx, (0.0, low_shelf_y, shelf_zc), (usable_w, 0.018, usable_d), self.UV_INTERIOR)
+            parts.append(
+                self._add_sliding_drawer_part(
+                    1,
+                    "Ngăn kéo ẩn bảo mật",
+                    0.0,
+                    drawer_cy,
+                    d / 2.0 - 0.036,
+                    usable_w * 0.94,
+                    drawer_h,
+                    d * 0.85,
+                )
+            )
+        else:
+            # Upper compartment shelf + metallic clothes hanging rail inside
+            top_shelf_y = plinth_h + body_h * 0.78
+            self._add_box(cp, cn, cuv, cidx, (0.0, top_shelf_y, shelf_zc), (usable_w, 0.018, usable_d), self.UV_INTERIOR)
+
+            if door_count >= 2:
+                part_x = usable_w * 0.08 if door_count == 2 else -usable_w * 0.16
+                self._add_box(cp, cn, cuv, cidx, (part_x, plinth_h + body_h / 2.0, shelf_zc), (0.018, body_h - side_t, usable_d), self.UV_INTERIOR)
+                rail_w = (part_x - (-usable_w / 2.0)) - 0.03 if door_count == 2 else (usable_w / 2.0 - part_x) - 0.04
+                rail_cx = (-usable_w / 2.0 + part_x) / 2.0 if door_count == 2 else (part_x + usable_w / 2.0) / 2.0
+                self._add_box(cp, cn, cuv, cidx, (rail_cx, top_shelf_y - 0.065, 0.0), (max(0.15, rail_w), 0.022, 0.022), self.UV_METAL)
+                fold_cx = (part_x + usable_w / 2.0) / 2.0 if door_count == 2 else (-usable_w / 2.0 + part_x) / 2.0
+                fold_w = abs(usable_w - abs(rail_w)) - 0.04
+                for frac in (0.34, 0.56):
+                    self._add_box(cp, cn, cuv, cidx, (fold_cx, plinth_h + body_h * frac, shelf_zc), (max(0.14, fold_w), 0.016, usable_d), self.UV_INTERIOR)
+                if drawer_count > 0:
+                    parts.append(
+                        self._add_sliding_drawer_part(
+                            1,
+                            "Ngăn kéo ẩn",
+                            fold_cx,
+                            plinth_h + body_h * 0.12,
+                            d / 2.0 - 0.036,
+                            max(0.14, fold_w * 0.92),
+                            body_h * 0.10,
+                            d * 0.85,
+                        )
+                    )
+            else:
+                self._add_box(cp, cn, cuv, cidx, (0.0, top_shelf_y - 0.065, 0.0), (usable_w * 0.92, 0.022, 0.022), self.UV_METAL)
 
         gap = 0.006
         door_w = (w * 0.96 - gap * (door_count - 1)) / door_count

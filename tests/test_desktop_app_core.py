@@ -36,7 +36,7 @@ print("  DeSpace 3D Studio Desktop — Core Engine Test Suite (TC-PY01 - TC-PY10
 print("=" * 72)
 
 passed = 0
-total = 17
+total = 18
 
 def check(name: str, condition: bool):
     global passed
@@ -325,6 +325,28 @@ finally:
 check(
     "TC-PY17: Local HTTP server rejects unauth POST (401), blocks evil CORS & accepts valid key (200)",
     unauth_status == 401 and evil_cors_header is None and auth_status == 200 and len(auth_received) == 1
+)
+
+# TC-PY18: Door-only cabinets/wardrobes never generate phantom drawers; Vault places hidden drawer centered
+with tempfile.TemporaryDirectory(prefix="despace_tc18_") as tc18_dir:
+    tc18_eng = ReconstructionEngine(output_dir=tc18_dir)
+    cases = [
+        ("AXG-STR-003", "shoe-racks-storage", "Tủ giày 3 cánh DeSpace Slate", {"width": 114, "depth": 34, "height": 88}, "3 Cánh cửa | 3 Ngăn kệ | 0 Ngăn kéo", 3, 0),
+        ("AXG-STR-005", "shoe-racks-storage", "Tủ giày 2 cánh Farmhouse Willowbrook", {"width": 115, "depth": 35, "height": 95}, "2 Cánh cửa | 3 Ngăn kệ | 0 Ngăn kéo", 2, 0),
+        ("AXG-STR-019", "wardrobes", "Tủ quần áo 4 cánh DeSpace Tower", {"width": 120, "depth": 47, "height": 185}, "4 Cánh cửa | 6 Ngăn kệ | 0 Ngăn kéo", 4, 0),
+        ("AXG-STR-021", "wardrobes", "Tủ quần áo 3 cánh DeSpace Wardura", {"width": 115, "depth": 45, "height": 182}, "3 Cánh cửa | 5 Ngăn kệ | 0 Ngăn kéo", 3, 0),
+        ("AXG-STR-023", "wardrobes", "Tủ quần áo 2 cánh có ngăn kéo ẩn bảo mật DeSpace Vault", {"width": 80, "depth": 48, "height": 180}, "2 Cánh cửa | 4 Ngăn kệ | 1 Ngăn kéo ẩn bảo mật", 2, 1),
+    ]
+    tc18_ok = True
+    for sku, cat, nm, dims, desc, exp_doors, exp_drawers in cases:
+        parts = tc18_eng._build_articulated_parts(cat, nm, dims["width"]/100.0, dims["depth"]/100.0, dims["height"]/100.0, description=desc)
+        n_doors = sum(1 for pt in parts if pt["name"].startswith("DESPACE_DOOR_"))
+        n_drawers = sum(1 for pt in parts if pt["name"].startswith("DESPACE_DRAWER_"))
+        if n_doors != exp_doors or n_drawers != exp_drawers:
+            tc18_ok = False
+check(
+    "TC-PY18: Door-only cabinets/wardrobes (003/005/019/021) have 0 phantom drawers; Vault (023) keeps 1 inner drawer",
+    tc18_ok
 )
 
 pct = round((passed / total) * 100, 1) if total else 0.0
