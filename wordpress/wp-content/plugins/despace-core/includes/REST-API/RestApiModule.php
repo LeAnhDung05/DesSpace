@@ -931,13 +931,30 @@ class RestApiModule {
 		}
 
 		if ( $has_3d ) {
-			$meta_query[] = array(
-				'relation' => 'OR',
-				array( 'key' => '_despace_glb_attachment_id', 'value' => 0, 'compare' => '>', 'type' => 'NUMERIC' ),
-				array( 'key' => '_despace_model_glb', 'value' => '', 'compare' => '!=' ),
-				array( 'key' => '_despace_glb_url', 'value' => '', 'compare' => '!=' ),
-				array( 'key' => '_axgnud_model_glb', 'value' => '', 'compare' => '!=' ),
-			);
+			$ids_3d = array();
+			if ( isset( $wpdb ) ) {
+				$meta_3d_ids = $wpdb->get_col(
+					"SELECT DISTINCT post_id FROM {$wpdb->postmeta}
+					WHERE (meta_key = '_despace_glb_attachment_id' AND CAST(meta_value AS UNSIGNED) > 0)
+					   OR (meta_key IN ('_despace_model_glb', '_despace_glb_url', '_axgnud_model_glb') AND meta_value != '')"
+				);
+				$ids_3d = array_map( 'intval', (array) $meta_3d_ids );
+
+				$table_3d = $wpdb->prefix . 'despace_product_3d_models';
+				if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table_3d ) ) ) === $table_3d ) {
+					$tbl_3d_ids = $wpdb->get_col(
+						"SELECT DISTINCT product_id FROM {$table_3d} WHERE glb_url IS NOT NULL AND glb_url != ''"
+					);
+					$ids_3d = array_values( array_unique( array_merge( $ids_3d, array_map( 'intval', (array) $tbl_3d_ids ) ) ) );
+				}
+			}
+			$ids_3d = array_values( array_filter( $ids_3d, static fn( $id ) => $id > 0 ) );
+			if ( null !== $post__in ) {
+				$intersected = array_values( array_intersect( $post__in, $ids_3d ) );
+				$post__in    = ! empty( $intersected ) ? $intersected : array( 0 );
+			} else {
+				$post__in = ! empty( $ids_3d ) ? $ids_3d : array( 0 );
+			}
 		}
 
 		// Search keyword matching SKU (including variation SKU mapped to parent) and title
@@ -960,7 +977,12 @@ class RestApiModule {
 
 			$matched_ids = array_map( 'intval', array_unique( array_merge( (array) $sku_product_ids, (array) $title_query->posts ) ) );
 			$matched_ids = array_values( array_filter( $matched_ids, static fn( $id ) => $id > 0 ) );
-			$post__in    = ! empty( $matched_ids ) ? $matched_ids : array( 0 );
+			if ( null !== $post__in ) {
+				$intersected = array_values( array_intersect( $post__in, $matched_ids ) );
+				$post__in    = ! empty( $intersected ) ? $intersected : array( 0 );
+			} else {
+				$post__in = ! empty( $matched_ids ) ? $matched_ids : array( 0 );
+			}
 		}
 
 		// Intersect on_sale filter
