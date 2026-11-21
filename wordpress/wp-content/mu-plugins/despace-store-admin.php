@@ -509,29 +509,11 @@ function despace_store_admin_clean_dashboard() {
 add_action( 'wp_dashboard_setup', 'despace_store_admin_clean_dashboard', 100 );
 
 /**
- * Load dashboard-specific styles across all DeSpace Admin Cockpit screens.
+ * Load unified DeSpace Atelier Admin styles across the entire WordPress admin
+ * for administrators, shop managers, and DeSpace staff.
  */
 function despace_store_admin_assets( $hook_suffix ) {
 	if ( ! despace_store_admin_can_access_hub() ) {
-		return;
-	}
-
-	$allowed_hooks = array(
-		'index.php',
-		'toplevel_page_despace-hub',
-		'edit.php',
-		'woocommerce_page_wc-orders',
-		'woocommerce_page_despace-reports',
-		'woocommerce_page_despace-inventory-logs',
-		'despace_page_despace-reports',
-		'despace_page_despace-inventory-logs',
-		'despace_page_despace-3d-manager',
-		'despace_page_despace-contact-settings',
-		'despace_page_despace-system',
-	);
-	$is_despace_screen = in_array( (string) $hook_suffix, $allowed_hooks, true )
-		|| false !== strpos( (string) $hook_suffix, 'despace' );
-	if ( ! $is_despace_screen ) {
 		return;
 	}
 
@@ -899,41 +881,77 @@ function despace_custom_login_branding() {
 	?>
 	<style type="text/css">
 		body.login {
-			background: #FAF7F2 !important;
-			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+			background: radial-gradient(circle at 50% 0%, #FFFFFF 0%, #F5F3EE 65%, #ECE7DD 100%) !important;
+			font-family: "SF Pro Text", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+			color: #1C1917 !important;
+		}
+		body.login div#login {
+			width: 390px !important;
+			padding-top: 6% !important;
 		}
 		body.login div#login h1 a {
 			background-image: url('<?php echo esc_url( $logo_url ); ?>') !important;
 			background-size: contain !important;
 			background-position: center !important;
 			background-repeat: no-repeat !important;
-			width: 240px !important;
-			height: 80px !important;
+			width: 220px !important;
+			height: 68px !important;
 			margin-bottom: 24px !important;
 		}
 		body.login form {
 			background: #FFFFFF !important;
-			border: 1px solid #E7E3DC !important;
+			border: 1px solid #E6E0D6 !important;
 			border-radius: 16px !important;
-			box-shadow: 0 16px 40px rgba(42, 29, 22, 0.08) !important;
+			box-shadow: 0 4px 12px rgba(28, 25, 23, 0.05), 0 24px 48px -20px rgba(28, 25, 23, 0.14) !important;
 			padding: 32px !important;
 		}
-		body.login #loginform .button-primary {
-			background: #1C1917 !important;
-			border-color: #1C1917 !important;
-			border-radius: 8px !important;
-			font-weight: 600 !important;
-			padding: 6px 20px !important;
-			text-shadow: none !important;
+		body.login form .input,
+		body.login input[type="text"],
+		body.login input[type="password"] {
+			border: 1px solid #D5CDC0 !important;
+			border-radius: 9px !important;
+			padding: 8px 12px !important;
+			font-size: 14px !important;
+			background: #FAF8F4 !important;
+			color: #1C1917 !important;
 			box-shadow: none !important;
 		}
+		body.login form .input:focus {
+			border-color: #A64E2B !important;
+			background: #FFFFFF !important;
+			box-shadow: 0 0 0 3px rgba(166, 78, 43, 0.16) !important;
+		}
+		body.login label {
+			color: #44403C !important;
+			font-weight: 600 !important;
+			font-size: 13px !important;
+		}
+		body.login #loginform .button-primary {
+			background: linear-gradient(180deg, #B45732 0%, #9B4624 100%) !important;
+			border-color: #9B4624 !important;
+			border-radius: 9px !important;
+			font-weight: 600 !important;
+			padding: 6px 22px !important;
+			min-height: 40px !important;
+			text-shadow: none !important;
+			box-shadow: 0 3px 10px rgba(166, 78, 43, 0.28) !important;
+			transition: background 0.15s ease, transform 0.15s ease !important;
+		}
 		body.login #loginform .button-primary:hover {
-			background: #3B2A20 !important;
-			border-color: #3B2A20 !important;
+			background: linear-gradient(180deg, #A24B29 0%, #863A1C 100%) !important;
+			border-color: #863A1C !important;
 		}
 		body.login .message, body.login .success {
-			border-left-color: #9A6745 !important;
-			border-radius: 8px !important;
+			border-left-color: #A64E2B !important;
+			border-radius: 10px !important;
+			box-shadow: 0 2px 8px rgba(28, 25, 23, 0.05) !important;
+		}
+		body.login #nav a, body.login #backtoblog a {
+			color: #5C564E !important;
+			font-weight: 500 !important;
+		}
+		body.login #nav a:hover, body.login #backtoblog a:hover {
+			color: #A64E2B !important;
 		}
 	</style>
 	<?php
@@ -1160,6 +1178,25 @@ function despace_redirect_legacy_admin_routes() {
 add_action( 'admin_menu', 'despace_redirect_legacy_admin_routes', 1000 );
 
 /**
+ * Return crisp inline SVG icons for DeSpace Atelier Admin UI (zero external icon fonts).
+ */
+function despace_admin_svg_icon( string $name ): string {
+	$icons = array(
+		'overview'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>',
+		'reports'   => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 6-7"/></svg>',
+		'inventory' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>',
+		'studio3d'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l9 5v10l-9 5-9-5V7l9-5z"/><path d="M12 22V12"/><path d="M21 7l-9 5-9-5"/></svg>',
+		'showroom'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+		'system'    => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+		'revenue'   => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>',
+		'orders'    => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
+		'plus'      => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+	);
+
+	return $icons[ $name ] ?? '';
+}
+
+/**
  * Render the shared Quiet Luxury Admin Cockpit header and 6-module navigation bar.
  *
  * @param string $active_slug   Current admin page slug.
@@ -1169,14 +1206,26 @@ add_action( 'admin_menu', 'despace_redirect_legacy_admin_routes', 1000 );
  *                              [ 'label' => string, 'url' => string, 'style' => 'primary|ghost|dark', 'target' => '_blank', 'id' => string, 'type' => 'link|button' ].
  */
 function despace_render_admin_cockpit_header( string $active_slug, string $page_title, string $page_subtitle = '', array $actions = array() ): void {
-	$logo_url   = content_url( '/themes/despace-child/assets/images/despace-logo-header.png' );
-	$lead_count = despace_admin_get_inquiry_count();
-	$env_type   = function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production';
+	$logo_url     = content_url( '/themes/despace-child/assets/images/despace-logo-header.png' );
+	$lead_count   = despace_admin_get_inquiry_count();
+	$env_type     = function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production';
+	$current_user = wp_get_current_user();
+	$role_label   = 'Quản trị viên';
+	if ( $current_user instanceof WP_User && ! empty( $current_user->roles ) ) {
+		$first_role = reset( $current_user->roles );
+		$role_names = array(
+			'administrator' => 'Administrator',
+			'shop_manager'  => 'Shop Manager',
+			'despace_staff' => 'DeSpace Staff',
+		);
+		$role_label = $role_names[ $first_role ] ?? ucfirst( (string) $first_role );
+	}
 
 	$nav_items = array(
 		array(
 			'slug'    => 'despace-hub',
 			'label'   => 'Tổng quan',
+			'icon'    => 'overview',
 			'url'     => admin_url( 'admin.php?page=despace-hub' ),
 			'visible' => despace_store_admin_can_access_hub(),
 			'badge'   => 0,
@@ -1184,6 +1233,7 @@ function despace_render_admin_cockpit_header( string $active_slug, string $page_
 		array(
 			'slug'    => 'despace-reports',
 			'label'   => 'Báo cáo Doanh thu',
+			'icon'    => 'reports',
 			'url'     => admin_url( 'admin.php?page=despace-reports' ),
 			'visible' => class_exists( '\DeSpace\Reports\Admin\DashboardPage' ) && despace_store_admin_can_view_reports(),
 			'badge'   => 0,
@@ -1191,6 +1241,7 @@ function despace_render_admin_cockpit_header( string $active_slug, string $page_
 		array(
 			'slug'    => 'despace-inventory-logs',
 			'label'   => 'Nhật ký Kho',
+			'icon'    => 'inventory',
 			'url'     => admin_url( 'admin.php?page=despace-inventory-logs' ),
 			'visible' => class_exists( '\DeSpace\Inventory\Admin\InventoryLogsPage' ) && despace_store_admin_can_view_inventory(),
 			'badge'   => 0,
@@ -1198,6 +1249,7 @@ function despace_render_admin_cockpit_header( string $active_slug, string $page_
 		array(
 			'slug'    => 'despace-3d-manager',
 			'label'   => 'Xưởng 3D & AR',
+			'icon'    => 'studio3d',
 			'url'     => admin_url( 'admin.php?page=despace-3d-manager' ),
 			'visible' => function_exists( 'axgnud_render_3d_manager_page' ) && despace_store_admin_can_manage_3d(),
 			'badge'   => 0,
@@ -1205,6 +1257,7 @@ function despace_render_admin_cockpit_header( string $active_slug, string $page_
 		array(
 			'slug'    => 'despace-contact-settings',
 			'label'   => 'Tư vấn & Showroom',
+			'icon'    => 'showroom',
 			'url'     => admin_url( 'admin.php?page=despace-contact-settings' ),
 			'visible' => function_exists( 'despace_render_contact_admin_page' ) && despace_store_admin_can_manage(),
 			'badge'   => $lead_count,
@@ -1212,6 +1265,7 @@ function despace_render_admin_cockpit_header( string $active_slug, string $page_
 		array(
 			'slug'    => 'despace-system',
 			'label'   => 'Hệ thống & Phân quyền',
+			'icon'    => 'system',
 			'url'     => admin_url( 'admin.php?page=despace-system' ),
 			'visible' => current_user_can( 'manage_options' ),
 			'badge'   => 0,
@@ -1244,15 +1298,22 @@ function despace_render_admin_cockpit_header( string $active_slug, string $page_
 			<div class="ds-cockpit-banner__left">
 				<div class="ds-cockpit-brand-row">
 					<img src="<?php echo esc_url( $logo_url ); ?>" alt="DeSpace" class="ds-cockpit-logo" />
-					<span class="ds-cockpit-badge">Admin Cockpit v3.0</span>
+					<span class="ds-cockpit-divider" aria-hidden="true"></span>
+					<span class="ds-cockpit-badge">Atelier Cockpit v3.1</span>
+					<span class="ds-cockpit-badge ds-cockpit-badge--live"><span class="ds-live-dot" aria-hidden="true"></span> Cửa hàng trực tuyến</span>
 					<?php if ( 'local' === $env_type ) : ?>
-						<span class="ds-cockpit-badge">Local Environment</span>
+						<span class="ds-cockpit-badge">Local Docker</span>
 					<?php endif; ?>
 				</div>
 				<h1><?php echo esc_html( $page_title ); ?></h1>
 				<?php if ( '' !== $page_subtitle ) : ?>
 					<p class="ds-cockpit-subtitle"><?php echo esc_html( $page_subtitle ); ?></p>
 				<?php endif; ?>
+				<div class="ds-cockpit-meta-line">
+					<span><?php echo esc_html( date_i18n( 'l, d/m/Y' ) ); ?></span>
+					<span aria-hidden="true">·</span>
+					<span>Tài khoản: <strong><?php echo esc_html( $current_user->display_name ?: $current_user->user_login ); ?></strong> (<?php echo esc_html( $role_label ); ?>)</span>
+				</div>
 			</div>
 
 			<div class="ds-cockpit-actions">
@@ -1292,6 +1353,7 @@ function despace_render_admin_cockpit_header( string $active_slug, string $page_
 				$is_active = ( $item['slug'] === $active_slug );
 				?>
 				<a href="<?php echo esc_url( $item['url'] ); ?>" class="ds-cockpit-nav__item <?php echo $is_active ? 'is-active' : ''; ?>"<?php echo $is_active ? ' aria-current="page"' : ''; ?>>
+					<span class="ds-cockpit-nav__icon"><?php echo despace_admin_svg_icon( $item['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
 					<span><?php echo esc_html( $item['label'] ); ?></span>
 					<?php if ( ! empty( $item['badge'] ) ) : ?>
 						<span class="ds-cockpit-nav__badge"><?php echo esc_html( number_format_i18n( (int) $item['badge'] ) ); ?></span>
@@ -1641,25 +1703,46 @@ function despace_render_hub_overview_page() {
 		?>
 
 		<!-- 5 Core Live KPI Cards -->
+		<?php
+		$cancelled_orders = function_exists( 'wc_orders_count' ) ? (int) wc_orders_count( 'cancelled' ) : 0;
+		$hold_total       = $on_hold + $pending;
+		$total_orders_bar = max( 1, $completed + $processing + $hold_total + $cancelled_orders );
+		$pct_completed    = round( ( $completed / $total_orders_bar ) * 100 );
+		$pct_processing   = round( ( $processing / $total_orders_bar ) * 100 );
+		$pct_hold         = round( ( $hold_total / $total_orders_bar ) * 100 );
+		$pct_cancelled    = max( 0, 100 - $pct_completed - $pct_processing - $pct_hold );
+		$denom_3d         = max( 1, $product_count );
+		$glb_pct          = min( 100, round( ( $glb_count / $denom_3d ) * 100 ) );
+		$usdz_pct         = min( 100, round( ( $usdz_count / $denom_3d ) * 100 ) );
+		?>
 		<section class="ds-kpi-grid" aria-label="Chỉ số điều hành chính">
 			<a class="ds-kpi-card ds-kpi-card--accent" href="<?php echo esc_url( $can_reports ? admin_url( 'admin.php?page=despace-reports' ) : '#' ); ?>">
-				<span class="ds-kpi-card__label">Doanh thu 30 ngày (HPOS)</span>
+				<div class="ds-kpi-card__top">
+					<span class="ds-kpi-card__label">Doanh thu 30 ngày</span>
+					<span class="ds-kpi-card__icon"><?php echo despace_admin_svg_icon( 'revenue' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+				</div>
 				<div class="ds-kpi-card__value">
 					<?php echo function_exists( 'wc_price' ) ? wp_kses_post( wc_price( $revenue_30d, array( 'decimals' => 0 ) ) ) : esc_html( number_format_i18n( $revenue_30d ) . ' ₫' ); ?>
 				</div>
-				<span class="ds-kpi-card__meta"><?php echo esc_html( sprintf( '%s đơn hợp lệ (Hoàn thành + Đang xử lý)', number_format_i18n( $valid_orders_30d ) ) ); ?></span>
+				<span class="ds-kpi-card__meta"><?php echo esc_html( sprintf( '%s đơn hợp lệ (HPOS)', number_format_i18n( $valid_orders_30d ) ) ); ?></span>
 			</a>
 
 			<a class="ds-kpi-card ds-kpi-card--warning" href="<?php echo esc_url( $can_manage ? despace_store_admin_orders_url() : admin_url( 'admin.php?page=despace-reports' ) ); ?>">
-				<span class="ds-kpi-card__label">Đơn hàng cần xử lý</span>
+				<div class="ds-kpi-card__top">
+					<span class="ds-kpi-card__label">Đơn hàng cần xử lý</span>
+					<span class="ds-kpi-card__icon"><?php echo despace_admin_svg_icon( 'orders' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+				</div>
 				<div class="ds-kpi-card__value"><?php echo esc_html( number_format_i18n( $action_orders ) ); ?></div>
 				<span class="ds-kpi-card__meta">
-					<?php echo esc_html( sprintf( '%d đang xử lý · %d chờ đối soát · %d hoàn thành', $processing, $on_hold + $pending, $completed ) ); ?>
+					<?php echo esc_html( sprintf( '%d đang xử lý · %d chờ đối soát · %d hoàn thành', $processing, $hold_total, $completed ) ); ?>
 				</span>
 			</a>
 
 			<a class="ds-kpi-card ds-kpi-card--success" href="<?php echo esc_url( $can_3d ? admin_url( 'admin.php?page=despace-3d-manager' ) : admin_url( 'edit.php?post_type=product' ) ); ?>">
-				<span class="ds-kpi-card__label">Sản phẩm &amp; Phủ 3D/AR</span>
+				<div class="ds-kpi-card__top">
+					<span class="ds-kpi-card__label">Sản phẩm &amp; 3D/AR</span>
+					<span class="ds-kpi-card__icon"><?php echo despace_admin_svg_icon( 'studio3d' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+				</div>
 				<div class="ds-kpi-card__value"><?php echo esc_html( number_format_i18n( $product_count ) ); ?></div>
 				<span class="ds-kpi-card__meta">
 					<?php
@@ -1672,16 +1755,79 @@ function despace_render_hub_overview_page() {
 			</a>
 
 			<a class="ds-kpi-card ds-kpi-card--info" href="<?php echo esc_url( $can_inventory ? admin_url( 'admin.php?page=despace-inventory-logs' ) : '#' ); ?>">
-				<span class="ds-kpi-card__label">Nhật ký Kiểm toán Kho</span>
+				<div class="ds-kpi-card__top">
+					<span class="ds-kpi-card__label">Kiểm toán Kho (M4)</span>
+					<span class="ds-kpi-card__icon"><?php echo despace_admin_svg_icon( 'inventory' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+				</div>
 				<div class="ds-kpi-card__value"><?php echo esc_html( number_format_i18n( $log_count ) ); ?></div>
-				<span class="ds-kpi-card__meta"><?php echo esc_html( sprintf( '+%s biến động hôm nay · Truy vết M4', number_format_i18n( $logs_today ) ) ); ?></span>
+				<span class="ds-kpi-card__meta"><?php echo esc_html( sprintf( '+%s biến động hôm nay · Chuẩn đối soát', number_format_i18n( $logs_today ) ) ); ?></span>
 			</a>
 
 			<a class="ds-kpi-card" href="<?php echo esc_url( $can_manage ? admin_url( 'admin.php?page=despace-contact-settings&tab=leads' ) : '#' ); ?>">
-				<span class="ds-kpi-card__label">Khách đăng ký tư vấn</span>
+				<div class="ds-kpi-card__top">
+					<span class="ds-kpi-card__label">Tư vấn Showroom</span>
+					<span class="ds-kpi-card__icon"><?php echo despace_admin_svg_icon( 'showroom' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+				</div>
 				<div class="ds-kpi-card__value"><?php echo esc_html( number_format_i18n( $lead_count ) ); ?></div>
 				<span class="ds-kpi-card__meta"><?php echo esc_html( sprintf( '★ %s/5.0 từ %s đánh giá đã duyệt', number_format( $avg_rating, 1 ), number_format_i18n( $review_count ) ) ); ?></span>
 			</a>
+		</section>
+
+		<!-- Visual Analytics Strip -->
+		<section class="ds-visual-strip" aria-label="Biểu đồ nhanh vận hành">
+			<div class="ds-panel" style="margin-bottom:0;">
+				<div class="ds-panel__header" style="margin-bottom:10px; padding-bottom:12px;">
+					<div>
+						<h2 class="ds-panel__title">Phân bổ trạng thái đơn hàng</h2>
+						<p class="ds-panel__desc">Tổng hợp <?php echo esc_html( number_format_i18n( $completed + $processing + $hold_total + $cancelled_orders ) ); ?> đơn hàng trên WooCommerce HPOS.</p>
+					</div>
+					<?php if ( $can_reports ) : ?>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-reports' ) ); ?>" style="color:#8c3e1f; font-weight:600; font-size:13px; text-decoration:none;">Báo cáo chi tiết →</a>
+					<?php endif; ?>
+				</div>
+				<div class="ds-segmented-bar" role="img" aria-label="Biểu đồ tỷ lệ trạng thái đơn hàng">
+					<?php if ( $completed > 0 ) : ?><div class="ds-segmented-bar__seg ds-segmented-bar__seg--completed" style="width:<?php echo esc_attr( $pct_completed ); ?>%;" title="Hoàn thành: <?php echo esc_attr( $completed ); ?>"></div><?php endif; ?>
+					<?php if ( $processing > 0 ) : ?><div class="ds-segmented-bar__seg ds-segmented-bar__seg--processing" style="width:<?php echo esc_attr( $pct_processing ); ?>%;" title="Đang xử lý: <?php echo esc_attr( $processing ); ?>"></div><?php endif; ?>
+					<?php if ( $hold_total > 0 ) : ?><div class="ds-segmented-bar__seg ds-segmented-bar__seg--hold" style="width:<?php echo esc_attr( $pct_hold ); ?>%;" title="Chờ đối soát: <?php echo esc_attr( $hold_total ); ?>"></div><?php endif; ?>
+					<?php if ( $cancelled_orders > 0 ) : ?><div class="ds-segmented-bar__seg ds-segmented-bar__seg--cancelled" style="width:<?php echo esc_attr( $pct_cancelled ); ?>%;" title="Đã hủy: <?php echo esc_attr( $cancelled_orders ); ?>"></div><?php endif; ?>
+				</div>
+				<div class="ds-legend-row">
+					<span class="ds-legend-item"><span class="ds-legend-dot" style="background:#15803d;"></span>Hoàn thành: <strong><?php echo esc_html( $completed ); ?></strong></span>
+					<span class="ds-legend-item"><span class="ds-legend-dot" style="background:#1d4ed8;"></span>Đang xử lý: <strong><?php echo esc_html( $processing ); ?></strong></span>
+					<span class="ds-legend-item"><span class="ds-legend-dot" style="background:#b45309;"></span>Chờ đối soát: <strong><?php echo esc_html( $hold_total ); ?></strong></span>
+					<span class="ds-legend-item"><span class="ds-legend-dot" style="background:#b91c1c;"></span>Đã hủy: <strong><?php echo esc_html( $cancelled_orders ); ?></strong></span>
+				</div>
+			</div>
+
+			<div class="ds-panel" style="margin-bottom:0;">
+				<div class="ds-panel__header" style="margin-bottom:14px; padding-bottom:12px;">
+					<div>
+						<h2 class="ds-panel__title">Tiến độ số hóa 3D &amp; Apple AR</h2>
+						<p class="ds-panel__desc">Độ phủ mô hình WebXR PBR (.GLB) và Apple Quick Look (.USDZ).</p>
+					</div>
+					<?php if ( $can_3d ) : ?>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-3d-manager' ) ); ?>" style="color:#8c3e1f; font-weight:600; font-size:13px; text-decoration:none;">Xưởng 3D →</a>
+					<?php endif; ?>
+				</div>
+				<div class="ds-progress-row">
+					<div class="ds-progress-row__head">
+						<span><strong>Web 3D (.GLB)</strong> · Trình xoay 360° nội bộ</span>
+						<span><strong><?php echo esc_html( $glb_count ); ?></strong> / <?php echo esc_html( $product_count ); ?> (<?php echo esc_html( $glb_pct ); ?>%)</span>
+					</div>
+					<div class="ds-progress-track">
+						<div class="ds-progress-fill" style="width:<?php echo esc_attr( $glb_pct ); ?>%;"></div>
+					</div>
+				</div>
+				<div class="ds-progress-row">
+					<div class="ds-progress-row__head">
+						<span><strong>iOS AR Quick Look (.USDZ)</strong> · Đặt trong phòng thực</span>
+						<span><strong><?php echo esc_html( $usdz_count ); ?></strong> / <?php echo esc_html( $product_count ); ?> (<?php echo esc_html( $usdz_pct ); ?>%)</span>
+					</div>
+					<div class="ds-progress-track">
+						<div class="ds-progress-fill ds-progress-fill--emerald" style="width:<?php echo esc_attr( $usdz_pct ); ?>%;"></div>
+					</div>
+				</div>
+			</div>
 		</section>
 
 		<!-- Main Operational Workspace -->
@@ -1826,36 +1972,54 @@ function despace_render_hub_overview_page() {
 					<div class="ds-action-list">
 						<?php if ( $can_manage ) : ?>
 							<a class="ds-action-item" href="<?php echo esc_url( admin_url( 'post-new.php?post_type=product' ) ); ?>">
-								<span><strong>+ Thêm sản phẩm nội thất</strong><small>Tạo SKU, giá bán, ảnh và biến thể gỗ</small></span>
-								<span aria-hidden="true">→</span>
+								<span class="ds-action-item__lead">
+									<span class="ds-action-item__icon"><?php echo despace_admin_svg_icon( 'plus' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+									<span><strong>Thêm sản phẩm nội thất</strong><small>Tạo SKU, giá bán, ảnh và biến thể gỗ</small></span>
+								</span>
+								<span class="ds-action-item__arrow" aria-hidden="true">→</span>
 							</a>
 							<a class="ds-action-item" href="<?php echo esc_url( despace_store_admin_orders_url() ); ?>">
-								<span><strong>Quản lý Đơn hàng (HPOS)</strong><small>Xác nhận VietQR, cập nhật trạng thái giao hàng</small></span>
-								<span aria-hidden="true">→</span>
+								<span class="ds-action-item__lead">
+									<span class="ds-action-item__icon"><?php echo despace_admin_svg_icon( 'orders' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+									<span><strong>Quản lý Đơn hàng (HPOS)</strong><small>Xác nhận VietQR, cập nhật trạng thái giao hàng</small></span>
+								</span>
+								<span class="ds-action-item__arrow" aria-hidden="true">→</span>
 							</a>
 						<?php endif; ?>
 						<?php if ( $can_reports ) : ?>
 							<a class="ds-action-item" href="<?php echo esc_url( admin_url( 'admin.php?page=despace-reports' ) ); ?>">
-								<span><strong>Báo cáo Doanh thu &amp; KPI</strong><small>Lọc theo ngày, AOV, Top 10 sản phẩm bán chạy</small></span>
-								<span aria-hidden="true">→</span>
+								<span class="ds-action-item__lead">
+									<span class="ds-action-item__icon"><?php echo despace_admin_svg_icon( 'reports' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+									<span><strong>Báo cáo Doanh thu &amp; KPI</strong><small>Lọc theo ngày, AOV, Top 10 sản phẩm bán chạy</small></span>
+								</span>
+								<span class="ds-action-item__arrow" aria-hidden="true">→</span>
 							</a>
 						<?php endif; ?>
 						<?php if ( $can_inventory ) : ?>
 							<a class="ds-action-item" href="<?php echo esc_url( admin_url( 'admin.php?page=despace-inventory-logs' ) ); ?>">
-								<span><strong>Nhật ký &amp; Kiểm toán Kho</strong><small>Truy vết biến động tồn kho &amp; xuất CSV</small></span>
-								<span aria-hidden="true">→</span>
+								<span class="ds-action-item__lead">
+									<span class="ds-action-item__icon"><?php echo despace_admin_svg_icon( 'inventory' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+									<span><strong>Nhật ký &amp; Kiểm toán Kho</strong><small>Truy vết biến động tồn kho &amp; xuất CSV</small></span>
+								</span>
+								<span class="ds-action-item__arrow" aria-hidden="true">→</span>
 							</a>
 						<?php endif; ?>
 						<?php if ( $can_3d ) : ?>
 							<a class="ds-action-item" href="<?php echo esc_url( admin_url( 'admin.php?page=despace-3d-manager' ) ); ?>">
-								<span><strong>Xưởng 3D &amp; AR Studio</strong><small>Quản lý GLB/USDZ, Desktop Sync &amp; AI 3D</small></span>
-								<span aria-hidden="true">→</span>
+								<span class="ds-action-item__lead">
+									<span class="ds-action-item__icon"><?php echo despace_admin_svg_icon( 'studio3d' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+									<span><strong>Xưởng 3D &amp; AR Studio</strong><small>Quản lý GLB/USDZ, Desktop Sync &amp; AI 3D</small></span>
+								</span>
+								<span class="ds-action-item__arrow" aria-hidden="true">→</span>
 							</a>
 						<?php endif; ?>
 						<?php if ( $can_manage ) : ?>
 							<a class="ds-action-item" href="<?php echo esc_url( admin_url( 'admin.php?page=despace-contact-settings&tab=leads' ) ); ?>">
-								<span><strong>Tư vấn &amp; Showroom</strong><small>Theo dõi <?php echo esc_html( number_format_i18n( $lead_count ) ); ?> yêu cầu tư vấn &amp; sửa thông tin showroom</small></span>
-								<span aria-hidden="true">→</span>
+								<span class="ds-action-item__lead">
+									<span class="ds-action-item__icon"><?php echo despace_admin_svg_icon( 'showroom' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+									<span><strong>Tư vấn &amp; Showroom</strong><small>Theo dõi <?php echo esc_html( number_format_i18n( $lead_count ) ); ?> yêu cầu tư vấn &amp; sửa thông tin showroom</small></span>
+								</span>
+								<span class="ds-action-item__arrow" aria-hidden="true">→</span>
 							</a>
 						<?php endif; ?>
 					</div>

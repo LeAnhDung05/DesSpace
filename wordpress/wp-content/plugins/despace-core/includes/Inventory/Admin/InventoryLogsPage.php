@@ -167,9 +167,7 @@ class InventoryLogsPage {
 		?>
 		<style>
 			.despace-audit-wrap {
-				max-width: 1400px;
-				margin: 24px 20px 48px 0;
-				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+				font-family: "SF Pro Text", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, sans-serif;
 				color: #1C1917;
 			}
 			.despace-audit-wrap .wp-list-table {
@@ -179,83 +177,59 @@ class InventoryLogsPage {
 				width: 100%;
 			}
 			.despace-audit-wrap .wp-list-table th {
-				background: #FAF8F5;
-				color: #78716C;
-				font-size: 11px;
+				background: #FAF8F4;
+				color: #44403C;
+				font-size: 11.5px;
 				font-weight: 700;
 				text-transform: uppercase;
-				letter-spacing: 0.6px;
-				padding: 14px 16px;
-				border-bottom: 1px solid #E7E3DC;
+				letter-spacing: 0.055em;
+				padding: 13px 16px;
+				border-bottom: 1px solid #E6E0D6;
 				border-top: none;
 			}
 			.despace-audit-wrap .wp-list-table td {
-				padding: 14px 16px;
-				font-size: 13px;
+				padding: 13px 16px;
+				font-size: 13.5px;
 				color: #1C1917;
-				border-bottom: 1px solid #F3F1EC;
+				border-bottom: 1px solid #F2EEE6;
 				vertical-align: middle;
+				font-variant-numeric: tabular-nums;
 			}
 			.despace-audit-wrap .wp-list-table tbody tr:hover td {
-				background: #FCFBF9;
+				background: #FCFAF6;
 			}
 			.despace-kpi-card {
-				background: #fff;
-				border: 1px solid #E7E3DC;
-				border-radius: 12px;
+				background: #ffffff;
+				border: 1px solid #E6E0D6;
+				border-radius: 14px;
 				padding: 20px 22px;
-				transition: border-color 0.2s ease, box-shadow 0.2s ease;
+				box-shadow: 0 1px 3px rgba(28,25,23,0.05), 0 8px 24px -12px rgba(28,25,23,0.08);
+				transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 			}
 			.despace-kpi-card:hover {
-				border-color: #D6CFC7;
-				box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+				border-color: #C8B8A4;
+				transform: translateY(-2px);
+				box-shadow: 0 4px 12px rgba(28,25,23,0.06), 0 18px 40px -18px rgba(28,25,23,0.14);
+			}
+			.despace-kpi-icon-well {
+				width: 34px;
+				height: 34px;
+				border-radius: 9px;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
 			}
 			.despace-filter-card {
-				background: #fff;
-				border: 1px solid #E7E3DC;
-				border-radius: 12px;
+				background: #ffffff;
+				border: 1px solid #E6E0D6;
+				border-radius: 14px;
 				padding: 20px 24px;
-				margin-bottom: 24px;
+				margin-bottom: 22px;
+				box-shadow: 0 1px 3px rgba(28,25,23,0.05), 0 8px 24px -12px rgba(28,25,23,0.08);
 			}
-			.despace-btn-terracotta {
-				display: inline-flex;
-				align-items: center;
-				gap: 8px;
-				background: #C25E3A !important;
-				border: 1px solid #C25E3A !important;
-				color: #FAF7F2 !important;
-				font-weight: 600 !important;
-				padding: 8px 18px !important;
-				height: auto !important;
-				border-radius: 8px !important;
-				font-size: 13.5px !important;
-				text-decoration: none !important;
-				box-shadow: 0 2px 8px rgba(194,94,58,0.25);
-				transition: background 0.15s ease;
-			}
-			.despace-btn-terracotta:hover {
-				background: #A84A28 !important;
-				border-color: #A84A28 !important;
-			}
-			.despace-btn-ghost {
-				display: inline-flex;
-				align-items: center;
-				gap: 8px;
-				background: rgba(255,255,255,0.06) !important;
-				border: 1px solid rgba(255,255,255,0.2) !important;
-				color: #FAF7F2 !important;
-				font-weight: 600 !important;
-				padding: 8px 16px !important;
-				height: auto !important;
-				border-radius: 8px !important;
-				font-size: 13.5px !important;
-				text-decoration: none !important;
-				transition: background 0.15s ease, border-color 0.15s ease;
-			}
-			.despace-btn-ghost:hover {
-				background: rgba(255,255,255,0.12) !important;
-				border-color: rgba(255,255,255,0.35) !important;
-				color: #fff !important;
+			.despace-audit-wrap .tablenav {
+				padding: 8px 0 12px;
+				height: auto;
 			}
 		</style>
 
@@ -314,62 +288,62 @@ class InventoryLogsPage {
 				</div>
 			<?php endif; ?>
 
-			<!-- 2. Core KPI Metric Cards (Clean Minimalism) -->
+			<!-- 2. Core KPI Metric Cards (DeSpace Atelier Luxury) -->
 			<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:24px;">
 				
-				<div class="despace-kpi-card">
+				<div class="despace-kpi-card" style="border-top:3px solid #1C1917;">
 					<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-						<span style="font-size:11.5px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;"><?php esc_html_e( 'Tổng Bản Ghi', 'despace-core' ); ?></span>
-						<span style="color:#78716C;">
+						<span style="font-size:12px; font-weight:700; color:#5C564E; text-transform:uppercase; letter-spacing:0.055em;"><?php esc_html_e( 'Tổng Bản Ghi', 'despace-core' ); ?></span>
+						<span class="despace-kpi-icon-well" style="background:#F1EDE5; color:#44403C;">
 							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
 						</span>
 					</div>
-					<div style="font-size:28px; font-weight:700; color:#1C1917; margin-bottom:4px; font-variant-numeric:tabular-nums;"><?php echo esc_html( number_format_i18n( $total_logs ) ); ?></div>
-					<div style="font-size:12px; color:#A8A29E;"><?php esc_html_e( 'Audit logs thời gian thực', 'despace-core' ); ?></div>
+					<div style="font-family:'Iowan Old Style',Georgia,serif; font-size:30px; font-weight:600; color:#1C1917; margin-bottom:6px; font-variant-numeric:tabular-nums;"><?php echo esc_html( number_format_i18n( $total_logs ) ); ?></div>
+					<div style="font-size:12.5px; color:#5C564E;"><?php esc_html_e( 'Audit logs thời gian thực', 'despace-core' ); ?></div>
 				</div>
 
-				<div class="despace-kpi-card">
+				<div class="despace-kpi-card" style="border-top:3px solid #991B1B;">
 					<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-						<span style="font-size:11.5px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;"><?php esc_html_e( 'Giảm Kho Bán Hàng', 'despace-core' ); ?></span>
-						<span style="color:#B91C1C;">
+						<span style="font-size:12px; font-weight:700; color:#5C564E; text-transform:uppercase; letter-spacing:0.055em;"><?php esc_html_e( 'Giảm Kho Bán Hàng', 'despace-core' ); ?></span>
+						<span class="despace-kpi-icon-well" style="background:#FEE2E2; color:#991B1B;">
 							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
 						</span>
 					</div>
-					<div style="font-size:28px; font-weight:700; color:#B91C1C; margin-bottom:4px; font-variant-numeric:tabular-nums;"><?php echo esc_html( number_format_i18n( $sales_count ) ); ?></div>
-					<div style="font-size:12px; color:#A8A29E;"><?php esc_html_e( 'Đơn hàng bán ra tự động', 'despace-core' ); ?></div>
+					<div style="font-family:'Iowan Old Style',Georgia,serif; font-size:30px; font-weight:600; color:#991B1B; margin-bottom:6px; font-variant-numeric:tabular-nums;"><?php echo esc_html( number_format_i18n( $sales_count ) ); ?></div>
+					<div style="font-size:12.5px; color:#5C564E;"><?php esc_html_e( 'Đơn hàng bán ra tự động', 'despace-core' ); ?></div>
 				</div>
 
-				<div class="despace-kpi-card">
+				<div class="despace-kpi-card" style="border-top:3px solid #166534;">
 					<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-						<span style="font-size:11.5px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;"><?php esc_html_e( 'Hoàn Kho & Restock', 'despace-core' ); ?></span>
-						<span style="color:#15803D;">
+						<span style="font-size:12px; font-weight:700; color:#5C564E; text-transform:uppercase; letter-spacing:0.055em;"><?php esc_html_e( 'Hoàn Kho & Restock', 'despace-core' ); ?></span>
+						<span class="despace-kpi-icon-well" style="background:#DCFCE7; color:#166534;">
 							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
 						</span>
 					</div>
-					<div style="font-size:28px; font-weight:700; color:#15803D; margin-bottom:4px; font-variant-numeric:tabular-nums;"><?php echo esc_html( number_format_i18n( $restock_count ) ); ?></div>
-					<div style="font-size:12px; color:#A8A29E;"><?php esc_html_e( 'Hủy đơn & hoàn trả', 'despace-core' ); ?></div>
+					<div style="font-family:'Iowan Old Style',Georgia,serif; font-size:30px; font-weight:600; color:#166534; margin-bottom:6px; font-variant-numeric:tabular-nums;"><?php echo esc_html( number_format_i18n( $restock_count ) ); ?></div>
+					<div style="font-size:12.5px; color:#5C564E;"><?php esc_html_e( 'Hủy đơn & hoàn trả', 'despace-core' ); ?></div>
 				</div>
 
-				<div class="despace-kpi-card">
+				<div class="despace-kpi-card" style="border-top:3px solid #92400E;">
 					<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-						<span style="font-size:11.5px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;"><?php esc_html_e( 'Chỉnh Sửa Thủ Công', 'despace-core' ); ?></span>
-						<span style="color:#D97706;">
+						<span style="font-size:12px; font-weight:700; color:#5C564E; text-transform:uppercase; letter-spacing:0.055em;"><?php esc_html_e( 'Chỉnh Sửa Thủ Công', 'despace-core' ); ?></span>
+						<span class="despace-kpi-icon-well" style="background:#FEF3C7; color:#92400E;">
 							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line></svg>
 						</span>
 					</div>
-					<div style="font-size:28px; font-weight:700; color:#D97706; margin-bottom:4px; font-variant-numeric:tabular-nums;"><?php echo esc_html( number_format_i18n( $manual_count ) ); ?></div>
-					<div style="font-size:12px; color:#A8A29E;"><?php esc_html_e( 'Nhập xưởng & kiểm kê', 'despace-core' ); ?></div>
+					<div style="font-family:'Iowan Old Style',Georgia,serif; font-size:30px; font-weight:600; color:#92400E; margin-bottom:6px; font-variant-numeric:tabular-nums;"><?php echo esc_html( number_format_i18n( $manual_count ) ); ?></div>
+					<div style="font-size:12.5px; color:#5C564E;"><?php esc_html_e( 'Nhập xưởng & kiểm kê', 'despace-core' ); ?></div>
 				</div>
 
-				<div class="despace-kpi-card">
+				<div class="despace-kpi-card" style="border-top:3px solid #A64E2B;">
 					<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-						<span style="font-size:11.5px; font-weight:700; color:#78716C; text-transform:uppercase; letter-spacing:0.6px;"><?php esc_html_e( 'Tình Trạng Đối Soát', 'despace-core' ); ?></span>
-						<span style="color:#15803D;">
+						<span style="font-size:12px; font-weight:700; color:#5C564E; text-transform:uppercase; letter-spacing:0.055em;"><?php esc_html_e( 'Tình Trạng Đối Soát', 'despace-core' ); ?></span>
+						<span class="despace-kpi-icon-well" style="background:#DCFCE7; color:#166534;">
 							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
 						</span>
 					</div>
-					<div style="font-size:22px; font-weight:700; color:#15803D; margin-bottom:4px; line-height:34px;">100% Khớp Kho</div>
-					<div style="font-size:12px; color:#A8A29E;">Idempotent & HPOS Ready</div>
+					<div style="font-family:'Iowan Old Style',Georgia,serif; font-size:24px; font-weight:600; color:#166534; margin-bottom:6px; line-height:34px;">100% Khớp Kho</div>
+					<div style="font-size:12.5px; color:#5C564E;">Idempotent &amp; HPOS Ready</div>
 				</div>
 
 			</div>

@@ -623,45 +623,45 @@ function axgnud_render_3d_manager_page() {
 			</div>
 		<?php endif; ?>
 
-		<!-- Top Statistics Metric Cards -->
-		<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:16px; margin-bottom:24px;">
-			<div style="background:#fff; border:1px solid #E7E5E4; border-radius:8px; padding:18px 20px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-				<span style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:#78716C; font-weight:600;">Tổng Sản Phẩm</span>
-				<div style="font-size:28px; font-weight:700; color:#1C1917; margin-top:4px;"><?php echo $total_count; ?></div>
-				<span style="font-size:12px; color:#A8A29E;">Toàn bộ kho DeSpace Luxury</span>
+		<!-- Top Statistics Metric Cards (DeSpace Atelier Luxury) -->
+		<section class="ds-kpi-grid" aria-label="Thống kê mô hình 3D và AR">
+			<div class="ds-kpi-card">
+				<span class="ds-kpi-card__label">Tổng Sản Phẩm</span>
+				<div class="ds-kpi-card__value"><?php echo esc_html( number_format_i18n( $total_count ) ); ?></div>
+				<span class="ds-kpi-card__meta">Toàn bộ danh mục DeSpace Luxury</span>
 			</div>
-			<div style="background:#fff; border:1px solid #E7E5E4; border-radius:8px; padding:18px 20px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-				<span style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:#059669; font-weight:600;">3D Sẵn Sàng (Published)</span>
-				<div style="font-size:28px; font-weight:700; color:#059669; margin-top:4px;"><?php echo $published_count; ?></div>
-				<span style="font-size:12px; color:#6EE7B7;">Mô hình PBR đã xuất bản</span>
+			<div class="ds-kpi-card ds-kpi-card--success">
+				<span class="ds-kpi-card__label">3D Sẵn Sàng (Published)</span>
+				<div class="ds-kpi-card__value" style="color:#166534;"><?php echo esc_html( number_format_i18n( $published_count ) ); ?></div>
+				<span class="ds-kpi-card__meta">Mô hình PBR (.GLB) đã xuất bản</span>
 			</div>
-			<div style="background:#fff; border:1px solid #E7E5E4; border-radius:8px; padding:18px 20px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-				<span style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:#9A6745; font-weight:600;">Hỗ Trợ AR Thực Tế</span>
-				<div style="font-size:28px; font-weight:700; color:#9A6745; margin-top:4px;"><?php echo $ar_ready_count; ?></div>
-				<span style="font-size:12px; color:#A8A29E;">Đầy đủ GLB + USDZ iOS/Android</span>
+			<div class="ds-kpi-card ds-kpi-card--accent">
+				<span class="ds-kpi-card__label">Hỗ Trợ AR Thực Tế</span>
+				<div class="ds-kpi-card__value" style="color:#8c3e1f;"><?php echo esc_html( number_format_i18n( $ar_ready_count ) ); ?></div>
+				<span class="ds-kpi-card__meta">Đầy đủ GLB + USDZ cho iOS &amp; Android</span>
 			</div>
-			<div style="background:#fff; border:1px solid #E7E5E4; border-radius:8px; padding:18px 20px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-				<span style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:#D97706; font-weight:600;">Chưa Có Mô Hình (Missing)</span>
-				<div style="font-size:28px; font-weight:700; color:#D97706; margin-top:4px;"><?php echo $missing_count; ?></div>
-				<span style="font-size:12px; color:#A8A29E;">Đang chờ số hóa chuẩn</span>
+			<div class="ds-kpi-card ds-kpi-card--warning">
+				<span class="ds-kpi-card__label">Chưa Có Mô Hình (Missing)</span>
+				<div class="ds-kpi-card__value" style="color:#92400e;"><?php echo esc_html( number_format_i18n( $missing_count ) ); ?></div>
+				<span class="ds-kpi-card__meta">Đang chờ số hóa hoặc cập nhật</span>
 			</div>
-		</div>
+		</section>
 
 		<!-- Filters & Search Toolbar -->
-		<div style="background:#fff; border:1px solid #E7E5E4; border-radius:8px; padding:16px; margin-bottom:20px; display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
+		<div class="ds-panel" style="padding:18px 22px; margin-bottom:20px; display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
 			<form method="GET" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; flex:1;">
 				<input type="hidden" name="page" value="despace-3d-manager" />
 				
-				<input type="text" name="s_kw" value="<?php echo esc_attr( $search_kw ); ?>" placeholder="Tìm tên sản phẩm hoặc SKU..." style="min-width:220px; height:36px;" />
+				<input type="text" name="s_kw" value="<?php echo esc_attr( $search_kw ); ?>" placeholder="Tìm tên sản phẩm hoặc SKU..." style="min-width:230px; height:38px;" />
 				
-				<select name="f_cat" style="height:36px;">
+				<select name="f_cat" style="height:38px;">
 					<option value="">Tất cả danh mục</option>
 					<?php foreach ( $cats as $c ) : ?>
 						<option value="<?php echo esc_attr( $c->slug ); ?>" <?php selected( $filter_cat, $c->slug ); ?>><?php echo esc_html( $c->name ); ?></option>
 					<?php endforeach; ?>
 				</select>
 
-				<select name="f_status" style="height:36px;">
+				<select name="f_status" style="height:38px;">
 					<option value="">Tất cả trạng thái</option>
 					<option value="published" <?php selected( $filter_st, 'published' ); ?>>Đã xuất bản (Published)</option>
 					<option value="ar_ready" <?php selected( $filter_st, 'ar_ready' ); ?>>AR Sẵn sàng (AR-Ready)</option>
@@ -669,20 +669,20 @@ function axgnud_render_3d_manager_page() {
 					<option value="draft" <?php selected( $filter_st, 'draft' ); ?>>Bản nháp (Draft)</option>
 				</select>
 
-				<button type="submit" class="button button-primary" style="height:36px;">Lọc Sản Phẩm</button>
+				<button type="submit" class="ds-btn ds-btn--dark" style="min-height:38px;">Lọc Sản Phẩm</button>
 				<?php if ( $search_kw || $filter_cat || $filter_st ) : ?>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-3d-manager' ) ); ?>" class="button button-secondary" style="height:36px; line-height:34px;">Xóa bộ lọc</a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-3d-manager' ) ); ?>" class="ds-btn ds-btn--outline" style="min-height:38px;">Xóa bộ lọc</a>
 				<?php endif; ?>
 			</form>
 			
-			<div style="color:#78716C; font-size:13px;">
-				Hiển thị: <strong><?php echo count( $all_rows ); ?></strong> / <?php echo $total_count; ?> sản phẩm
+			<div style="color:#5C564E; font-size:13px; font-variant-numeric:tabular-nums;">
+				Hiển thị: <strong><?php echo esc_html( number_format_i18n( count( $all_rows ) ) ); ?></strong> / <?php echo esc_html( number_format_i18n( $total_count ) ); ?> sản phẩm
 			</div>
 		</div>
 
 		<!-- Products Table -->
-		<div style="background:#fff; border:1px solid #E7E5E4; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-			<table class="wp-list-table widefat fixed striped" style="border:none;">
+		<div class="ds-panel" style="padding:0; overflow:hidden;">
+			<table class="wp-list-table widefat fixed striped" style="border:none; border-radius:0; box-shadow:none;">
 				<thead>
 					<tr>
 						<th style="width:60px;">Ảnh</th>
@@ -803,8 +803,8 @@ function axgnud_render_3d_manager_page() {
 		</div>
 
 		<!-- Edit Modal -->
-		<div id="axEdit3DModal" style="display:none; position:fixed; z-index:100000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); backdrop-filter:blur(3px); align-items:center; justify-content:center;">
-			<div style="background:#fff; border-radius:8px; width:640px; max-width:92%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); padding:24px;">
+		<div id="axEdit3DModal" class="ds-modal-backdrop" style="display:none; position:fixed; z-index:100000; left:0; top:0; width:100%; height:100%; align-items:center; justify-content:center;">
+			<div class="ds-modal-card" style="width:650px; max-width:92%; max-height:90vh; overflow-y:auto; padding:26px 28px;">
 				<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #E7E5E4; padding-bottom:12px; margin-bottom:16px;">
 					<h3 id="axModalTitle" style="margin:0; font-size:18px; color:#1C1917;">Cập Nhật Tài Sản 3D Sản Phẩm</h3>
 					<button type="button" class="ax-close-modal" style="background:none; border:none; font-size:20px; cursor:pointer; color:#78716C;">✕</button>
@@ -900,8 +900,8 @@ function axgnud_render_3d_manager_page() {
 		</div>
 
 		<!-- Preview 3D Modal -->
-		<div id="axPreview3DModal" style="display:none; position:fixed; z-index:100000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.65); backdrop-filter:blur(4px); align-items:center; justify-content:center;">
-			<div style="background:#FAF7F2; border-radius:10px; width:720px; max-width:94%; height:580px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); display:flex; flex-direction:column; overflow:hidden;">
+		<div id="axPreview3DModal" class="ds-modal-backdrop" style="display:none; position:fixed; z-index:100000; left:0; top:0; width:100%; height:100%; align-items:center; justify-content:center;">
+			<div class="ds-modal-card" style="width:760px; max-width:94%; height:600px; display:flex; flex-direction:column; overflow:hidden;">
 				<div style="padding:14px 20px; background:#fff; border-bottom:1px solid #E7E5E4; display:flex; justify-content:space-between; align-items:center;">
 					<div>
 						<h3 id="axPreviewTitle" style="margin:0; font-size:16px; color:#1C1917;">Xem Trước Mô Hình 3D</h3>
