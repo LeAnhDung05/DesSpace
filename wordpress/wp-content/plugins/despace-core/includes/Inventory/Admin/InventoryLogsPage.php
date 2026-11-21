@@ -380,12 +380,12 @@ class InventoryLogsPage {
 					</div>
 
 					<div style="display:flex; gap:8px;">
-						<button type="submit" class="button" style="height:36px; padding:0 16px; border-radius:6px; background:#1C1917; border-color:#1C1917; color:#fff; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+						<button type="submit" class="ds-btn ds-btn--dark" style="min-height:36px;">
 							<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
 							<span>Lọc</span>
 						</button>
 						<?php if ( ! empty( $current_event_type ) || ! empty( $current_product_id ) || ! empty( $current_date_from ) || ! empty( $current_date_to ) ) : ?>
-							<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-inventory-logs' ) ); ?>" class="button" style="height:36px; line-height:34px; padding:0 14px; border-radius:6px; border-color:#D6CFC7; color:#78716C; font-weight:600; text-decoration:none;">
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=despace-inventory-logs' ) ); ?>" class="ds-btn ds-btn--outline" style="min-height:36px;">
 								<?php esc_html_e( 'Đặt Lại', 'despace-core' ); ?>
 							</a>
 						<?php endif; ?>

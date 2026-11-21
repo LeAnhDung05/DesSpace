@@ -448,8 +448,36 @@ function axgnud_render_3d_manager_page() {
 							<div class="ds-copy-group">
 								<input type="text" id="ds-rest-base-url" value="<?php echo esc_attr( $rest_base ); ?>" readonly />
 								<button type="button" class="ds-btn ds-btn--outline" onclick="navigator.clipboard && navigator.clipboard.writeText(document.getElementById('ds-rest-base-url').value); this.textContent='Đã sao chép ✓';">Sao chép URL</button>
+								<button type="button" class="ds-btn ds-btn--dark" id="ds-test-desktop-health">Kiểm tra kết nối</button>
 							</div>
+							<div id="ds-desktop-health-result" style="margin-top:8px; font-size:13px;"></div>
 							<p class="description">Health check: <code><?php echo esc_html( rest_url( 'despace/v1/desktop-3d/health' ) ); ?></code> · Jobs: <code><?php echo esc_html( rest_url( 'despace/v1/desktop-3d/jobs' ) ); ?></code></p>
+							<script>
+							(function(){
+								var btn = document.getElementById('ds-test-desktop-health');
+								var out = document.getElementById('ds-desktop-health-result');
+								if (!btn || !out) return;
+								btn.addEventListener('click', function(){
+									var t0 = performance.now();
+									out.innerHTML = '<span class="ds-pill ds-pill--info">Đang kiểm tra API...</span>';
+									fetch(<?php echo wp_json_encode( esc_url_raw( rest_url( 'despace/v1/desktop-3d/health' ) ) ); ?>, {
+										headers: { 'X-WP-Nonce': <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?> }
+									})
+									.then(function(r){ return r.json().then(function(j){ return { ok: r.ok, status: r.status, data: j }; }); })
+									.then(function(res){
+										var ms = Math.round(performance.now() - t0);
+										if (res.ok && res.data && res.data.status === 'online') {
+											out.innerHTML = '<span class="ds-pill ds-pill--success">✓ Online (' + ms + 'ms) — ' + String(res.data.service || 'Desktop 3D Sync API').replace(/</g,'&lt;') + '</span>';
+										} else {
+											out.innerHTML = '<span class="ds-pill ds-pill--danger">Lỗi HTTP ' + res.status + '</span>';
+										}
+									})
+									.catch(function(){
+										out.innerHTML = '<span class="ds-pill ds-pill--danger">Không kết nối được REST endpoint</span>';
+									});
+								});
+							})();
+							</script>
 						</td>
 					</tr>
 					<tr>
@@ -738,20 +766,18 @@ function axgnud_render_3d_manager_page() {
 							</td>
 							<td>
 								<?php if ( 'published' === $row->model_status && $has_glb ) : ?>
-									<span style="background:#DEF7EC; color:#03543F; font-size:11px; padding:3px 8px; border-radius:12px; font-weight:600; display:inline-block;">✓ Published</span>
+									<span class="ds-pill ds-pill--success">✓ Published</span>
 								<?php elseif ( 'draft' === $row->model_status ) : ?>
-									<span style="background:#FEF08A; color:#854D0E; font-size:11px; padding:3px 8px; border-radius:12px; font-weight:600; display:inline-block;">Bản nháp</span>
+									<span class="ds-pill ds-pill--warning">Bản nháp</span>
 								<?php else : ?>
-									<span style="background:#FEE2E2; color:#991B1B; font-size:11px; padding:3px 8px; border-radius:12px; font-weight:600; display:inline-block;">Chưa có model</span>
+									<span class="ds-pill ds-pill--danger">Chưa có model</span>
 								<?php endif; ?>
 							</td>
 							<td>
 								<?php if ( $is_ar_ready ) : ?>
-									<span style="color:#059669; font-weight:600; font-size:12px; display:inline-flex; align-items:center; gap:3px;">
-										<span class="dashicons dashicons-yes-alt" style="font-size:16px; width:16px; height:16px;"></span> AR Ready
-									</span>
+									<span class="ds-pill ds-pill--success">✓ AR Ready</span>
 								<?php else : ?>
-									<span style="color:#A8A29E; font-size:12px;">Chưa sẵn sàng</span>
+									<span class="ds-pill ds-pill--neutral">Chưa sẵn sàng</span>
 								<?php endif; ?>
 							</td>
 							<td style="font-size:11.5px; color:#57534E;">
@@ -1017,6 +1043,18 @@ function axgnud_render_3d_manager_page() {
 				mv.src = glb;
 			}
 			$('#axPreview3DModal').css('display', 'flex');
+		});
+
+		// Close modals on Escape key or backdrop click
+		$(document).on('keydown', function(e) {
+			if (e.key === 'Escape') {
+				$('#axEdit3DModal, #axPreview3DModal').hide();
+			}
+		});
+		$('#axEdit3DModal, #axPreview3DModal').on('click', function(e) {
+			if (e.target === this) {
+				$(this).hide();
+			}
 		});
 	});
 	</script>

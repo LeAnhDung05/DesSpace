@@ -142,6 +142,12 @@ class DashboardPage {
 					);
 				}
 				$report_actions[] = array(
+					'label'   => 'In / Xuất PDF',
+					'type'    => 'button',
+					'style'   => 'ghost',
+					'onclick' => 'window.print()',
+				);
+				$report_actions[] = array(
 					'label'  => 'Xem cửa hàng ↗',
 					'url'    => home_url( '/' ),
 					'style'  => 'ghost',
