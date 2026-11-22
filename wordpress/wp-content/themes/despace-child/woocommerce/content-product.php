@@ -59,7 +59,8 @@ if ( ! empty( $raw_dims['length'] ) && ! empty( $raw_dims['width'] ) && ! empty(
 	<div class="f-card">
 		<div class="f-card-media">
 			<?php
-			$custom_badge = get_post_meta( $id, '_despace_badge', true ) ?: get_post_meta( $id, '_axgnud_badge', true );
+			$custom_badge  = get_post_meta( $id, '_despace_badge', true ) ?: get_post_meta( $id, '_axgnud_badge', true );
+			$card_seasonal = function_exists( 'despace_get_active_seasonal_config' ) ? despace_get_active_seasonal_config() : null;
 			?>
 			<div class="f-card-badges">
 				<?php if ( ! $is_in_stock ) : ?>
@@ -69,10 +70,14 @@ if ( ! empty( $raw_dims['length'] ) && ! empty( $raw_dims['width'] ) && ! empty(
 						$badge_slug  = sanitize_title( $custom_badge );
 						$badge_label = furniva_t( $custom_badge, ( 'Best Seller' === $custom_badge ? 'Bán chạy' : ( 'Featured' === $custom_badge ? 'Nổi bật' : ( 'New' === $custom_badge ? 'Mới' : ( 'Popular' === $custom_badge ? 'Phổ biến' : ( 'Sale' === $custom_badge ? 'Giảm giá' : $custom_badge ) ) ) ) ) );
 					?>
-						<span class="f-badge-custom f-badge-<?php echo esc_attr( $badge_slug ); ?>"><?php echo esc_html( $badge_label ); ?></span>
+						<?php if ( $card_seasonal && in_array( $custom_badge, array( 'Best Seller', 'Featured' ), true ) ) : ?>
+							<span class="f-badge-holiday">❄ <?php echo esc_html( furniva_t( 'Holiday Pick', 'Tuyển chọn Noel' ) ); ?></span>
+						<?php else : ?>
+							<span class="f-badge-custom f-badge-<?php echo esc_attr( $badge_slug ); ?>"><?php echo esc_html( $badge_label ); ?></span>
+						<?php endif; ?>
 					<?php endif; ?>
 					<?php if ( $percent > 0 ) : ?>
-						<span class="f-badge-sale">-<?php echo esc_html( $percent ); ?>%</span>
+						<span class="<?php echo $card_seasonal ? 'f-badge-holiday' : 'f-badge-sale'; ?>"><?php echo $card_seasonal ? esc_html( furniva_t( 'Noel Sale', 'Noel Sale' ) . ' ' ) : ''; ?>-<?php echo esc_html( $percent ); ?>%</span>
 					<?php endif; ?>
 				<?php endif; ?>
 			</div>

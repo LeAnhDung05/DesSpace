@@ -1,0 +1,420 @@
+/* ==========================================================================
+   DESPACE SEASONAL MODE — LUXURY CHRISTMAS (NOEL) EDITION
+   Zero-Footprint Architecture: Enqueued ONLY when Seasonal Mode is active.
+   Scoped strictly to body.despace-theme-noel & preset modifiers:
+     - .despace-noel--nordic   (Nordic Hygge: #FAF7F2 / #1B3B2B / #C9A96E)
+     - .despace-noel--midnight (Midnight Gold: #0E1A16 / #D4AF37 / #FAF7F2)
+     - .despace-noel--burgundy (Velvet Burgundy: #6E1D27 / #1F3A2E / #FBF8F3)
+   ========================================================================== */
+
+/* 1. Shared Noel Tokens & Preset Overrides */
+body.despace-theme-noel {
+	--noel-primary: #1B3B2B;
+	--noel-primary-deep: #12291E;
+	--noel-gold: #C9A96E;
+	--noel-gold-soft: rgba(201, 169, 110, 0.24);
+	--noel-gold-glow: rgba(201, 169, 110, 0.34);
+	--noel-surface-warm: #FAF7F2;
+	--noel-marquee-bg: #1B3B2B;
+	--noel-marquee-ink: #FAF7F2;
+	--noel-footer-bg: #162E22;
+	--noel-footer-ink: #F7F4EF;
+	--noel-badge-bg: #1B3B2B;
+	--noel-badge-ink: #F8EFE0;
+}
+
+/* Preset 1: Nordic Hygge (Default) */
+body.despace-theme-noel.despace-noel--nordic {
+	--despace-bg: #FAF7F2;
+	--despace-cream: #FAF7F2;
+	--despace-accent: #1B3B2B;
+	--despace-accent-hover: #12291E;
+	--despace-sand: #C9A96E;
+	--despace-border: #E5DCCF;
+	--f-champagne: #C9A96E;
+	--f-accent: #1B3B2B;
+	--noel-primary: #1B3B2B;
+	--noel-primary-deep: #12291E;
+	--noel-gold: #C9A96E;
+	--noel-marquee-bg: #1B3B2B;
+	--noel-marquee-ink: #FAF7F2;
+	--noel-footer-bg: #162E22;
+	--noel-badge-bg: #1B3B2B;
+}
+
+/* Preset 2: Midnight Gold (Dark winter Header/Hero/Footer + bright clean catalog cards) */
+body.despace-theme-noel.despace-noel--midnight {
+	--despace-bg: #F7F5F0;
+	--despace-cream: #FAF7F2;
+	--despace-accent: #9A7B3E;
+	--despace-accent-hover: #7D612B;
+	--despace-sand: #D4AF37;
+	--despace-border: #E5DFD2;
+	--f-champagne: #D4AF37;
+	--f-accent: #9A7B3E;
+	--noel-primary: #0E1A16;
+	--noel-primary-deep: #09120F;
+	--noel-gold: #D4AF37;
+	--noel-gold-soft: rgba(212, 175, 55, 0.25);
+	--noel-gold-glow: rgba(212, 175, 55, 0.36);
+	--noel-marquee-bg: #09120F;
+	--noel-marquee-ink: #F7EFE0;
+	--noel-footer-bg: #0E1A16;
+	--noel-badge-bg: #0E1A16;
+	--noel-badge-ink: #F6E6B8;
+}
+
+/* Preset 3: Velvet Burgundy (Rich festive wine + pine + milk cream) */
+body.despace-theme-noel.despace-noel--burgundy {
+	--despace-bg: #FBF8F3;
+	--despace-cream: #FBF8F3;
+	--despace-accent: #6E1D27;
+	--despace-accent-hover: #53141C;
+	--despace-sand: #D6B47A;
+	--despace-border: #EAE0D5;
+	--f-champagne: #D6B47A;
+	--f-accent: #6E1D27;
+	--noel-primary: #6E1D27;
+	--noel-primary-deep: #4E131B;
+	--noel-gold: #D6B47A;
+	--noel-gold-soft: rgba(214, 180, 122, 0.26);
+	--noel-gold-glow: rgba(214, 180, 122, 0.36);
+	--noel-marquee-bg: #6E1D27;
+	--noel-marquee-ink: #FBF8F3;
+	--noel-footer-bg: #1F3A2E;
+	--noel-badge-bg: #6E1D27;
+	--noel-badge-ink: #FBF8F3;
+}
+
+/* 2. Announcement Marquee — Festive Strip */
+body.despace-theme-noel .fv-announcement {
+	background: var(--noel-marquee-bg);
+	color: var(--noel-marquee-ink);
+	border-bottom: 1px solid var(--noel-gold-soft);
+}
+
+body.despace-theme-noel .fv-announcement__item {
+	color: var(--noel-marquee-ink);
+}
+
+body.despace-theme-noel .fv-announcement__item:hover {
+	color: var(--noel-gold);
+}
+
+body.despace-theme-noel .fv-announcement__separator {
+	color: var(--noel-gold);
+}
+
+/* 3. Delicate Minimalist Header / Logo Accent SVG */
+body.despace-theme-noel .ds-noel-brand-accent {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	margin-left: 6px;
+	color: var(--noel-gold);
+	vertical-align: middle;
+	flex-shrink: 0;
+}
+
+body.despace-theme-noel .ds-noel-brand-accent svg {
+	width: 18px;
+	height: 18px;
+	display: block;
+}
+
+/* Midnight Gold Header Theme (clean contrast on dark pine header) */
+body.despace-theme-noel.despace-noel--midnight .fv-header {
+	background: #0E1A16;
+	border-bottom: 1px solid rgba(212, 175, 55, 0.22);
+}
+
+body.despace-theme-noel.despace-noel--midnight .fv-header.is-scrolled {
+	background: rgba(14, 26, 22, 0.96);
+	box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.45);
+}
+
+body.despace-theme-noel.despace-noel--midnight .fv-brand-logo-img {
+	filter: brightness(0) invert(1) sepia(0.14) saturate(0.9);
+}
+
+body.despace-theme-noel.despace-noel--midnight .fv-primary-nav a,
+body.despace-theme-noel.despace-noel--midnight .fv-icon-button,
+body.despace-theme-noel.despace-noel--midnight .fv-header__subnav .fv-subnav-link {
+	color: #F5EFE3;
+}
+
+body.despace-theme-noel.despace-noel--midnight .fv-primary-nav a:hover,
+body.despace-theme-noel.despace-noel--midnight .fv-primary-nav a[aria-current="page"],
+body.despace-theme-noel.despace-noel--midnight .fv-header__subnav .fv-subnav-link:hover,
+body.despace-theme-noel.despace-noel--midnight .fv-header__subnav .fv-subnav-link.is-active {
+	color: #D4AF37;
+}
+
+body.despace-theme-noel.despace-noel--midnight .fv-header__subnav {
+	background: rgba(18, 34, 28, 0.96);
+	border-top: 1px solid rgba(212, 175, 55, 0.16);
+}
+
+body.despace-theme-noel.despace-noel--midnight .fv-lang-switcher {
+	background: rgba(255, 255, 255, 0.08);
+	border-color: rgba(212, 175, 55, 0.42);
+}
+
+body.despace-theme-noel.despace-noel--midnight .fv-lang-btn {
+	color: #E7DFD1;
+}
+
+body.despace-theme-noel.despace-noel--midnight .fv-lang-btn.is-active {
+	background: #D4AF37;
+	color: #0E1A16;
+}
+
+body.despace-theme-noel.despace-noel--midnight .fv-subnav-badge {
+	background: rgba(212, 175, 55, 0.16);
+	color: #F6E6B8;
+	border: 1px solid rgba(212, 175, 55, 0.35);
+}
+
+/* Nordic & Burgundy subtle header gold accents */
+body.despace-theme-noel.despace-noel--nordic .fv-header,
+body.despace-theme-noel.despace-noel--burgundy .fv-header {
+	border-bottom: 1px solid var(--noel-gold-soft);
+}
+
+body.despace-theme-noel .fv-subnav-badge {
+	background: var(--noel-badge-bg);
+	color: var(--noel-badge-ink);
+	border: 1px solid var(--noel-gold-soft);
+}
+
+/* 4. Hero & Holiday Offer Banner — Refined Festive Depth */
+body.despace-theme-noel .fv-featured-hero__stage {
+	box-shadow: 0 20px 50px -16px rgba(20, 34, 27, 0.22), 0 0 0 1px var(--noel-gold-soft);
+}
+
+body.despace-theme-noel .fv-featured-hero__stage .fv-eyebrow {
+	color: var(--noel-gold);
+}
+
+body.despace-theme-noel .fv-home-hero-cta {
+	border: 1px solid var(--noel-gold);
+	box-shadow: 0 6px 20px -6px var(--noel-gold-glow);
+}
+
+body.despace-theme-noel #despace-welcome-offer {
+	background: linear-gradient(135deg, var(--noel-primary) 0%, var(--noel-primary-deep) 100%);
+	color: #FAF7F2;
+	border: 1px solid var(--noel-gold-soft);
+	box-shadow: 0 18px 40px -16px rgba(14, 26, 22, 0.32);
+}
+
+body.despace-theme-noel #despace-welcome-offer h2,
+body.despace-theme-noel #despace-welcome-offer p,
+body.despace-theme-noel #despace-welcome-offer span {
+	color: #FAF7F2;
+}
+
+body.despace-theme-noel #despace-welcome-offer .fv-diwali-banner__lamp {
+	color: var(--noel-gold);
+}
+
+body.despace-theme-noel #despace-welcome-offer .fv-diwali-banner__button {
+	background: var(--noel-gold);
+	color: #1C1917;
+	border-color: var(--noel-gold);
+	font-weight: 700;
+}
+
+body.despace-theme-noel #despace-welcome-offer .fv-diwali-banner__button:hover {
+	background: #FAF7F2;
+	color: var(--noel-primary-deep);
+}
+
+/* 5. Product Cards — Keep Photo Frame 100% Bright & True-to-Wood + Holiday Badge & 3D/AR Warm Glow */
+body.despace-theme-noel .f-card {
+	background: #FFFFFF;
+	border-color: var(--despace-border);
+}
+
+body.despace-theme-noel .f-card-media {
+	background: #FAF7F2;
+}
+
+body.despace-theme-noel .f-card:hover {
+	border-color: var(--noel-gold);
+	box-shadow: 0 18px 40px -14px rgba(28, 25, 23, 0.14), 0 0 0 1px var(--noel-gold-soft);
+}
+
+body.despace-theme-noel .f-badge-holiday {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 9px;
+	border-radius: 999px;
+	background: var(--noel-badge-bg);
+	color: var(--noel-badge-ink);
+	border: 1px solid var(--noel-gold-soft);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+body.despace-theme-noel .f-card-3d-btn {
+	border-color: var(--noel-gold);
+	box-shadow: 0 2px 12px var(--noel-gold-soft);
+}
+
+body.despace-theme-noel .f-card-3d-btn:hover {
+	background: var(--noel-primary);
+	border-color: var(--noel-gold);
+	color: #FAF7F2;
+}
+
+/* 6. Single Product & <model-viewer> 3D/AR — Subtle Warm Champagne Holiday Halo */
+body.despace-theme-noel .ax-stage-pill--ar,
+body.despace-theme-noel #arViewInRoomBtn {
+	background: var(--noel-primary) !important;
+	border-color: var(--noel-gold) !important;
+	color: #FAF7F2 !important;
+	box-shadow: 0 8px 24px -8px var(--noel-gold-glow), 0 0 0 1px var(--noel-gold-soft);
+}
+
+body.despace-theme-noel .ax-stage-pill--ar:hover,
+body.despace-theme-noel #arViewInRoomBtn:hover {
+	background: var(--noel-primary-deep) !important;
+	box-shadow: 0 10px 28px -6px var(--noel-gold-glow), 0 0 0 2px var(--noel-gold);
+}
+
+body.despace-theme-noel #axView3DModelBtn {
+	border-color: var(--noel-gold) !important;
+	box-shadow: 0 4px 16px -6px var(--noel-gold-soft);
+}
+
+body.despace-theme-noel .ax-room-modal-dialog {
+	border-color: var(--noel-gold);
+	box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45), 0 0 38px -8px var(--noel-gold-glow);
+}
+
+body.despace-theme-noel .ax-room-badge {
+	background: var(--noel-primary);
+	color: var(--noel-gold);
+	border: 1px solid var(--noel-gold-soft);
+}
+
+/* 7. Trust Bar & Footer — Warm Winter Finale */
+body.despace-theme-noel .fv-footer {
+	background: var(--noel-footer-bg);
+	color: var(--noel-footer-ink);
+	border-top: 2px solid var(--noel-gold-soft);
+}
+
+body.despace-theme-noel .fv-footer h2,
+body.despace-theme-noel .fv-footer strong,
+body.despace-theme-noel .fv-footer .fv-footer__owner-name {
+	color: #FAF7F2;
+}
+
+body.despace-theme-noel .fv-footer a,
+body.despace-theme-noel .fv-footer p,
+body.despace-theme-noel .fv-footer li,
+body.despace-theme-noel .fv-footer span {
+	color: rgba(250, 247, 242, 0.82);
+}
+
+body.despace-theme-noel .fv-footer a:hover {
+	color: var(--noel-gold);
+}
+
+body.despace-theme-noel .fv-brand-logo-img--footer {
+	filter: brightness(0) invert(1) sepia(0.14) saturate(0.9);
+}
+
+body.despace-theme-noel .fv-footer__owner-avatar {
+	background: var(--noel-gold);
+	color: #1C1917;
+}
+
+/* 8. Lightweight Snow / Champagne Bokeh Canvas & Customer Toggle Button
+   Strict Z-Index Discipline:
+     canvas (150) < toggle (190) < header (200) < mega-menu (300) < drawer (500) < dialog (700) < 3D modal (100050) */
+#despace-noel-canvas {
+	position: fixed;
+	inset: 0;
+	width: 100vw;
+	height: 100vh;
+	pointer-events: none;
+	z-index: 150;
+	transition: opacity 0.35s ease;
+}
+
+#despace-noel-canvas.is-paused {
+	opacity: 0;
+}
+
+#despace-noel-snow-toggle {
+	position: fixed;
+	left: 18px;
+	bottom: 22px;
+	z-index: 190;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 36px;
+	padding: 0 12px;
+	border-radius: 999px;
+	border: 1px solid var(--noel-gold-soft);
+	background: rgba(255, 255, 255, 0.92);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+	color: var(--noel-primary);
+	font-family: var(--despace-font-sans, "Inter", sans-serif);
+	font-size: 12px;
+	font-weight: 600;
+	cursor: pointer;
+	box-shadow: 0 6px 20px rgba(28, 25, 23, 0.12);
+	transition: transform 0.18s ease, background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+#despace-noel-snow-toggle:hover {
+	transform: translateY(-2px);
+	background: var(--noel-primary);
+	border-color: var(--noel-gold);
+	color: #FAF7F2;
+}
+
+#despace-noel-snow-toggle[aria-pressed="false"] {
+	opacity: 0.72;
+}
+
+#despace-noel-snow-toggle:focus-visible {
+	outline: 2px solid var(--noel-gold);
+	outline-offset: 2px;
+}
+
+#despace-noel-snow-toggle .ds-noel-flake {
+	font-size: 14px;
+	line-height: 1;
+	color: var(--noel-gold);
+}
+
+@media (max-width: 767.98px) {
+	#despace-noel-snow-toggle {
+		left: 12px;
+		bottom: 76px;
+		height: 34px;
+		padding: 0 10px;
+	}
+	#despace-noel-snow-toggle .ds-noel-toggle-text {
+		display: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#despace-noel-canvas {
+		display: none !important;
+	}
+	#despace-noel-snow-toggle {
+		display: none !important;
+	}
+}

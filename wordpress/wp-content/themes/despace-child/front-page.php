@@ -226,14 +226,29 @@ $hero_products = array(
 			</div>
 		</section>
 
-		<section class="fv-diwali-banner fv-wrap fv-reveal fv-reveal-fade" id="despace-welcome-offer" data-legacy-id="furniva-welcome-offer" aria-label="<?php echo esc_attr(furniva_t('Welcome offer', 'Ưu đãi chào mừng')); ?>">
-			<span class="fv-diwali-banner__lamp" aria-hidden="true">✧</span>
+		<?php
+		$home_seasonal = function_exists('despace_get_active_seasonal_config') ? despace_get_active_seasonal_config() : null;
+		$offer_code    = ($home_seasonal && ! empty($home_seasonal['promo_code'])) ? (string) $home_seasonal['promo_code'] : 'WELCOME10';
+		$offer_kicker  = $home_seasonal
+			? furniva_t('DeSpace Holiday Edition', 'BỘ SƯU TẬP MÙA GIÁNG SINH DeSpace')
+			: furniva_t('A DeSpace welcome', 'ƯU ĐÃI CHÀO MỪNG DeSpace');
+		$offer_heading = $home_seasonal
+			? furniva_t('Warm spaces crafted for festive gatherings.', 'Tổ ấm nồng ấm cho mùa Giáng sinh an lành.')
+			: furniva_t('A more thoughtful home starts here.', 'Bắt đầu một không gian sống thật có gu.');
+		$offer_sub     = $home_seasonal
+			? (furniva_is_vi()
+				? (trim((string) ($home_seasonal['promo_banner_vi'] ?? '')) ?: sprintf('Nhập mã %s nhận ngay đặc quyền ưu đãi Giáng sinh.', $offer_code))
+				: (trim((string) ($home_seasonal['promo_banner_en'] ?? '')) ?: sprintf('Use code %s for exclusive seasonal savings.', $offer_code)))
+			: furniva_t('Take 10% off with code WELCOME10.', 'Giảm 10% với mã WELCOME10.');
+		?>
+		<section class="fv-diwali-banner fv-wrap fv-reveal fv-reveal-fade" id="despace-welcome-offer" data-legacy-id="furniva-welcome-offer" aria-label="<?php echo esc_attr($offer_kicker); ?>">
+			<span class="fv-diwali-banner__lamp" aria-hidden="true"><?php echo $home_seasonal ? '❄' : '✧'; ?></span>
 			<div class="fv-diwali-banner__copy">
-				<p><?php echo esc_html(furniva_t('A DeSpace welcome', 'ƯU ĐÃI CHÀO MỪNG DeSpace')); ?></p>
-				<h2><?php echo esc_html(furniva_t('A more thoughtful home starts here.', 'Bắt đầu một không gian sống thật có gu.')); ?></h2>
-				<span><?php echo esc_html(furniva_t('Take 10% off with code WELCOME10.', 'Giảm 10% với mã WELCOME10.')); ?></span>
+				<p><?php echo esc_html($offer_kicker); ?></p>
+				<h2><?php echo esc_html($offer_heading); ?></h2>
+				<span><?php echo esc_html($offer_sub); ?></span>
 			</div>
-			<button class="fv-diwali-banner__button f-copy-coupon" type="button" data-code="WELCOME10"><?php echo esc_html(furniva_t('Copy WELCOME10', 'Sao chép WELCOME10')); ?> <span aria-hidden="true">↗</span></button>
+			<button class="fv-diwali-banner__button f-copy-coupon" type="button" data-code="<?php echo esc_attr($offer_code); ?>"><?php echo esc_html(sprintf(furniva_t('Copy %s', 'Sao chép %s'), $offer_code)); ?> <span aria-hidden="true">↗</span></button>
 		</section>
 
 		<section class="fv-section fv-wrap fv-home-product-section fv-reveal fv-reveal-up" aria-labelledby="fv-best-title">

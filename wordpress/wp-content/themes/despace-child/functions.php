@@ -188,6 +188,24 @@ function despace_get_free_shipping_threshold(): float {
 }
 
 /**
+ * Return active Seasonal (Noel) configuration for the current frontend visitor,
+ * or null when Seasonal Mode is OFF / outside schedule / hidden from guests in preview.
+ * Guarantees 100% Zero-Footprint when inactive.
+ *
+ * @return array<string, mixed>|null
+ */
+function despace_get_active_seasonal_config(): ?array {
+	if ( ! class_exists( '\DeSpace\Seasonal\SeasonalSettings' ) ) {
+		return null;
+	}
+	$state = \DeSpace\Seasonal\SeasonalSettings::get_effective_state();
+	if ( empty( $state['active'] ) ) {
+		return null;
+	}
+	return $state['settings'];
+}
+
+/**
  * Return all published product IDs that have a valid 3D model (custom table + postmeta).
  *
  * @return int[]

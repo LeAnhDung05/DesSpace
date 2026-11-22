@@ -65,6 +65,7 @@ if ( ! empty( $pdp_raw_dims['length'] ) && ! empty( $pdp_raw_dims['width'] ) && 
 } elseif ( ! empty( $pdp_model_info['dimensions'] ) ) {
     $pdp_dim_str = $pdp_model_info['dimensions'];
 }
+$pdp_seasonal  = function_exists( 'despace_get_active_seasonal_config' ) ? despace_get_active_seasonal_config() : null;
 $free_ship_vnd = function_exists( 'despace_get_free_shipping_threshold' ) ? despace_get_free_shipping_threshold() : 5000000.0;
 $free_ship_lbl = furniva_is_vi()
     ? number_format( $free_ship_vnd, 0, ',', '.' ) . ' ₫'
@@ -342,7 +343,7 @@ $free_ship_lbl = furniva_is_vi()
                             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                             <circle cx="12" cy="13" r="4"/>
                         </svg>
-                        <span><?php echo esc_html( furniva_t( 'View in Your Room (AR)', 'Xem Trong Phòng Bạn (AR)' ) ); ?></span>
+                        <span><?php echo esc_html( $pdp_seasonal ? furniva_t( 'Place in Holiday Room (AR)', 'Thử đặt vào phòng đón Noel (AR)' ) : furniva_t( 'View in Your Room (AR)', 'Xem Trong Phòng Bạn (AR)' ) ); ?></span>
                     </button>
                     <?php endif; ?>
                 </div>

@@ -193,6 +193,11 @@ class Plugin {
 		if ( class_exists( 'DeSpace\\Admin\\AdminModule' ) && method_exists( 'DeSpace\\Admin\\AdminModule', 'init' ) ) {
 			\DeSpace\Admin\AdminModule::init();
 		}
+
+		// Seasonal Mode (Noel) Feature Flag Module.
+		if ( class_exists( 'DeSpace\\Seasonal\\SeasonalModule' ) && method_exists( 'DeSpace\\Seasonal\\SeasonalModule', 'init' ) ) {
+			\DeSpace\Seasonal\SeasonalModule::init();
+		}
 	}
 }
 

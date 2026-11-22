@@ -70,6 +70,9 @@ usort( $nav_categories, static function ( $a, $b ) use ( $cat_priority ) {
 	return $pa === $pb ? ( (int) $b->count <=> (int) $a->count ) : ( $pa <=> $pb );
 } );
 
+$seasonal_cfg = function_exists( 'despace_get_active_seasonal_config' ) ? despace_get_active_seasonal_config() : null;
+$marquee_sep  = $seasonal_cfg ? '❄' : '✦';
+
 $announcements = array(
 	array(
 		'text'    => furniva_t( 'Welcome offer: 10% off your first order with code WELCOME10', 'Ưu đãi chào mừng: giảm 10% đơn đầu tiên với mã WELCOME10' ),
@@ -107,6 +110,35 @@ $announcements = array(
 		'url'     => furniva_url( '/lien-he/' ),
 	),
 );
+
+if ( $seasonal_cfg ) {
+	$noel_marquee_text = furniva_is_vi()
+		? trim( (string) ( $seasonal_cfg['marquee_vi'] ?? '' ) )
+		: trim( (string) ( $seasonal_cfg['marquee_en'] ?? '' ) );
+	$noel_items = array();
+	if ( '' !== $noel_marquee_text ) {
+		$noel_items[] = array(
+			'text'    => $noel_marquee_text,
+			'title'   => furniva_t( 'DeSpace Holiday Edition', 'Bộ sưu tập Mùa Giáng Sinh DeSpace' ),
+			'content' => $noel_marquee_text,
+			'action'  => furniva_t( 'Explore Holiday Offers', 'Khám phá ưu đãi Noel' ),
+			'url'     => add_query_arg( 'on_sale', '1', $shop_url ),
+		);
+	}
+	$noel_code = trim( (string) ( $seasonal_cfg['promo_code'] ?? '' ) );
+	if ( '' !== $noel_code ) {
+		$noel_items[] = array(
+			'text'    => sprintf( furniva_t( 'Holiday Code %s — Exclusive seasonal furniture privileges', 'Mã ưu đãi Noel %s — Đặc quyền nội thất mùa lễ hội' ), $noel_code ),
+			'title'   => furniva_t( 'Holiday Promo Code', 'Mã ưu đãi Giáng sinh' ),
+			'content' => $noel_code,
+			'action'  => furniva_t( 'Shop Now', 'Mua sắm ngay' ),
+			'url'     => add_query_arg( 'on_sale', '1', $shop_url ),
+		);
+	}
+	if ( ! empty( $noel_items ) ) {
+		$announcements = array_merge( $noel_items, array_slice( $announcements, 1 ) );
+	}
+}
 ?>
 <header class="fv-header" id="top">
 	<div class="fv-announcement" role="region" aria-label="<?php echo esc_attr( furniva_t( 'Store announcements', 'Thông báo từ cửa hàng' ) ); ?>">
@@ -117,7 +149,7 @@ $announcements = array(
 						<a class="fv-announcement__item" href="<?php echo esc_url( $item['url'] ); ?>" title="<?php echo esc_attr( $item['title'] ); ?>">
 							<?php echo esc_html( $item['text'] ); ?>
 						</a>
-						<span class="fv-announcement__separator" aria-hidden="true">✦</span>
+						<span class="fv-announcement__separator" aria-hidden="true"><?php echo esc_html( $marquee_sep ); ?></span>
 					<?php endforeach; ?>
 				</div>
 				<div class="fv-announcement__group" aria-hidden="true">
@@ -125,7 +157,7 @@ $announcements = array(
 						<a class="fv-announcement__item" href="<?php echo esc_url( $item['url'] ); ?>" tabindex="-1">
 							<?php echo esc_html( $item['text'] ); ?>
 						</a>
-						<span class="fv-announcement__separator">✦</span>
+						<span class="fv-announcement__separator"><?php echo esc_html( $marquee_sep ); ?></span>
 					<?php endforeach; ?>
 				</div>
 			</div>
@@ -141,6 +173,11 @@ $announcements = array(
 					<?php echo wp_get_attachment_image( $logo_id, 'full', false, array( 'alt' => 'DeSpace' ) ); ?>
 				<?php else : ?>
 					<img class="fv-brand-logo-img" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/despace-logo-header.png' ); ?>" alt="DeSpace - Luxury Living, Lasting Value" width="168" height="56" />
+				<?php endif; ?>
+				<?php if ( $seasonal_cfg && ! empty( $seasonal_cfg['header_accent'] ) ) : ?>
+					<span class="ds-noel-brand-accent" aria-hidden="true">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l1.6 4.4L18 8l-4.4 1.6L12 14l-1.6-4.4L6 8l4.4-1.6L12 2z"/><path d="M18.5 14l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z"/></svg>
+					</span>
 				<?php endif; ?>
 			</a>
 		</div>
