@@ -34,8 +34,9 @@ $logo_id = get_theme_mod( 'custom_logo' );
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<?php $head_seasonal_cfg = function_exists( 'despace_get_active_seasonal_config' ) ? despace_get_active_seasonal_config() : null; ?>
 <?php if ( is_front_page() ) : ?>
-<link rel="preload" as="image" href="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/hero-scandinavian.jpg' ); ?>" fetchpriority="high" />
+<link rel="preload" as="image" type="image/webp" href="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/' . ( $head_seasonal_cfg ? 'hero-winter-atelier.webp' : 'hero-scandinavian.webp' ) ); ?>" fetchpriority="high" />
 <?php endif; ?>
 <link rel="icon" type="image/png" href="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/despace-favicon.png' ); ?>" />
 <link rel="apple-touch-icon" href="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/despace-app-icon.png' ); ?>" />
@@ -70,45 +71,56 @@ usort( $nav_categories, static function ( $a, $b ) use ( $cat_priority ) {
 	return $pa === $pb ? ( (int) $b->count <=> (int) $a->count ) : ( $pa <=> $pb );
 } );
 
-$seasonal_cfg = function_exists( 'despace_get_active_seasonal_config' ) ? despace_get_active_seasonal_config() : null;
-$marquee_sep  = $seasonal_cfg ? '❄' : '✦';
+$seasonal_cfg     = $head_seasonal_cfg ?? ( function_exists( 'despace_get_active_seasonal_config' ) ? despace_get_active_seasonal_config() : null );
+$marquee_sep      = $seasonal_cfg ? '❄' : '✦';
+$verified_coupon  = function_exists( 'despace_get_verified_coupon' )
+	? despace_get_verified_coupon( $seasonal_cfg ? (string) ( $seasonal_cfg['promo_code'] ?? '' ) : null )
+	: null;
+$count_3d_real    = function_exists( 'despace_get_3d_product_ids' ) ? count( despace_get_3d_product_ids() ) : 0;
 
-$announcements = array(
-	array(
-		'text'    => furniva_t( 'Welcome offer: 10% off your first order with code WELCOME10', 'Ưu đãi chào mừng: giảm 10% đơn đầu tiên với mã WELCOME10' ),
-		'title'   => furniva_t( 'Welcome Offer: 10% Off Your First Order', 'Ưu đãi chào mừng: Giảm 10% đơn hàng đầu tiên' ),
-		'content' => furniva_t( 'Enter promotional code WELCOME10 at checkout to enjoy 10% off your entire first luxury furniture order at DeSpace.', 'Sử dụng mã ưu đãi WELCOME10 khi thanh toán để được giảm ngay 10% cho toàn bộ sản phẩm trong đơn hàng đầu tiên tại DeSpace.' ),
+$announcements = array();
+if ( $verified_coupon ) {
+	$announcements[] = array(
+		'text'    => sprintf(
+			furniva_t( 'Active code %1$s: enjoy %2$s at checkout', 'Mã ưu đãi %1$s: %2$s trực tiếp khi thanh toán' ),
+			$verified_coupon['code'],
+			furniva_is_vi() ? $verified_coupon['label_vi'] : $verified_coupon['label_en']
+		),
+		'title'   => sprintf( furniva_t( 'Promo Code %s', 'Mã ưu đãi %s' ), $verified_coupon['code'] ),
+		'content' => $verified_coupon['code'],
 		'action'  => furniva_t( 'Shop Now', 'Mua sắm ngay' ),
 		'url'     => $shop_url,
-	),
-	array(
-		'text'    => sprintf( furniva_t( 'Complimentary nationwide delivery on orders over %s', 'Miễn phí giao hàng toàn quốc cho đơn từ %s' ), furniva_is_vi() ? $free_ship_vi : $free_ship_en ),
-		'title'   => furniva_t( 'Complimentary Insured Delivery & Assembly', 'Miễn phí giao hàng & lắp đặt tận nơi' ),
-		'content' => sprintf( furniva_t( 'DeSpace offers complimentary nationwide delivery and white-glove assembly on all orders from %s.', 'DeSpace miễn phí 100%% chi phí vận chuyển toàn quốc và hỗ trợ lắp đặt chuyên nghiệp đối với mọi đơn hàng từ %s.' ), furniva_is_vi() ? $free_ship_vi : $free_ship_en ),
-		'action'  => furniva_t( 'Explore Collection', 'Khám phá bộ sưu tập' ),
-		'url'     => $shop_url,
-	),
-	array(
-		'text'    => furniva_t( 'Interactive 1:1 3D & AR room preview on every design', 'Trải nghiệm xem 3D & đặt thử AR tỷ lệ 1:1 trên mọi sản phẩm' ),
-		'title'   => furniva_t( 'DeSpace 3D & AR Showroom', 'Không gian trải nghiệm 3D & AR DeSpace' ),
-		'content' => furniva_t( 'Inspect wood textures, open doors in 3D, and place true-to-scale furniture directly in your room via mobile AR.', 'Quan sát chi tiết vân gỗ, đóng mở cánh tủ 3D trực quan và đặt nội thất tỷ lệ 1:1 ngay trong phòng qua Camera AR.' ),
-		'action'  => furniva_t( 'Explore 3D Collection', 'Khám phá bộ sưu tập 3D' ),
-		'url'     => add_query_arg( 'has_3d', 'yes', $shop_url ),
-	),
-	array(
-		'text'    => furniva_t( '5-year structural warranty & 30-day return assurance', 'Bảo hành kết cấu 5 năm · Đổi trả linh hoạt trong 30 ngày' ),
-		'title'   => furniva_t( 'Craftsmanship Warranty & Returns', 'Chính sách bảo hành & Đổi trả DeSpace' ),
-		'content' => furniva_t( 'Every DeSpace piece is backed by our 5-year craftsmanship warranty and 30-day return support.', 'Mỗi thiết kế tại DeSpace đi kèm chính sách bảo hành kết cấu 5 năm và hỗ trợ đổi trả minh bạch trong 30 ngày.' ),
-		'action'  => furniva_t( 'View Policy', 'Xem chính sách' ),
-		'url'     => furniva_url( '/chinh-sach-doi-tra-bao-hanh/' ),
-	),
-	array(
-		'text'    => furniva_t( '1-on-1 interior consultation with DeSpace architects', 'Tư vấn không gian sống 1-1 cùng kiến trúc sư DeSpace' ),
-		'title'   => furniva_t( '1-on-1 Personal Interior Styling Consultation', 'Tư vấn không gian sống 1-1 cùng chuyên gia' ),
-		'content' => furniva_t( 'Book a personalized styling session with our interior architects at our Hanoi showroom or via virtual consultation.', 'Đặt lịch tư vấn trực tiếp 1-1 cùng đội ngũ kiến trúc sư DeSpace tại Showroom Hà Nội hoặc tư vấn trực tuyến.' ),
-		'action'  => furniva_t( 'Book Consultation', 'Đặt lịch tư vấn' ),
-		'url'     => furniva_url( '/lien-he/' ),
-	),
+	);
+}
+$announcements[] = array(
+	'text'    => furniva_t( 'Standard delivery & in-room placement — see shipping details', 'Giao hàng tiêu chuẩn & đồng kiểm lắp đặt — xem chính sách vận chuyển' ),
+	'title'   => furniva_t( 'Delivery & White-Glove Inspection Policy', 'Chính sách giao hàng & lắp đặt tận nơi' ),
+	'content' => furniva_t( 'Review estimated delivery timelines and inspection procedures on our Shipping Policy page.', 'Xem quy trình đồng kiểm và thời gian giao nhận dự kiến tại trang Chính sách giao hàng.' ),
+	'action'  => furniva_t( 'View Shipping Policy', 'Xem chính sách giao hàng' ),
+	'url'     => furniva_url( '/chinh-sach-giao-hang/' ),
+);
+$announcements[] = array(
+	'text'    => $count_3d_real > 0
+		? sprintf( furniva_t( 'Interactive 1:1 3D & AR preview available on %d designs', 'Trải nghiệm xem 3D & đặt thử AR tỷ lệ 1:1 trên %d mẫu thiết kế' ), $count_3d_real )
+		: furniva_t( 'Interactive 1:1 3D & AR room preview', 'Trải nghiệm xem 3D & đặt thử AR tỷ lệ 1:1' ),
+	'title'   => furniva_t( 'DeSpace 3D & AR Showroom', 'Không gian trải nghiệm 3D & AR DeSpace' ),
+	'content' => furniva_t( 'Inspect wood textures, open doors in 3D, and place true-to-scale furniture directly in your room via mobile AR.', 'Quan sát chi tiết vân gỗ, đóng mở cánh tủ 3D trực quan và đặt nội thất tỷ lệ 1:1 ngay trong phòng qua Camera AR.' ),
+	'action'  => furniva_t( 'Explore 3D Collection', 'Khám phá bộ sưu tập 3D' ),
+	'url'     => add_query_arg( 'has_3d', 'yes', $shop_url ),
+);
+$announcements[] = array(
+	'text'    => furniva_t( 'Structural timber & hardware support — transparent technical exchange policy', 'Chính sách bảo hành kết cấu gỗ, phụ kiện & hỗ trợ đổi lỗi kỹ thuật' ),
+	'title'   => furniva_t( 'Warranty & Returns Policy', 'Chính sách bảo hành & Đổi trả DeSpace' ),
+	'content' => furniva_t( 'Review structural and hardware support coverage on our Returns & Warranty page.', 'Xem chi tiết phạm vi hỗ trợ kết cấu khung gỗ, phụ kiện và quy trình đổi mới tại trang Chính sách.' ),
+	'action'  => furniva_t( 'View Policy', 'Xem chính sách' ),
+	'url'     => furniva_url( '/chinh-sach-doi-tra-bao-hanh/' ),
+);
+$announcements[] = array(
+	'text'    => furniva_t( 'Direct interior consultation with DeSpace studio', 'Tư vấn bài trí không gian sống cùng studio DeSpace' ),
+	'title'   => furniva_t( 'Interior Styling Consultation', 'Tư vấn không gian sống DeSpace' ),
+	'content' => furniva_t( 'Submit your room dimensions or product questions via our Contact page.', 'Gửi kích thước không gian hoặc yêu cầu tư vấn trực tiếp qua trang Liên hệ.' ),
+	'action'  => furniva_t( 'Contact Us', 'Liên hệ tư vấn' ),
+	'url'     => furniva_url( '/lien-he/' ),
 );
 
 if ( $seasonal_cfg ) {
@@ -119,24 +131,14 @@ if ( $seasonal_cfg ) {
 	if ( '' !== $noel_marquee_text ) {
 		$noel_items[] = array(
 			'text'    => $noel_marquee_text,
-			'title'   => furniva_t( 'DeSpace Holiday Edition', 'Bộ sưu tập Mùa Giáng Sinh DeSpace' ),
+			'title'   => furniva_t( 'DeSpace Winter Atelier 2026', 'DeSpace Winter Atelier 2026' ),
 			'content' => $noel_marquee_text,
-			'action'  => furniva_t( 'Explore Holiday Offers', 'Khám phá ưu đãi Noel' ),
-			'url'     => add_query_arg( 'on_sale', '1', $shop_url ),
-		);
-	}
-	$noel_code = trim( (string) ( $seasonal_cfg['promo_code'] ?? '' ) );
-	if ( '' !== $noel_code ) {
-		$noel_items[] = array(
-			'text'    => sprintf( furniva_t( 'Holiday Code %s — Exclusive seasonal furniture privileges', 'Mã ưu đãi Noel %s — Đặc quyền nội thất mùa lễ hội' ), $noel_code ),
-			'title'   => furniva_t( 'Holiday Promo Code', 'Mã ưu đãi Giáng sinh' ),
-			'content' => $noel_code,
-			'action'  => furniva_t( 'Shop Now', 'Mua sắm ngay' ),
-			'url'     => add_query_arg( 'on_sale', '1', $shop_url ),
+			'action'  => furniva_t( 'Explore Winter Atelier', 'Khám phá Winter Atelier' ),
+			'url'     => add_query_arg( 'collection', 'winter-atelier', $shop_url ),
 		);
 	}
 	if ( ! empty( $noel_items ) ) {
-		$announcements = array_merge( $noel_items, array_slice( $announcements, 1 ) );
+		$announcements = array_merge( $noel_items, $announcements );
 	}
 }
 ?>

@@ -386,13 +386,9 @@ jQuery(function ($) {
 		title: furnivaData.strings.searchButton
 	});
 
-	/* ---------------------------------------------------------------- newsletter (demo) */
+	/* ---------------------------------------------------------------- newsletter (honest guard if rendered) */
 	$("#furniva-newsletter").on("submit", function (e) {
 		e.preventDefault();
-		var email = $(this).find("input[type=email]").val();
-		if (!email) return;
-		$(this).find("input").val("");
-		$(".f-news-ok").fadeIn();
 		toast(furnivaData.strings.newsletterSuccess);
 	});
 

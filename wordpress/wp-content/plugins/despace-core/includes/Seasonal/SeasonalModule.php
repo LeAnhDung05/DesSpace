@@ -106,6 +106,10 @@ class SeasonalModule {
 
 			$is_vi      = function_exists( 'furniva_is_vi' ) ? (bool) furniva_is_vi() : true;
 			$promo_code = trim( (string) ( $settings['promo_code'] ?? '' ) );
+			if ( function_exists( 'despace_get_verified_coupon' ) ) {
+				$verified_c = despace_get_verified_coupon( $promo_code );
+				$promo_code = $verified_c ? $verified_c['code'] : '';
+			}
 
 			wp_localize_script(
 				'despace-noel',

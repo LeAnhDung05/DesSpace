@@ -268,7 +268,7 @@ class SeasonalAdminPage {
 							<div class="ds-mini-gift" id="dsPrevGift" style="border-color: <?php echo esc_attr( $active_prev['accent'] ); ?>; <?php echo empty( $settings['gift_box_enabled'] ) ? 'display:none;' : ''; ?>">
 								<span class="ds-mini-gift-seal" style="background: <?php echo esc_attr( $active_prev['accent'] ); ?>;">❄</span>
 								<small>Phong bao ưu đãi</small>
-								<code id="dsPrevPromoCode"><?php echo esc_html( $settings['promo_code'] ?: 'NOEL2026' ); ?></code>
+								<code id="dsPrevPromoCode"><?php echo esc_html( $settings['promo_code'] ?: 'DESPACE10' ); ?></code>
 							</div>
 						</div>
 						<div class="ds-mini-cards">
@@ -494,8 +494,8 @@ class SeasonalAdminPage {
 								<input type="text" id="ds-marquee-en" name="marquee_en" maxlength="240" value="<?php echo esc_attr( $settings['marquee_en'] ); ?>" placeholder="Season of Warmth — Holiday savings up to 20%..." />
 							</div>
 							<div class="ds-field-group">
-								<label for="ds-promo-code"><?php esc_html_e( 'Mã ưu đãi Noel tùy chọn (ví dụ: NOEL2026):', 'despace-core' ); ?></label>
-								<input type="text" id="ds-promo-code" name="promo_code" maxlength="32" value="<?php echo esc_attr( $settings['promo_code'] ); ?>" placeholder="NOEL2026" style="text-transform:uppercase;font-weight:700;letter-spacing:0.06em;" />
+								<label for="ds-promo-code"><?php esc_html_e( 'Mã ưu đãi WooCommerce đang hoạt động (ví dụ: DESPACE10):', 'despace-core' ); ?></label>
+								<input type="text" id="ds-promo-code" name="promo_code" maxlength="32" value="<?php echo esc_attr( $settings['promo_code'] ); ?>" placeholder="DESPACE10" style="text-transform:uppercase;font-weight:700;letter-spacing:0.06em;" />
 							</div>
 							<div class="ds-field-group">
 								<label for="ds-promo-vi"><?php esc_html_e( 'Thông điệp Banner & Phong bao (Tiếng Việt):', 'despace-core' ); ?></label>
@@ -728,7 +728,7 @@ class SeasonalAdminPage {
 
 				var codeInput = document.getElementById('ds-promo-code');
 				var codeEl = document.getElementById('dsPrevPromoCode');
-				if (codeEl && codeInput) codeEl.textContent = (codeInput.value || 'NOEL2026').toUpperCase();
+				if (codeEl && codeInput) codeEl.textContent = (codeInput.value || 'DESPACE10').toUpperCase();
 
 				var hasAccent = document.getElementById('ds-header-accent') && document.getElementById('ds-header-accent').checked;
 				var garland = document.getElementById('dsPrevGarland');

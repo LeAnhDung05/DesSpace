@@ -168,17 +168,17 @@ $facebook_url = ! empty( $contact_info['facebook_url'] ) ? trim( $contact_info['
 
 	<div class="fv-wrap fv-footer__newsletter">
 		<div class="fv-footer__newsletter-copy">
-			<h2><?php echo esc_html( furniva_t( 'A note from DeSpace', 'Bản tin DeSpace' ) ); ?></h2>
-			<p><?php echo esc_html( furniva_t( 'Occasional notes on new pieces, thoughtful spaces and studio news.', 'Cập nhật vừa đủ về sản phẩm mới, không gian sống và tin tức từ studio.' ) ); ?></p>
+			<h2><?php echo esc_html( furniva_t( 'Studio Consultation & Updates', 'Tư vấn & Liên hệ DeSpace' ) ); ?></h2>
+			<p><?php echo esc_html( furniva_t( 'Need dimension guidance, wood finish advice, or 3D/AR support? Send a direct consultation inquiry to our studio.', 'Cần tư vấn kích thước, tông gỗ hoàn thiện hoặc hỗ trợ xem 3D/AR? Gửi yêu cầu trực tiếp tới đội ngũ DeSpace.' ) ); ?></p>
 		</div>
 		<div class="fv-footer__newsletter-form-wrap">
-			<form id="furniva-newsletter">
-				<label class="screen-reader-text" for="furniva-newsletter-email"><?php echo esc_html( furniva_t( 'Email address', 'Địa chỉ email' ) ); ?></label>
-				<input id="furniva-newsletter-email" name="newsletter_email" type="email" autocomplete="email" placeholder="<?php echo esc_attr( furniva_t( 'Your email address', 'Địa chỉ email của bạn' ) ); ?>" required />
-				<button type="submit"><?php echo esc_html( furniva_t( 'Subscribe', 'Đăng ký' ) ); ?></button>
-			</form>
-			<div class="f-news-ok" role="status" aria-live="polite"><?php echo esc_html( furniva_t( 'Thanks for subscribing — check your inbox for the WELCOME10 code.', 'Cảm ơn bạn đã đăng ký — hãy kiểm tra email để nhận mã WELCOME10.' ) ); ?></div>
-			<div class="f-news-note"><?php echo esc_html( furniva_t( 'By subscribing you agree to our privacy policy.', 'Khi đăng ký, bạn đồng ý với chính sách quyền riêng tư của chúng tôi.' ) ); ?></div>
+			<div class="fv-footer__consult-cta" style="display:flex;align-items:center;flex-wrap:wrap;gap:12px;">
+				<a class="f-btn f-btn--primary" href="<?php echo esc_url( furniva_url( '/lien-he/' ) ); ?>" style="display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:10px 20px;border-radius:999px;background:#F4F0E8;color:#183B36;font-weight:600;font-size:13px;text-decoration:none;">
+					<span><?php echo esc_html( furniva_t( 'Open Consultation Form', 'Gửi yêu cầu tư vấn' ) ); ?></span>
+					<span aria-hidden="true">→</span>
+				</a>
+				<span class="f-news-note" style="margin:0;"><?php echo esc_html( furniva_t( 'Email newsletter subscription is not connected in this project demo; the Contact form uses a live AJAX handler.', 'Đăng ký bản tin email chưa kết nối máy chủ gửi thư trong bản mô phỏng; biểu mẫu Liên hệ hỗ trợ gửi yêu cầu trực tiếp.' ) ); ?></span>
+			</div>
 		</div>
 	</div>
 
@@ -190,31 +190,23 @@ $facebook_url = ! empty( $contact_info['facebook_url'] ) ? trim( $contact_info['
 			<span class="fv-legal-sep" aria-hidden="true">·</span>
 			<a href="<?php echo esc_url( furniva_url( '/dieu-khoan-mua-ban/' ) ); ?>"><?php echo esc_html( furniva_t( 'Terms of Sale', 'Điều khoản mua bán' ) ); ?></a>
 		</div>
-		<div class="f-payments" aria-label="<?php echo esc_attr( furniva_t( 'Available payment methods', 'Phương thức thanh toán' ) ); ?>">
-			<!-- Official VISA Badge -->
-			<span class="f-payment f-payment--visa" role="img" aria-label="VISA" title="VISA Card">
-				<svg viewBox="0 0 50 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-					<rect width="50" height="32" rx="4" fill="#ffffff" stroke="#e3ded7"/>
-					<text x="25" y="21" font-family="'Arial Black', -apple-system, sans-serif" font-weight="900" font-style="italic" font-size="15" fill="#1434CB" text-anchor="middle" letter-spacing="0.5">VISA</text>
+		<?php
+		$enabled_gateways = ( function_exists( 'WC' ) && WC()->payment_gateways() )
+			? array_keys( WC()->payment_gateways()->get_available_payment_gateways() )
+			: array( 'bacs', 'cod' );
+		?>
+		<div class="f-payments" aria-label="<?php echo esc_attr( furniva_t( 'Active checkout payment methods', 'Phương thức thanh toán đang kích hoạt' ) ); ?>">
+			<?php if ( in_array( 'bacs', $enabled_gateways, true ) ) : ?>
+			<!-- Active Gateway: Bank Transfer / VietQR (bacs) -->
+			<span class="f-payment f-payment--bacs" role="img" aria-label="<?php echo esc_attr( furniva_t( 'Bank Transfer (BACS / VietQR)', 'Chuyển khoản ngân hàng / VietQR' ) ); ?>" title="<?php echo esc_attr( furniva_t( 'Bank Transfer (BACS / VietQR)', 'Chuyển khoản ngân hàng / VietQR' ) ); ?>">
+				<svg viewBox="0 0 64 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+					<rect width="64" height="32" rx="4" fill="#183B36" stroke="#BD9A62"/>
+					<text x="32" y="19.5" fill="#F4F0E8" font-size="8.5" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" font-weight="700" text-anchor="middle" letter-spacing="0.4">VIETQR</text>
 				</svg>
 			</span>
-			<!-- Official MASTERCARD Badge -->
-			<span class="f-payment f-payment--mastercard" role="img" aria-label="MASTERCARD" title="Mastercard">
-				<svg viewBox="0 0 50 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-					<rect width="50" height="32" rx="4" fill="#ffffff" stroke="#e3ded7"/>
-					<circle cx="19.5" cy="16" r="9" fill="#EB001B"/>
-					<circle cx="30.5" cy="16" r="9" fill="#F79E1B"/>
-					<path d="M25 9.4a9 9 0 0 1 0 13.2 9 9 0 0 1 0-13.2z" fill="#FF5F00"/>
-				</svg>
-			</span>
-			<!-- Official AMEX Badge -->
-			<span class="f-payment f-payment--amex" role="img" aria-label="AMEX" title="American Express">
-				<svg viewBox="0 0 50 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-					<rect width="50" height="32" rx="4" fill="#006FCF" stroke="#005bb0"/>
-					<path d="M9 18.5l2.6-6h2.2l2.6 6h-1.6l-.5-1.3H11.2l-.5 1.3H9zm2.6-2.5h2.2l-1.1-2.7h-.1l-1 2.7zm5.8 2.5V12.5h2.3l1.8 3.5 1.8-3.5h2.3v6h-1.4v-4.1l-2 3.8h-1.4l-2-3.8v4.1h-1.4zm9.8 0V12.5h5.5v1.3h-4v1h3.6v1.3h-3.6v1.1h4v1.3h-5.5zm6.8 0l2.5-3-2.3-3h1.9l1.4 1.9 1.4-1.9h1.9l-2.3 3 2.5 3h-2l-1.5-2-1.5 2H34z" fill="#ffffff"/>
-				</svg>
-			</span>
-			<!-- Official PAYPAL Badge -->
+			<?php endif; ?>
+			<?php if ( in_array( 'ppcp-gateway', $enabled_gateways, true ) || in_array( 'paypal', $enabled_gateways, true ) ) : ?>
+			<!-- Active Gateway: PayPal -->
 			<span class="f-payment f-payment--paypal" role="img" aria-label="PAYPAL" title="PayPal">
 				<svg viewBox="0 0 50 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 					<rect width="50" height="32" rx="4" fill="#ffffff" stroke="#e3ded7"/>
@@ -222,7 +214,9 @@ $facebook_url = ! empty( $contact_info['facebook_url'] ) ? trim( $contact_info['
 					<path d="M22 11.5h5.8c2.8 0 4.6 1.4 4.1 4.2-.6 3.1-2.8 4.8-5.8 4.8H24l-1.2 5.5h-3.1l2.3-14.5z" fill="#0079C1"/>
 				</svg>
 			</span>
-			<!-- Official COD Badge -->
+			<?php endif; ?>
+			<?php if ( in_array( 'cod', $enabled_gateways, true ) ) : ?>
+			<!-- Active Gateway: Cash on Delivery (cod) -->
 			<span class="f-payment f-payment--cod" role="img" aria-label="COD" title="<?php echo esc_attr( furniva_t( 'Cash on delivery (COD)', 'Thanh toán khi nhận hàng (COD)' ) ); ?>">
 				<svg viewBox="0 0 50 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 					<rect width="50" height="32" rx="4" fill="#2d221a" stroke="#48382c"/>
@@ -234,6 +228,7 @@ $facebook_url = ! empty( $contact_info['facebook_url'] ) ? trim( $contact_info['
 					<text x="36" y="19" fill="#ffffff" font-size="8.5" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" font-weight="800" letter-spacing="0.5">COD</text>
 				</svg>
 			</span>
+			<?php endif; ?>
 		</div>
 	</div>
 </footer>

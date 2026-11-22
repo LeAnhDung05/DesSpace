@@ -115,8 +115,8 @@ add_action('wp_head', function () {
 				'Chính sách giao hàng toàn quốc & lắp đặt hoàn thiện tận nhà từ DeSpace.',
 			),
 			'chinh-sach-doi-tra-bao-hanh' => array(
-				'DeSpace 5-Year Structural Warranty & 30-Day Returns Policy for handcrafted furniture.',
-				'Chính sách bảo hành 5 năm và đổi trả linh hoạt 30 ngày cho sản phẩm nội thất DeSpace.',
+				'DeSpace Returns & Structural Warranty Policy — Technical exchange conditions and frame/hardware support (project simulation).',
+				'Chính sách bảo hành kết cấu khung gỗ, phụ kiện và đổi mới lỗi kỹ thuật tại DeSpace (mô phỏng đồ án).',
 			),
 			'chinh-sach-bao-mat'          => array(
 				'DeSpace Privacy Policy — Protecting customer personal information and secure checkout transactions.',
@@ -175,6 +175,32 @@ add_action('wp_head', function () {
 		echo '<link rel="alternate" hreflang="en" href="' . esc_url($en_canonical) . '" />' . "\n";
 	}
 	echo '<link rel="alternate" hreflang="x-default" href="' . esc_url($vi_canonical) . '" />' . "\n";
+
+	// Open Graph & Twitter Card metadata (100% grounded in verified page/product/asset data)
+	$og_url   = $is_vi ? $vi_canonical : $en_canonical;
+	$og_title = wp_get_document_title();
+	$og_type  = is_singular('product') ? 'product' : 'website';
+	$og_loc   = $is_vi ? 'vi_VN' : 'en_US';
+	$og_img   = get_stylesheet_directory_uri() . '/assets/images/' . ($seasonal ? 'hero-winter-atelier.jpg' : 'hero-scandinavian.jpg');
+	if (is_singular('product') && function_exists('wc_get_product')) {
+		$og_prod = wc_get_product(get_the_ID());
+		if ($og_prod && $og_prod->get_image_id()) {
+			$prod_img_url = wp_get_attachment_image_url($og_prod->get_image_id(), 'large');
+			if ($prod_img_url) {
+				$og_img = $prod_img_url;
+			}
+		}
+	}
+	echo '<meta property="og:site_name" content="DeSpace" />' . "\n";
+	echo '<meta property="og:type" content="' . esc_attr($og_type) . '" />' . "\n";
+	echo '<meta property="og:locale" content="' . esc_attr($og_loc) . '" />' . "\n";
+	echo '<meta property="og:title" content="' . esc_attr($og_title) . '" />' . "\n";
+	if ($desc) {
+		echo '<meta property="og:description" content="' . esc_attr($desc) . '" />' . "\n";
+	}
+	echo '<meta property="og:url" content="' . esc_url($og_url) . '" />' . "\n";
+	echo '<meta property="og:image" content="' . esc_url($og_img) . '" />' . "\n";
+	echo '<meta name="twitter:card" content="summary_large_image" />' . "\n";
 }, 1);
 
 // ---------------------------------------------------------------- canonical alias redirects
@@ -296,6 +322,82 @@ function despace_get_active_seasonal_config(): ?array {
 		return null;
 	}
 	return $state['settings'];
+}
+
+/**
+ * Resolve a VERIFIED published WooCommerce coupon from the live database.
+ * Never fabricates or displays a coupon code that does not actually exist as a
+ * published `shop_coupon` post in WooCommerce.
+ *
+ * @param string|null $preferred_code Optional preferred coupon code to verify first.
+ * @return array{code:string,amount:float,discount_type:string,label_vi:string,label_en:string}|null
+ */
+function despace_get_verified_coupon( ?string $preferred_code = null ): ?array {
+	if ( ! function_exists( 'wc_get_coupon_id_by_code' ) || ! class_exists( 'WC_Coupon' ) ) {
+		return null;
+	}
+
+	$candidates = array();
+	if ( null !== $preferred_code && '' !== trim( $preferred_code ) ) {
+		$candidates[] = trim( $preferred_code );
+	}
+	$candidates[] = 'DESPACE10';
+
+	$coupon_id = 0;
+	foreach ( array_unique( $candidates ) as $code ) {
+		$cid = (int) wc_get_coupon_id_by_code( $code );
+		if ( $cid > 0 && 'publish' === get_post_status( $cid ) ) {
+			$coupon_id = $cid;
+			break;
+		}
+	}
+
+	if ( $coupon_id <= 0 ) {
+		$published = get_posts( array(
+			'post_type'      => 'shop_coupon',
+			'post_status'    => 'publish',
+			'posts_per_page' => 1,
+			'orderby'        => 'ID',
+			'order'          => 'ASC',
+			'fields'         => 'ids',
+		) );
+		if ( ! empty( $published[0] ) ) {
+			$coupon_id = (int) $published[0];
+		}
+	}
+
+	if ( $coupon_id <= 0 ) {
+		return null;
+	}
+
+	$coupon = new WC_Coupon( $coupon_id );
+	$expires = $coupon->get_date_expires();
+	if ( $expires && $expires->getTimestamp() < time() ) {
+		return null;
+	}
+
+	$code   = strtoupper( (string) $coupon->get_code() );
+	$amount = (float) $coupon->get_amount();
+	$type   = (string) $coupon->get_discount_type();
+
+	if ( 'percent' === $type ) {
+		$amt_txt  = rtrim( rtrim( number_format( $amount, 2, '.', '' ), '0' ), '.' ) . '%';
+		$label_vi = sprintf( 'giảm %s', $amt_txt );
+		$label_en = sprintf( '%s off', $amt_txt );
+	} else {
+		$amt_vi   = number_format( $amount, 0, ',', '.' ) . ' ₫';
+		$amt_en   = number_format( $amount, 0, '.', ',' ) . ' ₫';
+		$label_vi = sprintf( 'giảm %s', $amt_vi );
+		$label_en = sprintf( '%s off', $amt_en );
+	}
+
+	return array(
+		'code'          => $code,
+		'amount'        => $amount,
+		'discount_type' => $type,
+		'label_vi'      => $label_vi,
+		'label_en'      => $label_en,
+	);
 }
 
 /**
@@ -822,7 +924,7 @@ function furniva_assets() {
 		'loginUrl'             => $wc_account_url,
 		'registerUrl'          => add_query_arg( 'action', 'register', $wc_account_url ),
 		'strings'     => array(
-			'newsletterSuccess' => despace_t('Subscribed! Use code WELCOME10 for 10% off.', 'Đăng ký thành công! Dùng mã WELCOME10 để giảm 10%.'),
+			'newsletterSuccess' => despace_t('Email newsletter delivery is not connected in this project demo. Please reach us via the Contact page.', 'Bản tin email chưa kết nối máy chủ gửi thư trong bản mô phỏng. Vui lòng liên hệ trực tiếp tại trang Liên hệ.'),
 			'contactPreview'    => despace_t('Preview form', 'Biểu mẫu xem trước'),
 			'contactThanks'     => despace_t('Thanks for reaching out.', 'Cảm ơn bạn đã liên hệ.'),
 			'contactNotSent'    => despace_t('This preview does not send email yet. You can reach us at contact@despace.test (Course Simulation).', 'Biểu mẫu xem trước này chưa gửi email. Bạn có thể liên hệ với chúng tôi qua contact@despace.test (Mô phỏng đồ án).'),
