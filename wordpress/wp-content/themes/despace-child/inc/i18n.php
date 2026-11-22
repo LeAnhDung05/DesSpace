@@ -584,10 +584,17 @@ function despace_language_switcher_html() {
 	$current_lang = despace_current_language();
 	$is_vi        = in_array( $current_lang, array( 'vi', 'vi_VN' ), true );
 
+	// Use unfiltered raw site origin from options (home_url() is filtered by TranslatePress on /en/ to append /en!)
+	$raw_origin = rtrim( (string) get_option( 'home' ), '/' );
+	if ( '' === $raw_origin ) {
+		$raw_origin = rtrim( (string) site_url(), '/' );
+	}
+	$raw_origin = preg_replace( '#(/en)+$#i', '', $raw_origin );
+
 	// Preserve percent-encoded UTF-8 Vietnamese slugs (do NOT run sanitize_text_field on REQUEST_URI).
 	$raw_uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '/';
 	$uri     = '/' . ltrim( str_replace( array( "\r", "\n" ), '', $raw_uri ), '/' );
-	$parts   = despace_strip_junk_query_params( home_url( $uri ) );
+	$parts   = despace_strip_junk_query_params( $raw_origin . $uri );
 	$path    = $parts['path'];
 	$qs      = $parts['query'];
 
@@ -598,10 +605,10 @@ function despace_language_switcher_html() {
 	}
 	$base_path = preg_replace( '#/+#', '/', $base_path );
 
-	$vi_url = home_url( $base_path . $qs );
-	$en_url = home_url( ( '/' === $base_path ? '/en/' : '/en' . $base_path ) . $qs );
+	$vi_url = $raw_origin . $base_path . $qs;
+	$en_url = $raw_origin . ( '/' === $base_path ? '/en/' : '/en' . $base_path ) . $qs;
 
-	// Let TranslatePress map translated slugs if available, then re-sanitize to guard against /en/en/ or junk params.
+	// Let TranslatePress map translated slugs if available, then re-sanitize against raw origin to prevent /en/en/ or junk params.
 	if ( class_exists( 'TRP_Translate_Press' ) ) {
 		$trp           = TRP_Translate_Press::get_trp_instance();
 		$url_converter = $trp ? $trp->get_component( 'url_converter' ) : null;
@@ -609,27 +616,28 @@ function despace_language_switcher_html() {
 			$trp_vi = $url_converter->get_url_for_language( 'vi', $vi_url );
 			$trp_en = $url_converter->get_url_for_language( 'en_US', $vi_url );
 			if ( is_string( $trp_vi ) && '' !== $trp_vi ) {
-				$p_vi = despace_strip_junk_query_params( $trp_vi );
+				$p_vi          = despace_strip_junk_query_params( $trp_vi );
 				$clean_vi_path = preg_replace( '#^(/en)+(/|$)#i', '/', $p_vi['path'] );
-				$vi_url = home_url( preg_replace( '#/+#', '/', '/' . ltrim( (string) $clean_vi_path, '/' ) ) . $p_vi['query'] );
+				$clean_vi_path = preg_replace( '#/+#', '/', '/' . ltrim( (string) $clean_vi_path, '/' ) );
+				$vi_url        = $raw_origin . $clean_vi_path . $p_vi['query'];
 			}
 			if ( is_string( $trp_en ) && '' !== $trp_en ) {
-				$p_en = despace_strip_junk_query_params( $trp_en );
+				$p_en          = despace_strip_junk_query_params( $trp_en );
 				$clean_en_base = preg_replace( '#^(/en)+(/|$)#i', '/', $p_en['path'] );
 				$clean_en_base = preg_replace( '#/+#', '/', '/' . ltrim( (string) $clean_en_base, '/' ) );
-				$en_url = home_url( ( '/' === $clean_en_base ? '/en/' : '/en' . $clean_en_base ) . $p_en['query'] );
+				$en_url        = $raw_origin . ( '/' === $clean_en_base ? '/en/' : '/en' . $clean_en_base ) . $p_en['query'];
 			}
 		}
 	}
 
 	ob_start();
 	?>
-	<div class="fv-lang-switcher" role="navigation" aria-label="<?php echo esc_attr( despace_t( 'Language selector', 'Chọn ngôn ngữ' ) ); ?>">
-		<a href="<?php echo esc_url( $vi_url ); ?>" class="fv-lang-btn <?php echo $is_vi ? 'is-active' : ''; ?>" aria-current="<?php echo $is_vi ? 'true' : 'false'; ?>" title="Tiếng Việt">
+	<div class="fv-lang-switcher" data-no-translation role="navigation" aria-label="<?php echo esc_attr( despace_t( 'Language selector', 'Chọn ngôn ngữ' ) ); ?>">
+		<a href="<?php echo esc_url( $vi_url ); ?>" data-no-translation class="fv-lang-btn <?php echo $is_vi ? 'is-active' : ''; ?>" aria-current="<?php echo $is_vi ? 'true' : 'false'; ?>" title="Tiếng Việt">
 			<span class="fv-lang-code">VI</span>
 		</a>
 		<span class="fv-lang-sep" aria-hidden="true">/</span>
-		<a href="<?php echo esc_url( $en_url ); ?>" class="fv-lang-btn <?php echo ! $is_vi ? 'is-active' : ''; ?>" aria-current="<?php echo ! $is_vi ? 'true' : 'false'; ?>" title="English">
+		<a href="<?php echo esc_url( $en_url ); ?>" data-no-translation class="fv-lang-btn <?php echo ! $is_vi ? 'is-active' : ''; ?>" aria-current="<?php echo ! $is_vi ? 'true' : 'false'; ?>" title="English">
 			<span class="fv-lang-code">EN</span>
 		</a>
 	</div>
