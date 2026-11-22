@@ -3075,24 +3075,31 @@
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
-.fv-home-hero-cta--primary {
+.fv-home .fv-home-hero-copy .fv-home-hero-cta--primary,
+.fv-home .fv-home-hero-copy .fv-home-hero-cta--primary span {
   background: #F4F0E8;
   border-color: #F4F0E8;
-  color: #183B36;
+  color: #183B36 !important;
   text-shadow: none;
 }
 
-.fv-home-hero-cta--primary:hover {
+.fv-home .fv-home-hero-copy .fv-home-hero-cta--primary:hover,
+.fv-home .fv-home-hero-copy .fv-home-hero-cta--primary:hover span {
   background: #BD9A62;
   border-color: #BD9A62;
-  color: #142B27;
+  color: #102824 !important;
   transform: translateY(-1px);
 }
 
-.fv-home-hero-cta--secondary:hover {
+.fv-home .fv-home-hero-copy .fv-home-hero-cta--secondary,
+.fv-home .fv-home-hero-copy .fv-home-hero-cta--secondary span {
+  color: #F4F0E8 !important;
+}
+
+.fv-home .fv-home-hero-copy .fv-home-hero-cta--secondary:hover {
   background: rgba(24, 59, 54, 0.86);
   border-color: #BD9A62;
-  color: #F4F0E8;
+  color: #F4F0E8 !important;
   transform: translateY(-1px);
 }
 

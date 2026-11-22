@@ -343,7 +343,7 @@ $free_ship_lbl = furniva_is_vi()
                             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                             <circle cx="12" cy="13" r="4"/>
                         </svg>
-                        <span><?php echo esc_html( $pdp_seasonal ? furniva_t( 'Place in Holiday Room (AR)', 'Thử đặt vào phòng đón Noel (AR)' ) : furniva_t( 'View in Your Room (AR)', 'Xem Trong Phòng Bạn (AR)' ) ); ?></span>
+                        <span><?php echo esc_html( $pdp_seasonal ? furniva_t( 'Preview in Room (AR)', 'Đặt vào phòng (AR)' ) : furniva_t( 'View in Your Room (AR)', 'Xem Trong Phòng (AR)' ) ); ?></span>
                     </button>
                     <?php endif; ?>
                 </div>

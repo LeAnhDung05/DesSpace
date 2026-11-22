@@ -132,14 +132,27 @@ body.despace-theme-noel .fv-announcement__item:hover { color: var(--noel-gold-br
 body.despace-theme-noel .fv-announcement__separator { color: var(--noel-gold); }
 
 /* 3. Delicate Header Brand Emblem & Architectural Breathing Fairy-Light Garland */
+body.despace-theme-noel .fv-header__logo {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: nowrap;
+	gap: 4px;
+}
+
 body.despace-theme-noel .ds-noel-brand-accent {
 	display: inline-flex;
 	align-items: center;
-	margin-left: 6px;
+	margin-left: 2px;
 	color: var(--noel-gold);
 	vertical-align: middle;
 	flex-shrink: 0;
 	filter: drop-shadow(0 0 6px var(--noel-gold-soft));
+}
+
+@media (max-width: 520px) {
+	body.despace-theme-noel .ds-noel-brand-accent {
+		display: none;
+	}
 }
 
 body.despace-theme-noel .ds-noel-brand-accent svg {
@@ -807,14 +820,16 @@ body.despace-theme-noel .fv-footer__owner-avatar { background: var(--noel-gold);
 .ds-noel-ctrl-btn .ds-noel-ico { color: var(--noel-gold); font-size: 13px; line-height: 1; }
 .ds-noel-ctrl-sep { width: 1px; height: 16px; background: var(--noel-gold-soft); }
 
-.ds-noel-ctrl-btn--promo {
+body.despace-theme-noel #despace-noel-controls .ds-noel-ctrl-btn--promo {
 	background: var(--noel-primary);
-	color: var(--noel-gold-bright);
+	color: #F4F0E8 !important;
+	border: 1px solid var(--noel-gold);
 	letter-spacing: 0.04em;
 }
-.ds-noel-ctrl-btn--promo:hover {
+body.despace-theme-noel #despace-noel-controls .ds-noel-ctrl-btn--promo:hover {
 	background: var(--noel-gold);
-	color: #1C1917;
+	border-color: var(--noel-gold);
+	color: #102824 !important;
 }
 
 @media (max-width: 960px) {

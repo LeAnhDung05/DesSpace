@@ -2406,7 +2406,7 @@ body.ax-3d-modal-open {
 }
 
 .ax-3d-info-pill {
-  max-width: min(300px, calc(100% - 530px));
+  max-width: min(230px, calc(100% - 760px));
 }
 .ax-3d-info-pill .ax-pill-row {
   min-width: 0;
