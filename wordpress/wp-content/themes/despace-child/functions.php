@@ -385,8 +385,9 @@ function despace_get_ar_product_ids(): array {
 }
 
 /**
- * Return curated Winter Atelier 2026 collection product IDs
- * (real published DeSpace products marked Featured/Best Seller, on sale, or key living/storage edits).
+ * Return curated Winter Atelier 2026 collection product IDs (strictly 12 signature
+ * published DeSpace pieces so Winter Atelier filtering & Noel badges remain
+ * genuinely curated and restrained rather than tagging every single catalog item).
  *
  * @return int[]
  */
@@ -398,33 +399,32 @@ function despace_get_winter_atelier_product_ids(): array {
 	global $wpdb;
 	$ids = array();
 
+	// 1. Prioritize Featured & Best Seller editorial pieces first
 	$badge_ids = $wpdb->get_col(
 		"SELECT DISTINCT p.ID
 		 FROM {$wpdb->posts} p
 		 INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
 		 WHERE p.post_type = 'product' AND p.post_status = 'publish'
 		   AND pm.meta_key IN ('_despace_badge', '_axgnud_badge')
-		   AND pm.meta_value IN ('Best Seller', 'Featured', 'New', 'Popular')"
+		   AND pm.meta_value IN ('Featured', 'Best Seller')
+		 ORDER BY p.ID ASC
+		 LIMIT 12"
 	);
 	$ids = array_merge( $ids, array_map( 'absint', (array) $badge_ids ) );
 
-	if ( function_exists( 'wc_get_product_ids_on_sale' ) ) {
-		$ids = array_merge( $ids, array_map( 'absint', (array) wc_get_product_ids_on_sale() ) );
-	}
-
-	// Ensure a rich curated edit (>= 8 real published products) using highest-rated / top-selling pieces.
+	// 2. Top-up with highest-demand published pieces up to a tight 12-item edit
 	if ( count( array_unique( array_filter( $ids ) ) ) < 12 ) {
 		$top_ids = $wpdb->get_col(
 			"SELECT p.ID FROM {$wpdb->posts} p
 			 LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = 'total_sales'
 			 WHERE p.post_type = 'product' AND p.post_status = 'publish'
-			 ORDER BY CAST(COALESCE(pm.meta_value, '0') AS UNSIGNED) DESC, p.ID DESC
-			 LIMIT 12"
+			 ORDER BY CAST(COALESCE(pm.meta_value, '0') AS UNSIGNED) DESC, p.ID ASC
+			 LIMIT 20"
 		);
 		$ids = array_merge( $ids, array_map( 'absint', (array) $top_ids ) );
 	}
 
-	$cached = array_values( array_unique( array_filter( $ids ) ) );
+	$cached = array_slice( array_values( array_unique( array_filter( $ids ) ) ), 0, 12 );
 	return $cached;
 }
 
