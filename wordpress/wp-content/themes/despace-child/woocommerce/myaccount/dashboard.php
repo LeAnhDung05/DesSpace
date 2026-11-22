@@ -82,43 +82,51 @@ if ( function_exists( 'wc_get_orders' ) ) {
 		</a>
 	</div>
 
-	<!-- Member Exclusive Vouchers Section -->
+	<!-- Member Exclusive Vouchers Section (verified published WooCommerce coupons only) -->
+	<?php
+	$dash_coupon_pct   = function_exists( 'despace_get_verified_coupon' ) ? despace_get_verified_coupon( 'DESPACE10' ) : null;
+	$dash_coupon_fixed = function_exists( 'despace_get_verified_coupon' ) ? despace_get_verified_coupon( 'DESPACE500K' ) : null;
+	if ( $dash_coupon_pct || $dash_coupon_fixed ) :
+	?>
 	<section class="ax-dash-section">
 		<div class="ax-section-heading">
-			<h3 class="ax-section-title"><?php echo esc_html( furniva_t( 'Your Exclusive Privilege Vouchers', 'Ví Ưu Đãi Hội Viên Độc Quyền' ) ); ?></h3>
+			<h3 class="ax-section-title"><?php echo esc_html( furniva_t( 'Active Store Vouchers', 'Mã Ưu Đãi Đang Áp Dụng' ) ); ?></h3>
 		</div>
 		<div class="ax-voucher-grid">
-			<!-- Voucher 1 -->
+			<?php if ( $dash_coupon_pct ) : ?>
 			<div class="ax-voucher-card">
 				<div class="ax-voucher-info">
-					<h4 class="ax-voucher-value"><?php echo esc_html( furniva_t( '10% OFF BESPOKE ORDER', 'GIẢM 10% ĐƠN ĐẦU TIÊN' ) ); ?></h4>
-					<p class="ax-voucher-desc"><?php echo esc_html( furniva_t( 'Valid on all storage, wardrobes, bookshelves', 'Áp dụng cho toàn bộ tủ, kệ sách và nội thất cao cấp' ) ); ?></p>
+					<h4 class="ax-voucher-value"><?php echo esc_html( furniva_t( '10% OFF YOUR ORDER', 'GIẢM 10% ĐƠN HÀNG' ) ); ?></h4>
+					<p class="ax-voucher-desc"><?php echo esc_html( furniva_t( 'Verified active WooCommerce coupon — enter at Cart or Checkout', 'Mã giảm giá hợp lệ trên hệ thống — nhập tại Giỏ hàng hoặc Thanh toán' ) ); ?></p>
 					<div class="ax-voucher-code-wrap">
-						<span class="ax-voucher-code">WELCOME10</span>
+						<span class="ax-voucher-code"><?php echo esc_html( $dash_coupon_pct['code'] ); ?></span>
 					</div>
 				</div>
-				<button type="button" class="ax-voucher-copy-btn" data-copy-code="WELCOME10">
+				<button type="button" class="ax-voucher-copy-btn" data-copy-code="<?php echo esc_attr( $dash_coupon_pct['code'] ); ?>">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
 					<span><?php echo esc_html( furniva_t( 'Copy', 'Sao chép' ) ); ?></span>
 				</button>
 			</div>
+			<?php endif; ?>
 
-			<!-- Voucher 2 -->
+			<?php if ( $dash_coupon_fixed ) : ?>
 			<div class="ax-voucher-card">
 				<div class="ax-voucher-info">
-					<h4 class="ax-voucher-value"><?php echo esc_html( furniva_t( 'COMPLIMENTARY SHIPPING', 'MIỄN PHÍ VẬN CHUYỂN' ) ); ?></h4>
-					<p class="ax-voucher-desc"><?php echo esc_html( furniva_t( 'Free white-glove delivery on orders over $500', 'Miễn phí giao hàng & lắp đặt tận nơi cho đơn từ $500' ) ); ?></p>
+					<h4 class="ax-voucher-value"><?php echo esc_html( furniva_t( '500,000 VND OFF CART', 'GIẢM TRỰC TIẾP 500.000 ₫' ) ); ?></h4>
+					<p class="ax-voucher-desc"><?php echo esc_html( furniva_t( 'Verified fixed-cart WooCommerce coupon — apply directly in Cart', 'Mã giảm trực tiếp tổng đơn hàng — áp dụng ngay tại Giỏ hàng' ) ); ?></p>
 					<div class="ax-voucher-code-wrap">
-						<span class="ax-voucher-code">FREESHIP500</span>
+						<span class="ax-voucher-code"><?php echo esc_html( $dash_coupon_fixed['code'] ); ?></span>
 					</div>
 				</div>
-				<button type="button" class="ax-voucher-copy-btn" data-copy-code="FREESHIP500">
+				<button type="button" class="ax-voucher-copy-btn" data-copy-code="<?php echo esc_attr( $dash_coupon_fixed['code'] ); ?>">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
 					<span><?php echo esc_html( furniva_t( 'Copy', 'Sao chép' ) ); ?></span>
 				</button>
 			</div>
+			<?php endif; ?>
 		</div>
 	</section>
+	<?php endif; ?>
 
 	<!-- Recent Orders Preview Section -->
 	<section class="ax-dash-section">

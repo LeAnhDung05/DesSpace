@@ -41,14 +41,14 @@ while ( have_posts() ) :
 					<p><?php echo esc_html( furniva_t( 'Every cabinet, shelf and drawer is digitized with exact millimeter clearance.', 'Mỗi hệ tủ, giá sách và ngăn kéo đều được số hóa chuẩn xác từng milimet.' ) ); ?></p>
 				</div>
 				<div class="f-about-metric">
-					<strong>40+</strong>
+					<strong><?php echo esc_html( function_exists( 'despace_get_3d_product_ids' ) ? (string) count( despace_get_3d_product_ids() ) : '40' ); ?></strong>
 					<span><?php echo esc_html( furniva_t( 'Curated Living Modules', 'Thiết kế nội thất lưu trữ' ) ); ?></span>
 					<p><?php echo esc_html( furniva_t( 'Tailored across shoe cabinets, dressers, bookcases and modular kitchens.', 'Phủ trọn lối vào, phòng khách, phòng ngủ và khu bếp căn hộ hiện đại.' ) ); ?></p>
 				</div>
 				<div class="f-about-metric">
-					<strong><?php echo esc_html( furniva_t( '5 yrs', '5 năm' ) ); ?></strong>
-					<span><?php echo esc_html( furniva_t( 'Structural & Hardware Warranty', 'Bảo hành kết cấu & phụ kiện' ) ); ?></span>
-					<p><?php echo esc_html( furniva_t( 'Direct care from our Gia Lam technical team with genuine spare hardware.', 'Đồng hành bảo dưỡng định kỳ trực tiếp từ đội ngũ kỹ thuật viên DeSpace.' ) ); ?></p>
+					<strong><?php echo esc_html( furniva_t( '100%', 'Đồng kiểm' ) ); ?></strong>
+					<span><?php echo esc_html( furniva_t( 'White-Glove Delivery Inspection', 'Kiểm tra kết cấu khi bàn giao' ) ); ?></span>
+					<p><?php echo esc_html( furniva_t( 'Direct delivery, assembly check and structural care per DeSpace policy.', 'Hỗ trợ đồng kiểm hoàn thiện, căn chỉnh phụ kiện theo chính sách DeSpace.' ) ); ?></p>
 				</div>
 			</section>
 

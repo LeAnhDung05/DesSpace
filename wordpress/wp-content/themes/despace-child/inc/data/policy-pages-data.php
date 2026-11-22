@@ -324,7 +324,7 @@ HTML
                 <span>Tôi có được áp dụng mã giảm giá khi đặt hàng không?</span>
                 <span aria-hidden="true" style="color:#9A6745;font-size:18px;">▾</span>
             </summary>
-            <p style="font-size:13.5px;color:#69645D;line-height:1.75;margin:12px 0 0;">Có. Quý khách có thể nhập mã ưu đãi chào mừng <strong>WELCOME10</strong> tại trang thanh toán để nhận ngay ưu đãi 10% cho đơn hàng đầu tiên của mình tại DeSpace.</p>
+            <p style="font-size:13.5px;color:#69645D;line-height:1.75;margin:12px 0 0;">Có. Quý khách có thể nhập mã ưu đãi <strong>DESPACE10</strong> (giảm 10%) hoặc <strong>DESPACE500K</strong> (giảm 500.000 ₫) tại trang giỏ hàng hoặc thanh toán.</p>
         </details>
     </div>
 

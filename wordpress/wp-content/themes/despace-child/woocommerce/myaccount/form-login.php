@@ -93,7 +93,7 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 				<div class="ax-auth-panel <?php echo 'register' === $active_tab ? 'is-active' : ''; ?>" id="ax-panel-register">
 					<div class="ax-reg-perk-banner">
 						<span class="ax-reg-perk-badge">✦ <?php echo esc_html( furniva_t( 'VIP WELCOME GIFT', 'QUÀ TẶNG THÀNH VIÊN' ) ); ?></span>
-						<p class="ax-reg-perk-text"><?php echo esc_html( furniva_t( 'Sign up now to receive code ', 'Đăng ký ngay nhận mã ' ) ); ?><strong>WELCOME10</strong><?php echo esc_html( furniva_t( ' for 10% off your premier order.', ' giảm 10% cho đơn hàng đầu tiên.' ) ); ?></p>
+						<p class="ax-reg-perk-text"><?php echo esc_html( furniva_t( 'Sign up now to use active code ', 'Đăng ký ngay để dùng mã ưu đãi ' ) ); ?><strong>DESPACE10</strong><?php echo esc_html( furniva_t( ' for 10% off your order.', ' giảm 10% cho đơn hàng của bạn.' ) ); ?></p>
 					</div>
 
 					<form method="post" class="woocommerce-form woocommerce-form-register register" <?php do_action( 'woocommerce_register_form_tag' ); ?>>
@@ -228,7 +228,7 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 					</div>
 					<div class="ax-privilege-item-content">
 						<h4><?php echo esc_html( furniva_t( '10% Welcome Voucher', 'Ưu Đãi 10% Chào Mừng Hội Viên' ) ); ?></h4>
-						<p><?php echo esc_html( furniva_t( 'Apply code WELCOME10 instantly on your first luxury furniture order.', 'Nhận ngay mã WELCOME10 giảm trực tiếp 10% khi sở hữu món đồ đầu tiên.' ) ); ?></p>
+						<p><?php echo esc_html( furniva_t( 'Apply active store code DESPACE10 for 10% off at checkout.', 'Áp dụng mã DESPACE10 giảm trực tiếp 10% tại bước thanh toán.' ) ); ?></p>
 					</div>
 				</li>
 

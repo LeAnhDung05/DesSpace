@@ -254,7 +254,7 @@ function despace_render_auth_modal() {
 
 			<div class="ax-auth-gate-perk">
 				<span class="ax-auth-gate-badge">✦ <?php echo esc_html( furniva_t( 'VIP WELCOME GIFT', 'ĐẶC QUYỀN HỘI VIÊN' ) ); ?></span>
-				<p><?php echo esc_html( furniva_t( 'Sign up now to receive code WELCOME10 and track order & warranty support (project simulation).', 'Đăng ký ngay để sử dụng mã WELCOME10 và theo dõi đơn hàng, thông tin bảo hành (mô phỏng đồ án).' ) ); ?></p>
+				<p><?php echo esc_html( furniva_t( 'Sign up now to apply active store code DESPACE10 (10% off) and track your orders (project simulation).', 'Đăng ký ngay để sử dụng mã ưu đãi DESPACE10 (giảm 10%) và theo dõi đơn hàng của bạn (mô phỏng đồ án).' ) ); ?></p>
 			</div>
 
 			<div class="ax-auth-gate-actions">

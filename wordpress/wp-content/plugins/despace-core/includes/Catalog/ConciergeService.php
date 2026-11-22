@@ -39,8 +39,8 @@ class ConciergeService {
 				'mode'     => 'policy',
 				'products' => array(),
 				'reply'    => $is_en
-					? 'DeSpace provides nationwide insured delivery and white-glove installation across all 34 provinces/cities in Vietnam. Orders from 5,000,000 VND receive FREE shipping.'
-					: 'DeSpace giao hàng có bảo hiểm và lắp đặt tận phòng trên toàn bộ 34 tỉnh/thành Việt Nam. Đơn hàng từ 5.000.000 ₫ được MIỄN PHÍ vận chuyển hoàn toàn.',
+					? 'DeSpace offers white-glove delivery with on-site inspection: estimated 1–3 business days in inner Hanoi and 3–7 business days nationwide (see our Shipping Policy page for details).'
+					: 'DeSpace giao hàng hỗ trợ đồng kiểm & lắp đặt tận phòng: dự kiến 1–3 ngày làm việc tại nội thành Hà Nội và 3–7 ngày làm việc cho các tỉnh thành khác (xem chi tiết tại trang Chính sách Giao hàng).',
 			);
 		}
 
@@ -59,8 +59,8 @@ class ConciergeService {
 				'mode'     => 'policy',
 				'products' => array(),
 				'reply'    => $is_en
-					? 'Every DeSpace furniture piece carries a 5-year structural warranty and a 30-day worry-free return policy. Need immediate support? Reach us via Hotline/Zalo: 0332 174 590.'
-					: 'Tất cả sản phẩm nội thất DeSpace đều được bảo hành kết cấu 5 năm và hỗ trợ đổi trả trong 30 ngày. Bạn có thể liên hệ nhanh qua Hotline/Zalo: 0332 174 590.',
+					? 'DeSpace provides white-glove delivery inspection, structural & hardware support, and technical-defect exchange according to our Return & Warranty Policy page. Need help? Contact Hotline/Zalo: 0332 174 590.'
+					: 'DeSpace hỗ trợ đồng kiểm khi bàn giao, bảo hành kết cấu & phụ kiện và đổi lỗi kỹ thuật theo trang Chính sách Đổi trả & Bảo hành. Cần tư vấn trực tiếp, vui lòng liên hệ Hotline/Zalo: 0332 174 590.',
 			);
 		}
 
@@ -456,8 +456,8 @@ class ConciergeService {
 		}
 
 		$sys_prompt = $is_en
-			? 'You are DeSpace AI Interior Concierge for a luxury Scandinavian furniture store in Vietnam. Reply concisely (2-4 sentences) in English. ONLY recommend products from the LIVE CATALOG CONTEXT below, citing exact dimensions (cm) and price. Mention that customers can tap the 3D/AR button below to place the item at 1:1 scale in their room. Store policies: Free nationwide shipping from 5,000,000 VND, COD & Napas247 VietQR supported, 5-year warranty.'
-			: 'Bạn là Chuyên gia Tư vấn Nội thất AI của DeSpace. Trả lời ngắn gọn, tinh tế (2-4 câu) bằng Tiếng Việt. CHỈ tư vấn dựa trên DANH SÁCH SẢN PHẨM THỰC TẾ bên dưới, nêu rõ kích thước (Rộng × Sâu × Cao cm) so với không gian khách hỏi và giá bán. Nhắc khách có thể bấm nút 3D/AR ngay bên dưới để đặt thử sản phẩm tỷ lệ 1:1 vào phòng. Chính sách: Miễn phí giao lắp từ 5.000.000 ₫, hỗ trợ COD & VietQR tự động, bảo hành 5 năm.';
+			? 'You are DeSpace AI Interior Concierge for a luxury Scandinavian furniture store in Vietnam. Reply concisely (2-4 sentences) in English. ONLY recommend products from the LIVE CATALOG CONTEXT below, citing exact dimensions (cm) and price. Mention that customers can tap the 3D/AR button below to place the item at 1:1 scale in their room. Store policies: White-glove delivery with on-site inspection (1-3 business days inner Hanoi, 3-7 business days nationwide), COD & Napas247 VietQR supported; refer to the Return & Warranty Policy page without inventing fixed warranty years.'
+			: 'Bạn là Chuyên gia Tư vấn Nội thất AI của DeSpace. Trả lời ngắn gọn, tinh tế (2-4 câu) bằng Tiếng Việt. CHỈ tư vấn dựa trên DANH SÁCH SẢN PHẨM THỰC TẾ bên dưới, nêu rõ kích thước (Rộng × Sâu × Cao cm) so với không gian khách hỏi và giá bán. Nhắc khách có thể bấm nút 3D/AR ngay bên dưới để đặt thử sản phẩm tỷ lệ 1:1 vào phòng. Chính sách: Giao hàng đồng kiểm tận nơi (1–3 ngày nội thành Hà Nội, 3–7 ngày toàn quốc), hỗ trợ COD & VietQR; không tự khẳng định số năm bảo hành cố định ngoài trang Chính sách Đổi trả & Bảo hành.';
 
 		$context_block = empty( $catalog_lines )
 			? 'LIVE CATALOG CONTEXT: Không có sản phẩm nào khớp giới hạn kích thước/ngân sách này.'

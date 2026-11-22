@@ -879,16 +879,23 @@ jQuery(function ($) {
 		if ($(this).is("a")) return;
 		clearTimeout(filterTimer);
 		var qs = new URLSearchParams(window.location.search);
+		var $orderbySelect = $("select.orderby");
+		var hadOrderby = $orderbySelect.length && $orderbySelect.val() && $orderbySelect.val() !== "menu_order";
 		var hadFilters = $("#furniva-filter-form input[type=checkbox]:checked").length > 0 ||
 			$("#f-price-min").val() !== "" ||
 			$("#f-price-max").val() !== "" ||
-			qs.has("s") || qs.has("q") || qs.has("on_sale");
+			hadOrderby ||
+			qs.has("s") || qs.has("q") || qs.has("on_sale") || qs.has("orderby");
 		$("#furniva-filter-form input[type=checkbox]").prop("checked", false);
 		$("#f-price-min, #f-price-max").val("");
-		if (qs.has("s") || qs.has("q") || qs.has("on_sale")) {
+		if ($orderbySelect.length) {
+			$orderbySelect.val("menu_order");
+		}
+		if (qs.has("s") || qs.has("q") || qs.has("on_sale") || qs.has("orderby")) {
 			qs.delete("s");
 			qs.delete("q");
 			qs.delete("on_sale");
+			qs.delete("orderby");
 			var newUrl = window.location.pathname + (qs.toString() ? "?" + qs.toString() : "");
 			history.replaceState({ furnivaFilter: true }, "", newUrl);
 		}
@@ -2191,7 +2198,7 @@ jQuery(function ($) {
 					e.stopPropagation();
 					e.stopImmediatePropagation();
 					var msg = isVi
-						? "Quý khách vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng, sử dụng mã ưu đãi WELCOME10 và theo dõi thông tin bảo hành (mô phỏng đồ án)."
+						? "Quý khách vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng, sử dụng mã ưu đãi DESPACE10 và theo dõi đơn hàng (mô phỏng đồ án)."
 						: "Please sign in or create an account to add items to your cart and unlock VIP member benefits.";
 					openAuthGateModal(msg, window.location.href);
 					return false;
