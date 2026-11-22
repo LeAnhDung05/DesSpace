@@ -83,15 +83,52 @@ function ax_get_product_3d_info( $product_id ) {
 		$usdz_url = '';
 	}
 
-	// Append local filemtime cache-buster so browsers never load stale cached single-mesh GLB/USDZ
+	// Verify local upload assets exist on disk and auto-resolve sibling .usdz beside .glb to avoid AR 404s
 	$uploads = wp_get_upload_dir();
 	if ( ! empty( $uploads['baseurl'] ) && ! empty( $uploads['basedir'] ) ) {
-		foreach ( array( 'glb_url', 'usdz_url' ) as $url_var ) {
-			if ( ! empty( $$url_var ) && false === strpos( $$url_var, '?' ) && 0 === strpos( $$url_var, $uploads['baseurl'] ) ) {
-				$rel  = substr( $$url_var, strlen( $uploads['baseurl'] ) );
-				$disk = wp_normalize_path( $uploads['basedir'] . $rel );
-				if ( file_exists( $disk ) ) {
-					$$url_var = add_query_arg( 'v', (string) filemtime( $disk ), $$url_var );
+		$uploads_base_url = rtrim( (string) $uploads['baseurl'], '/' );
+		$uploads_base_dir = wp_normalize_path( rtrim( (string) $uploads['basedir'], '/' ) );
+
+		$to_disk = static function ( string $url ) use ( $uploads_base_url, $uploads_base_dir ): ?string {
+			$clean = preg_replace( '/\?.*$/', '', $url );
+			if ( 0 === strpos( $clean, $uploads_base_url ) ) {
+				return wp_normalize_path( $uploads_base_dir . substr( $clean, strlen( $uploads_base_url ) ) );
+			}
+			$pos = strpos( $clean, '/wp-content/uploads/' );
+			if ( false !== $pos ) {
+				return wp_normalize_path( $uploads_base_dir . substr( $clean, $pos + strlen( '/wp-content/uploads' ) ) );
+			}
+			return null;
+		};
+
+		if ( ! empty( $glb_url ) ) {
+			$glb_disk = $to_disk( $glb_url );
+			if ( null !== $glb_disk ) {
+				if ( ! file_exists( $glb_disk ) ) {
+					$glb_url = '';
+				} else {
+					if ( false === strpos( $glb_url, '?' ) ) {
+						$glb_url = add_query_arg( 'v', (string) filemtime( $glb_disk ), $glb_url );
+					}
+					// Sibling .usdz auto-discovery if usdz_url meta/column is missing
+					if ( empty( $usdz_url ) ) {
+						$sibling_usdz_disk = preg_replace( '/\.glb$/i', '.usdz', $glb_disk );
+						if ( $sibling_usdz_disk && file_exists( $sibling_usdz_disk ) ) {
+							$rel_usdz = ltrim( substr( $sibling_usdz_disk, strlen( $uploads_base_dir ) ), '/' );
+							$usdz_url = add_query_arg( 'v', (string) filemtime( $sibling_usdz_disk ), $uploads_base_url . '/' . $rel_usdz );
+						}
+					}
+				}
+			}
+		}
+
+		if ( ! empty( $usdz_url ) ) {
+			$usdz_disk = $to_disk( $usdz_url );
+			if ( null !== $usdz_disk ) {
+				if ( ! file_exists( $usdz_disk ) ) {
+					$usdz_url = '';
+				} elseif ( false === strpos( $usdz_url, '?' ) ) {
+					$usdz_url = add_query_arg( 'v', (string) filemtime( $usdz_disk ), $usdz_url );
 				}
 			}
 		}
@@ -105,17 +142,23 @@ function ax_get_product_3d_info( $product_id ) {
 
 	$dim_str = '';
 	if ( $width > 0 && $depth > 0 && $height > 0 ) {
-		$dim_str = "Rộng {$width} cm × Sâu {$depth} cm × Cao {$height} cm";
+		$w_fmt = rtrim( rtrim( number_format( $width, 1, '.', '' ), '0' ), '.' );
+		$d_fmt = rtrim( rtrim( number_format( $depth, 1, '.', '' ), '0' ), '.' );
+		$h_fmt = rtrim( rtrim( number_format( $height, 1, '.', '' ), '0' ), '.' );
+		$dim_str = function_exists( 'furniva_t' )
+			? sprintf( furniva_t( 'W %s × D %s × H %s cm', 'Rộng %s × Sâu %s × Cao %s cm' ), $w_fmt, $d_fmt, $h_fmt )
+			: "Rộng {$w_fmt} × Sâu {$d_fmt} × Cao {$h_fmt} cm";
 	}
 
-	$has_3d = ! empty( $glb_url ) && ( 'published' === $model_status || is_admin() );
-	$ar_enabled = $has_3d && ! empty( $usdz_url ) && ( 1 === $ar_enabled_flag || 'yes' === $ar_enabled_flag );
+	$has_3d     = ! empty( $glb_url ) && ( 'published' === $model_status || is_admin() );
+	$ar_enabled = $has_3d && ( 1 === $ar_enabled_flag || 'yes' === $ar_enabled_flag || ! empty( $usdz_url ) );
 
 	return array(
 		'has_3d'       => $has_3d,
 		'glb_url'      => $has_3d ? $glb_url : '',
 		'usdz_url'     => $has_3d ? $usdz_url : '',
 		'ar_enabled'   => $ar_enabled,
+		'ios_ar_ready' => $has_3d && ! empty( $usdz_url ),
 		'model_status' => $model_status,
 		'width_cm'     => $width,
 		'depth_cm'     => $depth,
@@ -369,8 +412,56 @@ function ar_add_footer_link() {
 		'tunnelBaseUrl' => rtrim( $tunnel_base, '/' ),
 		'arPageUrl'     => esc_url_raw( ax_get_ar_page_url() ),
 	);
+	$ar_i18n = array(
+		'scale11'             => furniva_t( 'True 1:1 Scale', 'Tỷ lệ thực 1:1' ),
+		'openDoors'           => furniva_t( 'Open Doors', 'Mở hết cửa' ),
+		'closeDoors'          => furniva_t( 'Close Doors', 'Đóng hết cửa' ),
+		'openAll'             => furniva_t( 'Open All', 'Mở tất cả' ),
+		'doorHintIdle'        => furniva_t( 'Tap directly on any door or drawer to open / close', 'Chạm trực tiếp vào cánh tủ hoặc ngăn kéo để đóng / mở' ),
+		'doorHintHoverOpen'   => furniva_t( 'Click to open ', 'Nhấn để mở ' ),
+		'doorHintHoverClose'  => furniva_t( 'Click to close ', 'Nhấn để đóng ' ),
+		'doorOpenedPrefix'    => furniva_t( 'Opened ', 'Đang mở ' ),
+		'doorClosedPrefix'    => furniva_t( 'Closed ', 'Đã đóng ' ),
+		'doorTapAgainClose'   => furniva_t( ' — tap again to close', ' — chạm lại để đóng' ),
+		'doorTapAgainOpen'    => furniva_t( ' — tap again to open', ' — chạm lại để mở' ),
+		'subtitle3D'          => furniva_t( 'Inspect 360° 3D craftsmanship — tap doors or drawers to open and close', 'Quan sát chi tiết mô hình 3D 360° — chạm trực tiếp từng cánh cửa hoặc ngăn kéo để đóng/mở' ),
+		'subtitleAR'          => furniva_t( 'Launch AR Camera to place the true 1:1 3D model directly in your room', 'Khởi chạy Camera để đưa đúng mô hình 3D vào phòng của bạn với tỷ lệ 1:1 mượt mà' ),
+		'openCabinetAr'       => furniva_t( 'Open Doors', 'Mở Tủ' ),
+		'closeCabinetAr'      => furniva_t( 'Close Doors', 'Đóng Tủ' ),
+		'freePlaceMode'       => furniva_t( 'Free placement mode (Sensor paused)', 'Chế độ đặt tự do (Đã tắt cảm biến)' ),
+		'floorClear'          => furniva_t( '✓ Floor clear — Fits nicely here', '✓ Mặt sàn trống — Đặt vừa vị trí này' ),
+		'offFloor'            => furniva_t( '⚠ Above floor plane — Drag down onto floor', '⚠ Đang ngoài mặt sàn — Kéo xuống nền nhà' ),
+		'obstacleAhead'       => furniva_t( '⚠ Obstacle detected — Move to clear floor space', '⚠ Gặp vật cản phía trước — Kéo ra khoảng sàn trống' ),
+		'scanningFloor'       => furniva_t( 'Scanning floor surface…', 'Đang nhận diện mặt sàn nhà…' ),
+		'hintRotateMode'      => furniva_t( '3D Rotate Mode: Drag model to spin 360° • Drag background or hold Shift to move', 'Chế độ Xoay 3D: Vuốt lên tủ để xoay 360° • Kéo vùng trống hoặc giữ Shift để di chuyển tự do' ),
+		'hintMoveMode'        => furniva_t( 'Free Move Mode: Drag furniture across your floor — Auto red warning on obstacles', 'Di Chuyển Tự Do: Kéo mô hình khắp phòng — Tự động báo ĐỎ nếu chạm vật cản' ),
+		'qrWifiLabel'         => furniva_t( 'Same Wi-Fi', 'Cùng Wi-Fi' ),
+		'qrFallbackMsg'       => furniva_t( 'Copy the AR link below to open on your phone', 'Vui lòng sao chép liên kết bên dưới để mở trên điện thoại' ),
+		'qrCheckingTunnel'    => furniva_t( 'Checking HTTPS Tunnel connection…', 'Đang kiểm tra kết nối Tunnel HTTPS…' ),
+		'qrTunnelReady'       => furniva_t( '✓ HTTPS Tunnel ready — Open AR from any network', '✓ Tunnel HTTPS sẵn sàng — Mở AR từ mọi mạng' ),
+		'qrTunnelFallback'    => furniva_t( '⚠ Tunnel offline — Switched automatically to Wi-Fi LAN', '⚠ Tunnel tạm tắt — Đã tự chuyển sang Wi-Fi LAN' ),
+		'qrLanReady'          => furniva_t( 'Wi-Fi LAN mode: keep phone & computer on the same Wi-Fi', 'Chế độ Wi-Fi nội bộ: điện thoại & máy tính dùng chung Wi-Fi' ),
+		'copyLinkAr'          => furniva_t( 'Copy AR Link', 'Sao chép Link AR' ),
+		'copied'              => furniva_t( '✓ Copied!', '✓ Đã sao chép!' ),
+		'copyFailed'          => furniva_t( 'Could not copy', 'Không thể sao chép' ),
+		'addingToCart'        => furniva_t( 'Adding…', 'Đang thêm…' ),
+		'addedToCart'         => furniva_t( '✓ Added to cart!', '✓ Đã thêm vào giỏ!' ),
+		'iosUsdzMissing'      => furniva_t( 'Apple AR Quick Look (.usdz) is not available for this piece. Switching to Live 3D Camera AR instead.', 'Mô hình Apple AR Quick Look (.usdz) chưa khả dụng cho sản phẩm này. Đang chuyển sang Camera AR 3D Trực Tiếp.' ),
+		'androidGlbMissing'   => furniva_t( '3D model is unavailable for Google Scene Viewer.', 'Mô hình 3D chưa sẵn sàng cho Google Scene Viewer.' ),
+		'loadingProgress'     => furniva_t( 'Loading 1:1 3D Studio model ({pct}%)…', 'Đang tải mô hình 3D tỷ lệ 1:1 ({pct}%)…' ),
+		'fullscreenEnter'     => furniva_t( 'Fullscreen', 'Toàn màn hình' ),
+		'fullscreenExit'      => furniva_t( 'Exit Fullscreen', 'Thu gọn' ),
+		'showDims'            => furniva_t( 'Dimensions', 'Kích thước' ),
+		'partLeftDoor'        => furniva_t( 'Left Door', 'Cánh trái' ),
+		'partRightDoor'       => furniva_t( 'Right Door', 'Cánh phải' ),
+		'partSlideDoor'       => furniva_t( 'Sliding Door', 'Cánh lùa' ),
+		'partDrawer'          => furniva_t( 'Drawer', 'Ngăn kéo' ),
+		'partDoor'            => furniva_t( 'Cabinet Door', 'Cánh tủ' ),
+		'partFallback'        => furniva_t( 'Part ', 'Phần ' ),
+	);
 	echo '<script>';
 	echo 'window.AR_VISUALIZER_URL = ' . wp_json_encode( ax_get_ar_page_url(), JSON_HEX_TAG | JSON_HEX_AMP ) . ';';
 	echo 'window.DESPACE_AR_NETWORK = ' . wp_json_encode( $net_config, JSON_HEX_TAG | JSON_HEX_AMP ) . ';';
+	echo 'window.DESPACE_AR_I18N = ' . wp_json_encode( $ar_i18n, JSON_HEX_TAG | JSON_HEX_AMP ) . ';';
 	echo '</script>';
 }

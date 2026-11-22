@@ -43,6 +43,17 @@ $rating       = $product->get_average_rating();
 $count        = $product->get_review_count();
 $colors       = wc_get_product_terms( $id, 'pa_color' );
 $thumb_large  = $product->get_image_id() ? wp_get_attachment_image_url( $product->get_image_id(), 'large' ) : wc_placeholder_img_src( 'woocommerce_single' );
+$card_3d      = function_exists( 'ax_get_product_3d_info' ) ? ax_get_product_3d_info( $id ) : array();
+$raw_dims     = $product->get_dimensions( false );
+$card_dim_str = '';
+if ( ! empty( $raw_dims['length'] ) && ! empty( $raw_dims['width'] ) && ! empty( $raw_dims['height'] ) ) {
+	$card_dim_str = furniva_t(
+		sprintf( 'W %s × D %s × H %s cm', $raw_dims['length'], $raw_dims['width'], $raw_dims['height'] ),
+		sprintf( 'R %s × S %s × C %s cm', $raw_dims['length'], $raw_dims['width'], $raw_dims['height'] )
+	);
+} elseif ( ! empty( $card_3d['dimensions'] ) ) {
+	$card_dim_str = $card_3d['dimensions'];
+}
 ?>
 <li <?php wc_product_class( 'f-card-wrap', $product ); ?>>
 	<div class="f-card">
@@ -53,36 +64,42 @@ $thumb_large  = $product->get_image_id() ? wp_get_attachment_image_url( $product
 			<div class="f-card-badges">
 				<?php if ( ! $is_in_stock ) : ?>
 					<span class="f-badge-custom f-badge-outofstock"><?php echo esc_html( furniva_t( 'Out of stock', 'Hết hàng' ) ); ?></span>
-				<?php elseif ( ! empty( $custom_badge ) ) :
-					$badge_slug  = sanitize_title( $custom_badge );
-					$badge_label = furniva_t( $custom_badge, ( 'Best Seller' === $custom_badge ? 'Bán chạy' : ( 'Featured' === $custom_badge ? 'Nổi bật' : ( 'New' === $custom_badge ? 'Mới' : ( 'Popular' === $custom_badge ? 'Phổ biến' : ( 'Sale' === $custom_badge ? 'Giảm giá' : $custom_badge ) ) ) ) ) );
-				?>
-					<span class="f-badge-custom f-badge-<?php echo esc_attr( $badge_slug ); ?>"><?php echo esc_html( $badge_label ); ?></span>
-				<?php elseif ( $percent > 0 ) : ?>
-					<span class="f-badge-sale">-<?php echo esc_html( $percent ); ?>%</span>
+				<?php else : ?>
+					<?php if ( ! empty( $custom_badge ) ) :
+						$badge_slug  = sanitize_title( $custom_badge );
+						$badge_label = furniva_t( $custom_badge, ( 'Best Seller' === $custom_badge ? 'Bán chạy' : ( 'Featured' === $custom_badge ? 'Nổi bật' : ( 'New' === $custom_badge ? 'Mới' : ( 'Popular' === $custom_badge ? 'Phổ biến' : ( 'Sale' === $custom_badge ? 'Giảm giá' : $custom_badge ) ) ) ) ) );
+					?>
+						<span class="f-badge-custom f-badge-<?php echo esc_attr( $badge_slug ); ?>"><?php echo esc_html( $badge_label ); ?></span>
+					<?php endif; ?>
+					<?php if ( $percent > 0 ) : ?>
+						<span class="f-badge-sale">-<?php echo esc_html( $percent ); ?>%</span>
+					<?php endif; ?>
 				<?php endif; ?>
 			</div>
 
 			<div class="f-card-actions">
 				<?php
-				// 3D Preview button
-				$card_3d = function_exists( 'ax_get_product_3d_info' ) ? ax_get_product_3d_info( $id ) : array();
+				// 3D · AR Preview button
 				if ( ! empty( $card_3d['glb_url'] ) ) :
+					$has_card_ar = ! empty( $card_3d['ar_enabled'] );
 				?>
 					<button type="button" class="f-card-3d-btn ax-open-3d-btn"
 						data-product-id="<?php echo esc_attr( $id ); ?>"
 						data-product-name="<?php echo esc_attr( $product->get_name() ); ?>"
-						data-product-price="<?php echo esc_attr( wp_strip_all_tags( $product->get_price_html() ) ); ?>"
+						data-product-price="<?php echo esc_attr( wp_strip_all_tags( wc_price( $product->get_price() ) ) ); ?>"
+						data-product-regular-price="<?php echo esc_attr( $is_on_sale ? wp_strip_all_tags( wc_price( $regular ) ) : '' ); ?>"
+						data-product-raw-price="<?php echo esc_attr( $product->get_price() ); ?>"
 						data-product-image="<?php echo esc_url( $thumb_large ); ?>"
+						data-product-dimensions="<?php echo esc_attr( $card_dim_str ); ?>"
 						data-has-3d="yes"
-						data-ar-enabled="<?php echo ! empty( $card_3d['ar_enabled'] ) ? 'yes' : 'no'; ?>"
+						data-ar-enabled="<?php echo $has_card_ar ? 'yes' : 'no'; ?>"
 						data-glb-url="<?php echo esc_url( $card_3d['glb_url'] ); ?>"
 						data-usdz-url="<?php echo esc_url( $card_3d['usdz_url'] ?? '' ); ?>"
 						data-initial-tab="3d"
-						aria-label="<?php echo esc_attr( furniva_t( 'View 3D Model', 'Xem mô hình 3D' ) ); ?>"
-						title="<?php echo esc_attr( furniva_t( 'View 3D Model', 'Xem mô hình 3D' ) ); ?>">
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-						<span>3D</span>
+						aria-label="<?php echo esc_attr( furniva_t( 'View 3D & AR Model', 'Xem mô hình 3D & AR' ) ); ?>"
+						title="<?php echo esc_attr( furniva_t( 'View 3D & AR Model', 'Xem mô hình 3D & AR' ) ); ?>">
+						<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+						<span><?php echo $has_card_ar ? '3D · AR' : '3D'; ?></span>
 					</button>
 				<?php endif; ?>
 				<?php
@@ -108,6 +125,14 @@ $thumb_large  = $product->get_image_id() ? wp_get_attachment_image_url( $product
 					title="<?php echo esc_attr( $wl_aria_label ); ?>">
 					<?php echo furniva_svg( 'heart' ); ?>
 				</button>
+				<?php if ( class_exists( 'YITH_WCQV' ) ) : ?>
+					<button type="button" class="f-card-qv-btn yith-wcqv-button"
+						data-product_id="<?php echo esc_attr( $id ); ?>"
+						aria-label="<?php echo esc_attr( furniva_t( 'Quick view', 'Xem nhanh' ) ); ?>"
+						title="<?php echo esc_attr( furniva_t( 'Quick view', 'Xem nhanh' ) ); ?>">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+					</button>
+				<?php endif; ?>
 			</div>
 
 			<a href="<?php echo esc_url( $link ); ?>" aria-label="<?php echo esc_attr( $product->get_name() ); ?>" class="f-card-img-link">
@@ -125,6 +150,12 @@ $thumb_large  = $product->get_image_id() ? wp_get_attachment_image_url( $product
 					<img src="<?php echo esc_url( $hover_thumb_url ); ?>" alt="" class="f-card-img--hover" loading="lazy" decoding="async" />
 				<?php endif; ?>
 			</a>
+			<?php if ( $card_dim_str ) : ?>
+				<div class="f-card-dims-overlay" aria-label="<?php echo esc_attr( furniva_t( 'Dimensions', 'Kích thước' ) . ': ' . $card_dim_str ); ?>">
+					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 6H3"/><path d="M21 18H3"/><path d="M6 3v18"/><path d="M18 3v18"/></svg>
+					<span><?php echo esc_html( $card_dim_str ); ?></span>
+				</div>
+			<?php endif; ?>
 		</div>
 
 		<div class="f-card-body">

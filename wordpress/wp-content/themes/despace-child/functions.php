@@ -174,6 +174,121 @@ add_action( 'init', function() {
 	add_rewrite_rule( '^terms/?$', 'index.php?pagename=dieu-khoan-mua-ban', 'top' );
 } );
 
+// Use despace-child's unified 3D/AR Studio modal & lazy-loaded <model-viewer> (avoid duplicate modal & eager 350KB script).
+add_filter( 'despace_core_render_legacy_3d_modal', '__return_false' );
+add_filter( 'despace_core_enqueue_legacy_3d_assets', '__return_false' );
+
+/**
+ * Single source of truth for DeSpace free shipping threshold (VND).
+ *
+ * @return float
+ */
+function despace_get_free_shipping_threshold(): float {
+	return (float) apply_filters( 'despace_free_shipping_threshold', 5000000.0 );
+}
+
+/**
+ * Return all published product IDs that have a valid 3D model (custom table + postmeta).
+ *
+ * @return int[]
+ */
+function despace_get_3d_product_ids(): array {
+	static $cached = null;
+	if ( is_array( $cached ) ) {
+		return $cached;
+	}
+	global $wpdb;
+	$ids = array();
+
+	$table_despace = $wpdb->prefix . 'despace_product_3d_models';
+	if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table_despace ) ) ) === $table_despace ) {
+		$tbl_ids = $wpdb->get_col(
+			"SELECT DISTINCT m.product_id
+			 FROM {$table_despace} m
+			 INNER JOIN {$wpdb->posts} p ON p.ID = m.product_id
+			 WHERE p.post_type = 'product' AND p.post_status = 'publish'
+			   AND m.glb_url IS NOT NULL AND m.glb_url != ''
+			   AND (m.model_status = 'published' OR m.model_status = '' OR m.model_status IS NULL)"
+		);
+		$ids = array_merge( $ids, array_map( 'absint', (array) $tbl_ids ) );
+	}
+
+	$meta_ids = $wpdb->get_col(
+		"SELECT DISTINCT p.ID
+		 FROM {$wpdb->posts} p
+		 INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+		 WHERE p.post_type = 'product' AND p.post_status = 'publish'
+		   AND (
+		     (pm.meta_key = '_despace_glb_attachment_id' AND CAST(pm.meta_value AS UNSIGNED) > 0)
+		     OR (pm.meta_key IN ('_despace_model_glb', '_axgnud_model_glb', '_despace_glb_url') AND pm.meta_value != '')
+		   )"
+	);
+	$ids    = array_values( array_unique( array_filter( array_merge( $ids, array_map( 'absint', (array) $meta_ids ) ) ) ) );
+	$cached = $ids;
+	return $cached;
+}
+
+/**
+ * Apply URL query filters (?has_3d=yes, ?on_sale=1, ?availability=instock|onsale, ?price_min, ?price_max)
+ * directly on initial SSR shop/archive queries so deep-linked URLs match AJAX filter state.
+ */
+add_action( 'pre_get_posts', function ( $query ) {
+	if ( is_admin() || ! $query->is_main_query() ) {
+		return;
+	}
+	if ( ! ( $query->is_post_type_archive( 'product' ) || $query->is_tax( array( 'product_cat', 'product_tag' ) ) ) ) {
+		return;
+	}
+
+	$meta_query = (array) $query->get( 'meta_query' );
+	$post_in    = (array) $query->get( 'post__in' );
+
+	// Filter: 3D/AR Ready
+	if ( ! empty( $_GET['has_3d'] ) && 'no' !== sanitize_text_field( wp_unslash( $_GET['has_3d'] ) ) ) {
+		$ids_3d  = despace_get_3d_product_ids();
+		$ids_3d  = ! empty( $ids_3d ) ? $ids_3d : array( 0 );
+		$post_in = ! empty( $post_in ) ? array_values( array_intersect( $post_in, $ids_3d ) ) : $ids_3d;
+		if ( empty( $post_in ) ) {
+			$post_in = array( 0 );
+		}
+	}
+
+	// Filter: On Sale (?on_sale=1 or availability=onsale)
+	$avail_raw  = isset( $_GET['availability'] ) ? sanitize_text_field( wp_unslash( $_GET['availability'] ) ) : '';
+	$avail_list = array_filter( array_map( 'trim', explode( ',', $avail_raw ) ) );
+	$is_on_sale = ( isset( $_GET['on_sale'] ) && '1' === (string) wp_unslash( $_GET['on_sale'] ) ) || in_array( 'onsale', $avail_list, true );
+	if ( $is_on_sale && function_exists( 'wc_get_product_ids_on_sale' ) ) {
+		$sale_ids = wc_get_product_ids_on_sale();
+		$sale_ids = ! empty( $sale_ids ) ? $sale_ids : array( 0 );
+		$post_in  = ! empty( $post_in ) ? array_values( array_intersect( $post_in, $sale_ids ) ) : $sale_ids;
+		if ( empty( $post_in ) ) {
+			$post_in = array( 0 );
+		}
+	}
+
+	// Filter: In stock
+	if ( in_array( 'instock', $avail_list, true ) ) {
+		$meta_query[] = array( 'key' => '_stock_status', 'value' => 'instock' );
+	}
+
+	// Filter: Price bounds
+	$raw_min = isset( $_GET['price_min'] ) ? trim( (string) wp_unslash( $_GET['price_min'] ) ) : ( isset( $_GET['min_price'] ) ? trim( (string) wp_unslash( $_GET['min_price'] ) ) : '' );
+	$raw_max = isset( $_GET['price_max'] ) ? trim( (string) wp_unslash( $_GET['price_max'] ) ) : ( isset( $_GET['max_price'] ) ? trim( (string) wp_unslash( $_GET['max_price'] ) ) : '' );
+	if ( '' !== $raw_min && is_numeric( $raw_min ) ) {
+		$meta_query[] = array( 'key' => '_price', 'value' => max( 0.0, (float) $raw_min ), 'compare' => '>=', 'type' => 'NUMERIC' );
+	}
+	if ( '' !== $raw_max && is_numeric( $raw_max ) ) {
+		$meta_query[] = array( 'key' => '_price', 'value' => max( 0.0, (float) $raw_max ), 'compare' => '<=', 'type' => 'NUMERIC' );
+	}
+
+	if ( ! empty( $post_in ) ) {
+		$query->set( 'post__in', $post_in );
+	}
+	if ( ! empty( $meta_query ) ) {
+		$query->set( 'meta_query', $meta_query );
+	}
+} );
+
 // ---------------------------------------------------------------- assets
 function furniva_assets() {
 	$deps = array();
@@ -184,7 +299,12 @@ function furniva_assets() {
 	$main_style_path = get_stylesheet_directory() . '/style.css';
 	$main_style_ver  = file_exists( $main_style_path ) ? (string) filemtime( $main_style_path ) : FURNIVA_VER;
 	wp_enqueue_style( 'furniva', get_stylesheet_uri(), $deps, $main_style_ver );
-	wp_enqueue_style( 'furniva-fonts', 'https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&family=Playfair+Display:ital,wght@0,400..700;1,400..700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap', array(), null );
+
+	// Trimmed Google Fonts: Newsreader (Editorial Display) + Inter (UI Sans); load Caveat only on Front Page signature.
+	$fonts_url = is_front_page()
+		? 'https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..500&display=swap'
+		: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..500&display=swap';
+	wp_enqueue_style( 'furniva-fonts', $fonts_url, array(), null );
 
 	// Animations CSS
 	$animations_css = get_stylesheet_directory() . '/assets/css/animations.css';
@@ -340,9 +460,10 @@ function furniva_assets() {
 		);
 	}
 
-	// Load 3D/AR Studio Modal CSS & JS across storefront so AI Concierge 3D/AR cards work from any page
-	$ax_room_css = get_stylesheet_directory() . '/assets/css/ax-room-visualizer.css';
-	if ( file_exists( $ax_room_css ) ) {
+	// Load 3D/AR Studio Modal CSS & JS on storefront pages (skip Checkout & My Account to cut unnecessary CSS/JS payload)
+	$load_3d_studio = ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) && ( ! function_exists( 'is_account_page' ) || ! is_account_page() );
+	$ax_room_css    = get_stylesheet_directory() . '/assets/css/ax-room-visualizer.css';
+	if ( $load_3d_studio && file_exists( $ax_room_css ) ) {
 		wp_enqueue_style(
 			'furniva-ax-room-visualizer',
 			get_stylesheet_directory_uri() . '/assets/css/ax-room-visualizer.css',
@@ -353,7 +474,7 @@ function furniva_assets() {
 
 	// Do NOT globally enqueue dead despace-3d-visualizer.js (which eagerly injects 350KB model-viewer on every page).
 	$ax_room_js = get_stylesheet_directory() . '/assets/js/ax-room-visualizer.js';
-	if ( file_exists( $ax_room_js ) && ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) && ( ! function_exists( 'is_account_page' ) || ! is_account_page() ) ) {
+	if ( $load_3d_studio && file_exists( $ax_room_js ) ) {
 		wp_enqueue_script(
 			'despace-ax-room-visualizer',
 			get_stylesheet_directory_uri() . '/assets/js/ax-room-visualizer.js',
@@ -513,7 +634,8 @@ function furniva_assets() {
 			),
 			'searchLabel'       => furniva_t('Search', 'Tìm kiếm'),
 			'has3dLabel'        => furniva_t('3D/AR Available', 'Xem được 3D/AR'),
-			'priceRange'        => furniva_t('$%1$s – $%2$s', '$%1$s – $%2$s'),
+			'onSaleLabel'       => furniva_t('Special Offers', 'Đang khuyến mãi'),
+			'priceRange'        => furniva_t('%1$s – %2$s', '%1$s – %2$s'),
 			'itemRemoved'       => furniva_t('Item removed from cart.', 'Đã xóa sản phẩm khỏi giỏ hàng.'),
 			'addedToCart'       => furniva_t('Added {product} to your cart! 🛍️', 'Đã thêm {product} vào giỏ hàng! 🛍️'),
 			'genericItem'       => furniva_t('item', 'sản phẩm'),
@@ -527,7 +649,17 @@ function furniva_assets() {
 			'filterErrorTitle'  => despace_t('Unable to load products', 'Không thể tải danh sách sản phẩm'),
 			'filterErrorDesc'   => despace_t('A network error occurred while updating the catalog. Please try again.', 'Đã xảy ra lỗi kết nối khi lọc sản phẩm. Vui lòng thử lại.'),
 			'filterRetry'       => despace_t('Try again', 'Thử lại'),
+			'contactNameErr'    => despace_t('Please enter your full name (at least 2 characters).', 'Vui lòng nhập họ và tên (tối thiểu 2 ký tự).'),
+			'contactPhoneErr'   => despace_t('Please enter a valid phone number (9–11 digits).', 'Vui lòng nhập số điện thoại hợp lệ (9 – 11 chữ số).'),
+			'contactEmailErr'   => despace_t('Please enter a valid email address.', 'Địa chỉ email không đúng định dạng.'),
+			'contactMsgErr'     => despace_t('Please enter your inquiry or consultation note.', 'Vui lòng nhập lời nhắn hoặc ghi chú yêu cầu tư vấn.'),
+			'contactSending'    => despace_t('Sending inquiry…', 'Đang gửi thông tin…'),
+			'contactSendingMsg' => despace_t('Submitting your consultation request…', 'Đang gửi thông tin yêu cầu tư vấn…'),
+			'contactSuccess'    => despace_t('Request submitted successfully!', 'Đăng ký thành công!'),
+			'contactFail'       => despace_t('Something went wrong. Please try again later.', 'Đã có lỗi xảy ra. Vui lòng thử lại sau.'),
+			'contactNetErr'     => despace_t('Could not reach the server. Please check your connection or contact our hotline.', 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối mạng hoặc liên hệ qua hotline.'),
 		),
+		'freeShippingThreshold' => despace_get_free_shipping_threshold(),
 		'currencySymbol' => function_exists('get_woocommerce_currency_symbol') ? html_entity_decode(get_woocommerce_currency_symbol(), ENT_QUOTES, 'UTF-8') : '₫',
 		'policyUrls' => array(
 			'shipping' => furniva_url('/chinh-sach-giao-hang/'),
@@ -781,16 +913,8 @@ function furniva_ajax_filter()
 		$meta_query[] = array('key' => '_stock_status', 'value' => 'instock');
 	}
 
-	// 3D / AR feature filter
-	if (! empty($_POST['has_3d'])) {
-		$meta_query[] = array(
-			'key'     => '_despace_glb_attachment_id',
-			'value'   => 0,
-			'compare' => '>',
-			'type'    => 'NUMERIC',
-		);
-	}
-
+	// 3D / AR feature filter (uses authoritative wp_despace_product_3d_models + postmeta)
+	$has_3d_only = ! empty($_POST['has_3d']);
 	$orderby = sanitize_text_field($_POST['orderby'] ?? 'menu_order');
 
 	$query_args = array(
@@ -800,6 +924,11 @@ function furniva_ajax_filter()
 		'paged'          => $paged,
 		'tax_query'      => $tax_query,
 	);
+
+	if ($has_3d_only) {
+		$ids_3d = despace_get_3d_product_ids();
+		$query_args['post__in'] = ! empty($ids_3d) ? $ids_3d : array(0);
+	}
 
 	// Search keyword filter (by product name or SKU)
 	$search_term = sanitize_text_field($_POST['s'] ?? $_POST['q'] ?? '');
@@ -826,7 +955,12 @@ function furniva_ajax_filter()
 			return $id > 0;
 		});
 		if (! empty($matched_ids)) {
-			$query_args['post__in'] = $matched_ids;
+			if (isset($query_args['post__in'])) {
+				$intersected = array_values(array_intersect($query_args['post__in'], $matched_ids));
+				$query_args['post__in'] = ! empty($intersected) ? $intersected : array(0);
+			} else {
+				$query_args['post__in'] = $matched_ids;
+			}
 		} else {
 			$query_args['post__in'] = array(0); // force empty result
 		}
@@ -1045,16 +1179,43 @@ add_filter('woocommerce_quantity_input_classes', function ($classes) {
 });
 
 // ---------------------------------------------------------------- misc
-// Price display: keep decimals clean
+// Price display: keep VND cleanly formatted on right in both VI & EN modes (avoid ₫1.500.000)
 add_filter('woocommerce_price_format', function ($format, $currency_pos) {
-	if (function_exists('despace_is_english_mode') && despace_is_english_mode()) {
-		return '%1$s%2$s';
-	}
 	return '%2$s&nbsp;%1$s';
 }, 20, 2);
 add_filter('pre_option_woocommerce_currency_pos', function () {
-	return (function_exists('despace_is_english_mode') && despace_is_english_mode()) ? 'left' : 'right_space';
+	return 'right_space';
 });
+
+// Free shipping progress bar on classic [woocommerce_cart] shortcode page
+add_action( 'woocommerce_before_cart_table', function () {
+	if ( ! function_exists( 'WC' ) || ! WC()->cart || WC()->cart->is_empty() || ! WC()->cart->needs_shipping() ) {
+		return;
+	}
+	$subtotal  = (float) WC()->cart->get_subtotal();
+	$threshold = despace_get_free_shipping_threshold();
+	$remaining = max( 0.0, $threshold - $subtotal );
+	$percent   = min( 100, (int) round( ( $subtotal / max( 1.0, $threshold ) ) * 100 ) );
+	?>
+	<div class="ds-cart-freeship-bar" role="status" aria-live="polite">
+		<div class="ds-cart-freeship-bar__top">
+			<span class="ds-cart-freeship-bar__msg">
+				<?php if ( $remaining > 0 ) : ?>
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+					<span><?php printf( wp_kses_post( furniva_t( 'Add %s more to unlock <strong>FREE Nationwide Delivery</strong>.', 'Mua thêm %s để được <strong>MIỄN PHÍ GIAO HÀNG TOÀN QUỐC</strong>.' ) ), '<strong>' . wp_kses_post( wc_price( $remaining ) ) . '</strong>' ); ?></span>
+				<?php else : ?>
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+					<span class="is-unlocked"><?php echo wp_kses_post( furniva_t( 'You have unlocked <strong>FREE Nationwide Delivery</strong>!', 'Chúc mừng! Đơn hàng được <strong>MIỄN PHÍ GIAO HÀNG TOÀN QUỐC</strong>!' ) ); ?></span>
+				<?php endif; ?>
+			</span>
+			<span class="ds-cart-freeship-bar__pct"><?php echo esc_html( $percent ); ?>%</span>
+		</div>
+		<div class="ds-cart-freeship-bar__track" aria-hidden="true">
+			<div class="ds-cart-freeship-bar__fill <?php echo $remaining <= 0 ? 'is-complete' : ''; ?>" style="width:<?php echo esc_attr( $percent ); ?>%"></div>
+		</div>
+	</div>
+	<?php
+} );
 
 // Add "New" badge to genuinely new products (limit to top 3 newest)
 function furniva_is_new_product($product_id)
@@ -1085,9 +1246,9 @@ function furniva_render_cart_drawer_html()
 	$items      = $cart->get_cart();
 	$item_count = $cart->get_cart_contents_count();
 	$subtotal   = (float) $cart->get_subtotal();
-	$threshold  = 5000000.0;
+	$threshold  = despace_get_free_shipping_threshold();
 	$diff       = max( 0.0, $threshold - $subtotal );
-	$percent    = min( 100, round( ( $subtotal / $threshold ) * 100 ) );
+	$percent    = min( 100, round( ( $subtotal / max( 1.0, $threshold ) ) * 100 ) );
 
 	ob_start();
 ?>
@@ -1359,13 +1520,13 @@ function furniva_verify_cart_or_filter_nonce() {
 
 function furniva_ajax_update_cart_qty() {
 	if ( ! furniva_verify_cart_or_filter_nonce() ) {
-		wp_send_json_error( array( 'message' => 'Invalid security token' ), 403 );
+		wp_send_json_error( array( 'message' => furniva_t( 'Session expired. Please reload and try again.', 'Phiên làm việc đã hết hạn. Vui lòng tải lại trang.' ) ), 403 );
 	}
 	$cart_key = sanitize_text_field( wp_unslash( $_POST['cart_item_key'] ?? $_POST['cart_key'] ?? '' ) );
 	$quantity = max( 0, intval( $_POST['quantity'] ?? $_POST['qty'] ?? 1 ) );
 
 	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
-		wp_send_json_error( array( 'message' => 'Cart not available' ) );
+		wp_send_json_error( array( 'message' => furniva_t( 'Cart is currently unavailable.', 'Giỏ hàng hiện không khả dụng.' ) ) );
 	}
 
 	if ( ! empty( $cart_key ) && isset( WC()->cart->get_cart()[ $cart_key ] ) ) {
@@ -1379,9 +1540,9 @@ function furniva_ajax_update_cart_qty() {
 
 	$subtotal   = (float) WC()->cart->get_subtotal();
 	$item_count = (int) WC()->cart->get_cart_contents_count();
-	$threshold  = 5000000.00;
+	$threshold  = despace_get_free_shipping_threshold();
 	$remaining  = max( 0.00, $threshold - $subtotal );
-	$percent    = min( 100.0, ( $subtotal / $threshold ) * 100.0 );
+	$percent    = min( 100.0, ( $subtotal / max( 1.0, $threshold ) ) * 100.0 );
 
 	wp_send_json_success( array(
 		'subtotal'       => $subtotal,
@@ -1400,12 +1561,12 @@ add_action('wp_ajax_nopriv_despace_cart_update_qty', 'furniva_ajax_update_cart_q
 
 function furniva_ajax_remove_cart_item() {
 	if ( ! furniva_verify_cart_or_filter_nonce() ) {
-		wp_send_json_error( array( 'message' => 'Invalid security token' ), 403 );
+		wp_send_json_error( array( 'message' => furniva_t( 'Session expired. Please reload and try again.', 'Phiên làm việc đã hết hạn. Vui lòng tải lại trang.' ) ), 403 );
 	}
 	$cart_key = sanitize_text_field( wp_unslash( $_POST['cart_item_key'] ?? $_POST['cart_key'] ?? '' ) );
 
 	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
-		wp_send_json_error( array( 'message' => 'Cart not available' ) );
+		wp_send_json_error( array( 'message' => furniva_t( 'Cart is currently unavailable.', 'Giỏ hàng hiện không khả dụng.' ) ) );
 	}
 
 	if ( ! empty( $cart_key ) && isset( WC()->cart->get_cart()[ $cart_key ] ) ) {
@@ -1415,9 +1576,9 @@ function furniva_ajax_remove_cart_item() {
 
 	$subtotal   = (float) WC()->cart->get_subtotal();
 	$item_count = (int) WC()->cart->get_cart_contents_count();
-	$threshold  = 5000000.00;
+	$threshold  = despace_get_free_shipping_threshold();
 	$remaining  = max( 0.00, $threshold - $subtotal );
-	$percent    = min( 100.0, ( $subtotal / $threshold ) * 100.0 );
+	$percent    = min( 100.0, ( $subtotal / max( 1.0, $threshold ) ) * 100.0 );
 
 	wp_send_json_success( array(
 		'subtotal'       => $subtotal,
@@ -1436,10 +1597,10 @@ add_action('wp_ajax_nopriv_despace_cart_remove_item', 'furniva_ajax_remove_cart_
 
 function furniva_ajax_remove_cart_items() {
 	if ( ! furniva_verify_cart_or_filter_nonce() ) {
-		wp_send_json_error( array( 'message' => 'Invalid security token' ), 403 );
+		wp_send_json_error( array( 'message' => furniva_t( 'Session expired. Please reload and try again.', 'Phiên làm việc đã hết hạn. Vui lòng tải lại trang.' ) ), 403 );
 	}
 	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
-		wp_send_json_error( array( 'message' => 'Cart not available' ) );
+		wp_send_json_error( array( 'message' => furniva_t( 'Cart is currently unavailable.', 'Giỏ hàng hiện không khả dụng.' ) ) );
 	}
 
 	$raw_keys = isset( $_POST['cart_keys'] ) ? (array) wp_unslash( $_POST['cart_keys'] ) : array();
@@ -1457,9 +1618,9 @@ function furniva_ajax_remove_cart_items() {
 
 	$subtotal   = (float) WC()->cart->get_subtotal();
 	$item_count = (int) WC()->cart->get_cart_contents_count();
-	$threshold  = 5000000.00;
+	$threshold  = despace_get_free_shipping_threshold();
 	$remaining  = max( 0.00, $threshold - $subtotal );
-	$percent    = min( 100.0, ( $subtotal / $threshold ) * 100.0 );
+	$percent    = min( 100.0, ( $subtotal / max( 1.0, $threshold ) ) * 100.0 );
 
 	wp_send_json_success( array(
 		'removed'        => $removed,
@@ -1477,7 +1638,7 @@ add_action( 'wp_ajax_nopriv_furniva_cart_remove_items', 'furniva_ajax_remove_car
 
 function furniva_ajax_wishlist_add_to_cart() {
 	if ( ! furniva_verify_cart_or_filter_nonce() ) {
-		wp_send_json_error( array( 'message' => 'Invalid security token' ), 403 );
+		wp_send_json_error( array( 'message' => furniva_t( 'Session expired. Please reload and try again.', 'Phiên làm việc đã hết hạn. Vui lòng tải lại trang.' ) ), 403 );
 	}
 	if ( ! is_user_logged_in() && 'yes' !== get_option( 'woocommerce_enable_guest_checkout', 'yes' ) ) {
 		wp_send_json_error( array(
@@ -1489,7 +1650,7 @@ function furniva_ajax_wishlist_add_to_cart() {
 
 	$product_id = intval( $_POST['product_id'] ?? 0 );
 	if ( ! $product_id ) {
-		wp_send_json_error( array( 'message' => 'Invalid product' ) );
+		wp_send_json_error( array( 'message' => furniva_t( 'Invalid product.', 'Sản phẩm không hợp lệ.' ) ) );
 	}
 
 	$passed = apply_filters( 'woocommerce_add_to_cart_validation', true, $product_id, 1 );
@@ -1531,6 +1692,7 @@ function furniva_ajax_wishlist_add_to_cart() {
 
 	wp_send_json_success(array(
 		'cart_count' => $cart_count,
+		'cart_total' => ( function_exists( 'WC' ) && WC()->cart ) ? WC()->cart->get_cart_total() : wc_price( 0 ),
 		'message'    => furniva_t('Added to your cart successfully!', 'Đã thêm vào giỏ hàng thành công!'),
 	));
 }
@@ -1541,7 +1703,9 @@ add_action('wp_ajax_nopriv_despace_wishlist_add_to_cart', 'furniva_ajax_wishlist
 
 function furniva_ajax_wishlist_remove()
 {
-	check_ajax_referer('furniva_wishlist', 'security');
+	if ( ! furniva_verify_cart_or_filter_nonce() ) {
+		wp_send_json_error( array( 'message' => furniva_t( 'Session expired. Please reload and try again.', 'Phiên làm việc đã hết hạn. Vui lòng tải lại trang.' ) ), 403 );
+	}
 	$product_id = intval($_POST['product_id'] ?? 0);
 	if ($product_id) {
 		if (function_exists('yith_wcwl_wishlists')) {
@@ -1576,7 +1740,9 @@ add_action('wp_ajax_nopriv_despace_wishlist_remove', 'furniva_ajax_wishlist_remo
 
 function furniva_ajax_wishlist_clear()
 {
-	check_ajax_referer('furniva_wishlist', 'security');
+	if ( ! furniva_verify_cart_or_filter_nonce() ) {
+		wp_send_json_error( array( 'message' => furniva_t( 'Session expired. Please reload and try again.', 'Phiên làm việc đã hết hạn. Vui lòng tải lại trang.' ) ), 403 );
+	}
 	if (class_exists('YITH_WCWL_Wishlist_Factory')) {
 		$wishlist = YITH_WCWL_Wishlist_Factory::get_current_wishlist();
 		if ($wishlist && method_exists($wishlist, 'get_items')) {

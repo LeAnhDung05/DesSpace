@@ -1,23 +1,33 @@
 /**
- * DeSpace Admin Dashboard Stylesheet (M5) — Modern SaaS v4.0
- * Strictly scoped inside .despace-dashboard-wrap.
+ * DeSpace Admin Dashboard Stylesheet (M5) — Editorial Luxury System
+ * Strictly scoped inside .despace-dashboard-wrap (leaves native WP Admin untouched).
+ * Harmonized with DeSpace Storefront Design Tokens (#F7F4EF, #FAF7F2, #1C1917, #9A6745, #E7E0D7).
  *
  * @package DeSpace\Reports
  */
 
 .despace-dashboard-wrap {
-	--despace-primary: #0f172a;
-	--despace-accent-gold: #d97706;
-	--despace-accent-navy: #4f46e5;
-	--despace-success: #047857;
-	--despace-warning: #b45309;
-	--despace-danger: #b91c1c;
-	--despace-card-bg: #ffffff;
-	--despace-border: rgba(15, 23, 42, 0.08);
-	--despace-text-muted: #64748b;
-	--despace-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -10px rgba(15, 23, 42, 0.07);
-	--despace-shadow-hover: 0 0 0 1px rgba(79, 70, 229, 0.2), 0 12px 28px -12px rgba(79, 70, 229, 0.2);
-	font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	--despace-bg: #F7F4EF;
+	--despace-cream: #FAF7F2;
+	--despace-primary: #1C1917;
+	--despace-accent-gold: #9A6745;
+	--despace-accent-hover: #7A4E31;
+	--despace-accent-soft: #F5ECE2;
+	--despace-sand: #D8C4AE;
+	--despace-success: #4E6B4A;
+	--despace-success-bg: #EDF4EC;
+	--despace-warning: #B45309;
+	--despace-warning-bg: #FEF5E7;
+	--despace-danger: #BF5B50;
+	--despace-danger-bg: #FDF1EF;
+	--despace-card-bg: #FFFFFF;
+	--despace-border: #E7E0D7;
+	--despace-text-muted: #69645D;
+	--despace-shadow: 0 1px 2px rgba(28, 25, 23, 0.04), 0 8px 24px -10px rgba(28, 25, 23, 0.07);
+	--despace-shadow-hover: 0 0 0 1px rgba(154, 103, 69, 0.28), 0 12px 28px -12px rgba(28, 25, 23, 0.14);
+	--despace-font-display: "Newsreader", Georgia, "Times New Roman", serif;
+	--despace-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	font-family: var(--despace-font-sans);
 	color: var(--despace-primary);
 }
 
@@ -33,9 +43,10 @@
 }
 
 .despace-header-title h1 {
-	font-size: 26px;
-	font-weight: 800;
-	letter-spacing: -0.03em;
+	font-family: var(--despace-font-display);
+	font-size: 28px;
+	font-weight: 600;
+	letter-spacing: -0.02em;
 	margin: 0 0 6px 0;
 	color: var(--despace-primary);
 }
@@ -53,23 +64,23 @@
 }
 
 .despace-badge-hpos {
-	background-color: #eff6ff;
-	color: #1d4ed8;
+	background-color: var(--despace-success-bg);
+	color: var(--despace-success);
 	font-size: 12px;
 	font-weight: 600;
 	padding: 4px 10px;
 	border-radius: 9999px;
-	border: 1px solid #bfdbfe;
+	border: 1px solid rgba(78, 107, 74, 0.25);
 }
 
 .despace-badge-role {
-	background-color: #fffbeb;
-	color: #b45309;
+	background-color: var(--despace-accent-soft);
+	color: var(--despace-accent-gold);
 	font-size: 12px;
 	font-weight: 600;
 	padding: 4px 10px;
 	border-radius: 9999px;
-	border: 1px solid #fde68a;
+	border: 1px solid var(--despace-sand);
 }
 
 /* Filter Card */
@@ -102,13 +113,19 @@
 }
 
 .despace-filter-group input[type="date"] {
-	border: 1px solid rgba(15, 23, 42, 0.14);
+	border: 1px solid var(--despace-sand);
 	border-radius: 10px;
 	padding: 6px 11px;
 	font-size: 13px;
-	background-color: #ffffff;
+	background-color: #FFFFFF;
 	color: var(--despace-primary);
 	height: 36px;
+}
+
+.despace-filter-group input[type="date"]:focus {
+	border-color: var(--despace-accent-gold);
+	box-shadow: 0 0 0 3px rgba(154, 103, 69, 0.16);
+	outline: none;
 }
 
 .despace-filter-presets {
@@ -117,49 +134,50 @@
 	flex-wrap: wrap;
 }
 
-.despace-preset-btn {
-	border-radius: 9px !important;
-	font-size: 12.5px !important;
-	font-weight: 600 !important;
-	padding: 0 12px !important;
-	height: 35px !important;
-	line-height: 33px !important;
-	border: 1px solid rgba(15, 23, 42, 0.12) !important;
-	background: #f8fafc !important;
-	color: #334155 !important;
+.despace-dashboard-wrap .despace-preset-btn {
+	border-radius: 9px;
+	font-size: 12.5px;
+	font-weight: 600;
+	padding: 0 12px;
+	height: 35px;
+	line-height: 33px;
+	border: 1px solid var(--despace-border);
+	background: var(--despace-cream);
+	color: #3D3B37;
 	transition: all 0.15s ease;
 }
 
-.despace-preset-btn:hover {
-	background-color: #eef2ff !important;
-	border-color: #4f46e5 !important;
-	color: #3730a3 !important;
+.despace-dashboard-wrap .despace-preset-btn:hover {
+	background-color: var(--despace-accent-soft);
+	border-color: var(--despace-accent-gold);
+	color: var(--despace-accent-hover);
 }
 
-.despace-preset-btn.active {
-	background-color: #0f172a !important;
-	color: #ffffff !important;
-	border-color: #0f172a !important;
+.despace-dashboard-wrap .despace-preset-btn.active {
+	background-color: var(--despace-primary);
+	color: var(--despace-cream);
+	border-color: var(--despace-primary);
 }
 
-.despace-filter-action .button-primary {
+.despace-dashboard-wrap .despace-filter-action .button-primary {
 	height: 36px;
 	line-height: 34px;
 	padding: 0 18px;
 	border-radius: 10px;
-	background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%) !important;
-	border-color: #4f46e5 !important;
-	color: #ffffff !important;
+	background: var(--despace-accent-gold);
+	border-color: var(--despace-accent-gold);
+	color: #FFFFFF;
 	font-weight: 600;
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
-	box-shadow: 0 4px 12px -4px rgba(79, 70, 229, 0.45);
+	box-shadow: 0 4px 12px -4px rgba(154, 103, 69, 0.45);
+	transition: background-color 0.16s ease, border-color 0.16s ease;
 }
 
-.despace-filter-action .button-primary:hover {
-	background: linear-gradient(180deg, #4f46e5 0%, #4338ca 100%) !important;
-	border-color: #4338ca !important;
+.despace-dashboard-wrap .despace-filter-action .button-primary:hover {
+	background: var(--despace-accent-hover);
+	border-color: var(--despace-accent-hover);
 }
 
 .despace-loading-indicator {
@@ -170,6 +188,49 @@
 	border-top: 1px dashed var(--despace-border);
 	font-size: 13px;
 	color: var(--despace-text-muted);
+}
+
+/* Error Banner with Retry */
+.despace-error-banner {
+	border-radius: 14px;
+	border: 1px solid rgba(191, 91, 80, 0.35);
+	border-left: 4px solid var(--despace-danger);
+	background: var(--despace-danger-bg);
+	padding: 12px 16px;
+}
+
+.despace-error-banner__inner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 14px;
+	flex-wrap: wrap;
+}
+
+.despace-error-banner__inner p {
+	margin: 0;
+	color: #8C2D23;
+	font-weight: 500;
+}
+
+.despace-dashboard-wrap .despace-btn-retry {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	border-radius: 9px;
+	border: 1px solid rgba(191, 91, 80, 0.4);
+	background: #FFFFFF;
+	color: #8C2D23;
+	font-weight: 600;
+	padding: 0 12px;
+	height: 32px;
+	line-height: 30px;
+}
+
+.despace-dashboard-wrap .despace-btn-retry:hover {
+	background: var(--despace-danger);
+	border-color: var(--despace-danger);
+	color: #FFFFFF;
 }
 
 /* Metrics Grid */
@@ -193,7 +254,7 @@
 
 .despace-metric-card:hover {
 	transform: translateY(-2px);
-	border-color: rgba(79, 70, 229, 0.3);
+	border-color: var(--despace-sand);
 	box-shadow: var(--despace-shadow-hover);
 }
 
@@ -213,10 +274,10 @@
 	height: 21px;
 }
 
-.despace-card-revenue .despace-card-icon { background: #eef2ff; color: #4f46e5; }
-.despace-card-orders .despace-card-icon { background: #eff6ff; color: #2563eb; }
-.despace-card-3d .despace-card-icon { background: #ecfdf5; color: #059669; }
-.despace-card-aov .despace-card-icon { background: #fffbeb; color: #d97706; }
+.despace-card-revenue .despace-card-icon { background: var(--despace-accent-soft); color: var(--despace-accent-gold); }
+.despace-card-orders .despace-card-icon { background: #F2EEE9; color: var(--despace-primary); }
+.despace-card-3d .despace-card-icon { background: var(--despace-success-bg); color: var(--despace-success); }
+.despace-card-aov .despace-card-icon { background: var(--despace-warning-bg); color: var(--despace-warning); }
 
 .despace-card-content { flex: 1; min-width: 0; }
 
@@ -229,9 +290,9 @@
 }
 
 .despace-card-value {
-	font-size: 27px;
-	font-weight: 800;
-	letter-spacing: -0.035em;
+	font-size: 26px;
+	font-weight: 700;
+	letter-spacing: -0.03em;
 	margin: 0 0 6px 0;
 	color: var(--despace-primary);
 	line-height: 1.15;
@@ -275,14 +336,17 @@
 
 .despace-panel-header {
 	padding: 18px 22px;
-	border-bottom: 1px solid #f1f5f9;
-	background-color: #ffffff;
+	border-bottom: 1px solid var(--despace-border);
+	background-color: var(--despace-cream);
+	flex-wrap: wrap;
+	gap: 10px;
 }
 
 .despace-panel-header h2 {
-	font-size: 15.5px;
-	font-weight: 700;
-	letter-spacing: -0.015em;
+	font-family: var(--despace-font-display);
+	font-size: 18px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
 	margin: 0;
 	display: flex;
 	align-items: center;
@@ -290,44 +354,76 @@
 	color: var(--despace-primary);
 }
 
-.despace-panel-header .dashicons { color: #4f46e5; }
+.despace-panel-header .dashicons { color: var(--despace-accent-gold); }
 .despace-panel-body { padding: 22px; }
 
 /* Status Bars */
 .despace-status-bars-container { display: flex; flex-direction: column; gap: 14px; }
 .despace-status-row { display: flex; flex-direction: column; gap: 6px; }
 .despace-status-info { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-.despace-status-pill { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; }
+.despace-status-pill { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
 .despace-status-count { font-size: 12.5px; color: var(--despace-text-muted); font-variant-numeric: tabular-nums; }
-.despace-progress-track { height: 8px; background-color: #f1f5f9; border-radius: 9999px; overflow: hidden; }
+.despace-progress-track { height: 8px; background-color: var(--despace-bg); border-radius: 9999px; overflow: hidden; }
 .despace-progress-bar { height: 100%; border-radius: 9999px; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+
+/* Empty State */
+.despace-empty-state {
+	padding: 28px 18px;
+	text-align: center;
+	background: var(--despace-cream);
+	border: 1px dashed var(--despace-sand);
+	border-radius: 12px;
+	color: var(--despace-text-muted);
+	font-size: 13.5px;
+}
+
+.despace-empty-state p {
+	margin: 0;
+}
 
 /* Audit Notes */
 .despace-audit-notes { margin: 0; padding-left: 18px; font-size: 13.5px; line-height: 1.65; color: var(--despace-text-muted); }
 .despace-audit-notes li { margin-bottom: 12px; }
 .despace-audit-notes strong { color: var(--despace-primary); }
 
-/* Top 10 Table */
-.despace-table-subtitle { font-size: 12.5px; color: var(--despace-text-muted); font-weight: normal; }
-.despace-table { border: none !important; box-shadow: none !important; }
-.despace-table th {
-	background-color: #f8fafc !important;
-	font-weight: 700 !important;
-	color: #475569 !important;
-	font-size: 11.5px !important;
-	text-transform: uppercase;
-	letter-spacing: 0.055em;
-	padding: 13px 16px !important;
-	border-bottom: 1px solid var(--despace-border) !important;
+/* Top 10 Table & Responsive Horizontal Scroll Wrapper */
+.despace-table-scroll {
+	width: 100%;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
 }
-.despace-table td {
-	padding: 14px 16px !important;
-	vertical-align: middle !important;
-	border-bottom: 1px solid #f1f5f9 !important;
+
+.despace-table-subtitle { font-size: 12.5px; color: var(--despace-text-muted); font-weight: 400; }
+
+.despace-dashboard-wrap .despace-table {
+	border: 0;
+	box-shadow: none;
+	min-width: 720px;
+	background: #FFFFFF;
+}
+
+.despace-dashboard-wrap .despace-table th {
+	background-color: var(--despace-cream);
+	font-weight: 700;
+	color: var(--despace-text-muted);
+	font-size: 11.5px;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	padding: 13px 16px;
+	border-bottom: 1px solid var(--despace-border);
+}
+
+.despace-dashboard-wrap .despace-table td {
+	padding: 14px 16px;
+	vertical-align: middle;
+	border-bottom: 1px solid #F1EAE1;
 	font-size: 13.5px;
 	font-variant-numeric: tabular-nums;
 }
-.despace-product-row:hover { background-color: #f8fafc !important; }
+
+.despace-dashboard-wrap .despace-product-row:hover td {
+	background-color: var(--despace-cream);
+}
 
 .despace-rank-badge {
 	display: inline-flex;
@@ -338,12 +434,12 @@
 	border-radius: 9px;
 	font-size: 12px;
 	font-weight: 700;
-	background-color: #f1f5f9;
-	color: #475569;
+	background-color: var(--despace-bg);
+	color: var(--despace-text-muted);
 }
-.despace-rank-1 { background-color: #fef3c7; color: #b45309; }
-.despace-rank-2 { background-color: #eef2ff; color: #4338ca; }
-.despace-rank-3 { background-color: #ecfdf5; color: #047857; }
+.despace-rank-1 { background-color: #1C1917; color: #FAF7F2; }
+.despace-rank-2 { background-color: var(--despace-accent-soft); color: var(--despace-accent-gold); }
+.despace-rank-3 { background-color: var(--despace-success-bg); color: var(--despace-success); }
 
 .despace-product-thumbnail {
 	width: 44px;
@@ -353,33 +449,52 @@
 	border: 1px solid var(--despace-border);
 	display: block;
 }
-.despace-product-name { font-weight: 600; color: #4f46e5; text-decoration: none; }
-.despace-product-name:hover { color: #3730a3; text-decoration: underline; }
-.despace-sku { background-color: #f1f5f9; color: #334155; padding: 2px 7px; border-radius: 6px; font-size: 12px; }
+.despace-product-name { font-weight: 600; color: var(--despace-primary); text-decoration: none; }
+.despace-product-name:hover { color: var(--despace-accent-gold); text-decoration: underline; }
+.despace-sku { background-color: var(--despace-bg); color: #3D3B37; padding: 2px 7px; border-radius: 6px; font-size: 12px; }
+
 .despace-badge-3d-active {
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
-	background-color: #ecfdf5;
-	color: #047857;
+	background-color: var(--despace-success-bg);
+	color: var(--despace-success);
 	font-size: 12px;
 	font-weight: 600;
 	padding: 4px 10px;
 	border-radius: 9999px;
 }
 .despace-badge-3d-active .dashicons { font-size: 14px; width: 14px; height: 14px; }
-.despace-badge-3d-inactive { background-color: #f1f5f9; color: #64748b; font-size: 12px; padding: 4px 10px; border-radius: 9999px; }
+.despace-badge-3d-inactive { background-color: var(--despace-bg); color: var(--despace-text-muted); font-size: 12px; padding: 4px 10px; border-radius: 9999px; }
 .despace-revenue-cell { font-weight: 700; color: var(--despace-success); }
-.despace-table-empty { text-align: center !important; padding: 40px !important; color: var(--despace-text-muted); }
+.despace-dashboard-wrap .despace-table-empty { text-align: center; padding: 40px 20px; color: var(--despace-text-muted); }
 
-/* Shimmer Skeleton Loading for M5 Reports */
+/* Shimmer Skeleton Loading for KPI Cards, Status Bars & Table Rows */
+.despace-sk-bar {
+	display: inline-block;
+	height: 14px;
+	border-radius: 7px;
+	background: linear-gradient(90deg, #F2ECE3 25%, #E7DDD0 50%, #F2ECE3 75%);
+	background-size: 200% 100%;
+	animation: dsShimmer 1.25s ease-in-out infinite;
+	vertical-align: middle;
+}
+
+.despace-sk-bar--badge { width: 28px; height: 28px; border-radius: 9px; }
+.despace-sk-bar--thumb { width: 44px; height: 44px; border-radius: 10px; }
+.despace-sk-bar--title { width: 78%; max-width: 240px; }
+.despace-sk-bar--sku { width: 88px; }
+.despace-sk-bar--pill { width: 92px; height: 22px; border-radius: 999px; }
+.despace-sk-bar--num { width: 42px; }
+.despace-sk-bar--rev { width: 96px; }
+
 .despace-dashboard-wrap.is-loading .despace-card-value {
-	color: transparent !important;
-	background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+	color: transparent;
+	background: linear-gradient(90deg, #F2ECE3 25%, #E7DDD0 50%, #F2ECE3 75%);
 	background-size: 200% 100%;
 	border-radius: 8px;
 	min-height: 30px;
-	animation: dsShimmer 1.2s ease-in-out infinite;
+	animation: dsShimmer 1.25s ease-in-out infinite;
 }
 
 @keyframes dsShimmer {
@@ -392,4 +507,27 @@
 	font-size: 12px;
 	color: var(--despace-text-muted);
 	font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 782px) {
+	.despace-filter-card {
+		padding: 14px 16px;
+	}
+	.despace-filter-row {
+		flex-direction: column;
+		align-items: stretch;
+	}
+	.despace-filter-group {
+		justify-content: space-between;
+	}
+	.despace-filter-group input[type="date"] {
+		flex: 1;
+		max-width: 220px;
+	}
+	.despace-last-updated {
+		margin-left: 0;
+	}
+	.despace-metrics-grid {
+		grid-template-columns: 1fr;
+	}
 }

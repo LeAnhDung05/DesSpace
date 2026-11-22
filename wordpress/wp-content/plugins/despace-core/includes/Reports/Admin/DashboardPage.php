@@ -211,8 +211,14 @@ class DashboardPage {
 			</div>
 
 			<!-- Error Alert Container -->
-			<div id="despace-error-box" class="notice notice-error" style="display: none; margin: 16px 0;">
-				<p id="despace-error-message"></p>
+			<div id="despace-error-box" class="notice notice-error despace-error-banner" role="alert" style="display: none; margin: 16px 0;">
+				<div class="despace-error-banner__inner">
+					<p id="despace-error-message"></p>
+					<button type="button" id="despace-btn-retry" class="button despace-btn-retry">
+						<span class="dashicons dashicons-update" aria-hidden="true"></span>
+						<?php esc_html_e( 'Thử tải lại', 'despace-core' ); ?>
+					</button>
+				</div>
 			</div>
 
 			<!-- Metrics Summary Grid -->
@@ -310,27 +316,34 @@ class DashboardPage {
 					<span class="despace-table-subtitle"><?php esc_html_e( 'Dựa trên số lượng đã giao & đang xử lý trong kỳ', 'despace-core' ); ?></span>
 				</div>
 				<div class="despace-panel-body" style="padding: 0;">
-					<table class="wp-list-table widefat fixed striped despace-table">
-						<thead>
-							<tr>
-								<th scope="col" style="width: 50px; text-align: center;"><?php esc_html_e( '#', 'despace-core' ); ?></th>
-								<th scope="col" style="width: 60px;"><?php esc_html_e( 'Ảnh', 'despace-core' ); ?></th>
-								<th scope="col"><?php esc_html_e( 'Tên sản phẩm', 'despace-core' ); ?></th>
-								<th scope="col" style="width: 140px;"><?php esc_html_e( 'Mã SKU', 'despace-core' ); ?></th>
-								<th scope="col" style="width: 130px; text-align: center;"><?php esc_html_e( 'Mô hình 3D AR', 'despace-core' ); ?></th>
-								<th scope="col" style="width: 130px; text-align: right;"><?php esc_html_e( 'Số lượng bán', 'despace-core' ); ?></th>
-								<th scope="col" style="width: 160px; text-align: right;"><?php esc_html_e( 'Doanh thu', 'despace-core' ); ?></th>
-							</tr>
-						</thead>
-						<tbody id="despace-top-products-tbody">
-							<tr>
-								<td colspan="7" style="text-align: center; padding: 24px;">
-									<span class="spinner is-active" style="float: none; margin: 0 6px 0 0;"></span>
-									<?php esc_html_e( 'Đang tải danh sách...', 'despace-core' ); ?>
-								</td>
-							</tr>
-						</tbody>
-					</table>
+					<div class="despace-table-scroll">
+						<table class="wp-list-table widefat fixed striped despace-table">
+							<thead>
+								<tr>
+									<th scope="col" style="width: 54px; text-align: center;"><?php esc_html_e( '#', 'despace-core' ); ?></th>
+									<th scope="col" style="width: 64px;"><?php esc_html_e( 'Ảnh', 'despace-core' ); ?></th>
+									<th scope="col"><?php esc_html_e( 'Tên sản phẩm', 'despace-core' ); ?></th>
+									<th scope="col" style="width: 140px;"><?php esc_html_e( 'Mã SKU', 'despace-core' ); ?></th>
+									<th scope="col" style="width: 130px; text-align: center;"><?php esc_html_e( 'Mô hình 3D AR', 'despace-core' ); ?></th>
+									<th scope="col" style="width: 130px; text-align: right;"><?php esc_html_e( 'Số lượng bán', 'despace-core' ); ?></th>
+									<th scope="col" style="width: 160px; text-align: right;"><?php esc_html_e( 'Doanh thu', 'despace-core' ); ?></th>
+								</tr>
+							</thead>
+							<tbody id="despace-top-products-tbody">
+								<?php for ( $sk = 0; $sk < 4; $sk++ ) : ?>
+								<tr class="despace-sk-row" aria-hidden="true">
+									<td style="text-align: center;"><span class="despace-sk-bar despace-sk-bar--badge"></span></td>
+									<td><span class="despace-sk-bar despace-sk-bar--thumb"></span></td>
+									<td><span class="despace-sk-bar despace-sk-bar--title"></span></td>
+									<td><span class="despace-sk-bar despace-sk-bar--sku"></span></td>
+									<td style="text-align: center;"><span class="despace-sk-bar despace-sk-bar--pill"></span></td>
+									<td style="text-align: right;"><span class="despace-sk-bar despace-sk-bar--num"></span></td>
+									<td style="text-align: right;"><span class="despace-sk-bar despace-sk-bar--rev"></span></td>
+								</tr>
+								<?php endfor; ?>
+							</tbody>
+						</table>
+					</div>
 				</div>
 			</div>
 		</div>

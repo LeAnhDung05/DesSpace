@@ -111,7 +111,7 @@ $shop_url = wc_get_page_permalink( 'shop' );
                         $name = $product->get_name();
                         $price = $product->get_price_html();
                         $in_stock = $product->is_in_stock();
-                        $add_to_cart_url = esc_url( add_query_arg( 'add_to_cart', $product_id, wc_get_cart_url() ) );
+                        $add_to_cart_url = esc_url( add_query_arg( 'add-to-cart', $product_id, wc_get_cart_url() ) );
                     ?>
                     <tr class="ax-wishlist-item" data-product-id="<?php echo esc_attr( $product_id ); ?>">
                         <td class="ax-product-col">
@@ -265,21 +265,32 @@ jQuery(function($) {
                 quantity: 1
             },
             success: function(response) {
-                if (response.success) {
+                if (response && response.success) {
                     $btn.removeClass('loading').addClass('added');
                     $btn.find('span').text('<?php echo esc_js( furniva_t( 'Added!', 'Đã thêm!' ) ); ?>');
 
-                    // Update mini cart
-                    $(document.body).trigger('added_to_cart');
+                    if (response.data && typeof response.data.cart_count !== 'undefined') {
+                        var c = parseInt(response.data.cart_count, 10) || 0;
+                        $('.f-badge, .f-cart-count, .fv-cart-count, .ax-cart-badge').text(c);
+                        $('.f-cart-bnav-count').text(c).toggle(c > 0);
+                    }
+                    if (response.data && response.data.cart_total) {
+                        $('.f-cart-total').html(response.data.cart_total);
+                    }
+                    $(document.body).trigger('wc_fragment_refresh');
 
-                    // Show toast
-                    if (window.furnivaToast) {
-                        furnivaToast('<?php echo esc_js( furniva_t( 'Added to cart!', 'Đã thêm vào giỏ!' ) ); ?>');
+                    var $toast = $('#axToast, #furniva-toast').first();
+                    if ($toast.length) {
+                        $toast.text('<?php echo esc_js( furniva_t( 'Added to cart!', 'Đã thêm vào giỏ hàng!' ) ); ?>').addClass('show is-visible');
+                        setTimeout(function() { $toast.removeClass('show is-visible'); }, 2800);
                     }
 
                     setTimeout(function() {
-                        location.reload();
-                    }, 1500);
+                        $btn.removeClass('added').prop('disabled', false);
+                        $btn.find('span').text('<?php echo esc_js( furniva_t( 'Add to Cart', 'Thêm vào giỏ' ) ); ?>');
+                    }, 1800);
+                } else {
+                    $btn.removeClass('loading').prop('disabled', false);
                 }
             },
             error: function() {

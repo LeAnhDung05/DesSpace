@@ -16,7 +16,38 @@ jQuery(function ($) {
 	function toast(msg) {
 		var $t = $("#furniva-toast");
 		$t.text(msg).addClass("show");
-		setTimeout(function () { $t.removeClass("show"); }, 2600);
+		clearTimeout(window._fvToastTimer);
+		window._fvToastTimer = setTimeout(function () { $t.removeClass("show"); }, 2600);
+	}
+
+	/* ------------------------------------------------ centralized cart & wishlist badge sync */
+	function syncCartBadges(count, totalHtml) {
+		if (typeof count !== "undefined" && count !== null) {
+			var n = Math.max(0, parseInt(count, 10) || 0);
+			$(".f-badge, .f-cart-count, .fv-cart-count, .ax-cart-badge").text(n);
+			$(".f-cart-bnav-count").text(n).toggle(n > 0);
+		}
+		if (typeof totalHtml !== "undefined" && totalHtml !== null) {
+			$(".f-cart-total").html(totalHtml);
+		}
+	}
+
+	function syncWishlistBadges(count) {
+		if (typeof count === "undefined" || count === null) return;
+		var n = Math.max(0, parseInt(count, 10) || 0);
+		$(".fv-wishlist-count").text(n).toggle(n > 0);
+		$(".fv-wishlist-count-inline").text(n);
+	}
+
+	// Format VND (and optional USD reference in English mode)
+	function formatStoreMoney(amountVnd) {
+		var val = Math.max(0, Math.round(parseFloat(amountVnd) || 0));
+		var vndText = new Intl.NumberFormat("vi-VN").format(val) + " ₫";
+		if (window.furnivaData && furnivaData.language && furnivaData.language.indexOf("en") === 0 && val > 0) {
+			var usd = Math.round(val / 25000);
+			return vndText + " (≈ $" + new Intl.NumberFormat("en-US").format(Math.max(1, usd)) + ")";
+		}
+		return vndText;
 	}
 
 	/* --------------------------------------------------------- homepage room edit */
@@ -47,39 +78,147 @@ jQuery(function ($) {
 		$tabs.eq(nextIndex).trigger("focus").trigger("click");
 	});
 
-	/* ---------------------------------------------------------------- mobile nav */
-	$("#furniva-burger").on("click", function () {
-		var $menu = $("#furniva-mobile-nav");
-		var isOpen = $menu.hasClass("open");
-		$menu.toggleClass("open", !isOpen);
-		$(this).attr("aria-expanded", !isOpen ? "true" : "false").toggleClass("is-active", !isOpen);
-		$("body").toggleClass("is-menu-open", !isOpen);
+	/* ---------------------------------------------------------------- mobile nav drawer */
+	var $mobileNav = $("#furniva-mobile-nav");
+	var $mobileBackdrop = $("#furniva-mobile-backdrop");
+	var $burgerBtn = $("#furniva-burger");
+
+	function openMobileNav() {
+		$mobileNav.addClass("open").attr("aria-hidden", "false");
+		$mobileBackdrop.addClass("open").attr("aria-hidden", "false");
+		$burgerBtn.attr("aria-expanded", "true").addClass("is-active");
+		$("body").addClass("is-menu-open");
+		setTimeout(function () {
+			$("#furniva-mobile-close").trigger("focus");
+		}, 60);
+	}
+
+	function closeMobileNav(restoreFocus) {
+		if (!$mobileNav.hasClass("open")) return;
+		$mobileNav.removeClass("open").attr("aria-hidden", "true");
+		$mobileBackdrop.removeClass("open").attr("aria-hidden", "true");
+		$burgerBtn.attr("aria-expanded", "false").removeClass("is-active");
+		$("body").removeClass("is-menu-open");
+		if (restoreFocus) {
+			$burgerBtn.trigger("focus");
+		}
+	}
+
+	$burgerBtn.on("click", function () {
+		if ($mobileNav.hasClass("open")) {
+			closeMobileNav(true);
+		} else {
+			openMobileNav();
+		}
+	});
+
+	$(document).on("click", "#furniva-mobile-close, #furniva-mobile-backdrop", function () {
+		closeMobileNav(true);
 	});
 
 	// Close mobile nav on escape key, outside click, or link click
 	$(document).on("keydown", function (e) {
-		if (e.key === "Escape" && $("#furniva-mobile-nav").hasClass("open")) {
-			$("#furniva-mobile-nav").removeClass("open");
-			$("#furniva-burger").attr("aria-expanded", "false").removeClass("is-active").trigger("focus");
-			$("body").removeClass("is-menu-open");
+		if (e.key === "Escape" && $mobileNav.hasClass("open")) {
+			closeMobileNav(true);
 		}
 	});
 
 	$(document).on("click", function (e) {
-		if ($("#furniva-mobile-nav").hasClass("open")) {
+		if ($mobileNav.hasClass("open")) {
 			if (!$(e.target).closest("#furniva-mobile-nav, #furniva-burger").length) {
-				$("#furniva-mobile-nav").removeClass("open");
-				$("#furniva-burger").attr("aria-expanded", "false").removeClass("is-active");
-				$("body").removeClass("is-menu-open");
+				closeMobileNav(false);
 			}
 		}
 	});
 
-	$("#furniva-mobile-nav a").on("click", function () {
-		$("#furniva-mobile-nav").removeClass("open");
-		$("#furniva-burger").attr("aria-expanded", "false").removeClass("is-active");
-		$("body").removeClass("is-menu-open");
+	$mobileNav.on("click", "a", function () {
+		closeMobileNav(false);
 	});
+
+	$(window).on("resize", function () {
+		if (window.innerWidth > 1024 && $mobileNav.hasClass("open")) {
+			closeMobileNav(false);
+		}
+	});
+
+	/* ------------------------------------------------ desktop mega-menu hover intent */
+	(function initMegaMenu() {
+		var $megaItems = $(".fv-subnav-item--has-mega");
+		if (!$megaItems.length) return;
+		var openTimer = null;
+		var closeTimer = null;
+		var activeItem = null;
+
+		function isDesktopHoverEnabled() {
+			return window.innerWidth > 921 && (!window.matchMedia || window.matchMedia("(hover: hover) and (pointer: fine)").matches);
+		}
+
+		function closeAllMega() {
+			clearTimeout(openTimer);
+			clearTimeout(closeTimer);
+			$megaItems.removeClass("is-mega-open").children(".fv-subnav-link").attr("aria-expanded", "false");
+			activeItem = null;
+		}
+
+		function openMega($item) {
+			if (!isDesktopHoverEnabled()) return;
+			clearTimeout(closeTimer);
+			$megaItems.not($item).removeClass("is-mega-open").children(".fv-subnav-link").attr("aria-expanded", "false");
+			$item.addClass("is-mega-open").children(".fv-subnav-link").attr("aria-expanded", "true");
+			activeItem = $item[0];
+		}
+
+		$megaItems.on("mouseenter", function () {
+			if (!isDesktopHoverEnabled()) return;
+			var $item = $(this);
+			clearTimeout(closeTimer);
+			clearTimeout(openTimer);
+			if (activeItem === this) return;
+			openTimer = setTimeout(function () {
+				openMega($item);
+			}, activeItem ? 60 : 110);
+		});
+
+		$megaItems.on("mouseleave", function () {
+			clearTimeout(openTimer);
+			clearTimeout(closeTimer);
+			closeTimer = setTimeout(closeAllMega, 180);
+		});
+
+		$megaItems.on("focusin", function () {
+			if (window.innerWidth > 921) {
+				openMega($(this));
+			}
+		});
+
+		$megaItems.on("focusout", function (e) {
+			var self = this;
+			setTimeout(function () {
+				if (!self.contains(document.activeElement)) {
+					$(self).removeClass("is-mega-open").children(".fv-subnav-link").attr("aria-expanded", "false");
+					if (activeItem === self) activeItem = null;
+				}
+			}, 40);
+		});
+
+		$(document).on("keydown", function (e) {
+			if (e.key === "Escape" && activeItem) {
+				closeAllMega();
+			}
+		});
+
+		$(document).on("click", function (e) {
+			if (activeItem && !$(e.target).closest(".fv-subnav-item--has-mega").length) {
+				closeAllMega();
+			}
+		});
+
+		$(window).on("resize", function () {
+			if (window.innerWidth <= 921 && activeItem) {
+				closeAllMega();
+			}
+		});
+	})();
 
 	/* ---------------------------------------------- homepage lookbook + FAQ */
 	function activateLookTab($root, index) {
@@ -269,6 +408,7 @@ jQuery(function ($) {
 		}
 
 		// Client validation
+		var s = (window.furnivaData && furnivaData.strings) || {};
 		var name = $.trim($form.find('input[name="contact_name"]').val() || "");
 		var phone = $.trim($form.find('input[name="contact_phone"]').val() || "");
 		var email = $.trim($form.find('input[name="contact_email"]').val() || "");
@@ -276,7 +416,7 @@ jQuery(function ($) {
 
 		if (name.length < 2) {
 			$status.css({ display: "block", background: "#fdf2f2", color: "#991b1b", border: "1px solid #f87171" })
-				.text("Vui lòng nhập họ và tên (tối thiểu 2 ký tự).");
+				.text(s.contactNameErr || "Vui lòng nhập họ và tên (tối thiểu 2 ký tự).");
 			$form.find('input[name="contact_name"]').focus();
 			return;
 		}
@@ -284,21 +424,21 @@ jQuery(function ($) {
 		var digits = phone.replace(/\D/g, "");
 		if (digits.length < 9 || digits.length > 12) {
 			$status.css({ display: "block", background: "#fdf2f2", color: "#991b1b", border: "1px solid #f87171" })
-				.text("Vui lòng nhập số điện thoại hợp lệ (9 – 11 chữ số).");
+				.text(s.contactPhoneErr || "Vui lòng nhập số điện thoại hợp lệ (9 – 11 chữ số).");
 			$form.find('input[name="contact_phone"]').focus();
 			return;
 		}
 
 		if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
 			$status.css({ display: "block", background: "#fdf2f2", color: "#991b1b", border: "1px solid #f87171" })
-				.text("Địa chỉ email không đúng định dạng.");
+				.text(s.contactEmailErr || "Địa chỉ email không đúng định dạng.");
 			$form.find('input[name="contact_email"]').focus();
 			return;
 		}
 
 		if (message.length < 3) {
 			$status.css({ display: "block", background: "#fdf2f2", color: "#991b1b", border: "1px solid #f87171" })
-				.text("Vui lòng nhập lời nhắn hoặc ghi chú yêu cầu tư vấn.");
+				.text(s.contactMsgErr || "Vui lòng nhập lời nhắn hoặc ghi chú yêu cầu tư vấn.");
 			$form.find('textarea[name="contact_message"]').focus();
 			return;
 		}
@@ -314,14 +454,15 @@ jQuery(function ($) {
 
 		$btn.prop("disabled", true).addClass("is-loading");
 		var originalBtnText = $btn.find(".btn-text").length ? $btn.find(".btn-text").text() : $btn.text();
+		var sendingText = s.contactSending || "Đang gửi thông tin…";
 		if ($btn.find(".btn-text").length) {
-			$btn.find(".btn-text").text("Đang gửi thông tin…");
+			$btn.find(".btn-text").text(sendingText);
 		} else {
-			$btn.text("Đang gửi thông tin…");
+			$btn.text(sendingText);
 		}
 
 		$status.css({ display: "block", background: "#f3f4f6", color: "#374151", border: "1px solid #d1d5db" })
-			.text("Đang gửi thông tin yêu cầu tư vấn…");
+			.text(s.contactSendingMsg || "Đang gửi thông tin yêu cầu tư vấn…");
 
 		var ajaxUrl = (window.despaceData && despaceData.ajaxUrl) || (window.furnivaData && furnivaData.ajaxUrl) || "/wp-admin/admin-ajax.php";
 
@@ -342,10 +483,10 @@ jQuery(function ($) {
 
 				if (res && res.success) {
 					$status.css({ display: "block", background: "#ecfdf5", color: "#065f46", border: "1px solid #6ee7b7" })
-						.html("<strong>✦ " + (res.data && res.data.message ? res.data.message : "Đăng ký thành công!") + "</strong>");
+						.html("<strong>✦ " + escapeHtml(res.data && res.data.message ? res.data.message : (s.contactSuccess || "Đăng ký thành công!")) + "</strong>");
 					$form[0].reset();
 				} else {
-					var errMsg = (res && res.data && res.data.message) ? res.data.message : "Đã có lỗi xảy ra. Vui lòng thử lại sau.";
+					var errMsg = (res && res.data && res.data.message) ? res.data.message : (s.contactFail || "Đã có lỗi xảy ra. Vui lòng thử lại sau.");
 					$status.css({ display: "block", background: "#fdf2f2", color: "#991b1b", border: "1px solid #f87171" })
 						.text(errMsg);
 				}
@@ -358,7 +499,7 @@ jQuery(function ($) {
 					$btn.text(originalBtnText);
 				}
 
-				var err = "Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối mạng hoặc liên hệ qua hotline.";
+				var err = s.contactNetErr || "Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối mạng hoặc liên hệ qua hotline.";
 				if (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
 					err = xhr.responseJSON.data.message;
 				}
@@ -415,6 +556,7 @@ jQuery(function ($) {
 	/* ---------------------------------------------------------------- AJAX shop filter */
 	var filterTimer = null,
 		filterXhr = null,
+		fetching = false,
 		currentPage = 1,
 		baseCat = (window.furnivaData && furnivaData.baseCat) || "",
 		$results = $("#furniva-shop-results"),
@@ -541,7 +683,6 @@ jQuery(function ($) {
 		applyGridCols($(this).data("cols"));
 	});
 
-	var filterXhr = null;
 	function runFilter(append, skipHistory) {
 		if (filterXhr && filterXhr.readyState !== 4) {
 			if (append) return;
@@ -705,6 +846,13 @@ jQuery(function ($) {
 			$("#furniva-filter-form input[type=checkbox]").filter(function () {
 				return $(this).attr("name") === name && String($(this).val()) === val;
 			}).prop("checked", false);
+			if (name === "availability" && val === "onsale") {
+				var qsSale = new URLSearchParams(window.location.search);
+				if (qsSale.has("on_sale")) {
+					qsSale.delete("on_sale");
+					history.replaceState({ furnivaFilter: true }, "", window.location.pathname + (qsSale.toString() ? "?" + qsSale.toString() : ""));
+				}
+			}
 		}
 		runFilter(false);
 	});
@@ -799,6 +947,11 @@ jQuery(function ($) {
 			if (qs.get("has_3d")) {
 				$("#furniva-filter-form input[type=checkbox]").filter(function () {
 					return $(this).attr("name") === "has_3d";
+				}).prop("checked", true);
+			}
+			if (qs.get("on_sale") === "1") {
+				$("#furniva-filter-form input[type=checkbox]").filter(function () {
+					return $(this).attr("name") === "availability" && String($(this).val()) === "onsale";
 				}).prop("checked", true);
 			}
 			if (qs.get("price_min") || qs.get("min_price")) $("#f-price-min").val(qs.get("price_min") || qs.get("min_price"));
@@ -1033,13 +1186,13 @@ jQuery(function ($) {
 				if ($singlePrice.length && variation) {
 					var priceHtml = variation.price_html || "";
 					if (!priceHtml && typeof variation.display_price !== "undefined") {
-						priceHtml = '<ins><span class="woocommerce-Price-amount amount">$' + Number(variation.display_price).toFixed(2) + "</span></ins>";
+						priceHtml = '<ins><span class="woocommerce-Price-amount amount">' + escapeHtml(formatStoreMoney(variation.display_price)) + "</span></ins>";
 					}
 
 					if (variation.display_regular_price && variation.display_regular_price > variation.display_price) {
-						var diff = (variation.display_regular_price - variation.display_price).toFixed(2);
+						var diff = variation.display_regular_price - variation.display_price;
 						if (priceHtml.indexOf("f-save-tag") === -1) {
-							priceHtml += ' <span class="f-save-tag">' + furnivaData.strings.save + ' $' + diff + "</span>";
+							priceHtml += ' <span class="f-save-tag">' + escapeHtml(furnivaData.strings.save) + ' ' + escapeHtml(formatStoreMoney(diff)) + "</span>";
 						}
 					}
 
@@ -1129,8 +1282,7 @@ jQuery(function ($) {
 			if (res && res.success) {
 				$drawerContent.html(res.data.html).addClass("ds-sk-reveal");
 				if (window.DeSpaceSkeleton) window.DeSpaceSkeleton.hydrateMedia($drawerContent[0]);
-				if (res.data.count !== undefined) $(".f-badge, .f-cart-count, .fv-cart-count, .ax-cart-badge").text(res.data.count);
-				if (res.data.total !== undefined) $(".f-cart-total").html(res.data.total);
+				syncCartBadges(res.data.count, res.data.total);
 			} else if (prevHtml) {
 				$drawerContent.html(prevHtml);
 			}
@@ -1179,8 +1331,7 @@ jQuery(function ($) {
 		}).done(function (res) {
 			if (res && res.success) {
 				$drawerContent.html(res.data.html);
-				$(".f-badge, .f-cart-count, .fv-cart-count, .ax-cart-badge").text(res.data.count);
-				$(".f-cart-total").html(res.data.total);
+				syncCartBadges(res.data.count, res.data.total);
 			}
 		}).always(function () {
 			$drawerContent.removeClass("is-busy");
@@ -1199,8 +1350,7 @@ jQuery(function ($) {
 		}).done(function (res) {
 			if (res && res.success) {
 				$drawerContent.html(res.data.html);
-				$(".f-badge, .f-cart-count, .fv-cart-count, .ax-cart-badge").text(res.data.count);
-				$(".f-cart-total").html(res.data.total);
+				syncCartBadges(res.data.count, res.data.total);
 				toast(furnivaData.strings.itemRemoved);
 			}
 		}).always(function () {
@@ -1392,18 +1542,28 @@ jQuery(function ($) {
 	}
 	polishEmptyCartBlock();
 
-	/* ---------------------------------------------------------------- sticky header scroll effect (rAF + passive) */
+	/* ---------------------------------------------------------------- sticky header scroll effect (rAF + passive + hysteresis) */
 	var $header = $(".fv-header");
 	if ($header.length) {
 		var headerScrollTicking = false;
+		var isHeaderScrolled = false;
+		var updateHeaderScroll = function () {
+			var y = window.scrollY || window.pageYOffset || 0;
+			if (!isHeaderScrolled && y > 56) {
+				isHeaderScrolled = true;
+				$header.addClass("is-scrolled");
+			} else if (isHeaderScrolled && y < 20) {
+				isHeaderScrolled = false;
+				$header.removeClass("is-scrolled");
+			}
+			headerScrollTicking = false;
+		};
 		window.addEventListener("scroll", function () {
 			if (headerScrollTicking) return;
 			headerScrollTicking = true;
-			window.requestAnimationFrame(function () {
-				$header.toggleClass("is-scrolled", window.scrollY > 15);
-				headerScrollTicking = false;
-			});
+			window.requestAnimationFrame(updateHeaderScroll);
 		}, { passive: true });
+		updateHeaderScroll();
 	}
 
 	/* -------------------------------------------------------- homepage category recommendations */
@@ -1481,17 +1641,15 @@ jQuery(function ($) {
 			$btn.prop("disabled", false);
 			if (res && res.success) {
 				showAxToast(res.data.message || (furnivaData && furnivaData.language === 'vi' ? 'Đã thêm vào giỏ hàng!' : 'Added to cart!'));
-				if (res.data.cart_count) {
-					$(".f-cart-count, .fv-cart-count, .ax-cart-badge").text(res.data.cart_count);
-				}
+				syncCartBadges(res.data.cart_count, res.data.cart_total);
 			} else {
 				var errMsg = (res && res.data && res.data.message) ? res.data.message : (furnivaData && furnivaData.language === 'vi' ? 'Không thể thêm vào giỏ hàng.' : 'Could not add to cart.');
-				showAxToast(errMsg);
+				showAxToast(errMsg, "error");
 			}
 		}).fail(function () {
 			$btn.find("span").text(origText);
 			$btn.prop("disabled", false);
-			showAxToast(furnivaData && furnivaData.language === 'vi' ? 'Lỗi kết nối. Vui lòng thử lại.' : 'Connection error. Please try again.');
+			showAxToast(furnivaData && furnivaData.language === 'vi' ? 'Lỗi kết nối. Vui lòng thử lại.' : 'Connection error. Please try again.', "error");
 		});
 	});
 
@@ -1510,6 +1668,7 @@ jQuery(function ($) {
 					text = remaining + ' sản phẩm đã lưu';
 				}
 				$("#axWishlistCountBadge").text(text);
+				syncWishlistBadges(remaining);
 				showAxToast(furnivaData && furnivaData.language === 'vi' ? 'Đã xóa khỏi danh sách yêu thích' : 'Removed from wishlist');
 				if (remaining === 0) {
 					$("#axWishlistEmptyCard").show();
@@ -1521,28 +1680,22 @@ jQuery(function ($) {
 			$.post(furnivaData.ajaxUrl, {
 				action: 'furniva_wishlist_remove',
 				product_id: pid,
+				security: furnivaData.wishlistNonce || furnivaData.nonce,
 				nonce: furnivaData.nonce
+			}).done(function (res) {
+				if (res && res.success && res.data && typeof res.data.count === "number") {
+					syncWishlistBadges(res.data.count);
+				}
 			});
 		}
 	});
 
-	// Format VND (and optional USD reference in English mode)
-	function formatStoreMoney(amountVnd) {
-		var val = Math.max(0, Math.round(parseFloat(amountVnd) || 0));
-		var vndText = new Intl.NumberFormat('vi-VN').format(val) + ' ₫';
-		if (furnivaData && furnivaData.language && furnivaData.language.indexOf('en') === 0 && val > 0) {
-			var usd = Math.round(val / 25000);
-			return vndText + ' (≈ $' + new Intl.NumberFormat('en-US').format(Math.max(1, usd)) + ')';
-		}
-		return vndText;
-	}
-
-	// 4. Cart: Recalculate Totals & Free Shipping Bar (Strictly VND 5,000,000 threshold)
+	// 4. Cart: Recalculate Totals & Free Shipping Bar (Single source of truth threshold)
 	function recalculateCart() {
 		if (!$(".ax-cart-card").length) return;
 		var subtotal = 0;
 		var totalItems = 0;
-		var threshold = 5000000;
+		var threshold = (window.furnivaData && furnivaData.freeShippingThreshold) || 5000000;
 
 		$(".ax-cart-card").each(function () {
 			var $card = $(this);
@@ -1591,8 +1744,7 @@ jQuery(function ($) {
 				nonce: furnivaData.nonce
 			}).done(function (res) {
 				if (res && res.success) {
-					if (res.data.subtotal_html) $(".f-cart-total").html(res.data.subtotal_html);
-					if (res.data.item_count !== undefined) $(".f-badge, .f-cart-count, .fv-cart-count, .ax-cart-badge").text(res.data.item_count);
+					syncCartBadges(res.data.item_count, res.data.subtotal_html);
 				}
 			});
 		}
@@ -1619,8 +1771,7 @@ jQuery(function ($) {
 					nonce: furnivaData.nonce
 				}).done(function (res) {
 					if (res && res.success) {
-						if (res.data.subtotal_html) $(".f-cart-total").html(res.data.subtotal_html);
-						if (res.data.item_count !== undefined) $(".f-badge, .f-cart-count, .fv-cart-count, .ax-cart-badge").text(res.data.item_count);
+						syncCartBadges(res.data.item_count, res.data.subtotal_html);
 					}
 				});
 			}
@@ -1666,8 +1817,7 @@ jQuery(function ($) {
 				nonce: furnivaData.nonce
 			}).done(function (res) {
 				if (res && res.success) {
-					if (res.data.subtotal_html) $(".f-cart-total").html(res.data.subtotal_html);
-					if (res.data.item_count !== undefined) $(".f-badge, .f-cart-count, .fv-cart-count, .ax-cart-badge").text(res.data.item_count);
+					syncCartBadges(res.data.item_count, res.data.subtotal_html);
 				}
 			});
 		}
@@ -1694,8 +1844,7 @@ jQuery(function ($) {
 				nonce: furnivaData.nonce
 			}).done(function (res) {
 				if (res && res.success) {
-					if (res.data.subtotal_html) $(".f-cart-total").html(res.data.subtotal_html);
-					if (res.data.item_count !== undefined) $(".f-badge, .f-cart-count, .fv-cart-count, .ax-cart-badge").text(res.data.item_count);
+					syncCartBadges(res.data.item_count, res.data.subtotal_html);
 				}
 			});
 		}
@@ -1747,11 +1896,13 @@ jQuery(function ($) {
 		var $btn = $(this);
 		var pid = $btn.data("product-id");
 		if (!pid) return;
+		var isVi = !furnivaData || furnivaData.language !== "en";
 
 		$btn.prop("disabled", true);
 		$.post(furnivaData ? furnivaData.ajaxUrl : "/wp-admin/admin-ajax.php", {
 			action: "furniva_wishlist_toggle",
 			product_id: pid,
+			security: (furnivaData && furnivaData.wishlistNonce) || (furnivaData ? furnivaData.nonce : ""),
 			nonce: furnivaData ? furnivaData.nonce : ""
 		}, function (res) {
 			$btn.prop("disabled", false);
@@ -1762,16 +1913,22 @@ jQuery(function ($) {
 				$btn.find("svg").attr("fill", isAdded ? "currentColor" : "none");
 
 				showAxToast(res.data.message);
-
-				// Update header / footer wishlist badges
-				var count = res.data.count;
-				$(".fv-wishlist-count").text(count).toggle(count > 0);
+				syncWishlistBadges(res.data.count);
 
 				// Trigger YITH & document events
 				$(document.body).trigger(isAdded ? "added_to_wishlist" : "removed_from_wishlist");
+			} else {
+				var errMsg = (res && res.data && res.data.message)
+					? res.data.message
+					: (isVi ? "Không thể cập nhật danh sách yêu thích." : "Unable to update wishlist.");
+				showAxToast(errMsg, "error");
 			}
-		}).fail(function () {
+		}).fail(function (xhr) {
 			$btn.prop("disabled", false);
+			var failMsg = (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message)
+				? xhr.responseJSON.data.message
+				: (isVi ? "Lỗi kết nối khi cập nhật danh sách yêu thích." : "Connection error while updating wishlist.");
+			showAxToast(failMsg, "error");
 		});
 	});
 
@@ -1840,7 +1997,7 @@ jQuery(function ($) {
 				});
 
 				if (typeof res.data.count === "number") {
-					$(".fv-wishlist-count").text(res.data.count).toggle(res.data.count > 0);
+					syncWishlistBadges(res.data.count);
 				}
 
 				showAxToast(res.data.message || (isAdded
@@ -1871,8 +2028,7 @@ jQuery(function ($) {
 			nonce: furnivaData ? furnivaData.nonce : ""
 		}, function (res) {
 			if (res && res.success) {
-				var count = res.data.count;
-				$(".fv-wishlist-count").text(count).toggle(count > 0);
+				syncWishlistBadges(res.data.count);
 			}
 		});
 	});

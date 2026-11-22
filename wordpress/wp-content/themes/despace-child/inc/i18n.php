@@ -65,6 +65,8 @@ function furniva_english_titles() {
 		10 => 'Home', 11 => 'About DeSpace', 12 => 'Contact DeSpace',
 		13 => 'Shipping & Assembly Policy', 9 => 'Returns & Warranty Policy',
 		14 => 'Frequently Asked Questions', 15 => 'Privacy Policy', 16 => 'Terms of Sale & Service',
+		486 => 'Shop', 487 => 'Shopping Cart', 488 => 'Checkout', 489 => 'My Account',
+		501 => 'AR Room Visualizer', 514 => 'Journal', 515 => 'Wishlist',
 		230 => 'How to Choose the Right Lounge Chair for Your Living Room',
 		232 => '5 Ways to Style a Walnut Coffee Table',
 		234 => 'Lighting Layers: How to Light a Living Room Properly',
@@ -534,43 +536,89 @@ function furniva_post_excerpt( $post_id, $words = 26 ) {
 }
 
 /**
+ * Strip noisy hosting/tracking query parameters (e.g. ?i=1, ?i=2, fbclid, utm_*)
+ * and normalize duplicate /en/ prefixes so the VI/EN switcher always produces clean URLs.
+ *
+ * @param string $raw_url URL or request URI.
+ * @return array{path:string,query:string}
+ */
+function despace_strip_junk_query_params( $raw_url ) {
+	$parsed = wp_parse_url( (string) $raw_url );
+	$path   = isset( $parsed['path'] ) && '' !== $parsed['path'] ? $parsed['path'] : '/';
+
+	// Normalize duplicate leading /en/ segments (e.g. /en/en/foo -> /en/foo)
+	$path = preg_replace( '#^(/en)+(/|$)#i', '/en$2', $path );
+	if ( '' === $path ) {
+		$path = '/';
+	}
+
+	$clean_query = '';
+	if ( ! empty( $parsed['query'] ) ) {
+		parse_str( $parsed['query'], $params );
+		if ( is_array( $params ) ) {
+			$junk_exact = array( 'i', 'fbclid', 'gclid', 'yclid', 'mc_cid', 'mc_eid', '_gl', 'dclid', 'msclkid', 'ckattempt' );
+			foreach ( array_keys( $params ) as $k ) {
+				$lk = strtolower( (string) $k );
+				if ( in_array( $lk, $junk_exact, true ) || 0 === strpos( $lk, 'utm_' ) ) {
+					unset( $params[ $k ] );
+				}
+			}
+			if ( ! empty( $params ) ) {
+				$clean_query = '?' . http_build_query( $params, '', '&', PHP_QUERY_RFC3986 );
+			}
+		}
+	}
+
+	return array(
+		'path'  => $path,
+		'query' => $clean_query,
+	);
+}
+
+/**
  * Direct 2-language switcher toggle [ VI | EN ].
- * Uses TranslatePress URL converter when present, with clean fallback.
- * Guarantees 100% clickable navigation between Vietnamese and English.
+ * Strips hosting junk parameters (?i=1, ?i=2, utm_*, fbclid) and prevents /en/en/ duplication.
+ * Guarantees 100% clickable, deterministic navigation between Vietnamese and English.
  */
 function despace_language_switcher_html() {
 	$current_lang = despace_current_language();
 	$is_vi        = in_array( $current_lang, array( 'vi', 'vi_VN' ), true );
 
 	// Preserve percent-encoded UTF-8 Vietnamese slugs (do NOT run sanitize_text_field on REQUEST_URI).
-	$raw_uri     = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '/';
-	$uri         = '/' . ltrim( str_replace( array( "\r", "\n" ), '', $raw_uri ), '/' );
-	$current_url = esc_url_raw( home_url( $uri ) );
+	$raw_uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '/';
+	$uri     = '/' . ltrim( str_replace( array( "\r", "\n" ), '', $raw_uri ), '/' );
+	$parts   = despace_strip_junk_query_params( home_url( $uri ) );
+	$path    = $parts['path'];
+	$qs      = $parts['query'];
 
-	$vi_url = '';
-	$en_url = '';
+	// Base path with any leading /en/ prefix removed cleanly
+	$base_path = preg_replace( '#^(/en)+(/|$)#i', '/', $path );
+	if ( '' === $base_path || '/' !== $base_path[0] ) {
+		$base_path = '/' . ltrim( (string) $base_path, '/' );
+	}
+	$base_path = preg_replace( '#/+#', '/', $base_path );
 
+	$vi_url = home_url( $base_path . $qs );
+	$en_url = home_url( ( '/' === $base_path ? '/en/' : '/en' . $base_path ) . $qs );
+
+	// Let TranslatePress map translated slugs if available, then re-sanitize to guard against /en/en/ or junk params.
 	if ( class_exists( 'TRP_Translate_Press' ) ) {
 		$trp           = TRP_Translate_Press::get_trp_instance();
 		$url_converter = $trp ? $trp->get_component( 'url_converter' ) : null;
 		if ( $url_converter && method_exists( $url_converter, 'get_url_for_language' ) ) {
-			$vi_url = $url_converter->get_url_for_language( 'vi', $current_url );
-			$en_url = $url_converter->get_url_for_language( 'en_US', $current_url );
-		}
-	}
-
-	// Fallback if TRP didn't produce distinct URLs
-	if ( empty( $vi_url ) || empty( $en_url ) || $vi_url === $en_url ) {
-		$path = wp_parse_url( $current_url, PHP_URL_PATH ) ?: '/';
-		$query = wp_parse_url( $current_url, PHP_URL_QUERY );
-		$qs = $query ? '?' . $query : '';
-		if ( 0 === strpos( $path, '/en/' ) || '/en' === $path ) {
-			$en_url  = $current_url;
-			$vi_path = preg_replace( '#^/en(/|$)#', '/', $path );
-			$vi_url  = home_url( $vi_path . $qs );
-		} else {
-			$vi_url  = $current_url;
-			$en_url  = home_url( '/en' . ( '/' === $path ? '/' : $path ) . $qs );
+			$trp_vi = $url_converter->get_url_for_language( 'vi', $vi_url );
+			$trp_en = $url_converter->get_url_for_language( 'en_US', $vi_url );
+			if ( is_string( $trp_vi ) && '' !== $trp_vi ) {
+				$p_vi = despace_strip_junk_query_params( $trp_vi );
+				$clean_vi_path = preg_replace( '#^(/en)+(/|$)#i', '/', $p_vi['path'] );
+				$vi_url = home_url( preg_replace( '#/+#', '/', '/' . ltrim( (string) $clean_vi_path, '/' ) ) . $p_vi['query'] );
+			}
+			if ( is_string( $trp_en ) && '' !== $trp_en ) {
+				$p_en = despace_strip_junk_query_params( $trp_en );
+				$clean_en_base = preg_replace( '#^(/en)+(/|$)#i', '/', $p_en['path'] );
+				$clean_en_base = preg_replace( '#/+#', '/', '/' . ltrim( (string) $clean_en_base, '/' ) );
+				$en_url = home_url( ( '/' === $clean_en_base ? '/en/' : '/en' . $clean_en_base ) . $p_en['query'] );
+			}
 		}
 	}
 
@@ -592,6 +640,25 @@ function despace_language_switcher_html() {
 function furniva_language_switcher_html() {
 	return despace_language_switcher_html();
 }
+
+/**
+ * Bilingual sale price HTML & clean screen-reader labels (zero English leakage on VI, zero double-escaped entities).
+ */
+add_filter( 'woocommerce_format_sale_price', function( $price, $regular_price, $sale_price ) {
+	$reg_html  = is_numeric( $regular_price ) ? wc_price( $regular_price ) : (string) $regular_price;
+	$sale_html = is_numeric( $sale_price ) ? wc_price( $sale_price ) : (string) $sale_price;
+
+	$reg_plain  = trim( html_entity_decode( wp_strip_all_tags( $reg_html ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+	$sale_plain = trim( html_entity_decode( wp_strip_all_tags( $sale_html ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+
+	$orig_label = sprintf( despace_t( 'Original price: %s.', 'Giá gốc: %s.' ), $reg_plain );
+	$curr_label = sprintf( despace_t( 'Current price: %s.', 'Giá ưu đãi: %s.' ), $sale_plain );
+
+	return '<del aria-hidden="true">' . $reg_html . '</del> '
+		. '<span class="screen-reader-text">' . esc_html( $orig_label ) . '</span>'
+		. '<ins aria-hidden="true">' . $sale_html . '</ins>'
+		. '<span class="screen-reader-text">' . esc_html( $curr_label ) . '</span>';
+}, 20, 3 );
 
 /**
  * Safe English Currency Reference Display (Ledger remains strictly VND)
@@ -621,7 +688,8 @@ add_filter( 'wc_price', function( $return, $price, $args, $unformatted_price ) {
 	if ( $usd_approx < 1 ) {
 		$usd_approx = round( $raw_num / 25000, 2 );
 	}
-	return $return . ' <span class="despace-usd-ref" style="font-size:0.84em;opacity:0.75;font-weight:500;">(&approx; $' . esc_html( number_format( (float) $usd_approx, ( $usd_approx == (int) $usd_approx ? 0 : 2 ) ) ) . ')</span>';
+	// Use literal UTF-8 ≈ so wp_strip_all_tags() + esc_html() never double-escapes &approx; into &amp;approx;
+	return $return . ' <span class="despace-usd-ref">(≈ $' . esc_html( number_format( (float) $usd_approx, ( $usd_approx == (int) $usd_approx ? 0 : 2 ) ) ) . ')</span>';
 }, 99, 4 );
 
 /**

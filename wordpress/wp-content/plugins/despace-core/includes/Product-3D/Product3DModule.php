@@ -259,6 +259,10 @@ class Product3DModule {
 	 * Enqueue frontend scripts and styles.
 	 */
 	public function frontend_enqueue_scripts(): void {
+		$use_legacy_assets = (bool) apply_filters( 'despace_core_enqueue_legacy_3d_assets', true );
+		if ( ! $use_legacy_assets ) {
+			return;
+		}
 		$css_path = DESPACE_CORE_PATH . 'assets/css/despace-3d.css';
 		if ( file_exists( $css_path ) ) {
 			wp_enqueue_style(
@@ -496,6 +500,9 @@ class Product3DModule {
 	 * Render global 3D modal in footer.
 	 */
 	public function render_global_3d_modal(): void {
+		if ( ! apply_filters( 'despace_core_render_legacy_3d_modal', true ) ) {
+			return;
+		}
 		?>
 		<div id="despace-3d-modal" class="despace-3d-modal-overlay" style="display:none;" role="dialog" aria-modal="true">
 			<div class="despace-3d-modal-container">

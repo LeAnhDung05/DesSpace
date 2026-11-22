@@ -1499,8 +1499,182 @@
 .ax-product-page a:focus-visible,
 .ax-product-page button:focus-visible,
 .ax-product-page input:focus-visible,
-.ax-product-page select:focus-visible {
+.ax-product-page select:focus-visible,
+.ax-product-page summary:focus-visible {
     outline: 2px solid #191816;
     outline-offset: 3px;
     box-shadow: 0 0 0 4px rgba(197, 168, 128, 0.35);
 }
+
+/* ============================================================
+   PHA 3 — GALLERY MODE SWITCHER (2D <-> 3D <-> AR) & SPEC ACCORDION
+   ============================================================ */
+.ax-badge-designer--sale {
+    background: #BF5B50;
+    color: #FFFFFF;
+}
+
+.ax-stage-switcher {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+    margin-top: 14px;
+    padding: 6px;
+    background: #FFFFFF;
+    border: 1px solid #E7E0D7;
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(28, 25, 23, 0.05);
+}
+
+.ax-stage-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    color: #5C554D;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.ax-stage-pill:hover {
+    background: #FAF7F2;
+    color: #1C1917;
+    border-color: #E7E0D7;
+}
+
+.ax-stage-pill.is-active {
+    background: #FAF7F2;
+    color: #1C1917;
+    border-color: #D8C4AE;
+    box-shadow: 0 2px 6px rgba(28, 25, 23, 0.06);
+}
+
+.ax-stage-pill--ar {
+    background: #1C1917;
+    color: #FAF7F2;
+    border-color: #1C1917;
+}
+
+.ax-stage-pill--ar:hover {
+    background: #9A6745;
+    border-color: #9A6745;
+    color: #FFFFFF;
+}
+
+.ax-spec-accordion {
+    margin-top: 22px;
+    border: 1px solid #E7E0D7;
+    border-radius: 14px;
+    background: #FFFFFF;
+    overflow: hidden;
+}
+
+.ax-spec-item {
+    border-bottom: 1px solid #EFE9E0;
+}
+
+.ax-spec-item:last-child {
+    border-bottom: 0;
+}
+
+.ax-spec-summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 15px 18px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #1C1917;
+    background: #FFFFFF;
+    transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+.ax-spec-summary::-webkit-details-marker {
+    display: none;
+}
+
+.ax-spec-summary:hover {
+    background: #FAF7F2;
+    color: #9A6745;
+}
+
+.ax-spec-chevron {
+    flex-shrink: 0;
+    color: #8A7A65;
+    transition: transform 0.2s ease;
+}
+
+.ax-spec-item[open] .ax-spec-chevron {
+    transform: rotate(180deg);
+    color: #9A6745;
+}
+
+.ax-spec-body {
+    padding: 0 18px 16px;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: #5C554D;
+}
+
+.ax-spec-body p {
+    margin: 0 0 10px;
+}
+
+.ax-spec-dl {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ax-spec-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 6px 0;
+    border-bottom: 1px dashed #EFE9E0;
+}
+
+.ax-spec-row:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
+.ax-spec-row dt {
+    font-size: 12.5px;
+    color: #69645D;
+    flex-shrink: 0;
+}
+
+.ax-spec-row dd {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1C1917;
+    text-align: right;
+}
+
+.ax-spec-link {
+    display: inline-flex;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #9A6745;
+    text-decoration: none;
+}
+
+.ax-spec-link:hover {
+    text-decoration: underline;
+    color: #7A4E31;
+}
+

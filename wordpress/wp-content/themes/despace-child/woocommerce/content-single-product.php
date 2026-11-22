@@ -50,6 +50,25 @@ foreach ( $gallery_ids as $gid ) {
 $finish_desc_meta = get_post_meta( $id, '_despace_finish_desc', true ) ?: get_post_meta( $id, '_axgnud_finish_desc', true );
 $color_hex_meta   = get_post_meta( $id, '_despace_color_hex', true ) ?: get_post_meta( $id, '_axgnud_color_hex', true );
 $custom_badge     = get_post_meta( $id, '_despace_badge', true ) ?: get_post_meta( $id, '_axgnud_badge', true );
+
+// Pre-compute 3D/AR & dimensions so both Gallery Mode Switcher and Spec Accordion stay 100% synced
+$pdp_model_info = ( ! $product->is_virtual() && function_exists( 'ax_get_product_3d_info' ) ) ? ax_get_product_3d_info( $id ) : array( 'has_3d' => false, 'glb_url' => '', 'usdz_url' => '', 'ar_enabled' => false );
+$pdp_has_3d     = ! empty( $pdp_model_info['glb_url'] );
+$pdp_has_ar     = $pdp_has_3d && ! empty( $pdp_model_info['ar_enabled'] );
+$pdp_raw_dims   = $product->get_dimensions( false );
+$pdp_dim_str    = '';
+if ( ! empty( $pdp_raw_dims['length'] ) && ! empty( $pdp_raw_dims['width'] ) && ! empty( $pdp_raw_dims['height'] ) ) {
+    $pdp_dim_str = furniva_t(
+        sprintf( '%s × %s × %s cm (W × D × H)', $pdp_raw_dims['length'], $pdp_raw_dims['width'], $pdp_raw_dims['height'] ),
+        sprintf( '%s × %s × %s cm (Rộng × Sâu × Cao)', $pdp_raw_dims['length'], $pdp_raw_dims['width'], $pdp_raw_dims['height'] )
+    );
+} elseif ( ! empty( $pdp_model_info['dimensions'] ) ) {
+    $pdp_dim_str = $pdp_model_info['dimensions'];
+}
+$free_ship_vnd = function_exists( 'despace_get_free_shipping_threshold' ) ? despace_get_free_shipping_threshold() : 5000000.0;
+$free_ship_lbl = furniva_is_vi()
+    ? number_format( $free_ship_vnd, 0, ',', '.' ) . ' ₫'
+    : number_format( $free_ship_vnd, 0, '.', ',' ) . ' ₫ (≈ $' . number_format( round( $free_ship_vnd / 25000 ), 0 ) . ')';
 ?>
 
 <div id="product-<?php echo esc_attr( $id ); ?>" <?php wc_product_class( 'ax-product-page', $product ); ?>>
@@ -73,15 +92,14 @@ $custom_badge     = get_post_meta( $id, '_despace_badge', true ) ?: get_post_met
 
             <!-- LEFT: Gallery -->
             <div class="ax-gallery-wrap">
-                <?php if ( $percent ) : ?>
-                    <span class="ax-badge-designer">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                        DESIGNER PICK
+                <?php if ( $percent > 0 ) : ?>
+                    <span class="ax-badge-designer ax-badge-designer--sale">
+                        -<?php echo esc_html( $percent ); ?>% · <?php echo esc_html( furniva_t( 'SPECIAL OFFER', 'ƯU ĐÃI' ) ); ?>
                     </span>
                 <?php else : ?>
                     <span class="ax-badge-designer">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                        <?php echo esc_html( furniva_t( 'FEATURED', 'NỔI BẬT' ) ); ?>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        <?php echo esc_html( furniva_t( 'CURATED DESIGN', 'TUYỂN CHỌN' ) ); ?>
                     </span>
                 <?php endif; ?>
 
@@ -118,6 +136,26 @@ $custom_badge     = get_post_meta( $id, '_despace_badge', true ) ?: get_post_met
                         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
                     </button>
                 </div>
+                <!-- Gallery Mode Switcher: 2D Gallery <-> 3D Interactive <-> AR in Room -->
+                <?php if ( $pdp_has_3d ) : ?>
+                <div class="ax-stage-switcher" role="group" aria-label="<?php echo esc_attr( furniva_t( 'Product view mode', 'Chế độ xem sản phẩm' ) ); ?>">
+                    <button type="button" class="ax-stage-pill is-active" data-stage-mode="2d">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span><?php echo esc_html( furniva_t( '2D Gallery', 'Thư viện ảnh 2D' ) ); ?></span>
+                    </button>
+                    <button type="button" class="ax-stage-pill" data-stage-mode="3d" onclick="document.getElementById('axView3DModelBtn') && document.getElementById('axView3DModelBtn').click();">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                        <span><?php echo esc_html( furniva_t( '3D Space 360°', 'Không gian 3D' ) ); ?></span>
+                    </button>
+                    <?php if ( $pdp_has_ar ) : ?>
+                    <button type="button" class="ax-stage-pill ax-stage-pill--ar" data-stage-mode="ar" onclick="document.getElementById('arViewInRoomBtn') && document.getElementById('arViewInRoomBtn').click();">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        <span><?php echo esc_html( furniva_t( 'View AR in Room', 'Xem AR trong phòng' ) ); ?></span>
+                    </button>
+                    <?php endif; ?>
+                </div>
+                <?php endif; ?>
+
                 <!-- Thumbnails -->
                 <?php if ( count( $all_images ) > 1 ) : ?>
                 <div class="ax-gallery-thumbs" role="group" aria-label="<?php echo esc_attr( furniva_t( 'Product thumbnails', 'Ảnh thu nhỏ sản phẩm' ) ); ?>">
@@ -343,37 +381,109 @@ $custom_badge     = get_post_meta( $id, '_despace_badge', true ) ?: get_post_met
                 <div class="ax-trust-features">
                     <div class="ax-trust-item">
                         <div class="ax-trust-icon">
-                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
                             </svg>
                         </div>
                         <div>
-                            <strong><?php echo esc_html( furniva_t( 'Delivery options at checkout', 'Tùy chọn giao hàng tại thanh toán' ) ); ?></strong>
-                            <span><?php echo esc_html( furniva_t( 'Shown for your address and order', 'Hiển thị theo địa chỉ và đơn hàng' ) ); ?></span>
+                            <strong><?php echo esc_html( furniva_t( 'Complimentary Delivery', 'Miễn phí giao hàng & lắp đặt' ) ); ?></strong>
+                            <span><?php echo esc_html( sprintf( furniva_t( 'Nationwide insured delivery from %s', 'Áp dụng cho đơn từ %s toàn quốc' ), $free_ship_lbl ) ); ?></span>
                         </div>
                     </div>
                     <div class="ax-trust-item">
                         <div class="ax-trust-icon">
-                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>
                             </svg>
                         </div>
                         <div>
-                            <strong><?php echo esc_html( furniva_t( 'WooCommerce stock status', 'Tình trạng kho WooCommerce' ) ); ?></strong>
-                            <span><?php echo esc_html( furniva_t( 'Updated for the selected option', 'Cập nhật theo lựa chọn sản phẩm' ) ); ?></span>
+                            <strong><?php echo esc_html( furniva_t( '5-Year Structural Warranty', 'Bảo hành kết cấu 5 năm' ) ); ?></strong>
+                            <span><?php echo esc_html( furniva_t( 'Certified timber frame & soft-close hardware', 'Bảo hành khung gỗ & bản lề giảm chấn chính hãng' ) ); ?></span>
                         </div>
                     </div>
                     <div class="ax-trust-item">
                         <div class="ax-trust-icon">
-                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
                             </svg>
                         </div>
                         <div>
-                            <strong><?php echo esc_html( furniva_t( 'Product information', 'Thông tin sản phẩm' ) ); ?></strong>
-                            <span><?php echo esc_html( furniva_t( 'Managed in the store catalog', 'Quản lý trong danh mục cửa hàng' ) ); ?></span>
+                            <strong><?php echo esc_html( furniva_t( '30-Day Flexible Returns', 'Đổi trả linh hoạt 30 ngày' ) ); ?></strong>
+                            <span><?php echo esc_html( furniva_t( 'Inspect quality upon delivery before signing', 'Kiểm tra hoàn thiện trực tiếp khi nhận hàng' ) ); ?></span>
                         </div>
                     </div>
+                </div>
+
+                <!-- Specifications & Showroom Policies Accordion -->
+                <?php
+                $mat_terms    = wc_get_product_terms( $id, 'pa_material', array( 'fields' => 'names' ) );
+                $mat_display  = ( ! empty( $mat_terms ) && ! is_wp_error( $mat_terms ) )
+                    ? implode( ', ', array_map( static function ( $t ) { return furniva_term_label( $t, 'pa_material' ); }, $mat_terms ) )
+                    : ( $finish_desc_meta ?: furniva_t( 'Engineered FSC-certified timber & matte veneer finish', 'Gỗ công nghiệp đạt chuẩn FSC phủ Melamine/Veneer chống trầy' ) );
+                $policy_ret_url  = furniva_url( '/chinh-sach-doi-tra-bao-hanh/' );
+                $policy_ship_url = furniva_url( '/chinh-sach-giao-hang/' );
+                ?>
+                <div class="ax-spec-accordion">
+                    <details class="ax-spec-item" open>
+                        <summary class="ax-spec-summary">
+                            <span><?php echo esc_html( furniva_t( 'Dimensions & Craftsmanship', 'Thông số kích thước & Chất liệu gỗ' ) ); ?></span>
+                            <svg class="ax-spec-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                        </summary>
+                        <div class="ax-spec-body">
+                            <dl class="ax-spec-dl">
+                                <?php if ( $pdp_dim_str ) : ?>
+                                    <div class="ax-spec-row">
+                                        <dt><?php echo esc_html( furniva_t( 'Dimensions', 'Kích thước tổng thể' ) ); ?></dt>
+                                        <dd><?php echo esc_html( $pdp_dim_str ); ?></dd>
+                                    </div>
+                                <?php endif; ?>
+                                <div class="ax-spec-row">
+                                    <dt><?php echo esc_html( furniva_t( 'Wood & Finish', 'Chất liệu & Hoàn thiện' ) ); ?></dt>
+                                    <dd><?php echo esc_html( $mat_display ); ?></dd>
+                                </div>
+                                <?php if ( $single_finish ) : ?>
+                                    <div class="ax-spec-row">
+                                        <dt><?php echo esc_html( furniva_t( 'Color Tone', 'Tông màu' ) ); ?></dt>
+                                        <dd><?php echo esc_html( $single_finish ); ?></dd>
+                                    </div>
+                                <?php endif; ?>
+                                <?php if ( $product->get_weight() ) : ?>
+                                    <div class="ax-spec-row">
+                                        <dt><?php echo esc_html( furniva_t( 'Weight', 'Trọng lượng' ) ); ?></dt>
+                                        <dd><?php echo esc_html( wc_format_weight( $product->get_weight() ) ); ?></dd>
+                                    </div>
+                                <?php endif; ?>
+                                <?php if ( $pdp_has_3d ) : ?>
+                                    <div class="ax-spec-row">
+                                        <dt><?php echo esc_html( furniva_t( '3D & AR Preview', 'Trải nghiệm 3D & AR' ) ); ?></dt>
+                                        <dd><?php echo esc_html( furniva_t( 'True-to-scale 1:1 (.glb & iOS .usdz)', 'Tỷ lệ thực 1:1 (hỗ trợ 360° & iOS/Android AR)' ) ); ?></dd>
+                                    </div>
+                                <?php endif; ?>
+                            </dl>
+                        </div>
+                    </details>
+
+                    <details class="ax-spec-item">
+                        <summary class="ax-spec-summary">
+                            <span><?php echo esc_html( furniva_t( '5-Year Warranty & 30-Day Returns', 'Bảo hành 5 năm & Đổi trả 30 ngày' ) ); ?></span>
+                            <svg class="ax-spec-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                        </summary>
+                        <div class="ax-spec-body">
+                            <p><?php echo esc_html( furniva_t( 'Every DeSpace piece includes a 5-year structural warranty on joints, frames, and hinges, plus 30-day return or exchange eligibility in original condition.', 'Tất cả thiết kế DeSpace được bảo hành 5 năm cho kết cấu khung gỗ, ray trượt và bản lề giảm chấn; hỗ trợ đổi trả minh bạch trong 30 ngày nếu sản phẩm chưa qua sử dụng hoặc phát sinh lỗi kỹ thuật.' ) ); ?></p>
+                            <a class="ax-spec-link" href="<?php echo esc_url( $policy_ret_url ); ?>"><?php echo esc_html( furniva_t( 'Read full warranty & return policy →', 'Xem chi tiết chính sách bảo hành & đổi trả →' ) ); ?></a>
+                        </div>
+                    </details>
+
+                    <details class="ax-spec-item">
+                        <summary class="ax-spec-summary">
+                            <span><?php echo esc_html( furniva_t( 'White-Glove Delivery & Assembly', 'Vận chuyển & Lắp đặt tận nơi' ) ); ?></span>
+                            <svg class="ax-spec-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                        </summary>
+                        <div class="ax-spec-body">
+                            <p><?php echo esc_html( sprintf( furniva_t( 'Complimentary insured nationwide delivery and in-room installation for orders from %s. Estimated dispatch: 2–5 business days.', 'Miễn phí giao hàng toàn quốc và hỗ trợ lắp đặt tận phòng cho đơn hàng từ %s. Thời gian bàn giao dự kiến 2–5 ngày làm việc.' ), $free_ship_lbl ) ); ?></p>
+                            <a class="ax-spec-link" href="<?php echo esc_url( $policy_ship_url ); ?>"><?php echo esc_html( furniva_t( 'View delivery schedule & rates →', 'Xem lịch giao hàng & biểu phí →' ) ); ?></a>
+                        </div>
+                    </details>
                 </div>
             </div>
         </div>

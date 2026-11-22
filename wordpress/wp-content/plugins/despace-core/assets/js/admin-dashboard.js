@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadingEl = document.getElementById('despace-filter-loading');
     const errorBox = document.getElementById('despace-error-box');
     const errorMsg = document.getElementById('despace-error-message');
+    const retryBtn = document.getElementById('despace-btn-retry');
 
     // KPI Elements.
     const metricRevenue = document.getElementById('metric-revenue');
@@ -44,15 +45,46 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusBarsContainer = document.getElementById('despace-status-bars');
     const topProductsTbody = document.getElementById('despace-top-products-tbody');
 
-    // Friendly labels and styles for WooCommerce order statuses.
+    // Friendly labels and Editorial Luxury palette for WooCommerce order statuses.
     const statusMetadata = {
-        completed: { label: 'Hoàn thành', color: '#2e7d32', bg: '#e8f5e9' },
-        processing: { label: 'Đang xử lý', color: '#1565c0', bg: '#e3f2fd' },
-        'on-hold': { label: 'Tạm giữ (Chờ đối soát)', color: '#e65100', bg: '#fff3e0' },
-        pending: { label: 'Chờ thanh toán', color: '#f57f17', bg: '#fffde7' },
-        cancelled: { label: 'Đã hủy', color: '#c62828', bg: '#ffebee' },
-        refunded: { label: 'Đã hoàn tiền', color: '#455a64', bg: '#eceff1' },
-        failed: { label: 'Thất bại', color: '#b71c1c', bg: '#fbe9e7' }
+        completed: { label: 'Hoàn thành', color: '#4E6B4A', bg: '#EDF4EC' },
+        processing: { label: 'Đang xử lý', color: '#9A6745', bg: '#F7EFE6' },
+        'on-hold': { label: 'Tạm giữ (Chờ đối soát)', color: '#B45309', bg: '#FEF5E7' },
+        pending: { label: 'Chờ thanh toán', color: '#8A6B3E', bg: '#FAF4E8' },
+        cancelled: { label: 'Đã hủy', color: '#BF5B50', bg: '#FDF1EF' },
+        refunded: { label: 'Đã hoàn tiền', color: '#69645D', bg: '#F2EEE9' },
+        failed: { label: 'Thất bại', color: '#A33E34', bg: '#FCECE9' }
+    };
+
+    const renderLoadingSkeletons = () => {
+        if (topProductsTbody) {
+            const skRow = `
+                <tr class="despace-sk-row" aria-hidden="true">
+                    <td style="text-align: center;"><span class="despace-sk-bar despace-sk-bar--badge"></span></td>
+                    <td><span class="despace-sk-bar despace-sk-bar--thumb"></span></td>
+                    <td><span class="despace-sk-bar despace-sk-bar--title"></span></td>
+                    <td><span class="despace-sk-bar despace-sk-bar--sku"></span></td>
+                    <td style="text-align: center;"><span class="despace-sk-bar despace-sk-bar--pill"></span></td>
+                    <td style="text-align: right;"><span class="despace-sk-bar despace-sk-bar--num"></span></td>
+                    <td style="text-align: right;"><span class="despace-sk-bar despace-sk-bar--rev"></span></td>
+                </tr>
+            `;
+            topProductsTbody.innerHTML = skRow.repeat(4);
+        }
+        if (statusBarsContainer) {
+            const skBar = `
+                <div class="despace-status-row" aria-hidden="true">
+                    <div class="despace-status-info">
+                        <span class="despace-sk-bar despace-sk-bar--pill"></span>
+                        <span class="despace-sk-bar despace-sk-bar--num"></span>
+                    </div>
+                    <div class="despace-progress-track">
+                        <div class="despace-sk-bar" style="width: 100%; height: 8px;"></div>
+                    </div>
+                </div>
+            `;
+            statusBarsContainer.innerHTML = skBar.repeat(3);
+        }
     };
 
     /**
@@ -91,6 +123,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (loadingEl) {
             loadingEl.style.display = isLoading ? 'flex' : 'none';
+        }
+        if (isLoading) {
+            renderLoadingSkeletons();
         }
         if (filterBtn) {
             filterBtn.disabled = isLoading;
@@ -387,6 +422,17 @@ document.addEventListener('DOMContentLoaded', () => {
             presetButtons.forEach(b => b.classList.remove('active'));
 
             fetchMetrics(from, to);
+        });
+    }
+
+    if (retryBtn) {
+        retryBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const from = dateFromInput ? dateFromInput.value : settings.defaultFrom;
+            const to = dateToInput ? dateToInput.value : settings.defaultTo;
+            if (from && to) {
+                fetchMetrics(from, to);
+            }
         });
     }
 

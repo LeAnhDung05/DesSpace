@@ -1,45 +1,45 @@
 /* ==========================================================================
-   DESPACE MODERN ADMIN COCKPIT v4.0 — ULTRA-MODERN SAAS DESIGN SYSTEM
-   Inspired by Linear · Vercel · Stripe Dashboard (2026)
+   DESPACE EDITORIAL LUXURY ADMIN COCKPIT v5.0 — HARMONIZED WITH STOREFRONT
    Strictly scoped to DeSpace admin pages (.ds-cockpit-wrap, .ds-cmd-*, .ds-modal-*)
    Leaves all native WordPress admin screens 100% original and untouched.
    ========================================================================== */
 
 .ds-cockpit-wrap {
-	--ds-canvas: #f8fafc;
-	--ds-surface: #ffffff;
-	--ds-surface-subtle: #f8fafc;
-	--ds-surface-muted: #f1f5f9;
-	--ds-obsidian: #09090b;
-	--ds-obsidian-2: #111318;
-	--ds-ink: #0f172a;
-	--ds-ink-secondary: #334155;
-	--ds-ink-muted: #64748b;
-	--ds-border: rgba(15, 23, 42, 0.08);
-	--ds-border-strong: rgba(15, 23, 42, 0.14);
-	--ds-brand: #4f46e5;
-	--ds-brand-hover: #4338ca;
-	--ds-brand-soft: rgba(79, 70, 229, 0.08);
-	--ds-copper: #d97706;
-	--ds-success: #047857;
-	--ds-success-bg: #ecfdf5;
-	--ds-success-dot: #10b981;
-	--ds-warning: #b45309;
-	--ds-warning-bg: #fffbeb;
-	--ds-warning-dot: #f59e0b;
-	--ds-danger: #b91c1c;
-	--ds-danger-bg: #fef2f2;
-	--ds-danger-dot: #ef4444;
-	--ds-info: #1d4ed8;
-	--ds-info-bg: #eff6ff;
-	--ds-info-dot: #3b82f6;
+	--ds-canvas: #F7F4EF;
+	--ds-surface: #FFFFFF;
+	--ds-surface-subtle: #FAF7F2;
+	--ds-surface-muted: #F2ECE3;
+	--ds-obsidian: #1C1917;
+	--ds-obsidian-2: #2B231D;
+	--ds-ink: #1C1917;
+	--ds-ink-secondary: #3D3B37;
+	--ds-ink-muted: #69645D;
+	--ds-border: #E7E0D7;
+	--ds-border-strong: #D8C4AE;
+	--ds-brand: #9A6745;
+	--ds-brand-hover: #7A4E31;
+	--ds-brand-soft: rgba(154, 103, 69, 0.10);
+	--ds-copper: #C59B76;
+	--ds-success: #4E6B4A;
+	--ds-success-bg: #EDF4EC;
+	--ds-success-dot: #6F806C;
+	--ds-warning: #B45309;
+	--ds-warning-bg: #FEF5E7;
+	--ds-warning-dot: #D97706;
+	--ds-danger: #BF5B50;
+	--ds-danger-bg: #FDF1EF;
+	--ds-danger-dot: #BF5B50;
+	--ds-info: #9A6745;
+	--ds-info-bg: #F5ECE2;
+	--ds-info-dot: #9A6745;
 	--ds-radius-sm: 10px;
 	--ds-radius-md: 14px;
 	--ds-radius-lg: 20px;
-	--ds-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-	--ds-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -10px rgba(15, 23, 42, 0.07);
-	--ds-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06), 0 20px 44px -18px rgba(15, 23, 42, 0.12);
-	--ds-shadow-glow: 0 0 0 1px rgba(79, 70, 229, 0.22), 0 12px 30px -12px rgba(79, 70, 229, 0.22);
+	--ds-shadow-xs: 0 1px 2px rgba(28, 25, 23, 0.04);
+	--ds-shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.04), 0 8px 24px -10px rgba(28, 25, 23, 0.07);
+	--ds-shadow-md: 0 4px 12px rgba(28, 25, 23, 0.06), 0 20px 44px -18px rgba(28, 25, 23, 0.12);
+	--ds-shadow-glow: 0 0 0 1px rgba(154, 103, 69, 0.24), 0 12px 30px -12px rgba(154, 103, 69, 0.22);
+	--ds-font-display: "Newsreader", Georgia, "Times New Roman", serif;
 	--ds-font-sans: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 	--ds-font-mono: "SF Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
@@ -47,7 +47,7 @@
 	margin: 18px 22px 48px 2px;
 	padding: 22px;
 	background-color: var(--ds-canvas);
-	background-image: radial-gradient(rgba(15, 23, 42, 0.055) 1px, transparent 1px);
+	background-image: radial-gradient(rgba(28, 25, 23, 0.045) 1px, transparent 1px);
 	background-size: 22px 22px;
 	border: 1px solid var(--ds-border);
 	border-radius: 22px;
@@ -94,21 +94,21 @@
 .ds-cockpit-wrap textarea:focus,
 .ds-modal-card input:focus,
 .ds-modal-card select:focus {
-	border-color: #4f46e5;
-	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.14);
+	border-color: var(--ds-brand, #9A6745);
+	box-shadow: 0 0 0 3px rgba(154, 103, 69, 0.16);
 	outline: none;
 }
 
 .ds-cockpit-wrap a:focus-visible,
 .ds-cockpit-wrap button:focus-visible {
-	outline: 2px solid #4f46e5;
+	outline: 2px solid var(--ds-brand, #9A6745);
 	outline-offset: 2px;
 }
 
 .ds-cockpit-wrap code {
-	background: #f1f5f9;
-	color: #1e293b;
-	border: 1px solid rgba(15, 23, 42, 0.06);
+	background: var(--ds-surface-muted, #F2ECE3);
+	color: var(--ds-ink, #1C1917);
+	border: 1px solid var(--ds-border, #E7E0D7);
 	border-radius: 6px;
 	padding: 2px 7px;
 	font-family: var(--ds-font-mono);
@@ -156,10 +156,10 @@
 .ds-cockpit-banner {
 	position: relative;
 	background:
-		radial-gradient(560px 260px at 86% -10%, rgba(99, 102, 241, 0.36) 0%, rgba(99, 102, 241, 0) 66%),
-		radial-gradient(420px 220px at 14% 110%, rgba(217, 119, 6, 0.22) 0%, rgba(217, 119, 6, 0) 65%),
-		linear-gradient(135deg, #09090b 0%, #11131a 55%, #161824 100%);
-	color: #f8fafc;
+		radial-gradient(560px 260px at 86% -10%, rgba(197, 155, 118, 0.32) 0%, rgba(197, 155, 118, 0) 66%),
+		radial-gradient(420px 220px at 14% 110%, rgba(154, 103, 69, 0.28) 0%, rgba(154, 103, 69, 0) 65%),
+		linear-gradient(135deg, #1C1917 0%, #26201B 58%, #2F261F 100%);
+	color: #FAF7F2;
 	padding: 26px 30px 24px;
 	display: flex;
 	align-items: flex-end;
@@ -442,40 +442,40 @@
 }
 
 .ds-btn--primary {
-	background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%);
-	border-color: #4f46e5;
+	background: linear-gradient(180deg, #A87450 0%, #9A6745 100%);
+	border-color: #9A6745;
 	color: #ffffff !important;
-	box-shadow: 0 1px 2px rgba(79, 70, 229, 0.25), 0 6px 16px -6px rgba(79, 70, 229, 0.5);
+	box-shadow: 0 1px 2px rgba(154, 103, 69, 0.25), 0 6px 16px -6px rgba(154, 103, 69, 0.45);
 }
 
 .ds-btn--primary:hover,
 .ds-btn--primary:focus {
-	background: linear-gradient(180deg, #4f46e5 0%, #4338ca 100%);
-	border-color: #4338ca;
+	background: linear-gradient(180deg, #9A6745 0%, #7A4E31 100%);
+	border-color: #7A4E31;
 	color: #ffffff !important;
 	transform: translateY(-1px);
-	box-shadow: 0 8px 22px -6px rgba(79, 70, 229, 0.55);
+	box-shadow: 0 8px 22px -6px rgba(122, 78, 49, 0.5);
 }
 
 .ds-btn--dark {
-	background: #0f172a;
-	border-color: #0f172a;
-	color: #ffffff !important;
+	background: #1C1917;
+	border-color: #1C1917;
+	color: #FAF7F2 !important;
 	box-shadow: var(--ds-shadow-xs);
 }
 
 .ds-btn--dark:hover,
 .ds-btn--dark:focus {
-	background: #1e293b;
-	border-color: #1e293b;
+	background: #2F261F;
+	border-color: #2F261F;
 	color: #ffffff !important;
 	transform: translateY(-1px);
 }
 
 .ds-btn--ghost {
 	background: rgba(255, 255, 255, 0.08);
-	border-color: rgba(255, 255, 255, 0.18);
-	color: #f8fafc !important;
+	border-color: rgba(255, 255, 255, 0.2);
+	color: #FAF7F2 !important;
 	backdrop-filter: blur(8px);
 }
 
@@ -495,9 +495,9 @@
 
 .ds-btn--outline:hover,
 .ds-btn--outline:focus {
-	background: #f8fafc;
-	border-color: #4f46e5;
-	color: #4338ca !important;
+	background: #FAF7F2;
+	border-color: #9A6745;
+	color: #7A4E31 !important;
 }
 
 .ds-btn--danger-outline {
@@ -661,7 +661,7 @@ a.ds-kpi-card:hover {
 }
 
 .ds-kpi-card__icon svg { width: 18px; height: 18px; }
-.ds-kpi-card--accent .ds-kpi-card__icon { background: #eef2ff; color: #4f46e5; }
+.ds-kpi-card--accent .ds-kpi-card__icon { background: #F5ECE2; color: #9A6745; }
 .ds-kpi-card--success .ds-kpi-card__icon { background: #ecfdf5; color: #059669; }
 .ds-kpi-card--info .ds-kpi-card__icon { background: #eff6ff; color: #2563eb; }
 .ds-kpi-card--warning .ds-kpi-card__icon { background: #fffbeb; color: #d97706; }
@@ -767,7 +767,7 @@ a.ds-kpi-card:hover {
 
 .ds-ring-progress {
 	fill: none;
-	stroke: #4f46e5;
+	stroke: #9A6745;
 	stroke-width: 6;
 	stroke-linecap: round;
 }
@@ -904,9 +904,9 @@ a.ds-kpi-card:hover {
 
 .ds-table th {
 	padding: 11px 14px;
-	background: #f8fafc;
+	background: #FAF7F2;
 	border-bottom: 1px solid var(--ds-border);
-	color: #475569;
+	color: var(--ds-ink-muted);
 	font-size: 11.5px;
 	font-weight: 700;
 	text-transform: uppercase;
@@ -916,14 +916,14 @@ a.ds-kpi-card:hover {
 
 .ds-table td {
 	padding: 13px 14px;
-	border-bottom: 1px solid #f1f5f9;
+	border-bottom: 1px solid #F1EAE1;
 	color: var(--ds-ink);
 	vertical-align: middle;
 	font-variant-numeric: tabular-nums;
 }
 
 .ds-table tbody tr:last-child td { border-bottom: 0; }
-.ds-table tbody tr:hover td { background: #f8fafc; }
+.ds-table tbody tr:hover td { background: #FAF7F2; }
 
 /* Initials Avatar */
 .ds-customer-cell {
@@ -936,8 +936,8 @@ a.ds-kpi-card:hover {
 	width: 32px;
 	height: 32px;
 	border-radius: 10px;
-	background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
-	color: #4338ca;
+	background: linear-gradient(135deg, #F5ECE2 0%, #EADAC8 100%);
+	color: #7A4E31;
 	font-size: 12px;
 	font-weight: 700;
 	display: inline-flex;
@@ -1227,31 +1227,31 @@ a.ds-kpi-card:hover {
 
 .ds-cmd-item:hover,
 .ds-cmd-item.is-selected {
-	background: #eef2ff;
-	color: #3730a3 !important;
+	background: #F5ECE2;
+	color: #7A4E31 !important;
 }
 
 .ds-cmd-footer {
 	display: flex;
 	justify-content: space-between;
 	padding: 10px 16px;
-	background: #f8fafc;
-	border-top: 1px solid rgba(15, 23, 42, 0.06);
+	background: #FAF7F2;
+	border-top: 1px solid #E7E0D7;
 	font-size: 12px;
-	color: #64748b;
+	color: #69645D;
 }
 
 /* Modern 3D Studio Modals */
 .ds-modal-backdrop {
-	background: rgba(9, 9, 11, 0.68) !important;
+	background: rgba(28, 25, 23, 0.68) !important;
 	backdrop-filter: blur(6px);
 }
 
 .ds-modal-card {
 	background: #ffffff !important;
-	border: 1px solid rgba(15, 23, 42, 0.1) !important;
+	border: 1px solid #E7E0D7 !important;
 	border-radius: 18px !important;
-	box-shadow: 0 28px 72px rgba(9, 9, 11, 0.36) !important;
+	box-shadow: 0 28px 72px rgba(28, 25, 23, 0.36) !important;
 }
 
 /* ==========================================================================
@@ -1277,25 +1277,25 @@ a.ds-kpi-card:hover {
 	max-width: 400px;
 	padding: 12px 16px;
 	border-radius: 12px;
-	background: #0f172a;
-	color: #f8fafc;
+	background: #1C1917;
+	color: #FAF7F2;
 	font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 	font-size: 13.5px;
 	font-weight: 500;
-	box-shadow: 0 14px 36px -8px rgba(15, 23, 42, 0.4);
+	box-shadow: 0 14px 36px -8px rgba(28, 25, 23, 0.42);
 	border: 1px solid rgba(255, 255, 255, 0.1);
 	animation: dsToastIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.ds-toast--success { border-left: 4px solid #10b981; }
-.ds-toast--error { border-left: 4px solid #ef4444; }
-.ds-toast--info { border-left: 4px solid #6366f1; }
+.ds-toast--success { border-left: 4px solid #6F806C; }
+.ds-toast--error { border-left: 4px solid #BF5B50; }
+.ds-toast--info { border-left: 4px solid #9A6745; }
 
 .ds-toast__close {
 	margin-left: auto;
 	background: none;
 	border: none;
-	color: #94a3b8;
+	color: #A89F95;
 	cursor: pointer;
 	font-size: 15px;
 	line-height: 1;
@@ -1321,28 +1321,28 @@ a.ds-kpi-card:hover {
 	pointer-events: none;
 	opacity: 0;
 	transform: translate(-50%, -115%);
-	background: #0f172a;
-	color: #ffffff;
+	background: #1C1917;
+	color: #FAF7F2;
 	padding: 7px 11px;
 	border-radius: 9px;
 	font-size: 12px;
 	font-weight: 600;
 	white-space: nowrap;
-	box-shadow: 0 10px 24px -6px rgba(15, 23, 42, 0.35);
+	box-shadow: 0 10px 24px -6px rgba(28, 25, 23, 0.35);
 	transition: opacity 0.14s ease, left 0.12s ease, top 0.12s ease;
 	z-index: 10;
 }
 
 .ds-chart-tooltip.is-visible { opacity: 1; }
 .ds-chart-dot { cursor: pointer; transition: r 0.14s ease, fill 0.14s ease; }
-.ds-chart-dot:hover { fill: #4f46e5; }
+.ds-chart-dot:hover { fill: #9A6745; }
 
 /* Inline Quick-Filter Pills inside Panels */
 .ds-inline-tabs {
 	display: inline-flex;
 	gap: 4px;
 	padding: 3px;
-	background: #f1f5f9;
+	background: #F2ECE3;
 	border-radius: 9px;
 }
 

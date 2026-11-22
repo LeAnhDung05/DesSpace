@@ -80,6 +80,26 @@
 
   var copyTimers = new WeakMap();
   var lastCopyMessage = '';
+  var lastFocusedTrigger = null;
+  var modelLoadTimeout = null;
+
+  function arT(key, fallback) {
+    if (window.DESPACE_AR_I18N && Object.prototype.hasOwnProperty.call(window.DESPACE_AR_I18N, key) && window.DESPACE_AR_I18N[key]) {
+      return window.DESPACE_AR_I18N[key];
+    }
+    return fallback || '';
+  }
+
+  function showArNotice(msg) {
+    var $t = $('#axToast, #furniva-toast').first();
+    if ($t.length) {
+      $t.text(msg).addClass('show is-visible');
+      clearTimeout(window._despaceArToastTimer);
+      window._despaceArToastTimer = setTimeout(function () {
+        $t.removeClass('show is-visible');
+      }, 3600);
+    }
+  }
 
   // Device Detection
   var Device = {
@@ -146,6 +166,7 @@
     $(document).on('click', '#axView3DModelBtn, .ax-open-3d-btn', function (e) {
       e.preventDefault();
       e.stopPropagation();
+      lastFocusedTrigger = this;
       ensureModelViewerLibrary();
       extractProductData($(this));
       currentProduct.initialTab = '3d';
@@ -154,9 +175,10 @@
     });
 
     // Open Real AR Camera directly
-    $(document).on('click', '#arViewInRoomBtn, .ax-open-ar-btn, .ax-open-room-modal', function (e) {
+    $(document).on('click', '#arViewInRoomBtn, .ax-open-ar-btn, .ax-open-room-modal, .ax-quick-ar-btn', function (e) {
       e.preventDefault();
       e.stopPropagation();
+      lastFocusedTrigger = this;
       ensureModelViewerLibrary();
       extractProductData($(this));
       currentProduct.initialTab = 'ar';
@@ -246,34 +268,77 @@
       $('#axLiveArInfoDims').text(currentProduct.dimensions);
     } else {
       $('#axModalProductDims').hide();
-      $('#ax3DInfoDims').text('Tỷ lệ thực 1:1');
-      $('#axLiveArInfoDims').text('Tỷ lệ thực 1:1');
+      $('#ax3DInfoDims').text(arT('scale11', 'Tỷ lệ thực 1:1'));
+      $('#axLiveArInfoDims').text(arT('scale11', 'Tỷ lệ thực 1:1'));
     }
 
     $('#ax3DInfoTitle').text(currentProduct.name);
     $('#axLiveArInfoTitle').text(currentProduct.name);
 
-    // 2. Setup 3D Viewer & overlays
+    // Ensure error fallback poster matches current product
+    if (currentProduct.image) {
+      $('#ax3DErrorPoster').attr({ src: currentProduct.image, alt: currentProduct.name }).show();
+    } else {
+      $('#ax3DErrorPoster').hide();
+    }
+
+    // 2. Mark modal open BEFORE setting up tabs/camera so Live Camera AR session guard passes!
+    $modal.addClass('is-open').attr('aria-hidden', 'false').fadeIn(200);
+    $('body').addClass('ax-3d-modal-open');
+
+    // 3. Setup 3D Viewer & overlays
     setupModelViewer();
 
-    // 3. Switch to initial tab ('3d' or 'ar')
+    // 4. Switch to initial tab ('3d' or 'ar')
     switchTab(currentProduct.initialTab || '3d');
 
-    // 4. Show modal
-    $modal.fadeIn(200).attr('aria-hidden', 'false');
-    $('body').css('overflow', 'hidden');
+    // 5. Move focus cleanly into dialog for keyboard accessibility
+    setTimeout(function () {
+      var closeBtn = document.getElementById('axRoomModalClose');
+      if (closeBtn) closeBtn.focus();
+    }, 80);
   }
 
   function closeModal() {
+    clearTimeout(modelLoadTimeout);
+    if (document.fullscreenElement && typeof document.exitFullscreen === 'function') {
+      document.exitFullscreen().catch(function () { });
+    }
     stopLiveCameraStream();
     stopInteractive3DLoop();
     var $modal = $('#ax-room-visualizer-modal');
-    $modal.fadeOut(180).attr('aria-hidden', 'true');
-    $('body').css('overflow', '');
+    $modal.removeClass('is-open is-fullscreen').fadeOut(180).attr('aria-hidden', 'true');
+    $('body').removeClass('ax-3d-modal-open');
+    $('#axBtnFullscreen3D').removeClass('is-active').attr('aria-pressed', 'false');
+    $('#axBtnFullscreenText').text(arT('fullscreenEnter', 'Toàn màn hình'));
 
     var mv = document.getElementById('axMainModelViewer');
     if (mv) {
       mv.autoRotate = false;
+    }
+
+    if (lastFocusedTrigger && typeof lastFocusedTrigger.focus === 'function') {
+      try { lastFocusedTrigger.focus(); } catch (err) { }
+    }
+  }
+
+  function updateModelProgress(ratio) {
+    var pct = Math.max(5, Math.min(100, Math.round((Number(ratio) || 0) * 100)));
+    $('#ax3DProgressBar').addClass('is-active');
+    $('#ax3DProgressFill').css('width', pct + '%');
+    var skProg = document.getElementById('ax3DSkProgress');
+    if (skProg) skProg.value = pct;
+    $('#ax3DLoadingCaption').text(arT('loadingProgress', 'Đang tải mô hình 3D tỷ lệ 1:1 ({pct}%)…').replace('{pct}', String(pct)));
+    if (pct >= 100) {
+      setTimeout(function () {
+        $('#ax3DProgressBar').removeClass('is-active');
+      }, 320);
+    }
+  }
+
+  function onModelProgress(event) {
+    if (event && event.detail && typeof event.detail.totalProgress === 'number') {
+      updateModelProgress(event.detail.totalProgress);
     }
   }
 
@@ -281,6 +346,7 @@
     var mv = document.getElementById('axMainModelViewer');
     if (!mv) return;
 
+    clearTimeout(modelLoadTimeout);
     var $loading = $('#ax3DLoadingOverlay');
     var $error = $('#ax3DErrorOverlay');
     var $unsupported = $('#ax3DNotConfiguredOverlay');
@@ -288,22 +354,35 @@
     $loading.hide();
     $error.hide();
     $unsupported.hide();
+    $('#ax3DProgressBar').removeClass('is-active');
+    $('#ax3DProgressFill').css('width', '0%');
     resetInteractive3DUI();
 
     if (!currentProduct.has3D || !currentProduct.glbUrl) {
       mv.removeAttribute('src');
       mv.removeAttribute('ios-src');
+      mv.removeAttribute('poster');
       $unsupported.fadeIn(150);
       return;
     }
 
+    state.modelLoaded = false;
     $loading.show();
+    updateModelProgress(0.12);
 
     mv.removeEventListener('load', onModelLoad);
     mv.removeEventListener('error', onModelError);
+    mv.removeEventListener('progress', onModelProgress);
 
     mv.addEventListener('load', onModelLoad);
     mv.addEventListener('error', onModelError);
+    mv.addEventListener('progress', onModelProgress);
+
+    if (currentProduct.image) {
+      mv.setAttribute('poster', currentProduct.image);
+    } else {
+      mv.removeAttribute('poster');
+    }
 
     mv.src = currentProduct.glbUrl;
     mv.setAttribute('src', currentProduct.glbUrl);
@@ -315,10 +394,19 @@
 
     mv.autoRotate = state.autoRotate;
     loadInteractive3DStage(currentProduct.glbUrl);
+
+    // Fallback safety timeout if neither model-viewer nor Three.js completes within 18s
+    modelLoadTimeout = setTimeout(function () {
+      if (!state.modelLoaded && !interactive3D.active && $('#ax-room-visualizer-modal').hasClass('is-open')) {
+        onModelError(new Error('3D model load timed out'));
+      }
+    }, 18000);
   }
 
   function onModelLoad() {
+    clearTimeout(modelLoadTimeout);
     state.modelLoaded = true;
+    updateModelProgress(1);
     $('#ax3DLoadingOverlay').fadeOut(180);
     $('#ax3DErrorOverlay').hide();
     $('#ax3DNotConfiguredOverlay').hide();
@@ -364,7 +452,7 @@
 
     $('#axInteractive3DStage').hide();
     $('#axBtnToggleDoors').hide().removeClass('is-open').attr('aria-pressed', 'false');
-    $('#axBtnToggleDoorsText').text('Mở hết cửa');
+    $('#axBtnToggleDoorsText').text(arT('openDoors', 'Mở hết cửa'));
     $('#ax3DPartHint').hide().text('');
     $('#ax3DPartPills').hide().empty();
 
@@ -531,11 +619,11 @@
         }
       });
       if (canvas) canvas.style.cursor = 'pointer';
-      $('#ax3DPartHint').text('👆 Nhấn để ' + (part.isOpen ? 'đóng ' : 'mở ') + part.label);
+      $('#ax3DPartHint').text((part.isOpen ? arT('doorHintHoverClose', 'Nhấn để đóng ') : arT('doorHintHoverOpen', 'Nhấn để mở ')) + part.label);
     } else {
       if (canvas) canvas.style.cursor = 'grab';
       if (interactive3D.parts.length) {
-        $('#ax3DPartHint').text('👆 Chạm trực tiếp vào cánh tủ hoặc ngăn kéo để đóng / mở');
+        $('#ax3DPartHint').text(arT('doorHintIdle', 'Chạm trực tiếp vào cánh tủ hoặc ngăn kéo để đóng / mở'));
       }
     }
   }
@@ -547,7 +635,7 @@
     $('#axBtnToggleDoors')
       .toggleClass('is-open', anyOpen)
       .attr('aria-pressed', anyOpen ? 'true' : 'false');
-    $('#axBtnToggleDoorsText').text(allOpen ? 'Đóng hết cửa' : (anyOpen ? 'Mở tất cả' : 'Mở hết cửa'));
+    $('#axBtnToggleDoorsText').text(allOpen ? arT('closeDoors', 'Đóng hết cửa') : (anyOpen ? arT('openAll', 'Mở tất cả') : arT('openDoors', 'Mở hết cửa')));
 
     interactive3D.parts.forEach(function (pt) {
       if (pt.chipEl) {
@@ -561,7 +649,11 @@
     if (!part) return;
     part.isOpen = (typeof forceOpen === 'boolean') ? forceOpen : !part.isOpen;
     part.target = part.isOpen ? 1 : 0;
-    $('#ax3DPartHint').text((part.isOpen ? '🔓 Đang mở ' : '🔒 Đã đóng ') + part.label + ' — chạm lại để ' + (part.isOpen ? 'đóng' : 'mở'));
+    $('#ax3DPartHint').text(
+      (part.isOpen ? arT('doorOpenedPrefix', 'Đang mở ') : arT('doorClosedPrefix', 'Đã đóng ')) +
+      part.label +
+      (part.isOpen ? arT('doorTapAgainClose', ' — chạm lại để đóng') : arT('doorTapAgainOpen', ' — chạm lại để mở'))
+    );
     updatePartButtonsUI();
   }
 
@@ -669,19 +761,19 @@
     }
     var n = (node.name || '').toUpperCase();
     if (/^(DESPACE_DOOR_HINGE_L|DOOR_HINGE_L|DOOR_L)/.test(n)) {
-      return { type: 'hinge_door', label: 'Cánh trái', axis: 'y', openValue: -1.62 };
+      return { type: 'hinge_door', label: arT('partLeftDoor', 'Cánh trái'), axis: 'y', openValue: -1.62 };
     }
     if (/^(DESPACE_DOOR_HINGE_R|DOOR_HINGE_R|DOOR_R)/.test(n)) {
-      return { type: 'hinge_door', label: 'Cánh phải', axis: 'y', openValue: 1.62 };
+      return { type: 'hinge_door', label: arT('partRightDoor', 'Cánh phải'), axis: 'y', openValue: 1.62 };
     }
     if (/^(DESPACE_DOOR_SLIDE|SLIDE_DOOR)/.test(n)) {
-      return { type: 'slide_door', label: 'Cánh lùa', axis: 'x', openValue: 0.42 };
+      return { type: 'slide_door', label: arT('partSlideDoor', 'Cánh lùa'), axis: 'x', openValue: 0.42 };
     }
     if (/^(DESPACE_DRAWER|DRAWER)/.test(n)) {
-      return { type: 'drawer', label: 'Ngăn kéo', axis: 'z', openValue: 0.22 };
+      return { type: 'drawer', label: arT('partDrawer', 'Ngăn kéo'), axis: 'z', openValue: 0.22 };
     }
     if (/^(DOOR)/.test(n)) {
-      return { type: 'hinge_door', label: 'Cánh tủ', axis: 'y', openValue: -1.62 };
+      return { type: 'hinge_door', label: arT('partDoor', 'Cánh tủ'), axis: 'y', openValue: -1.62 };
     }
     return null;
   }
@@ -792,7 +884,7 @@
               btn.type = 'button';
               btn.className = 'ax-part-chip';
               btn.setAttribute('aria-pressed', 'false');
-              btn.textContent = pt.label || ('Phần ' + (idx + 1));
+              btn.textContent = pt.label || (arT('partFallback', 'Phần ') + (idx + 1));
               btn.addEventListener('click', function () {
                 toggleInteractivePart(pt);
               });
@@ -801,18 +893,25 @@
             });
             $('#axBtnToggleDoors').show();
             $('#ax3DPartPills').show();
-            $('#ax3DPartHint').text('👆 Chạm trực tiếp vào cánh tủ hoặc ngăn kéo để đóng / mở').show();
+            $('#ax3DPartHint').text(arT('doorHintIdle', 'Chạm trực tiếp vào cánh tủ hoặc ngăn kéo để đóng / mở')).show();
           } else {
             $('#axBtnToggleDoors').hide();
             $('#ax3DPartPills').hide();
             $('#ax3DPartHint').hide();
           }
 
+          clearTimeout(modelLoadTimeout);
+          state.modelLoaded = true;
+          updateModelProgress(1);
           resizeInteractive3DStage();
           startInteractive3DLoop();
           $('#ax3DLoadingOverlay').fadeOut(160);
         },
-        undefined,
+        function (xhr) {
+          if (xhr && xhr.lengthComputable && xhr.total > 0) {
+            updateModelProgress(xhr.loaded / xhr.total);
+          }
+        },
         function () {
           resetInteractive3DUI();
         }
@@ -821,8 +920,10 @@
   }
 
   function onModelError(err) {
+    clearTimeout(modelLoadTimeout);
     console.warn('[DeSpace 3D] Failed to load model:', err);
     state.modelLoaded = false;
+    $('#ax3DProgressBar').removeClass('is-active');
     $('#ax3DLoadingOverlay').hide();
     $('#ax3DErrorOverlay').fadeIn(150);
   }
@@ -837,7 +938,7 @@
       stopLiveCameraStream();
       $('#axTabPaneAR').hide().removeClass('ax-tab-active');
       $('#axTabPane3D').show().addClass('ax-tab-active');
-      $('#axModalHeaderSubtitle').text('Quan sát chi tiết mô hình 3D 360° — chạm trực tiếp từng cánh cửa hoặc ngăn kéo để đóng/mở');
+      $('#axModalHeaderSubtitle').text(arT('subtitle3D', 'Quan sát chi tiết mô hình 3D 360° — chạm trực tiếp từng cánh cửa hoặc ngăn kéo để đóng/mở'));
       if (interactive3D.modelRoot) {
         interactive3D.active = true;
         resizeInteractive3DStage();
@@ -847,7 +948,7 @@
       stopInteractive3DLoop();
       $('#axTabPane3D').hide().removeClass('ax-tab-active');
       $('#axTabPaneAR').show().addClass('ax-tab-active');
-      $('#axModalHeaderSubtitle').text('Khởi chạy Camera để đưa đúng mô hình 3D vào phòng của bạn với tỷ lệ 1:1 mượt mà');
+      $('#axModalHeaderSubtitle').text(arT('subtitleAR', 'Khởi chạy Camera để đưa đúng mô hình 3D vào phòng của bạn với tỷ lệ 1:1 mượt mà'));
       setupARCard();
     }
   }
@@ -858,7 +959,6 @@
     var $cardDesktop = $('#axArCardDesktop');
     var $cardMissing = $('#axArMissingModelCard');
     var $submodeBar = $('#axArSubmodeBar');
-    var $handoffContainer = $('#axArHandoffContainer');
     var $liveCamCard = $('#axLiveCameraArCard');
 
     $cardIOS.hide();
@@ -875,9 +975,13 @@
 
     $submodeBar.show();
 
-    // Update iOS Quick Look link (must have <img> as first child for Safari rel="ar")
-    var usdz = currentProduct.usdzUrl || currentProduct.glbUrl;
-    $('#axAppleArLink').attr('href', usdz);
+    // Update iOS Quick Look link strictly with valid .usdz (NEVER pass .glb into rel="ar")
+    var $appleLink = $('#axAppleArLink');
+    if (currentProduct.usdzUrl && /\.usdz(\?|$)/i.test(currentProduct.usdzUrl)) {
+      $appleLink.attr('href', currentProduct.usdzUrl).attr('data-usdz-ready', '1').removeClass('is-unavailable');
+    } else {
+      $appleLink.attr('href', '#apple-ar-unavailable').attr('data-usdz-ready', '0').addClass('is-unavailable');
+    }
     if (currentProduct.image) {
       $('#axAppleArHiddenImg').attr('src', currentProduct.image);
     }
@@ -1055,7 +1159,7 @@
     },
     evaluateFootprint: function () {
       if (!state.spatialScanEnabled) {
-        updateSpatialUI(false, 'clear', 'Chế độ đặt tự do (Đã tắt cảm biến)');
+        updateSpatialUI(false, 'clear', arT('freePlaceMode', 'Chế độ đặt tự do (Đã tắt cảm biến)'));
         return;
       }
       var img = this.captureFrame();
@@ -1151,11 +1255,11 @@
         state.isObstructed = false;
       }
     }
-    var msg = '✓ Mặt sàn trống — Đặt vừa vị trí này';
+    var msg = arT('floorClear', '✓ Mặt sàn trống — Đặt vừa vị trí này');
     if (state.isObstructed) {
       msg = (reason === 'off_floor')
-        ? '⚠ Đang ngoài mặt sàn — Kéo xuống nền nhà'
-        : '⚠ Gặp vật cản phía trước — Kéo ra khoảng sàn trống';
+        ? arT('offFloor', '⚠ Đang ngoài mặt sàn — Kéo xuống nền nhà')
+        : arT('obstacleAhead', '⚠ Gặp vật cản phía trước — Kéo ra khoảng sàn trống');
     }
     updateSpatialUI(state.isObstructed, reason, msg);
   }
@@ -1195,7 +1299,7 @@
     var liveMv = document.getElementById('axLiveArModelViewer');
     state.liveDoorsOpen = false;
     state.autoSnapDone = false;
-    $('#axLiveToggleDoorsBtn').hide().removeClass('active').attr('aria-pressed', 'false').find('span').text('🚪 Mở Tủ');
+    $('#axLiveToggleDoorsBtn').hide().removeClass('active').attr('aria-pressed', 'false').find('span').text(arT('openCabinetAr', 'Mở Tủ'));
 
     if (liveMv && currentProduct.glbUrl) {
       if (liveMv.getAttribute('src') !== currentProduct.glbUrl) {
@@ -1224,7 +1328,7 @@
 
     resetLiveTransform();
     setLiveGestureMode('rotate');
-    $('#axLiveSpatialStatus').removeClass('is-obstructed').addClass('is-scanning').text('🔍 Đang nhận diện mặt sàn nhà...');
+    $('#axLiveSpatialStatus').removeClass('is-obstructed').addClass('is-scanning').text(arT('scanningFloor', 'Đang nhận diện mặt sàn nhà…'));
 
     var video = document.getElementById('axLiveArVideo');
     var $fallbackBg = $('#axLiveArFallbackRoom');
@@ -1328,14 +1432,14 @@
         liveMv.style.pointerEvents = 'auto';
       }
       $wrap.removeClass('is-move-mode');
-      $('#axLiveArHint').text('Chế độ Xoay 3D: Vuốt lên tủ để xoay 360° • Kéo vùng trống hoặc giữ Shift để di chuyển tự do');
+      $('#axLiveArHint').text(arT('hintRotateMode', 'Chế độ Xoay 3D: Vuốt lên tủ để xoay 360° • Kéo vùng trống hoặc giữ Shift để di chuyển tự do'));
     } else {
       if (liveMv) {
         liveMv.removeAttribute('camera-controls');
         liveMv.style.pointerEvents = 'none';
       }
       $wrap.addClass('is-move-mode');
-      $('#axLiveArHint').text('Di Chuyển Tự Do: Kéo mô hình khắp phòng — Tự động báo ĐỎ nếu chạm vật cản');
+      $('#axLiveArHint').text(arT('hintMoveMode', 'Di Chuyển Tự Do: Kéo mô hình khắp phòng — Tự động báo ĐỎ nếu chạm vật cản'));
     }
   }
 
@@ -1558,7 +1662,7 @@
         liveMv.play({ repetitions: 1 });
       }
       $(this).toggleClass('active', state.liveDoorsOpen).attr('aria-pressed', state.liveDoorsOpen ? 'true' : 'false');
-      $(this).find('span').text(state.liveDoorsOpen ? '🔒 Đóng Tủ' : '🚪 Mở Tủ');
+      $(this).find('span').text(state.liveDoorsOpen ? arT('closeCabinetAr', 'Đóng Tủ') : arT('openCabinetAr', 'Mở Tủ'));
     });
 
     // Snapshot capture (composite live video/room + 3D WebGL model-viewer)
@@ -1663,7 +1767,7 @@
     // Update switcher button labels
     if (lanBase) {
       var lanHost = lanBase.replace(/^https?:\/\//, '');
-      $('#axQrNetLanBtn').text('📶 Cùng Wi-Fi (' + lanHost + ')');
+      $('#axQrNetLanBtn').text(arT('qrWifiLabel', 'Cùng Wi-Fi') + ' (' + lanHost + ')');
     }
     if (!tunnelBase) {
       $('#axQrNetTunnelBtn').hide();
@@ -1702,12 +1806,12 @@
       $container.html(qrSvg);
     } catch (e) {
       console.error('[DeSpace QR] Encoder error:', e);
-      $container.html('<div style="font-size:12px;color:#9A6745;padding:12px;text-align:center;">Vui lòng sao chép liên kết bên dưới để mở trên điện thoại</div>');
+      $container.html('<div style="font-size:12px;color:#9A6745;padding:12px;text-align:center;">' + arT('qrFallbackMsg', 'Vui lòng sao chép liên kết bên dưới để mở trên điện thoại') + '</div>');
     }
 
     // Live health verification when using Cloudflare HTTPS tunnel; auto-fallback to LAN IP if tunnel is dead
     if (state.qrNetMode === 'tunnel' && net.tunnelBaseUrl && typeof fetch === 'function') {
-      $status.removeClass('is-ok is-warn').text('Đang kiểm tra kết nối Tunnel HTTPS...');
+      $status.removeClass('is-ok is-warn').text(arT('qrCheckingTunnel', 'Đang kiểm tra kết nối Tunnel HTTPS…'));
       var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
       var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 2500) : null;
       fetch(net.tunnelBaseUrl.replace(/\/$/, '') + '/wp-json/despace/v1/desktop-3d/health', {
@@ -1716,7 +1820,7 @@
       }).then(function (resp) {
         if (timer) clearTimeout(timer);
         if (resp && resp.ok) {
-          $status.removeClass('is-warn').addClass('is-ok').text('✓ Tunnel HTTPS sẵn sàng — Mở AR từ mọi mạng');
+          $status.removeClass('is-warn').addClass('is-ok').text(arT('qrTunnelReady', '✓ Tunnel HTTPS sẵn sàng — Mở AR từ mọi mạng'));
         } else {
           throw new Error('HTTP ' + (resp ? resp.status : 'error'));
         }
@@ -1729,11 +1833,11 @@
           var lanUrl = buildMobileArUrl();
           $('#axArDirectUrlInput').val(lanUrl);
           try { $container.html(createSvgQRCode(lanUrl, 180)); } catch (err) { }
-          $status.removeClass('is-ok').addClass('is-warn').text('⚠ Tunnel tạm tắt — Đã tự chuyển sang Wi-Fi LAN');
+          $status.removeClass('is-ok').addClass('is-warn').text(arT('qrTunnelFallback', '⚠ Tunnel tạm tắt — Đã tự chuyển sang Wi-Fi LAN'));
         }
       });
     } else if (net.lanBaseUrl) {
-      $status.removeClass('is-warn').addClass('is-ok').text('📶 Chế độ Wi-Fi nội bộ: điện thoại & máy tính dùng chung Wi-Fi');
+      $status.removeClass('is-warn').addClass('is-ok').text(arT('qrLanReady', 'Chế độ Wi-Fi nội bộ: điện thoại & máy tính dùng chung Wi-Fi'));
     }
   }
 
@@ -2035,12 +2139,33 @@
     });
 
     $(document).on('keydown', function (e) {
-      if (e.key === 'Escape' && $('#ax-room-visualizer-modal').is(':visible')) {
+      var $modal = $('#ax-room-visualizer-modal');
+      if (!$modal.hasClass('is-open')) return;
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
         closeModal();
+        return;
+      }
+
+      // Keyboard Focus Trap inside open 3D/AR Modal
+      if (e.key === 'Tab') {
+        var focusable = $modal.find('a[href]:visible, button:not([disabled]):visible, input:not([disabled]):visible, [tabindex]:not([tabindex="-1"]):visible').toArray();
+        if (!focusable.length) return;
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     });
 
-    $('#axBtnRetryLoad3D').on('click', function () {
+    $('#axBtnRetryLoad3D').on('click', function (e) {
+      e.preventDefault();
       setupModelViewer();
     });
   }
@@ -2070,6 +2195,14 @@
       });
     });
 
+    $('#axBtnToggleDims').on('click', function (e) {
+      e.preventDefault();
+      var $pill = $('#ax3DInfoPill');
+      var isShown = !$pill.hasClass('is-hidden');
+      $pill.toggleClass('is-hidden', isShown);
+      $(this).toggleClass('is-active', !isShown).attr('aria-pressed', !isShown ? 'true' : 'false');
+    });
+
     $('#axBtnAutoRotate').on('click', function (e) {
       e.preventDefault();
       var mv = document.getElementById('axMainModelViewer');
@@ -2080,7 +2213,7 @@
       if (interactive3D.controls) {
         interactive3D.controls.autoRotate = state.autoRotate;
       }
-      $(this).toggleClass('is-active', state.autoRotate);
+      $(this).toggleClass('is-active', state.autoRotate).attr('aria-pressed', state.autoRotate ? 'true' : 'false');
     });
 
     $('#axBtnResetCamera').on('click', function (e) {
@@ -2098,6 +2231,37 @@
         interactive3D.controls.update();
       }
     });
+
+    $('#axBtnFullscreen3D').on('click', function (e) {
+      e.preventDefault();
+      var $modal = $('#ax-room-visualizer-modal');
+      var dialogEl = $modal.find('.ax-room-modal-dialog')[0];
+      var willFs = !$modal.hasClass('is-fullscreen');
+      if (willFs) {
+        $modal.addClass('is-fullscreen');
+        if (dialogEl && typeof dialogEl.requestFullscreen === 'function') {
+          dialogEl.requestFullscreen().catch(function () { });
+        }
+      } else {
+        $modal.removeClass('is-fullscreen');
+        if (document.fullscreenElement && typeof document.exitFullscreen === 'function') {
+          document.exitFullscreen().catch(function () { });
+        }
+      }
+      $(this).toggleClass('is-active', willFs).attr('aria-pressed', willFs ? 'true' : 'false');
+      $('#axBtnFullscreenText').text(willFs ? arT('fullscreenExit', 'Thu gọn') : arT('fullscreenEnter', 'Toàn màn hình'));
+      setTimeout(resizeInteractive3DStage, 120);
+    });
+
+    document.addEventListener('fullscreenchange', function () {
+      var isFs = !!document.fullscreenElement;
+      if (!isFs && $('#ax-room-visualizer-modal').hasClass('is-fullscreen')) {
+        $('#ax-room-visualizer-modal').removeClass('is-fullscreen');
+        $('#axBtnFullscreen3D').removeClass('is-active').attr('aria-pressed', 'false');
+        $('#axBtnFullscreenText').text(arT('fullscreenEnter', 'Toàn màn hình'));
+        setTimeout(resizeInteractive3DStage, 120);
+      }
+    });
   }
 
   function bindARActions() {
@@ -2111,9 +2275,31 @@
       generateDesktopQRCode();
     });
 
+    // iOS Apple Quick Look safety guard: prevent broken # / non-USDZ redirect & seamlessly fallback to Live Camera AR
+    $('#axAppleArLink').on('click', function (e) {
+      var href = String($(this).attr('href') || '');
+      var isUsdzReady = $(this).attr('data-usdz-ready') === '1' && /\.usdz(\?|$)/i.test(href);
+      if (!isUsdzReady) {
+        e.preventDefault();
+        showArNotice(arT('iosUsdzMissing', 'Mô hình Apple AR Quick Look (.usdz) chưa khả dụng. Đang chuyển sang Camera AR 3D Trực Tiếp.'));
+        switchArSubView('live-camera');
+        return false;
+      }
+      // Valid .usdz on iOS Safari: let native rel="ar" Quick Look proceed without hijacking
+      if (!Device.isIOS()) {
+        e.preventDefault();
+        switchArSubView('live-camera');
+        return false;
+      }
+    });
+
     // Android AR launch
     $('#axAndroidArBtn').on('click', function (e) {
       e.preventDefault();
+      if (!currentProduct.glbUrl) {
+        showArNotice(arT('androidGlbMissing', 'Mô hình 3D chưa sẵn sàng cho Google Scene Viewer.'));
+        return;
+      }
       var mv = document.getElementById('axMainModelViewer');
 
       if (mv && typeof mv.activateAR === 'function') {
@@ -2125,12 +2311,10 @@
         }
       }
 
-      if (currentProduct.glbUrl) {
-        var intentUrl = 'intent://arvr.google.com/scene-viewer/1.0?file=' + encodeURIComponent(currentProduct.glbUrl) +
-          '&mode=ar_only&resizable=false&title=' + encodeURIComponent(currentProduct.name) +
-          '#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;';
-        window.location.href = intentUrl;
-      }
+      var intentUrl = 'intent://arvr.google.com/scene-viewer/1.0?file=' + encodeURIComponent(currentProduct.glbUrl) +
+        '&mode=ar_only&resizable=false&title=' + encodeURIComponent(currentProduct.name) +
+        '#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;';
+      window.location.href = intentUrl;
     });
   }
 
@@ -2150,7 +2334,7 @@
     clearTimeout(copyTimers.get(button));
     button.removeAttribute('data-copied');
     button.removeAttribute('data-failed');
-    var message = ok ? 'Đã sao chép!' : 'Không thể sao chép';
+    var message = ok ? arT('copied', '✓ Đã sao chép!') : arT('copyFailed', 'Không thể sao chép');
     if (message === lastCopyMessage) message += '\u00A0';
     lastCopyMessage = message;
     tip.textContent = '';
@@ -2158,7 +2342,7 @@
     button.setAttribute(ok ? 'data-copied' : 'data-failed', '');
     var $textSpan = $(button).find('#axBtnCopyArText');
     if ($textSpan.length) {
-      $textSpan.text(ok ? '✓ Đã sao chép!' : 'Sao chép Link AR');
+      $textSpan.text(ok ? arT('copied', '✓ Đã sao chép!') : arT('copyLinkAr', 'Sao chép Link AR'));
     }
     requestAnimationFrame(function () { tip.textContent = message; });
     copyTimers.set(button, setTimeout(function () {
@@ -2166,7 +2350,7 @@
       button.removeAttribute('data-failed');
       tip.textContent = '';
       if ($textSpan.length) {
-        $textSpan.text('Sao chép Link AR');
+        $textSpan.text(arT('copyLinkAr', 'Sao chép Link AR'));
       }
     }, 2200));
   }
@@ -2228,7 +2412,7 @@
       var originalText = $('#axModalCartBtnText').text();
 
       $btn.addClass('loading');
-      $('#axModalCartBtnText').text('Đang thêm...');
+      $('#axModalCartBtnText').text(arT('addingToCart', 'Đang thêm…'));
 
       $.ajax({
         type: 'POST',
@@ -2248,9 +2432,14 @@
             return;
           }
           $btn.removeClass('loading').addClass('added');
-          $('#axModalCartBtnText').text('✓ Đã thêm vào giỏ!');
+          $('#axModalCartBtnText').text(arT('addedToCart', '✓ Đã thêm vào giỏ!'));
           if (response && response.fragments) {
+            $.each(response.fragments, function (key, value) {
+              $(key).replaceWith(value);
+            });
             $(document.body).trigger('added_to_cart', [response.fragments, response.cart_hash, $btn]);
+          } else {
+            $(document.body).trigger('wc_fragment_refresh');
           }
           setTimeout(function () {
             $btn.removeClass('added');

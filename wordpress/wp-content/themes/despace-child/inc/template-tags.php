@@ -38,9 +38,12 @@ class DeSpace_Mega_Walker extends Walker_Nav_Menu {
 			}
 			$panel .= '</ul>';
 		}
-		$chair_cat = get_term_by( 'slug', 'chairs', 'product_cat' );
-		$thumb_id  = $chair_cat ? get_term_meta( $chair_cat->term_id, 'thumbnail_id', true ) : 0;
-		$panel    .= '<a class="f-mega-card" href="' . esc_url( get_permalink( wc_get_page_id( 'shop' ) ) ) . '">';
+		$featured_cat = get_term_by( 'slug', 'shoe-racks-storage', 'product_cat' );
+		if ( ! $featured_cat && ! empty( $cats ) && ! is_wp_error( $cats ) ) {
+			$featured_cat = $cats[0];
+		}
+		$thumb_id  = $featured_cat ? get_term_meta( $featured_cat->term_id, 'thumbnail_id', true ) : 0;
+		$panel    .= '<a class="f-mega-card" href="' . esc_url( furniva_url( get_permalink( wc_get_page_id( 'shop' ) ) ) ) . '">';
 		if ( $thumb_id ) {
 			$panel .= wp_get_attachment_image( $thumb_id, 'medium' );
 		}
@@ -86,7 +89,7 @@ add_action( 'furniva_card_quick_view', function ( $id ) {
 function despace_section_head( $kicker, $title, $link_url = '', $link_text = '' ) {
 	echo '<div class="f-section-head"><div><span class="f-kicker">' . esc_html( $kicker ) . '</span><h2>' . esc_html( $title ) . '</h2></div>';
 	if ( $link_url ) {
-		echo '<a class="f-link" href="' . esc_url( $link_url ) . '">' . esc_html( $link_text ?: 'View all' ) . '</a>';
+		echo '<a class="f-link" href="' . esc_url( $link_url ) . '">' . esc_html( $link_text ?: furniva_t( 'View all', 'Xem tất cả' ) ) . '</a>';
 	}
 	echo '</div>';
 }
@@ -144,12 +147,15 @@ function despace_filter_sidebar() {
 		 WHERE p.post_type = 'product' AND p.post_status = 'publish'
 		   AND pm.meta_key = '_stock_status' AND pm.meta_value = 'instock'"
 	);
-	$has_3d_count = (int) $wpdb->get_var(
-		"SELECT COUNT(DISTINCT p.ID) FROM {$wpdb->posts} p
-		 INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
-		 WHERE p.post_type = 'product' AND p.post_status = 'publish'
-		   AND pm.meta_key = '_despace_glb_attachment_id' AND CAST(pm.meta_value AS UNSIGNED) > 0"
-	);
+	$has_3d_count = function_exists( 'despace_get_3d_product_ids' )
+		? count( despace_get_3d_product_ids() )
+		: (int) $wpdb->get_var(
+			"SELECT COUNT(DISTINCT p.ID) FROM {$wpdb->posts} p
+			 INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+			 WHERE p.post_type = 'product' AND p.post_status = 'publish'
+			   AND pm.meta_key = '_despace_glb_attachment_id' AND CAST(pm.meta_value AS UNSIGNED) > 0"
+		);
+	$onsale_count = function_exists( 'wc_get_product_ids_on_sale' ) ? count( wc_get_product_ids_on_sale() ) : 0;
 
 	$req_min = isset( $_GET['price_min'] ) && is_numeric( $_GET['price_min'] ) ? absint( $_GET['price_min'] ) : '';
 	$req_max = isset( $_GET['price_max'] ) && is_numeric( $_GET['price_max'] ) ? absint( $_GET['price_max'] ) : '';
@@ -304,6 +310,13 @@ function despace_filter_sidebar() {
 						<span><?php echo esc_html( furniva_t( 'In stock', 'Còn hàng' ) ); ?></span>
 						<span class="f-count">(<?php echo (int) $instock_count; ?>)</span>
 					</label>
+					<?php if ( $onsale_count > 0 ) : ?>
+					<label class="f-filter-check">
+						<input type="checkbox" name="availability" value="onsale" data-name="<?php echo esc_attr( furniva_t( 'Special Offers', 'Đang khuyến mãi' ) ); ?>" />
+						<span><?php echo esc_html( furniva_t( 'Special Offers', 'Đang khuyến mãi' ) ); ?></span>
+						<span class="f-count">(<?php echo (int) $onsale_count; ?>)</span>
+					</label>
+					<?php endif; ?>
 				</div>
 			</details>
 
