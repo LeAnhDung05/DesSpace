@@ -482,6 +482,12 @@ $free_ship_lbl = furniva_is_vi()
                         </summary>
                         <div class="ax-spec-body">
                             <p><?php echo esc_html( sprintf( furniva_t( 'Complimentary insured nationwide delivery and in-room installation for orders from %s. Estimated dispatch: 2–5 business days.', 'Miễn phí giao hàng toàn quốc và hỗ trợ lắp đặt tận phòng cho đơn hàng từ %s. Thời gian bàn giao dự kiến 2–5 ngày làm việc.' ), $free_ship_lbl ) ); ?></p>
+                            <?php if ( $pdp_seasonal ) : ?>
+                                <div class="ds-pdp-holiday-note">
+                                    <span aria-hidden="true">❄</span>
+                                    <span><?php echo esc_html( furniva_t( 'Winter Atelier Priority: Complimentary festive gift-card & insured pre-Christmas room setup.', 'Đặc quyền Winter Atelier: Tặng thiệp chúc lễ & ưu tiên giao lắp hoàn thiện trước Giáng sinh.' ) ); ?></span>
+                                </div>
+                            <?php endif; ?>
                             <a class="ax-spec-link" href="<?php echo esc_url( $policy_ship_url ); ?>"><?php echo esc_html( furniva_t( 'View delivery schedule & rates →', 'Xem lịch giao hàng & biểu phí →' ) ); ?></a>
                         </div>
                     </details>

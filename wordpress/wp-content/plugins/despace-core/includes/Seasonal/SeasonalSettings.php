@@ -1,6 +1,6 @@
 <?php
 /**
- * DeSpace Seasonal Mode (Noel) Settings & Evaluator.
+ * DeSpace Seasonal Mode (Noel) Settings & Evaluator (v2.0 — Winter Atelier).
  *
  * Manages wp_options persistence, strict sanitization, WordPress-timezone
  * auto-scheduling, and zero-footprint activation rules (off / preview / active).
@@ -30,12 +30,17 @@ class SeasonalSettings {
 	/**
 	 * Allowed visual presets.
 	 */
-	public const VALID_PRESETS = array( 'nordic', 'midnight', 'burgundy' );
+	public const VALID_PRESETS = array( 'nordic', 'midnight', 'burgundy', 'frost' );
 
 	/**
 	 * Allowed snow densities.
 	 */
 	public const VALID_DENSITIES = array( 'light', 'medium' );
+
+	/**
+	 * Allowed atmospheric particle styles.
+	 */
+	public const VALID_SNOW_STYLES = array( 'snow_bokeh', 'crystals', 'champagne' );
 
 	/**
 	 * Default seasonal settings.
@@ -44,19 +49,23 @@ class SeasonalSettings {
 	 */
 	public static function defaults(): array {
 		return array(
-			'status'           => 'off',
-			'preset'           => 'nordic',
-			'snow_enabled'     => true,
-			'snow_density'     => 'light',
-			'header_accent'    => true,
-			'marquee_vi'       => 'Mùa Giáng Sinh An Lành — Ưu đãi lễ hội lên đến 20% & Quà tặng bài trí phòng từ DeSpace',
-			'marquee_en'       => 'Season of Warmth — Holiday savings up to 20% & complimentary festive room styling',
-			'promo_code'       => 'NOEL2026',
-			'promo_banner_vi'  => 'Đặc quyền mùa lễ hội: Nhập mã NOEL2026 nhận ngay ưu đãi Giáng sinh cho không gian sống của bạn.',
-			'promo_banner_en'  => 'Festive Privilege: Apply code NOEL2026 for exclusive holiday savings on handcrafted furniture.',
-			'schedule_enabled' => false,
-			'start_date'       => '',
-			'end_date'         => '',
+			'status'            => 'off',
+			'preset'            => 'nordic',
+			'snow_enabled'      => true,
+			'snow_density'      => 'light',
+			'snow_style'        => 'snow_bokeh',
+			'header_accent'     => true,
+			'countdown_enabled' => true,
+			'gift_box_enabled'  => true,
+			'audio_enabled'     => true,
+			'marquee_vi'        => 'Mùa Giáng Sinh An Lành — Ưu đãi lễ hội lên đến 20% & Quà tặng bài trí phòng từ DeSpace',
+			'marquee_en'        => 'Season of Warmth — Holiday savings up to 20% & complimentary festive room styling',
+			'promo_code'        => 'NOEL2026',
+			'promo_banner_vi'   => 'Đặc quyền mùa lễ hội: Mở phong bao nhận mã NOEL2026 cho không gian sống ấm áp.',
+			'promo_banner_en'   => 'Festive Privilege: Unwrap code NOEL2026 for exclusive holiday savings on handcrafted furniture.',
+			'schedule_enabled'  => false,
+			'start_date'        => '',
+			'end_date'          => '',
 		);
 	}
 
@@ -99,6 +108,11 @@ class SeasonalSettings {
 			$density = 'light';
 		}
 
+		$snow_style = isset( $raw['snow_style'] ) ? strtolower( trim( (string) $raw['snow_style'] ) ) : $defaults['snow_style'];
+		if ( ! in_array( $snow_style, self::VALID_SNOW_STYLES, true ) ) {
+			$snow_style = 'snow_bokeh';
+		}
+
 		$sanitize_text = static function ( $val, int $max_len = 240 ): string {
 			$str = (string) $val;
 			if ( function_exists( 'sanitize_text_field' ) ) {
@@ -124,7 +138,6 @@ class SeasonalSettings {
 		$start_date = $sanitize_date( $raw['start_date'] ?? '' );
 		$end_date   = $sanitize_date( $raw['end_date'] ?? '' );
 		if ( '' !== $start_date && '' !== $end_date && $start_date > $end_date ) {
-			// Ensure logical date bounds if admin entered inverted range.
 			$tmp        = $start_date;
 			$start_date = $end_date;
 			$end_date   = $tmp;
@@ -141,19 +154,23 @@ class SeasonalSettings {
 		};
 
 		return array(
-			'status'           => $status,
-			'preset'           => $preset,
-			'snow_enabled'     => $to_bool( $raw['snow_enabled'] ?? false ),
-			'snow_density'     => $density,
-			'header_accent'    => $to_bool( $raw['header_accent'] ?? false ),
-			'marquee_vi'       => $sanitize_text( $raw['marquee_vi'] ?? $defaults['marquee_vi'], 240 ),
-			'marquee_en'       => $sanitize_text( $raw['marquee_en'] ?? $defaults['marquee_en'], 240 ),
-			'promo_code'       => $promo_code,
-			'promo_banner_vi'  => $sanitize_text( $raw['promo_banner_vi'] ?? $defaults['promo_banner_vi'], 240 ),
-			'promo_banner_en'  => $sanitize_text( $raw['promo_banner_en'] ?? $defaults['promo_banner_en'], 240 ),
-			'schedule_enabled' => $to_bool( $raw['schedule_enabled'] ?? false ),
-			'start_date'       => $start_date,
-			'end_date'         => $end_date,
+			'status'            => $status,
+			'preset'            => $preset,
+			'snow_enabled'      => $to_bool( $raw['snow_enabled'] ?? false ),
+			'snow_density'      => $density,
+			'snow_style'        => $snow_style,
+			'header_accent'     => $to_bool( $raw['header_accent'] ?? false ),
+			'countdown_enabled' => $to_bool( $raw['countdown_enabled'] ?? false ),
+			'gift_box_enabled'  => $to_bool( $raw['gift_box_enabled'] ?? false ),
+			'audio_enabled'     => $to_bool( $raw['audio_enabled'] ?? false ),
+			'marquee_vi'        => $sanitize_text( $raw['marquee_vi'] ?? $defaults['marquee_vi'], 240 ),
+			'marquee_en'        => $sanitize_text( $raw['marquee_en'] ?? $defaults['marquee_en'], 240 ),
+			'promo_code'        => $promo_code,
+			'promo_banner_vi'   => $sanitize_text( $raw['promo_banner_vi'] ?? $defaults['promo_banner_vi'], 240 ),
+			'promo_banner_en'   => $sanitize_text( $raw['promo_banner_en'] ?? $defaults['promo_banner_en'], 240 ),
+			'schedule_enabled'  => $to_bool( $raw['schedule_enabled'] ?? false ),
+			'start_date'        => $start_date,
+			'end_date'          => $end_date,
 		);
 	}
 
@@ -268,7 +285,7 @@ class SeasonalSettings {
 	}
 
 	/**
-	 * Human-readable preset metadata for Admin UI.
+	 * Human-readable preset metadata for Admin UI & live preview.
 	 *
 	 * @return array<string, array<string, mixed>>
 	 */
@@ -276,21 +293,63 @@ class SeasonalSettings {
 		return array(
 			'nordic'   => array(
 				'name'     => 'Nordic Hygge',
-				'badge'    => 'Mặc định · Khuyên dùng',
-				'desc'     => 'Nền kem ấm Bắc Âu kết hợp xanh thông trầm và vàng Champagne — tôn vân gỗ tự nhiên tối đa.',
+				'badge'    => 'Mặc định · Bắc Âu Ấm Áp',
+				'desc'     => 'Kem ấm Bắc Âu phối xanh thông trầm & vàng Champagne — tôn tối đa vẻ đẹp vân gỗ tự nhiên.',
 				'swatches' => array( '#FAF7F2', '#1B3B2B', '#C9A96E' ),
+				'preview'  => array(
+					'marqueeBg' => '#1B3B2B',
+					'marqueeFg' => '#FAF7F2',
+					'headerBg'  => '#FAF7F2',
+					'headerFg'  => '#1C1917',
+					'heroBg'    => 'linear-gradient(135deg, #1B3B2B 0%, #12291E 100%)',
+					'accent'    => '#C9A96E',
+					'pageBg'    => '#FAF7F2',
+				),
 			),
 			'midnight' => array(
 				'name'     => 'Midnight Gold',
-				'badge'    => 'Đêm Đông Sang Trọng',
-				'desc'     => 'Header, Hero và Footer sắc đêm đông xanh rêu trầm điểm vàng kim; lưới sản phẩm giữ nền sáng sạch.',
+				'badge'    => 'Đêm Đông Đẳng Cấp',
+				'desc'     => 'Header, Hero & Footer sắc đêm đông xanh rêu trầm ánh vàng kim; lưới sản phẩm giữ nền sáng sạch.',
 				'swatches' => array( '#0E1A16', '#D4AF37', '#FAF7F2' ),
+				'preview'  => array(
+					'marqueeBg' => '#09120F',
+					'marqueeFg' => '#F7EFE0',
+					'headerBg'  => '#0E1A16',
+					'headerFg'  => '#F5EFE3',
+					'heroBg'    => 'linear-gradient(135deg, #0E1A16 0%, #172B24 100%)',
+					'accent'    => '#D4AF37',
+					'pageBg'    => '#F7F5F0',
+				),
 			),
 			'burgundy' => array(
 				'name'     => 'Velvet Burgundy',
 				'badge'    => 'Lễ Hội Nồng Ấm',
-				'desc'     => 'Đỏ rượu vang trầm phối xanh thông cổ điển và kem sữa — đậm không khí ưu đãi Noel nhưng vẫn tinh tế.',
+				'desc'     => 'Đỏ rượu vang nhung trầm phối xanh thông cổ điển & kem sữa — nổi bật ưu đãi lễ hội nhưng vẫn thanh lịch.',
 				'swatches' => array( '#6E1D27', '#1F3A2E', '#FBF8F3' ),
+				'preview'  => array(
+					'marqueeBg' => '#6E1D27',
+					'marqueeFg' => '#FBF8F3',
+					'headerBg'  => '#FBF8F3',
+					'headerFg'  => '#2B1618',
+					'heroBg'    => 'linear-gradient(135deg, #6E1D27 0%, #4A1118 100%)',
+					'accent'    => '#D6B47A',
+					'pageBg'    => '#FBF8F3',
+				),
+			),
+			'frost'    => array(
+				'name'     => 'Alpine Frost',
+				'badge'    => 'Mới · Biệt Thự Tuyết Thụy Sĩ',
+				'desc'     => 'Sương băng thanh khiết kết hợp xanh vân sam trầm, ánh bạc mịn & đồng thau ấm chuẩn resort vùng Alps.',
+				'swatches' => array( '#F3F6F9', '#1E3342', '#C7A66B' ),
+				'preview'  => array(
+					'marqueeBg' => '#1E3342',
+					'marqueeFg' => '#F3F6F9',
+					'headerBg'  => '#F7FAFC',
+					'headerFg'  => '#1B2A35',
+					'heroBg'    => 'linear-gradient(135deg, #1E3342 0%, #13222E 100%)',
+					'accent'    => '#C7A66B',
+					'pageBg'    => '#F3F6F9',
+				),
 			),
 		);
 	}

@@ -231,6 +231,53 @@ SeasonalModule::enqueue_frontend_assets();
 $loaded_when_on = isset( $mock_styles['despace-noel'], $mock_scripts['despace-noel'], $mock_localized['despace-noel']['DESPACE_NOEL'] );
 $assert( 'TC-SN-12', 'Zero-Footprint enqueue (0 assets when off; CSS+JS+config when on)', $zero_when_off && $loaded_when_on );
 
+// TC-SN-13: 4th Luxury Preset (Alpine Frost) supported & emits body class
+SeasonalSettings::save( array( 'status' => 'active', 'preset' => 'frost', 'header_accent' => true ) );
+$cls_frost = SeasonalModule::filter_body_class( array( 'despace-site' ) );
+$assert(
+	'TC-SN-13',
+	'4th Luxury Preset Alpine Frost emits despace-noel--frost class',
+	in_array( 'despace-theme-noel', $cls_frost, true ) && in_array( 'despace-noel--frost', $cls_frost, true )
+);
+
+// TC-SN-14: snow_style whitelist sanitization (snow_bokeh | crystals | champagne)
+$s_valid = SeasonalSettings::sanitize( array( 'snow_style' => 'champagne' ) );
+$s_bad   = SeasonalSettings::sanitize( array( 'snow_style' => 'confetti_attack' ) );
+$assert( 'TC-SN-14', 'snow_style accepts champagne & rejects invalid values', 'champagne' === $s_valid['snow_style'] && 'snow_bokeh' === $s_bad['snow_style'] );
+
+// TC-SN-15: Interactive v2 toggles (countdown, gift box, opt-in audio) localized cleanly
+$mock_styles = $mock_scripts = $mock_localized = array();
+SeasonalSettings::save( array(
+	'status'            => 'active',
+	'preset'            => 'frost',
+	'snow_style'        => 'crystals',
+	'countdown_enabled' => true,
+	'gift_box_enabled'  => true,
+	'audio_enabled'     => false,
+	'promo_code'        => 'WINTER26',
+) );
+SeasonalModule::enqueue_frontend_assets();
+$loc = $mock_localized['despace-noel']['DESPACE_NOEL'] ?? array();
+$assert(
+	'TC-SN-15',
+	'v2 localized payload carries snowStyle, countdown, giftBox, audio & promoCode',
+	'crystals' === ( $loc['snowStyle'] ?? '' )
+	&& true === ( $loc['countdownEnabled'] ?? null )
+	&& true === ( $loc['giftBoxEnabled'] ?? null )
+	&& false === ( $loc['audioEnabled'] ?? null )
+	&& 'WINTER26' === ( $loc['promoCode'] ?? '' )
+);
+
+// TC-SN-16: All 4 presets expose complete live-preview palette metadata
+$cat = SeasonalSettings::preset_catalog();
+$cat_ok = count( $cat ) === 4;
+foreach ( array( 'nordic', 'midnight', 'burgundy', 'frost' ) as $k ) {
+	if ( empty( $cat[ $k ]['preview']['marqueeBg'] ) || empty( $cat[ $k ]['preview']['heroBg'] ) || empty( $cat[ $k ]['preview']['accent'] ) ) {
+		$cat_ok = false;
+	}
+}
+$assert( 'TC-SN-16', 'All 4 presets include complete live-preview simulator palettes', $cat_ok );
+
 echo "\n========================================================================\n";
 printf( "SUMMARY: %d Total | %d Passed | %d Failed\n", $passed + $failed, $passed, $failed );
 echo "========================================================================\n";

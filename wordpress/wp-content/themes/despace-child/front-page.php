@@ -230,7 +230,7 @@ $hero_products = array(
 		$home_seasonal = function_exists('despace_get_active_seasonal_config') ? despace_get_active_seasonal_config() : null;
 		$offer_code    = ($home_seasonal && ! empty($home_seasonal['promo_code'])) ? (string) $home_seasonal['promo_code'] : 'WELCOME10';
 		$offer_kicker  = $home_seasonal
-			? furniva_t('DeSpace Holiday Edition', 'BỘ SƯU TẬP MÙA GIÁNG SINH DeSpace')
+			? furniva_t('DeSpace Winter Atelier · Holiday Edition', 'DESPACE WINTER ATELIER · MÙA GIÁNG SINH')
 			: furniva_t('A DeSpace welcome', 'ƯU ĐÃI CHÀO MỪNG DeSpace');
 		$offer_heading = $home_seasonal
 			? furniva_t('Warm spaces crafted for festive gatherings.', 'Tổ ấm nồng ấm cho mùa Giáng sinh an lành.')
@@ -240,7 +240,82 @@ $hero_products = array(
 				? (trim((string) ($home_seasonal['promo_banner_vi'] ?? '')) ?: sprintf('Nhập mã %s nhận ngay đặc quyền ưu đãi Giáng sinh.', $offer_code))
 				: (trim((string) ($home_seasonal['promo_banner_en'] ?? '')) ?: sprintf('Use code %s for exclusive seasonal savings.', $offer_code)))
 			: furniva_t('Take 10% off with code WELCOME10.', 'Giảm 10% với mã WELCOME10.');
+		$show_atelier_card = $home_seasonal && (! empty($home_seasonal['countdown_enabled']) || ! empty($home_seasonal['gift_box_enabled']));
 		?>
+		<?php if ($show_atelier_card) : ?>
+		<section class="ds-holiday-atelier fv-wrap fv-reveal fv-reveal-fade" id="despace-holiday-atelier" aria-label="<?php echo esc_attr($offer_kicker); ?>">
+			<div class="ds-holiday-card">
+				<div class="ds-holiday-card__grid">
+					<div>
+						<span class="ds-holiday-kicker">❄ <?php echo esc_html($offer_kicker); ?></span>
+						<h2 class="ds-holiday-title"><?php echo esc_html($offer_heading); ?></h2>
+						<p class="ds-holiday-sub"><?php echo esc_html($offer_sub); ?></p>
+						<?php if (! empty($home_seasonal['countdown_enabled'])) : ?>
+						<div class="ds-holiday-countdown" id="dsHolidayCountdown" aria-label="<?php echo esc_attr(furniva_t('Countdown to Christmas', 'Đếm ngược đến Giáng sinh')); ?>">
+							<div class="ds-cd-unit"><span class="ds-cd-val" data-cd="days">--</span><span class="ds-cd-lbl"><?php echo esc_html(furniva_t('Days', 'Ngày')); ?></span></div>
+							<div class="ds-cd-unit"><span class="ds-cd-val" data-cd="hours">--</span><span class="ds-cd-lbl"><?php echo esc_html(furniva_t('Hours', 'Giờ')); ?></span></div>
+							<div class="ds-cd-unit"><span class="ds-cd-val" data-cd="mins">--</span><span class="ds-cd-lbl"><?php echo esc_html(furniva_t('Mins', 'Phút')); ?></span></div>
+							<div class="ds-cd-unit"><span class="ds-cd-val" data-cd="secs">--</span><span class="ds-cd-lbl"><?php echo esc_html(furniva_t('Secs', 'Giây')); ?></span></div>
+						</div>
+						<?php endif; ?>
+					</div>
+
+					<?php if (! empty($home_seasonal['gift_box_enabled']) && '' !== $offer_code) : ?>
+					<div class="ds-holiday-gift-box" id="dsHolidayGiftBox">
+						<div class="ds-gift-sealed">
+							<button type="button" class="ds-gift-seal-btn" id="dsHolidayUnwrapBtn">
+								<span class="ds-wax-seal" aria-hidden="true">❄</span>
+								<span class="ds-gift-seal-title"><?php echo esc_html(furniva_t('Unwrap Holiday Privilege', 'Mở phong bao ưu đãi Noel')); ?></span>
+								<span class="ds-gift-seal-hint"><?php echo esc_html(furniva_t('Tap the wax seal to reveal your festive code ✦', 'Chạm con dấu vàng để mở mã quà tặng ✦')); ?></span>
+							</button>
+						</div>
+						<div class="ds-gift-revealed">
+							<span class="ds-holiday-kicker" style="justify-content:center;margin-bottom:4px;">✦ <?php echo esc_html(furniva_t('Your Holiday Code', 'Mã Quà Tặng Của Bạn')); ?></span>
+							<div class="ds-gift-code-pill"><?php echo esc_html($offer_code); ?></div>
+							<button type="button" class="ds-gift-copy-btn" id="dsHolidayCopyGiftBtn" data-code="<?php echo esc_attr($offer_code); ?>">
+								<?php echo esc_html(sprintf(furniva_t('Copy %s', 'Sao chép mã %s'), $offer_code)); ?> ↗
+							</button>
+						</div>
+					</div>
+					<?php else : ?>
+					<div class="ds-holiday-gift-box is-unwrapped">
+						<div class="ds-gift-revealed" style="display:block;">
+							<span class="ds-holiday-kicker" style="justify-content:center;margin-bottom:4px;">✦ <?php echo esc_html(furniva_t('Holiday Code', 'Mã Ưu Đãi Noel')); ?></span>
+							<div class="ds-gift-code-pill"><?php echo esc_html($offer_code); ?></div>
+							<button type="button" class="ds-gift-copy-btn f-copy-coupon" data-code="<?php echo esc_attr($offer_code); ?>">
+								<?php echo esc_html(sprintf(furniva_t('Copy %s', 'Sao chép %s'), $offer_code)); ?> ↗
+							</button>
+						</div>
+					</div>
+					<?php endif; ?>
+				</div>
+
+				<div class="ds-holiday-tiers">
+					<a class="ds-holiday-tier-link" href="<?php echo esc_url(add_query_arg('price_max', '5000000', $shop_url)); ?>">
+						<div>
+							<small><?php echo esc_html(furniva_t('Thoughtful Gifts · Under 5M ₫', 'Quà Tặng Tinh Tế · Dưới 5 Triệu')); ?></small>
+							<strong><?php echo esc_html(furniva_t('Compact storage & entryway pieces', 'Tủ gọn nhẹ & điểm nhấn sảnh đón')); ?></strong>
+						</div>
+						<span class="ds-holiday-tier-arrow" aria-hidden="true">→</span>
+					</a>
+					<a class="ds-holiday-tier-link" href="<?php echo esc_url(add_query_arg('has_3d', 'yes', $shop_url)); ?>">
+						<div>
+							<small><?php echo esc_html(furniva_t('Interactive 1:1 AR Preview', 'Đặt Thử Vào Phòng Đón Noel')); ?></small>
+							<strong><?php echo esc_html(furniva_t('40 Designs Ready in 3D & AR', '40 Thiết Kế Hỗ Trợ Xem 3D & AR')); ?></strong>
+						</div>
+						<span class="ds-holiday-tier-arrow" aria-hidden="true">→</span>
+					</a>
+					<a class="ds-holiday-tier-link" href="<?php echo esc_url(add_query_arg('on_sale', '1', $shop_url)); ?>">
+						<div>
+							<small><?php echo esc_html(furniva_t('Seasonal Showroom Privileges', 'Đặc Quyền Mùa Lễ Hội')); ?></small>
+							<strong><?php echo esc_html(furniva_t('Explore Holiday Sale Offers', 'Khám Phá Sản Phẩm Ưu Đãi Noel')); ?></strong>
+						</div>
+						<span class="ds-holiday-tier-arrow" aria-hidden="true">→</span>
+					</a>
+				</div>
+			</div>
+		</section>
+		<?php else : ?>
 		<section class="fv-diwali-banner fv-wrap fv-reveal fv-reveal-fade" id="despace-welcome-offer" data-legacy-id="furniva-welcome-offer" aria-label="<?php echo esc_attr($offer_kicker); ?>">
 			<span class="fv-diwali-banner__lamp" aria-hidden="true"><?php echo $home_seasonal ? '❄' : '✧'; ?></span>
 			<div class="fv-diwali-banner__copy">
@@ -250,6 +325,7 @@ $hero_products = array(
 			</div>
 			<button class="fv-diwali-banner__button f-copy-coupon" type="button" data-code="<?php echo esc_attr($offer_code); ?>"><?php echo esc_html(sprintf(furniva_t('Copy %s', 'Sao chép %s'), $offer_code)); ?> <span aria-hidden="true">↗</span></button>
 		</section>
+		<?php endif; ?>
 
 		<section class="fv-section fv-wrap fv-home-product-section fv-reveal fv-reveal-up" aria-labelledby="fv-best-title">
 			<div class="fv-section-heading">

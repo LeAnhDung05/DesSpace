@@ -1,14 +1,14 @@
 <?php
 /**
- * DeSpace Seasonal Mode (Noel) Module Coordinator.
+ * DeSpace Seasonal Mode (Noel) Module Coordinator (v2.0 — Winter Atelier).
  *
  * Enforces strict Zero-Footprint architecture:
  * - When status = 'off', or status = 'preview' for non-admin visitors, or
  *   outside the configured schedule window: ZERO CSS, ZERO JS, ZERO body
  *   classes, and ZERO festive DOM are emitted on the storefront.
  * - When active: registers body classes, enqueues dedicated despace-noel.css
- *   & despace-noel.js, exposes Admin Bar status indicator, and provides clean
- *   hooks for storefront templates.
+ *   & despace-noel.js with interactive countdown, gift-unwrap, opt-in Web Audio
+ *   winter chime & 3-layer snow/bokeh engine, and shows Admin Bar status badge.
  *
  * @package DeSpace\Seasonal
  */
@@ -38,7 +38,7 @@ class SeasonalModule {
 		}
 		self::$initialized = true;
 
-		// 1. Admin Settings Page (RBAC: manage_options only).
+		// 1. Admin Settings Studio (RBAC: manage_options only).
 		SeasonalAdminPage::init();
 
 		// 2. Admin Bar Live / Preview Status Indicator (Admins only).
@@ -80,11 +80,11 @@ class SeasonalModule {
 			return;
 		}
 
-		$settings   = $state['settings'];
-		$theme_dir  = function_exists( 'get_stylesheet_directory' ) ? get_stylesheet_directory() : '';
-		$theme_uri  = function_exists( 'get_stylesheet_directory_uri' ) ? get_stylesheet_directory_uri() : '';
-		$css_path   = $theme_dir . '/assets/css/despace-noel.css';
-		$js_path    = $theme_dir . '/assets/js/despace-noel.js';
+		$settings  = $state['settings'];
+		$theme_dir = function_exists( 'get_stylesheet_directory' ) ? get_stylesheet_directory() : '';
+		$theme_uri = function_exists( 'get_stylesheet_directory_uri' ) ? get_stylesheet_directory_uri() : '';
+		$css_path  = $theme_dir . '/assets/css/despace-noel.css';
+		$js_path   = $theme_dir . '/assets/js/despace-noel.js';
 
 		if ( '' !== $theme_dir && file_exists( $css_path ) ) {
 			wp_enqueue_style(
@@ -104,22 +104,36 @@ class SeasonalModule {
 				true
 			);
 
-			$is_vi = function_exists( 'furniva_is_vi' ) ? (bool) furniva_is_vi() : true;
+			$is_vi      = function_exists( 'furniva_is_vi' ) ? (bool) furniva_is_vi() : true;
+			$promo_code = trim( (string) ( $settings['promo_code'] ?? '' ) );
+
 			wp_localize_script(
 				'despace-noel',
 				'DESPACE_NOEL',
 				array(
-					'active'      => true,
-					'mode'        => $state['mode'],
-					'preset'      => $settings['preset'],
-					'snowEnabled' => ! empty( $settings['snow_enabled'] ),
-					'snowDensity' => $settings['snow_density'],
-					'isVi'        => $is_vi,
-					'labels'      => array(
-						'pauseSnow'  => $is_vi ? 'Tắt hiệu ứng tuyết rơi' : 'Pause snowfall effect',
-						'resumeSnow' => $is_vi ? 'Bật hiệu ứng tuyết rơi' : 'Resume snowfall effect',
-						'snowOn'     => $is_vi ? 'Tuyết: Bật' : 'Snow: On',
-						'snowOff'    => $is_vi ? 'Tuyết: Tắt' : 'Snow: Off',
+					'active'           => true,
+					'mode'             => $state['mode'],
+					'preset'           => $settings['preset'],
+					'snowEnabled'      => ! empty( $settings['snow_enabled'] ),
+					'snowDensity'      => $settings['snow_density'],
+					'snowStyle'        => $settings['snow_style'],
+					'countdownEnabled' => ! empty( $settings['countdown_enabled'] ),
+					'giftBoxEnabled'   => ! empty( $settings['gift_box_enabled'] ),
+					'audioEnabled'     => ! empty( $settings['audio_enabled'] ),
+					'promoCode'        => $promo_code,
+					'isVi'             => $is_vi,
+					'labels'           => array(
+						'pauseSnow'   => $is_vi ? 'Tắt hiệu ứng tuyết & ánh sáng' : 'Pause snow & light effect',
+						'resumeSnow'  => $is_vi ? 'Bật hiệu ứng tuyết & ánh sáng' : 'Resume snow & light effect',
+						'snowOn'      => $is_vi ? 'Tuyết' : 'Snow',
+						'snowOff'     => $is_vi ? 'Đã tắt' : 'Paused',
+						'musicOn'     => $is_vi ? 'Tắt giai điệu hộp âm Giáng sinh' : 'Mute winter music box',
+						'musicOff'    => $is_vi ? 'Bật giai điệu hộp âm Giáng sinh êm dịu' : 'Play gentle winter music box',
+						'musicLabel'  => $is_vi ? 'Nhạc lễ' : 'Chime',
+						'copyCode'    => $is_vi ? 'Sao chép mã ưu đãi mùa lễ' : 'Copy holiday promo code',
+						'copiedToast' => $is_vi ? '✦ Đã sao chép mã Giáng sinh {code}!' : '✦ Copied Holiday Code {code}!',
+						'unwrapped'   => $is_vi ? '✦ Phong bao ưu đãi đã mở — chúc bạn mùa lễ an lành!' : '✦ Holiday privilege unwrapped — warm season wishes!',
+						'merryNow'    => $is_vi ? 'Chúc Mừng Giáng Sinh An Lành!' : 'Merry Christmas from DeSpace!',
 					),
 				)
 			);
@@ -142,12 +156,8 @@ class SeasonalModule {
 			return;
 		}
 
-		$preset_names = array(
-			'nordic'   => 'Nordic Hygge',
-			'midnight' => 'Midnight Gold',
-			'burgundy' => 'Velvet Burgundy',
-		);
-		$preset_label = $preset_names[ $settings['preset'] ] ?? ucfirst( (string) $settings['preset'] );
+		$catalog      = SeasonalSettings::preset_catalog();
+		$preset_label = $catalog[ $settings['preset'] ]['name'] ?? ucfirst( (string) $settings['preset'] );
 
 		if ( 'preview' === $state['mode'] ) {
 			$title = sprintf( '❄ Noel: Xem trước (%s)', $preset_label );

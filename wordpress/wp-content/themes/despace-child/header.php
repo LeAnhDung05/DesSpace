@@ -333,6 +333,11 @@ if ( $seasonal_cfg ) {
 			</a>
 		</div>
 	</nav>
+	<?php if ( $seasonal_cfg && ! empty( $seasonal_cfg['header_accent'] ) ) : ?>
+		<div class="ds-noel-header-garland" aria-hidden="true">
+			<?php for ( $b = 0; $b < 18; $b++ ) : ?><span class="ds-noel-light-bead"></span><?php endfor; ?>
+		</div>
+	<?php endif; ?>
 </header>
 
 <dialog class="fv-dialog fv-search-dialog" id="furniva-search-dialog" aria-labelledby="furniva-search-title">
