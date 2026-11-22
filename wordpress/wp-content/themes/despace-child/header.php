@@ -81,7 +81,7 @@ $announcements = array(
 	array(
 		'text'    => sprintf( furniva_t( 'Complimentary nationwide delivery on orders over %s', 'Miễn phí giao hàng toàn quốc cho đơn từ %s' ), furniva_is_vi() ? $free_ship_vi : $free_ship_en ),
 		'title'   => furniva_t( 'Complimentary Insured Delivery & Assembly', 'Miễn phí giao hàng & lắp đặt tận nơi' ),
-		'content' => sprintf( furniva_t( 'DeSpace offers complimentary nationwide delivery and white-glove assembly on all orders from %s.', 'DeSpace miễn phí 100% chi phí vận chuyển toàn quốc và hỗ trợ lắp đặt chuyên nghiệp đối với mọi đơn hàng từ %s.' ), furniva_is_vi() ? $free_ship_vi : $free_ship_en ),
+		'content' => sprintf( furniva_t( 'DeSpace offers complimentary nationwide delivery and white-glove assembly on all orders from %s.', 'DeSpace miễn phí 100%% chi phí vận chuyển toàn quốc và hỗ trợ lắp đặt chuyên nghiệp đối với mọi đơn hàng từ %s.' ), furniva_is_vi() ? $free_ship_vi : $free_ship_en ),
 		'action'  => furniva_t( 'Explore Collection', 'Khám phá bộ sưu tập' ),
 		'url'     => $shop_url,
 	),
