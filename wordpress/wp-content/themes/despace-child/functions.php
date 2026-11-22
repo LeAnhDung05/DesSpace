@@ -49,39 +49,132 @@ function furniva_setup()
 }
 add_action('after_setup_theme', 'furniva_setup');
 
-// ---------------------------------------------------------------- SEO & Meta tags
+// ---------------------------------------------------------------- SEO & Meta tags (Bilingual VI/EN + Canonical + Hreflang)
 add_action('wp_head', function () {
 	if (defined('WPSEO_VERSION') || defined('RANK_MATH_VERSION') || defined('AIOSEO_VERSION')) {
 		return;
 	}
+	$is_vi = function_exists('furniva_is_vi') ? furniva_is_vi() : true;
+	$seasonal = function_exists('despace_get_active_seasonal_config') ? despace_get_active_seasonal_config() : null;
 	$desc = '';
+
 	if (is_front_page()) {
-		$desc = 'DeSpace — Thương hiệu nội thất cao cấp phong cách Scandinavian & Quiet Luxury. Trải nghiệm trực quan 3D/AR đặt sản phẩm trong phòng với tỷ lệ thực tế.';
+		if ($seasonal) {
+			$desc = $is_vi
+				? 'DeSpace — Winter Atelier 2026: Nội thất cao cấp phong cách Nordic Hygge × Modern Luxury mùa lễ hội, trải nghiệm mô hình 3D 360° và đặt phòng AR tỷ lệ 1:1.'
+				: 'DeSpace — Winter Atelier 2026: Nordic Hygge & Modern Luxury furniture for the holiday season, with interactive 360° 3D models and true-to-scale AR room preview.';
+		} else {
+			$desc = $is_vi
+				? 'DeSpace — Thương hiệu nội thất cao cấp phong cách Scandinavian & Quiet Luxury. Trải nghiệm trực quan 3D/AR đặt sản phẩm trong phòng với tỷ lệ thực tế.'
+				: 'DeSpace — Scandinavian & Modern Luxury furniture atelier. Explore handcrafted pieces with interactive 360° 3D viewer and true-to-scale AR room preview.';
+		}
+	} elseif (function_exists('is_shop') && is_shop()) {
+		$has_3d = ! empty($_GET['has_3d']);
+		$has_ar = ! empty($_GET['has_ar']);
+		$is_winter = isset($_GET['collection']) && 'winter-atelier' === sanitize_title(wp_unslash($_GET['collection']));
+		if ($is_winter) {
+			$desc = $is_vi
+				? 'Bộ sưu tập Winter Atelier 2026 tại DeSpace — Tuyển chọn nội thất gỗ cao cấp cho không gian lễ hội ấm áp, hỗ trợ xem 3D & AR 1:1.'
+				: 'DeSpace Winter Atelier 2026 Collection — Curated luxury timber furniture for calm holiday living with 3D & AR preview.';
+		} elseif ($has_ar) {
+			$desc = $is_vi
+				? 'Cửa hàng nội thất DeSpace hỗ trợ AR đặt thử vào phòng thực tế 1:1 trên iOS Quick Look & Android ARCore.'
+				: 'Shop DeSpace AR-ready furniture — preview true-to-scale 1:1 designs directly in your room via iOS Quick Look & Android ARCore.';
+		} elseif ($has_3d) {
+			$desc = $is_vi
+				? 'Khám phá danh mục nội thất DeSpace có mô hình 3D 360° tương tác trực quan, lọc theo danh mục, kích thước, màu gỗ và hỗ trợ AR.'
+				: 'Explore DeSpace 3D furniture catalogue — inspect 360° interactive models, filter by category, finish, dimensions, and preview in AR.';
+		} else {
+			$desc = $is_vi
+				? 'Cửa hàng nội thất cao cấp DeSpace — Tủ giày, tủ quần áo, kệ sách, tủ bếp và tủ ngăn kéo phong cách Bắc Âu kèm trải nghiệm 3D/AR 1:1.'
+				: 'Shop DeSpace luxury Scandinavian furniture — shoe cabinets, wardrobes, bookshelves, kitchen storage, and sideboards with 3D & AR room preview.';
+		}
+	} elseif (function_exists('is_product_taxonomy') && is_product_taxonomy()) {
+		$term = get_queried_object();
+		$tname = ($term && ! empty($term->name)) ? furniva_term_label($term->name, $term->taxonomy ?? 'product_cat') : '';
+		$desc = $is_vi
+			? sprintf('%s cao cấp tại DeSpace — Thiết kế Bắc Âu tinh tế, chuẩn hoàn thiện vân gỗ và hỗ trợ xem thử 3D/AR trong phòng.', $tname ?: 'Nội thất')
+			: sprintf('Explore DeSpace %s — Scandinavian luxury craftsmanship with interactive 360° 3D viewer and 1:1 AR room placement.', $tname ?: 'furniture');
 	} elseif (is_page()) {
 		$slug = get_post_field('post_name', get_the_ID());
 		$descriptions = array(
-			've-despace'                 => 'Về DeSpace — Không gian nội thất phong cách Scandinavian & Quiet Luxury kết hợp trải nghiệm 3D/AR (Mô phỏng đồ án).',
-			'lien-he'                    => 'Liên hệ DeSpace — Gửi yêu cầu tư vấn sản phẩm nội thất và trải nghiệm không gian 3D/AR (Thông tin showroom mô phỏng phục vụ đồ án).',
-			'cau-hoi-thuong-gap'         => 'Giải đáp các câu hỏi thường gặp về sản phẩm gỗ tự nhiên, công nghệ xem phòng 3D/AR, đặt hàng và chính sách khách hàng tại DeSpace (Kịch bản đồ án).',
-			'chinh-sach-giao-hang'       => 'Chính sách giao hàng toàn quốc & lắp đặt hoàn thiện tận nhà từ DeSpace (Thông tin mô phỏng đồ án môn học).',
-			'chinh-sach-doi-tra-bao-hanh' => 'Chính sách bảo hành và đổi trả sản phẩm nội thất DeSpace (Thông tin mô phỏng đồ án môn học).',
-			'chinh-sach-bao-mat'         => 'Chính sách bảo mật quyền riêng tư của DeSpace — Bảo vệ dữ liệu cá nhân khách hàng, cam kết an toàn giao dịch trực tuyến (Mô phỏng đồ án).',
-			'dieu-khoan-mua-ban'         => 'Điều khoản mua bán và sử dụng dịch vụ tại DeSpace — Minh bạch quyền lợi và trách nhiệm khách hàng (Mô phỏng đồ án).',
+			've-despace'                  => array(
+				'About DeSpace — Scandinavian & Modern Luxury furniture atelier combining timber craftsmanship with true-to-scale 3D/AR room preview.',
+				'Về DeSpace — Không gian nội thất phong cách Scandinavian & Quiet Luxury kết hợp trải nghiệm 3D/AR (Mô phỏng đồ án).',
+			),
+			'lien-he'                     => array(
+				'Contact DeSpace — Request private interior consultation, custom dimensions, and 3D/AR showroom support.',
+				'Liên hệ DeSpace — Gửi yêu cầu tư vấn sản phẩm nội thất và trải nghiệm không gian 3D/AR (Thông tin showroom mô phỏng phục vụ đồ án).',
+			),
+			'cau-hoi-thuong-gap'          => array(
+				'DeSpace FAQs — Answers on timber materials, 3D/AR room preview, delivery, installation, and 5-year warranty.',
+				'Giải đáp các câu hỏi thường gặp về sản phẩm gỗ tự nhiên, công nghệ xem phòng 3D/AR, đặt hàng và chính sách khách hàng tại DeSpace.',
+			),
+			'chinh-sach-giao-hang'        => array(
+				'DeSpace Shipping & White-Glove Installation Policy — Nationwide insured delivery and careful in-room assembly.',
+				'Chính sách giao hàng toàn quốc & lắp đặt hoàn thiện tận nhà từ DeSpace.',
+			),
+			'chinh-sach-doi-tra-bao-hanh' => array(
+				'DeSpace 5-Year Structural Warranty & 30-Day Returns Policy for handcrafted furniture.',
+				'Chính sách bảo hành 5 năm và đổi trả linh hoạt 30 ngày cho sản phẩm nội thất DeSpace.',
+			),
+			'chinh-sach-bao-mat'          => array(
+				'DeSpace Privacy Policy — Protecting customer personal information and secure checkout transactions.',
+				'Chính sách bảo mật quyền riêng tư của DeSpace — Bảo vệ dữ liệu cá nhân khách hàng và giao dịch trực tuyến.',
+			),
+			'dieu-khoan-mua-ban'          => array(
+				'DeSpace Terms of Sale & Service — Transparent purchasing terms and customer protections.',
+				'Điều khoản mua bán và sử dụng dịch vụ tại DeSpace — Minh bạch quyền lợi và trách nhiệm khách hàng.',
+			),
 		);
 		if (isset($descriptions[$slug])) {
-			$desc = $descriptions[$slug];
+			$desc = $is_vi ? $descriptions[$slug][1] : $descriptions[$slug][0];
 		}
 	} elseif (is_singular('product') && function_exists('wc_get_product')) {
 		$product = wc_get_product(get_the_ID());
 		if ($product) {
-			$short = wp_strip_all_tags($product->get_short_description());
-			$desc = $short ? $short : ($product->get_name() . ' — Nội thất cao cấp DeSpace hỗ trợ trải nghiệm 3D/AR đặt phòng thực tế.');
+			$short = trim(preg_replace('/\s+/', ' ', wp_strip_all_tags($product->get_short_description())));
+			if ($short) {
+				$desc = function_exists('mb_substr') ? mb_substr($short, 0, 160, 'UTF-8') : substr($short, 0, 160);
+			} else {
+				$desc = $is_vi
+					? ($product->get_name() . ' — Nội thất cao cấp DeSpace hỗ trợ xem mô hình 3D 360° & đặt phòng AR 1:1.')
+					: ($product->get_name() . ' — Handcrafted DeSpace luxury furniture with 360° 3D inspection & 1:1 AR room preview.');
+			}
 		}
 	}
 
 	if ($desc) {
 		echo '<meta name="description" content="' . esc_attr($desc) . '" />' . "\n";
 	}
+
+	// Emit clean Canonical on Shop & Product Archives (WordPress rel_canonical() only covers singular posts/pages)
+	$raw_origin = rtrim((string) get_option('home'), '/');
+	$raw_origin = preg_replace('#(/en)+$#i', '', $raw_origin);
+	$req_uri    = isset($_SERVER['REQUEST_URI']) ? (string) wp_unslash($_SERVER['REQUEST_URI']) : '/';
+	$parts      = function_exists('despace_strip_junk_query_params')
+		? despace_strip_junk_query_params($raw_origin . '/' . ltrim($req_uri, '/'))
+		: array('path' => wp_parse_url($req_uri, PHP_URL_PATH) ?: '/', 'query' => '');
+	$clean_path = preg_replace('#/+#', '/', '/' . ltrim((string) $parts['path'], '/'));
+	$base_path  = preg_replace('#^(/en)+(/|$)#i', '/', $clean_path);
+	$base_path  = preg_replace('#/+#', '/', '/' . ltrim((string) $base_path, '/'));
+
+	$vi_canonical = $raw_origin . $base_path;
+	$en_canonical = $raw_origin . ('/' === $base_path ? '/en/' : '/en' . $base_path);
+
+	if ((function_exists('is_shop') && is_shop()) || (function_exists('is_product_taxonomy') && is_product_taxonomy()) || is_front_page()) {
+		$curr_canonical = $is_vi ? $vi_canonical : $en_canonical;
+		if (! is_singular()) {
+			echo '<link rel="canonical" href="' . esc_url($curr_canonical) . '" />' . "\n";
+		}
+	}
+
+	// Ensure x-default hreflang (and vi/en when TranslatePress is inactive)
+	if (! class_exists('TRP_Translate_Press')) {
+		echo '<link rel="alternate" hreflang="vi" href="' . esc_url($vi_canonical) . '" />' . "\n";
+		echo '<link rel="alternate" hreflang="en" href="' . esc_url($en_canonical) . '" />' . "\n";
+	}
+	echo '<link rel="alternate" hreflang="x-default" href="' . esc_url($vi_canonical) . '" />' . "\n";
 }, 1);
 
 // ---------------------------------------------------------------- canonical alias redirects
@@ -247,7 +340,96 @@ function despace_get_3d_product_ids(): array {
 }
 
 /**
- * Apply URL query filters (?has_3d=yes, ?on_sale=1, ?availability=instock|onsale, ?price_min, ?price_max)
+ * Return all published product IDs that explicitly support AR room placement
+ * (verified 3D model + ar_enabled=1 or valid iOS .usdz asset).
+ *
+ * @return int[]
+ */
+function despace_get_ar_product_ids(): array {
+	static $cached = null;
+	if ( is_array( $cached ) ) {
+		return $cached;
+	}
+	global $wpdb;
+	$ids = array();
+
+	$table_despace = $wpdb->prefix . 'despace_product_3d_models';
+	if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table_despace ) ) ) === $table_despace ) {
+		$tbl_ids = $wpdb->get_col(
+			"SELECT DISTINCT m.product_id
+			 FROM {$table_despace} m
+			 INNER JOIN {$wpdb->posts} p ON p.ID = m.product_id
+			 WHERE p.post_type = 'product' AND p.post_status = 'publish'
+			   AND m.glb_url IS NOT NULL AND m.glb_url != ''
+			   AND (m.ar_enabled = 1 OR (m.usdz_url IS NOT NULL AND m.usdz_url != ''))
+			   AND (m.model_status = 'published' OR m.model_status = '' OR m.model_status IS NULL)"
+		);
+		$ids = array_merge( $ids, array_map( 'absint', (array) $tbl_ids ) );
+	}
+
+	$meta_ids = $wpdb->get_col(
+		"SELECT DISTINCT p.ID
+		 FROM {$wpdb->posts} p
+		 INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+		 WHERE p.post_type = 'product' AND p.post_status = 'publish'
+		   AND (
+		     (pm.meta_key IN ('_despace_usdz_url', '_despace_model_usdz', '_axgnud_model_usdz') AND pm.meta_value != '')
+		     OR (pm.meta_key IN ('_despace_ar_enabled', '_axgnud_ar_enabled') AND pm.meta_value IN ('yes', '1', 'true'))
+		   )"
+	);
+	// Intersect with verified 3D IDs so AR never claims a product lacking a 3D asset.
+	$ids_3d = despace_get_3d_product_ids();
+	$merged = array_values( array_unique( array_filter( array_merge( $ids, array_map( 'absint', (array) $meta_ids ) ) ) ) );
+	$cached = ! empty( $ids_3d ) ? array_values( array_intersect( $merged, $ids_3d ) ) : $merged;
+	return $cached;
+}
+
+/**
+ * Return curated Winter Atelier 2026 collection product IDs
+ * (real published DeSpace products marked Featured/Best Seller, on sale, or key living/storage edits).
+ *
+ * @return int[]
+ */
+function despace_get_winter_atelier_product_ids(): array {
+	static $cached = null;
+	if ( is_array( $cached ) ) {
+		return $cached;
+	}
+	global $wpdb;
+	$ids = array();
+
+	$badge_ids = $wpdb->get_col(
+		"SELECT DISTINCT p.ID
+		 FROM {$wpdb->posts} p
+		 INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+		 WHERE p.post_type = 'product' AND p.post_status = 'publish'
+		   AND pm.meta_key IN ('_despace_badge', '_axgnud_badge')
+		   AND pm.meta_value IN ('Best Seller', 'Featured', 'New', 'Popular')"
+	);
+	$ids = array_merge( $ids, array_map( 'absint', (array) $badge_ids ) );
+
+	if ( function_exists( 'wc_get_product_ids_on_sale' ) ) {
+		$ids = array_merge( $ids, array_map( 'absint', (array) wc_get_product_ids_on_sale() ) );
+	}
+
+	// Ensure a rich curated edit (>= 8 real published products) using highest-rated / top-selling pieces.
+	if ( count( array_unique( array_filter( $ids ) ) ) < 12 ) {
+		$top_ids = $wpdb->get_col(
+			"SELECT p.ID FROM {$wpdb->posts} p
+			 LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = 'total_sales'
+			 WHERE p.post_type = 'product' AND p.post_status = 'publish'
+			 ORDER BY CAST(COALESCE(pm.meta_value, '0') AS UNSIGNED) DESC, p.ID DESC
+			 LIMIT 12"
+		);
+		$ids = array_merge( $ids, array_map( 'absint', (array) $top_ids ) );
+	}
+
+	$cached = array_values( array_unique( array_filter( $ids ) ) );
+	return $cached;
+}
+
+/**
+ * Apply URL query filters (?has_3d=yes, ?has_ar=yes, ?collection=winter-atelier, ?on_sale=1, ?availability=instock|onsale, ?price_min, ?price_max)
  * directly on initial SSR shop/archive queries so deep-linked URLs match AJAX filter state.
  */
 add_action( 'pre_get_posts', function ( $query ) {
@@ -261,11 +443,31 @@ add_action( 'pre_get_posts', function ( $query ) {
 	$meta_query = (array) $query->get( 'meta_query' );
 	$post_in    = (array) $query->get( 'post__in' );
 
-	// Filter: 3D/AR Ready
+	// Filter: 3D Model Available
 	if ( ! empty( $_GET['has_3d'] ) && 'no' !== sanitize_text_field( wp_unslash( $_GET['has_3d'] ) ) ) {
 		$ids_3d  = despace_get_3d_product_ids();
 		$ids_3d  = ! empty( $ids_3d ) ? $ids_3d : array( 0 );
 		$post_in = ! empty( $post_in ) ? array_values( array_intersect( $post_in, $ids_3d ) ) : $ids_3d;
+		if ( empty( $post_in ) ) {
+			$post_in = array( 0 );
+		}
+	}
+
+	// Filter: AR Room Placement Ready
+	if ( ! empty( $_GET['has_ar'] ) && 'no' !== sanitize_text_field( wp_unslash( $_GET['has_ar'] ) ) ) {
+		$ids_ar  = despace_get_ar_product_ids();
+		$ids_ar  = ! empty( $ids_ar ) ? $ids_ar : array( 0 );
+		$post_in = ! empty( $post_in ) ? array_values( array_intersect( $post_in, $ids_ar ) ) : $ids_ar;
+		if ( empty( $post_in ) ) {
+			$post_in = array( 0 );
+		}
+	}
+
+	// Filter: Winter Atelier 2026 Collection
+	if ( ! empty( $_GET['collection'] ) && 'winter-atelier' === sanitize_title( wp_unslash( $_GET['collection'] ) ) ) {
+		$winter_ids = despace_get_winter_atelier_product_ids();
+		$winter_ids = ! empty( $winter_ids ) ? $winter_ids : array( 0 );
+		$post_in    = ! empty( $post_in ) ? array_values( array_intersect( $post_in, $winter_ids ) ) : $winter_ids;
 		if ( empty( $post_in ) ) {
 			$post_in = array( 0 );
 		}
@@ -646,7 +848,9 @@ function furniva_assets() {
 				'size' => furniva_t('Size', 'Kích thước'),
 				'material' => furniva_t('Material', 'Chất liệu'),
 				'availability' => furniva_t('Availability', 'Tình trạng'),
-				'has_3d' => furniva_t('Feature', 'Tính năng'),
+				'has_3d' => furniva_t('3D View', 'Mô hình 3D'),
+				'has_ar' => furniva_t('AR Room', 'Đặt phòng AR'),
+				'collection' => furniva_t('Collection', 'Bộ sưu tập'),
 				'price' => furniva_t('Price', 'Giá'),
 				'search' => furniva_t('Search', 'Tìm kiếm'),
 			),
@@ -931,9 +1135,11 @@ function furniva_ajax_filter()
 		$meta_query[] = array('key' => '_stock_status', 'value' => 'instock');
 	}
 
-	// 3D / AR feature filter (uses authoritative wp_despace_product_3d_models + postmeta)
-	$has_3d_only = ! empty($_POST['has_3d']);
-	$orderby = sanitize_text_field($_POST['orderby'] ?? 'menu_order');
+	// 3D Model, AR Room Preview & Winter Atelier Collection filters (distinct authoritative sets)
+	$has_3d_only   = ! empty($_POST['has_3d']) && 'no' !== sanitize_text_field(wp_unslash($_POST['has_3d']));
+	$has_ar_only   = ! empty($_POST['has_ar']) && 'no' !== sanitize_text_field(wp_unslash($_POST['has_ar']));
+	$collection    = isset($_POST['collection']) ? sanitize_title(wp_unslash($_POST['collection'])) : '';
+	$orderby       = sanitize_text_field($_POST['orderby'] ?? 'menu_order');
 
 	$query_args = array(
 		'post_type'      => 'product',
@@ -943,9 +1149,24 @@ function furniva_ajax_filter()
 		'tax_query'      => $tax_query,
 	);
 
+	$intersect_post_in = static function (array &$args, array $ids): void {
+		$ids = ! empty($ids) ? $ids : array(0);
+		if (isset($args['post__in'])) {
+			$merged = array_values(array_intersect($args['post__in'], $ids));
+			$args['post__in'] = ! empty($merged) ? $merged : array(0);
+		} else {
+			$args['post__in'] = $ids;
+		}
+	};
+
 	if ($has_3d_only) {
-		$ids_3d = despace_get_3d_product_ids();
-		$query_args['post__in'] = ! empty($ids_3d) ? $ids_3d : array(0);
+		$intersect_post_in($query_args, despace_get_3d_product_ids());
+	}
+	if ($has_ar_only) {
+		$intersect_post_in($query_args, despace_get_ar_product_ids());
+	}
+	if ('winter-atelier' === $collection) {
+		$intersect_post_in($query_args, despace_get_winter_atelier_product_ids());
 	}
 
 	// Search keyword filter (by product name or SKU)

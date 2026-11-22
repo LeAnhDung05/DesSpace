@@ -9817,7 +9817,7 @@ nav.woocommerce-pagination a.prev.page-numbers {
 
 /* 3. Tăng độ tương phản cho chữ trên Hero Banner trang chủ */
 .hero-main-card::after,
-.fv-featured-hero__stage a::after {
+.fv-featured-hero__stage > a::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -9832,7 +9832,7 @@ nav.woocommerce-pagination a.prev.page-numbers {
 }
 
 .hero-main-card > *,
-.fv-featured-hero__stage a > * {
+.fv-featured-hero__stage > a > * {
   position: relative;
   z-index: 2;
 }
@@ -11833,6 +11833,91 @@ body.despace-site .f-mobile-nav.open {
 	background: var(--despace-ink);
 	border-color: var(--despace-ink);
 	color: var(--despace-cream);
+}
+
+.f-card-ar-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 5px 8px;
+	border-radius: 999px;
+	border: 1px solid rgba(24, 59, 54, 0.25);
+	background: rgba(24, 59, 54, 0.9);
+	color: #F4F0E8;
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	cursor: pointer;
+	transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.f-card-ar-btn:hover {
+	background: #BD9A62;
+	border-color: #BD9A62;
+	color: #142B27;
+	transform: translateY(-1px);
+}
+
+/* Honest AR Device/Browser Capability Banner inside 3D/AR Studio Modal */
+.ax-ar-compat-banner {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	padding: 12px 16px;
+	margin-bottom: 14px;
+	border-radius: 12px;
+	font-size: 13px;
+	line-height: 1.5;
+	border: 1px solid #D9E2E6;
+	background: #F4F0E8;
+	color: #183B36;
+}
+
+.ax-ar-compat-banner.is-supported {
+	background: #EAF4EF;
+	border-color: rgba(24, 59, 54, 0.28);
+	color: #183B36;
+}
+
+.ax-ar-compat-banner.is-limited {
+	background: #FDF4EC;
+	border-color: rgba(189, 154, 98, 0.55);
+	color: #6B4423;
+}
+
+.ax-ar-compat-banner.is-desktop {
+	background: #EEF3F6;
+	border-color: #C9D8DF;
+	color: #1E3540;
+}
+
+.ax-ar-compat-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	background: rgba(24, 59, 54, 0.12);
+	font-weight: 700;
+	flex-shrink: 0;
+	margin-top: 1px;
+}
+
+.ax-ar-compat-copy {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.ax-ar-compat-copy strong {
+	font-size: 13px;
+	font-weight: 700;
+}
+
+.ax-ar-compat-copy span {
+	font-size: 12.5px;
+	opacity: 0.9;
 }
 
 .f-card-qv-btn {

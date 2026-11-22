@@ -385,6 +385,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 					     DEVICE HANDOFF CARDS (iOS, Android, Desktop QR)
 					     ==================================================== -->
 					<div id="axArHandoffContainer">
+						<!-- Honest Device & Browser AR Compatibility Banner (Dynamically detected) -->
+						<div class="ax-ar-compat-banner" id="axArCompatBanner" role="status" aria-live="polite" style="display:none;">
+							<span class="ax-ar-compat-icon" id="axArCompatIcon" aria-hidden="true">ℹ</span>
+							<div class="ax-ar-compat-copy">
+								<strong id="axArCompatTitle"></strong>
+								<span id="axArCompatDesc"></span>
+							</div>
+						</div>
+
 						<!-- Device: iOS / iPadOS (Apple Quick Look + Live 3D Camera) -->
 						<div class="ax-ar-device-card" id="axArCardIOS" style="display:none;">
 							<div class="ax-ar-card-header">

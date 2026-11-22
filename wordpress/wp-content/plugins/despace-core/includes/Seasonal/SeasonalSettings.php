@@ -23,6 +23,14 @@ class SeasonalSettings {
 	public const OPTION_KEY = 'despace_seasonal_settings';
 
 	/**
+	 * Centralized Christmas 2026 — Winter Atelier campaign defaults.
+	 */
+	public const DEFAULT_CAMPAIGN_ID = 'christmas-2026';
+	public const DEFAULT_TIMEZONE    = 'Asia/Ho_Chi_Minh';
+	public const DEFAULT_START_DATE  = '2026-11-22';
+	public const DEFAULT_END_DATE    = '2026-12-26';
+
+	/**
 	 * Allowed activation statuses.
 	 */
 	public const VALID_STATUSES = array( 'off', 'preview', 'active' );
@@ -49,6 +57,8 @@ class SeasonalSettings {
 	 */
 	public static function defaults(): array {
 		return array(
+			'campaign_id'       => self::DEFAULT_CAMPAIGN_ID,
+			'timezone'          => self::DEFAULT_TIMEZONE,
 			'status'            => 'off',
 			'preset'            => 'nordic',
 			'snow_enabled'      => true,
@@ -58,11 +68,11 @@ class SeasonalSettings {
 			'countdown_enabled' => true,
 			'gift_box_enabled'  => true,
 			'audio_enabled'     => true,
-			'marquee_vi'        => 'Mùa Giáng Sinh An Lành — Ưu đãi lễ hội lên đến 20% & Quà tặng bài trí phòng từ DeSpace',
-			'marquee_en'        => 'Season of Warmth — Holiday savings up to 20% & complimentary festive room styling',
+			'marquee_vi'        => 'DESPACE WINTER ATELIER 2026 — Bộ sưu tập nội thất mùa lễ hội & Trải nghiệm 3D/AR 1:1',
+			'marquee_en'        => 'DESPACE WINTER ATELIER 2026 — Holiday Furniture Edit & True-to-Scale 3D/AR Room Preview',
 			'promo_code'        => 'NOEL2026',
-			'promo_banner_vi'   => 'Đặc quyền mùa lễ hội: Mở phong bao nhận mã NOEL2026 cho không gian sống ấm áp.',
-			'promo_banner_en'   => 'Festive Privilege: Unwrap code NOEL2026 for exclusive holiday savings on handcrafted furniture.',
+			'promo_banner_vi'   => 'Đặc quyền Winter Atelier 2026: Mở phong bao nhận mã NOEL2026 cho không gian sống an yên mùa lễ hội.',
+			'promo_banner_en'   => 'Winter Atelier 2026 Privilege: Unwrap code NOEL2026 for calm holiday living and crafted interiors.',
 			'schedule_enabled'  => false,
 			'start_date'        => '',
 			'end_date'          => '',
@@ -146,6 +156,23 @@ class SeasonalSettings {
 		$promo_raw  = strtoupper( trim( (string) ( $raw['promo_code'] ?? '' ) ) );
 		$promo_code = substr( (string) preg_replace( '/[^A-Z0-9_-]/', '', $promo_raw ), 0, 32 );
 
+		$campaign_raw = strtolower( trim( (string) ( $raw['campaign_id'] ?? $defaults['campaign_id'] ) ) );
+		$campaign_id  = substr( (string) preg_replace( '/[^a-z0-9_-]/', '', $campaign_raw ), 0, 48 );
+		if ( '' === $campaign_id ) {
+			$campaign_id = self::DEFAULT_CAMPAIGN_ID;
+		}
+
+		$tz_raw   = trim( (string) ( $raw['timezone'] ?? $defaults['timezone'] ) );
+		$timezone = self::DEFAULT_TIMEZONE;
+		if ( '' !== $tz_raw ) {
+			try {
+				new \DateTimeZone( $tz_raw );
+				$timezone = $tz_raw;
+			} catch ( \Exception $e ) {
+				$timezone = self::DEFAULT_TIMEZONE;
+			}
+		}
+
 		$to_bool = static function ( $val ): bool {
 			if ( is_bool( $val ) ) {
 				return $val;
@@ -154,6 +181,8 @@ class SeasonalSettings {
 		};
 
 		return array(
+			'campaign_id'       => $campaign_id,
+			'timezone'          => $timezone,
 			'status'            => $status,
 			'preset'            => $preset,
 			'snow_enabled'      => $to_bool( $raw['snow_enabled'] ?? false ),
@@ -189,22 +218,30 @@ class SeasonalSettings {
 	}
 
 	/**
-	 * Resolve current local date (YYYY-MM-DD) in WordPress configured timezone.
+	 * Resolve current local date (YYYY-MM-DD) in configured campaign timezone
+	 * (defaults to Asia/Ho_Chi_Minh).
 	 *
+	 * @param string|null $timezone Optional IANA timezone string.
 	 * @return string
 	 */
-	public static function today_wp_date(): string {
-		if ( function_exists( 'wp_date' ) ) {
-			return (string) wp_date( 'Y-m-d' );
+	public static function today_wp_date( ?string $timezone = null ): string {
+		$tz_name = ( null !== $timezone && '' !== $timezone ) ? $timezone : self::DEFAULT_TIMEZONE;
+		try {
+			$dt = new \DateTimeImmutable( 'now', new \DateTimeZone( $tz_name ) );
+			return $dt->format( 'Y-m-d' );
+		} catch ( \Exception $e ) {
+			if ( function_exists( 'wp_date' ) ) {
+				return (string) wp_date( 'Y-m-d' );
+			}
+			if ( function_exists( 'current_time' ) ) {
+				return (string) current_time( 'Y-m-d' );
+			}
+			return gmdate( 'Y-m-d' );
 		}
-		if ( function_exists( 'current_time' ) ) {
-			return (string) current_time( 'Y-m-d' );
-		}
-		return gmdate( 'Y-m-d' );
 	}
 
 	/**
-	 * Evaluate auto-schedule window for given settings.
+	 * Evaluate auto-schedule window for given settings (inclusive of start_date & end_date).
 	 *
 	 * @param array<string, mixed> $settings  Sanitized settings.
 	 * @param string|null          $today_ymd Optional override for deterministic testing.
@@ -215,7 +252,8 @@ class SeasonalSettings {
 			return 'open';
 		}
 
-		$today = ( null !== $today_ymd && '' !== $today_ymd ) ? $today_ymd : self::today_wp_date();
+		$tz    = (string) ( $settings['timezone'] ?? self::DEFAULT_TIMEZONE );
+		$today = ( null !== $today_ymd && '' !== $today_ymd ) ? $today_ymd : self::today_wp_date( $tz );
 		$start = (string) ( $settings['start_date'] ?? '' );
 		$end   = (string) ( $settings['end_date'] ?? '' );
 
@@ -292,18 +330,18 @@ class SeasonalSettings {
 	public static function preset_catalog(): array {
 		return array(
 			'nordic'   => array(
-				'name'     => 'Nordic Hygge',
-				'badge'    => 'Mặc định · Bắc Âu Ấm Áp',
-				'desc'     => 'Kem ấm Bắc Âu phối xanh thông trầm & vàng Champagne — tôn tối đa vẻ đẹp vân gỗ tự nhiên.',
-				'swatches' => array( '#FAF7F2', '#1B3B2B', '#C9A96E' ),
+				'name'     => 'Winter Atelier 2026 (Nordic Hygge)',
+				'badge'    => 'Christmas 2026 · Chủ đạo',
+				'desc'     => 'Ivory (#F4F0E8), Ice (#D9E2E6), Pine (#183B36), Berry (#A9443F) & Brass (#BD9A62) — thanh lịch Bắc Âu, tôn vân gỗ nguyên bản.',
+				'swatches' => array( '#F4F0E8', '#183B36', '#BD9A62', '#A9443F', '#D9E2E6' ),
 				'preview'  => array(
-					'marqueeBg' => '#1B3B2B',
-					'marqueeFg' => '#FAF7F2',
-					'headerBg'  => '#FAF7F2',
-					'headerFg'  => '#1C1917',
-					'heroBg'    => 'linear-gradient(135deg, #1B3B2B 0%, #12291E 100%)',
-					'accent'    => '#C9A96E',
-					'pageBg'    => '#FAF7F2',
+					'marqueeBg' => '#183B36',
+					'marqueeFg' => '#F4F0E8',
+					'headerBg'  => '#F4F0E8',
+					'headerFg'  => '#183B36',
+					'heroBg'    => 'linear-gradient(135deg, #183B36 0%, #102824 100%)',
+					'accent'    => '#BD9A62',
+					'pageBg'    => '#F4F0E8',
 				),
 			),
 			'midnight' => array(

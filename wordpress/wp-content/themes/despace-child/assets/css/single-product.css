@@ -1678,3 +1678,106 @@
     color: #7A4E31;
 }
 
+/* Desktop Sticky Purchase Panel (keeps buying actions pinned while inspecting gallery) */
+@media (min-width: 1025px) {
+    .ax-gallery-wrap {
+        position: sticky;
+        top: 108px;
+        align-self: start;
+    }
+
+    .ax-info-wrap {
+        position: sticky;
+        top: 108px;
+        align-self: start;
+    }
+}
+
+/* Restrained Winter Atelier Holiday Room Styling Context (zero alteration of product images) */
+.ds-pdp-holiday-styling {
+    margin-top: 28px;
+    padding: 20px 24px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #F4F0E8 0%, #EDF2F4 100%);
+    border: 1px solid rgba(24, 59, 54, 0.14);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.ds-pdp-holiday-styling__lead {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1 1 320px;
+}
+
+.ds-pdp-holiday-styling__astro {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #BD9A62;
+    box-shadow: 0 6px 16px rgba(24, 59, 54, 0.12);
+    flex-shrink: 0;
+}
+
+.ds-pdp-holiday-styling__kicker {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #183B36;
+    margin-bottom: 4px;
+}
+
+.ds-pdp-holiday-styling__lead h3 {
+    margin: 0 0 4px;
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 1.15rem;
+    font-weight: 500;
+    color: #183B36;
+}
+
+.ds-pdp-holiday-styling__lead p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #4F5B58;
+}
+
+.ds-pdp-holiday-styling__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 44px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid #183B36;
+    background: #183B36;
+    color: #F4F0E8;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.ds-pdp-holiday-styling__cta:hover {
+    background: #102824;
+    border-color: #BD9A62;
+}
+
+/* Mobile Sticky Add-to-Cart Touch Target Guarantee */
+@media (max-width: 767.98px) {
+    .f-sticky-bar .f-sticky-add-btn {
+        min-height: 44px;
+        padding: 10px 16px;
+    }
+    .ds-pdp-holiday-styling {
+        padding: 16px;
+    }
+}
+

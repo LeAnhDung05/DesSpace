@@ -453,7 +453,8 @@
   background: var(--fv-ivory-deep);
 }
 
-.fv-featured-hero__stage a,
+.fv-featured-hero__stage > a,
+.fv-featured-hero__stage > .fv-hero-stage-inner,
 .fv-featured-hero__stage img,
 .fv-featured-hero__aside a,
 .fv-featured-hero__aside img {
@@ -2956,28 +2957,48 @@
 
 .fv-home .fv-featured-hero__grid > * { min-width: 0; }
 
-.fv-home .fv-featured-hero__stage {
-  height: clamp(420px, 41vw, 570px);
-  border-radius: 3px;
+.fv-home .fv-featured-hero {
+  padding-top: 14px;
 }
 
-.fv-home .fv-featured-hero__stage > a {
+.fv-home .fv-featured-hero__stage {
+  height: clamp(440px, 44vw, 580px);
+  border-radius: 10px;
+  overflow: hidden;
   position: relative;
+}
+
+.fv-home .fv-featured-hero__stage > a,
+.fv-home .fv-featured-hero__stage > .fv-hero-stage-inner {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
   isolation: isolate;
 }
 
-.fv-home .fv-featured-hero__stage > a::after {
+.fv-home .fv-featured-hero__stage > a::after,
+.fv-home .fv-featured-hero__stage > .fv-hero-stage-inner::after {
   position: absolute;
-  z-index: 0;
+  z-index: 1;
   inset: 0;
+  pointer-events: none;
   background:
-    linear-gradient(to top right, rgba(20, 15, 10, 0.68) 0%, rgba(20, 15, 10, 0.35) 45%, rgba(20, 15, 10, 0.1) 70%, transparent 100%),
-    linear-gradient(to right, rgba(20, 15, 10, 0.6) 0%, rgba(20, 15, 10, 0.25) 45%, transparent 80%),
-    linear-gradient(0deg, rgba(20, 15, 10, 0.45) 0%, transparent 35%);
+    linear-gradient(to right, rgba(16, 35, 31, 0.78) 0%, rgba(16, 35, 31, 0.44) 44%, rgba(16, 35, 31, 0.08) 76%, transparent 100%),
+    linear-gradient(0deg, rgba(16, 35, 31, 0.52) 0%, transparent 42%);
   content: "";
 }
 
+.fv-home .fv-featured-hero__stage picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .fv-home .fv-featured-hero__stage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   object-position: center;
   transition: transform 650ms ease;
 }
@@ -2989,54 +3010,90 @@
 
 .fv-home-hero-copy {
   position: absolute;
-  z-index: 1;
+  z-index: 3;
   right: 30px;
-  bottom: 22px;
-  left: clamp(26px, 4.5vw, 72px);
+  bottom: 32px;
+  left: clamp(26px, 4.2vw, 64px);
   display: grid;
   justify-items: start;
-  gap: 8px;
-  max-width: 590px;
-  color: white;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+  gap: 10px;
+  max-width: 560px;
+  color: #F4F0E8;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
 }
 
 .fv-home-hero-copy .fv-eyebrow {
-  color: #f3d4b3;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  color: #E3C992;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
 .fv-home-hero-copy > .fv-home-hero-title {
-	margin: 0;
-	color: inherit;
+  margin: 0;
+  color: #FFFFFF;
   font-family: "Newsreader", "DM Serif Display", Georgia, serif;
-  font-size: clamp(44px, 5.3vw, 75px);
+  font-size: clamp(34px, 4.1vw, 56px);
   font-weight: 400;
-  letter-spacing: -0.04em;
-  line-height: 0.98;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+  letter-spacing: -0.025em;
+  line-height: 1.08;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
 }
 
-.fv-home-hero-copy > span:not(.fv-eyebrow):not(.fv-home-hero-cta) {
-  max-width: 410px;
-  color: rgb(255 255 255 / 92%);
-  font-size: 14px;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+.fv-home-hero-sub {
+  margin: 0;
+  max-width: 460px;
+  color: rgba(244, 240, 232, 0.92);
+  font-size: 14.5px;
+  line-height: 1.6;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.42);
+}
+
+.fv-home-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
 }
 
 .fv-home-hero-cta {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  margin-top: 7px;
-  padding: 12px 18px;
-  border: 1px solid rgb(255 255 255 / 60%);
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 11px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: 999px;
-  background: rgb(35 31 27 / 15%);
-  color: white;
-  font-size: 12px;
+  background: rgba(24, 59, 54, 0.28);
+  color: #FFFFFF;
+  font-size: 13px;
   font-weight: 600;
-  backdrop-filter: blur(8px);
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.fv-home-hero-cta--primary {
+  background: #F4F0E8;
+  border-color: #F4F0E8;
+  color: #183B36;
+  text-shadow: none;
+}
+
+.fv-home-hero-cta--primary:hover {
+  background: #BD9A62;
+  border-color: #BD9A62;
+  color: #142B27;
+  transform: translateY(-1px);
+}
+
+.fv-home-hero-cta--secondary:hover {
+  background: rgba(24, 59, 54, 0.86);
+  border-color: #BD9A62;
+  color: #F4F0E8;
+  transform: translateY(-1px);
 }
 
 .fv-home .fv-featured-hero__aside { gap: 14px; }
@@ -3253,12 +3310,15 @@
   .fv-home .fv-start-chips { margin-top: 10px; gap: 6px; }
   .fv-home .fv-start-chip { min-height: 38px; padding-right: 10px; font-size: 11px; }
   .fv-home .fv-start-chip__image { width: 28px; height: 28px; }
-  .fv-home .fv-featured-hero { padding-top: 6px; }
-  .fv-home .fv-featured-hero__stage { height: min(96vw, 380px); min-height: 290px; border-radius: 12px; overflow: hidden; }
-  .fv-home .fv-featured-hero__stage > a::after { background: linear-gradient(90deg, rgb(27 23 19 / 52%), transparent 100%), linear-gradient(0deg, rgb(27 23 19 / 68%), transparent 72%); }
-  .fv-home-hero-copy { right: 16px; bottom: 18px; left: 16px; gap: 6px; }
+  .fv-home .fv-featured-hero { padding-top: 8px; }
+  .fv-home .fv-featured-hero__stage { height: min(104vw, 410px); min-height: 320px; border-radius: 12px; overflow: hidden; }
+  .fv-home .fv-featured-hero__stage > a::after,
+  .fv-home .fv-featured-hero__stage > .fv-hero-stage-inner::after { background: linear-gradient(90deg, rgba(16, 35, 31, 0.72), rgba(16, 35, 31, 0.25) 100%), linear-gradient(0deg, rgba(16, 35, 31, 0.78), transparent 72%); }
+  .fv-home-hero-copy { right: 16px; bottom: 18px; left: 16px; gap: 7px; }
   .fv-home-hero-copy > .fv-home-hero-title { font-size: clamp(1.45rem, 6.2vw, 1.95rem); line-height: 1.18; }
-  .fv-home-hero-copy > span:not(.fv-eyebrow):not(.fv-home-hero-cta) { font-size: 12px; line-height: 1.45; }
+  .fv-home-hero-sub { font-size: 12.5px; line-height: 1.48; }
+  .fv-home-hero-actions { gap: 8px; margin-top: 4px; }
+  .fv-home-hero-cta { min-height: 44px; padding: 9px 15px; font-size: 12px; }
   .fv-home .fv-featured-hero__aside { gap: 8px; }
   .fv-home .fv-featured-hero__aside a { height: 132px; border-radius: 10px; overflow: hidden; }
   .fv-home-feature-caption { padding: 18px 10px 10px; font-size: 13.5px; line-height: 1.28; }

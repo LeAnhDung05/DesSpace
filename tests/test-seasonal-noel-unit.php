@@ -278,6 +278,74 @@ foreach ( array( 'nordic', 'midnight', 'burgundy', 'frost' ) as $k ) {
 }
 $assert( 'TC-SN-16', 'All 4 presets include complete live-preview simulator palettes', $cat_ok );
 
+// TC-SN-17: Centralized christmas-2026 campaign ID & Asia/Ho_Chi_Minh timezone defaults + sanitization
+$def2 = SeasonalSettings::defaults();
+$bad_tz = SeasonalSettings::sanitize( array( 'campaign_id' => 'Christmas 2026!!', 'timezone' => 'Mars/Olympus_Mons' ) );
+$assert(
+	'TC-SN-17',
+	'Campaign defaults to christmas-2026 & Asia/Ho_Chi_Minh with strict TZ validation',
+	'christmas-2026' === $def2['campaign_id']
+	&& 'Asia/Ho_Chi_Minh' === $def2['timezone']
+	&& 'christmas2026' === $bad_tz['campaign_id']
+	&& 'Asia/Ho_Chi_Minh' === $bad_tz['timezone']
+);
+
+// TC-SN-18: Exact Christmas 2026 window (2026-11-22 -> 2026-12-26 inclusive, auto-off on 2026-12-27)
+SeasonalSettings::save( array(
+	'campaign_id'      => 'christmas-2026',
+	'timezone'         => 'Asia/Ho_Chi_Minh',
+	'status'           => 'active',
+	'preset'           => 'nordic',
+	'schedule_enabled' => true,
+	'start_date'       => '2026-11-22',
+	'end_date'         => '2026-12-26',
+) );
+$d_before = SeasonalSettings::get_effective_state( false, '2026-11-21', false );
+$d_start  = SeasonalSettings::get_effective_state( false, '2026-11-22', false );
+$d_end    = SeasonalSettings::get_effective_state( false, '2026-12-26', false );
+$d_after  = SeasonalSettings::get_effective_state( false, '2026-12-27', false );
+$assert(
+	'TC-SN-18',
+	'christmas-2026 window active [2026-11-22..2026-12-26] & auto-reverts 2026-12-27',
+	false === $d_before['active']
+	&& true === $d_start['active']
+	&& true === $d_end['active']
+	&& false === $d_after['active']
+	&& 'scheduled_expired' === $d_after['mode']
+);
+
+// TC-SN-19: Winter Atelier 2026 Nordic palette carries exact brand hexes
+$nordic_swatches = $cat['nordic']['swatches'] ?? array();
+$assert(
+	'TC-SN-19',
+	'Winter Atelier Nordic preset carries exact Ivory/Pine/Brass/Berry/Ice tokens',
+	in_array( '#F4F0E8', $nordic_swatches, true )
+	&& in_array( '#183B36', $nordic_swatches, true )
+	&& in_array( '#BD9A62', $nordic_swatches, true )
+	&& in_array( '#A9443F', $nordic_swatches, true )
+	&& in_array( '#D9E2E6', $nordic_swatches, true )
+);
+
+// TC-SN-20: Localized payload exposes campaignId, timezone, heroScopedSnow & astroImageUrl
+$mock_styles = $mock_scripts = $mock_localized = array();
+SeasonalSettings::save( array(
+	'campaign_id'      => 'christmas-2026',
+	'timezone'         => 'Asia/Ho_Chi_Minh',
+	'status'           => 'active',
+	'preset'           => 'nordic',
+	'schedule_enabled' => false,
+) );
+SeasonalModule::enqueue_frontend_assets();
+$loc2 = $mock_localized['despace-noel']['DESPACE_NOEL'] ?? array();
+$assert(
+	'TC-SN-20',
+	'Localized DESPACE_NOEL carries campaignId, timezone, heroScopedSnow & astroImageUrl',
+	'christmas-2026' === ( $loc2['campaignId'] ?? '' )
+	&& 'Asia/Ho_Chi_Minh' === ( $loc2['timezone'] ?? '' )
+	&& true === ( $loc2['heroScopedSnow'] ?? false )
+	&& false !== strpos( (string) ( $loc2['astroImageUrl'] ?? '' ), 'astro-winter-atelier.webp' )
+);
+
 echo "\n========================================================================\n";
 printf( "SUMMARY: %d Total | %d Passed | %d Failed\n", $passed + $failed, $passed, $failed );
 echo "========================================================================\n";

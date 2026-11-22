@@ -297,18 +297,27 @@ $facebook_url = ! empty( $contact_info['facebook_url'] ) ? trim( $contact_info['
 			</svg>
 		<?php echo ! empty( $facebook_url ) ? '</a>' : '</button>'; ?>
 	</div>
+	<?php
+	$footer_seasonal  = function_exists( 'despace_get_active_seasonal_config' ) ? despace_get_active_seasonal_config() : null;
+	$chat_avatar_webp = $footer_seasonal ? ( get_stylesheet_directory_uri() . '/assets/images/astro-winter-atelier.webp' ) : '';
+	$chat_avatar_src  = $footer_seasonal ? ( get_stylesheet_directory_uri() . '/assets/images/astro-winter-atelier.jpg' ) : ( get_stylesheet_directory_uri() . '/assets/images/despace-mark.png' );
+	$chat_avatar_alt  = $footer_seasonal ? furniva_t( 'Astro — DeSpace Winter Atelier Concierge', 'Astro — Trợ lý Mùa lễ hội DeSpace' ) : 'DeSpace AI Assistant';
+	?>
 	<section class="ax-chat-panel" id="ax-chat-panel" aria-labelledby="ax-chat-title" aria-hidden="true" hidden>
 		<header class="ax-chat-panel__head">
-			<img class="ax-chat-panel__avatar" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/despace-mark.png' ); ?>" alt="DeSpace AI Assistant" width="40" height="40" />
+			<picture>
+				<?php if ( $chat_avatar_webp ) : ?><source srcset="<?php echo esc_url( $chat_avatar_webp ); ?>" type="image/webp" /><?php endif; ?>
+				<img class="ax-chat-panel__avatar" src="<?php echo esc_url( $chat_avatar_src ); ?>" alt="<?php echo esc_attr( $chat_avatar_alt ); ?>" width="40" height="40" />
+			</picture>
 			<div>
-				<h2 id="ax-chat-title"><?php echo esc_html( furniva_t( 'DeSpace AI Concierge', 'Trợ lý Nội thất AI DeSpace' ) ); ?></h2>
+				<h2 id="ax-chat-title"><?php echo esc_html( $footer_seasonal ? furniva_t( 'Astro · Winter Atelier Concierge', 'Astro · Trợ lý Winter Atelier' ) : furniva_t( 'DeSpace AI Concierge', 'Trợ lý Nội thất AI DeSpace' ) ); ?></h2>
 				<p><?php echo esc_html( furniva_t( '1:1 room-fit sizing, 3D/AR & catalog guide', 'Đo kích thước phòng 1:1, 3D/AR & tư vấn nội thất' ) ); ?></p>
 			</div>
 			<button class="ax-chat-close" type="button" aria-label="<?php echo esc_attr( furniva_t( 'Close chat', 'Đóng trò chuyện' ) ); ?>">×</button>
 		</header>
 		<div class="ax-chat-messages" id="ax-chat-messages" role="log" aria-live="polite">
 			<div class="ax-chat-message ax-chat-message--assistant">
-				<?php echo esc_html( furniva_t( 'Hello! I am DeSpace AI Concierge ✦. Tell me your room space (e.g. "shoe cabinet width 120cm depth 35cm under 3M"), wood tone, or style — I will find pieces that fit and let you preview them in 1:1 3D & AR!', 'Xin chào! Mình là Trợ lý Nội thất AI DeSpace ✦. Hãy nhập kích thước góc phòng (VD: "tủ giày ngang 1m2 sâu 35cm dưới 3 triệu"), màu gỗ hoặc loại tủ — mình sẽ đo khớp và mở xem thử 3D/AR 1:1 ngay tại đây!' ) ); ?>
+				<?php echo esc_html( $footer_seasonal ? furniva_t( 'Warm holiday wishes! I am Astro from DeSpace Winter Atelier ✦. Share your room dimensions or favorite wood tone — I will curate pieces that fit and open a 1:1 3D/AR room preview!', 'Chúc bạn mùa lễ hội an yên! Mình là Astro từ DeSpace Winter Atelier ✦. Hãy nhập kích thước góc phòng (VD: "tủ giày ngang 1m2 sâu 35cm dưới 3 triệu") hoặc tông gỗ yêu thích — mình sẽ chọn mẫu khớp và mở xem 3D/AR 1:1 ngay!' ) : furniva_t( 'Hello! I am DeSpace AI Concierge ✦. Tell me your room space (e.g. "shoe cabinet width 120cm depth 35cm under 3M"), wood tone, or style — I will find pieces that fit and let you preview them in 1:1 3D & AR!', 'Xin chào! Mình là Trợ lý Nội thất AI DeSpace ✦. Hãy nhập kích thước góc phòng (VD: "tủ giày ngang 1m2 sâu 35cm dưới 3 triệu"), màu gỗ hoặc loại tủ — mình sẽ đo khớp và mở xem thử 3D/AR 1:1 ngay tại đây!' ) ); ?>
 			</div>
 		</div>
 		<div class="ax-chat-prompts">
@@ -330,9 +339,12 @@ $facebook_url = ! empty( $contact_info['facebook_url'] ) ? trim( $contact_info['
 		</form>
 		<p class="ax-chat-note"><?php echo esc_html( furniva_t( 'AI Assistant: live recommendations from DeSpace collection.', 'Trợ lý AI: gợi ý sản phẩm trực tiếp từ bộ sưu tập DeSpace.' ) ); ?></p>
 	</section>
-	<button class="ax-chat-toggle" type="button" id="ax-chat-toggle" aria-expanded="false" aria-controls="ax-chat-panel" aria-label="<?php echo esc_attr( furniva_t( 'Open shopping assistant', 'Mở trợ lý mua sắm' ) ); ?>" title="<?php echo esc_attr( furniva_t( 'Chat with shopping assistant', 'Trò chuyện với trợ lý mua sắm' ) ); ?>">
+	<button class="ax-chat-toggle <?php echo $footer_seasonal ? 'ax-chat-toggle--astro' : ''; ?>" type="button" id="ax-chat-toggle" aria-expanded="false" aria-controls="ax-chat-panel" aria-label="<?php echo esc_attr( $footer_seasonal ? furniva_t( 'Chat with Astro — Winter Atelier Assistant', 'Trò chuyện cùng Astro — Trợ lý Mùa lễ hội' ) : furniva_t( 'Open shopping assistant', 'Mở trợ lý mua sắm' ) ); ?>" title="<?php echo esc_attr( $footer_seasonal ? furniva_t( 'Astro · Winter Atelier Concierge', 'Astro · Trợ lý Winter Atelier' ) : furniva_t( 'Chat with shopping assistant', 'Trò chuyện với trợ lý mua sắm' ) ); ?>">
 		<div class="ax-chat-mascot-wrapper">
-			<img class="ax-chat-mascot-img" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/images/despace-mark.png' ); ?>" alt="DeSpace AI Assistant" width="48" height="48" />
+			<picture>
+				<?php if ( $chat_avatar_webp ) : ?><source srcset="<?php echo esc_url( $chat_avatar_webp ); ?>" type="image/webp" /><?php endif; ?>
+				<img class="ax-chat-mascot-img" src="<?php echo esc_url( $chat_avatar_src ); ?>" alt="<?php echo esc_attr( $chat_avatar_alt ); ?>" width="48" height="48" />
+			</picture>
 		</div>
 		<svg class="ax-chat-toggle__close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
 			<path d="m6 6 12 12M18 6 6 18"/>

@@ -580,6 +580,10 @@ jQuery(function ($) {
 			var name = $(this).attr("name");
 			if (name === "has_3d") {
 				f.has_3d = $(this).val();
+			} else if (name === "has_ar") {
+				f.has_ar = $(this).val();
+			} else if (name === "collection") {
+				f.collection = $(this).val();
 			} else if (f[name]) {
 				f[name].push($(this).val());
 			}
@@ -799,7 +803,7 @@ jQuery(function ($) {
 			$.each(collectFilters(), function (k, v) {
 				if (typeof v === "object" && v.length) params[k] = v.join(",");
 				else if (k.indexOf("price") === 0 && v !== "") params[k] = v;
-				else if (k === "has_3d" && v) params[k] = v;
+				else if ((k === "has_3d" || k === "has_ar" || k === "collection") && v) params[k] = v;
 				else if (k === "s" && v) params[k] = v;
 				else if (k === "orderby" && v && v !== "menu_order") params[k] = v;
 			});
@@ -947,6 +951,17 @@ jQuery(function ($) {
 			if (qs.get("has_3d")) {
 				$("#furniva-filter-form input[type=checkbox]").filter(function () {
 					return $(this).attr("name") === "has_3d";
+				}).prop("checked", true);
+			}
+			if (qs.get("has_ar")) {
+				$("#furniva-filter-form input[type=checkbox]").filter(function () {
+					return $(this).attr("name") === "has_ar";
+				}).prop("checked", true);
+			}
+			if (qs.get("collection")) {
+				var colVal = qs.get("collection");
+				$("#furniva-filter-form input[type=checkbox]").filter(function () {
+					return $(this).attr("name") === "collection" && String($(this).val()) === String(colVal);
 				}).prop("checked", true);
 			}
 			if (qs.get("on_sale") === "1") {

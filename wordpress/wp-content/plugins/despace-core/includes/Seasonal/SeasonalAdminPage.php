@@ -89,6 +89,8 @@ class SeasonalAdminPage {
 		check_admin_referer( self::NONCE_ACTION, self::NONCE_FIELD );
 
 		$raw = array(
+			'campaign_id'       => isset( $_POST['campaign_id'] ) ? wp_unslash( $_POST['campaign_id'] ) : SeasonalSettings::DEFAULT_CAMPAIGN_ID,
+			'timezone'          => isset( $_POST['timezone'] ) ? wp_unslash( $_POST['timezone'] ) : SeasonalSettings::DEFAULT_TIMEZONE,
 			'status'            => isset( $_POST['status'] ) ? wp_unslash( $_POST['status'] ) : 'off',
 			'preset'            => isset( $_POST['preset'] ) ? wp_unslash( $_POST['preset'] ) : 'nordic',
 			'snow_enabled'      => ! empty( $_POST['snow_enabled'] ),
@@ -143,8 +145,9 @@ class SeasonalAdminPage {
 		$presets     = SeasonalSettings::preset_catalog();
 		$has_cockpit = function_exists( 'despace_render_admin_cockpit_header' );
 		$saved       = isset( $_GET['saved'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['saved'] ) );
-		$tz_label    = function_exists( 'wp_timezone_string' ) ? wp_timezone_string() : 'UTC';
-		$today_wp    = SeasonalSettings::today_wp_date();
+		$tz_label    = (string) ( $settings['timezone'] ?? SeasonalSettings::DEFAULT_TIMEZONE );
+		$campaign_id = (string) ( $settings['campaign_id'] ?? SeasonalSettings::DEFAULT_CAMPAIGN_ID );
+		$today_wp    = SeasonalSettings::today_wp_date( $tz_label );
 
 		$status_badges = array(
 			'off'               => array( 'label' => 'Đang tắt — Giao diện gốc (0 KB Noel)', 'cls' => 'ds-seasonal-pill--off' ),
@@ -204,8 +207,9 @@ class SeasonalAdminPage {
 					<span class="ds-seasonal-meta">
 						<?php
 						printf(
-							/* translators: 1: WP local date, 2: WP timezone */
-							esc_html__( 'Ngày máy chủ (%2$s): %1$s', 'despace-core' ),
+							/* translators: 1: campaign ID, 2: WP local date, 3: timezone */
+							esc_html__( 'Chiến dịch: %1$s · Ngày (%3$s): %2$s', 'despace-core' ),
+							'<code>' . esc_html( $campaign_id ) . '</code>',
 							'<strong>' . esc_html( $today_wp ) . '</strong>',
 							esc_html( $tz_label )
 						);
@@ -438,6 +442,17 @@ class SeasonalAdminPage {
 									<span><?php esc_html_e( 'Hết ngày kết thúc, storefront tự động trở lại giao diện mặc định 0 KB Noel.', 'despace-core' ); ?></span>
 								</div>
 							</label>
+
+							<div class="ds-date-pair">
+								<div class="ds-field-group">
+									<label for="ds-campaign-id"><?php esc_html_e( 'Mã chiến dịch (Campaign ID):', 'despace-core' ); ?></label>
+									<input type="text" id="ds-campaign-id" name="campaign_id" maxlength="48" value="<?php echo esc_attr( $campaign_id ); ?>" placeholder="christmas-2026" />
+								</div>
+								<div class="ds-field-group">
+									<label for="ds-timezone"><?php esc_html_e( 'Múi giờ chiến dịch (Timezone):', 'despace-core' ); ?></label>
+									<input type="text" id="ds-timezone" name="timezone" maxlength="64" value="<?php echo esc_attr( $tz_label ); ?>" placeholder="Asia/Ho_Chi_Minh" />
+								</div>
+							</div>
 
 							<div class="ds-date-pair">
 								<div class="ds-field-group">
@@ -707,8 +722,8 @@ class SeasonalAdminPage {
 				var heroTitle = document.getElementById('dsPrevHeroTitle');
 				if (heroTitle) {
 					heroTitle.textContent = prevLang === 'en'
-						? 'Warm spaces crafted for festive gatherings.'
-						: 'Tổ ấm nồng ấm cho mùa Giáng sinh an lành.';
+						? 'A Season to Feel at Home.'
+						: 'Mùa lễ hội, chạm vào cảm giác an yên';
 				}
 
 				var codeInput = document.getElementById('ds-promo-code');

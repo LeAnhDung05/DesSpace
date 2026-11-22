@@ -953,6 +953,67 @@
     }
   }
 
+  function detectArCapability() {
+    var isEn = (window.furnivaData && String(window.furnivaData.language || '').indexOf('en') === 0)
+      || (window.location && window.location.pathname.indexOf('/en/') === 0);
+    var hasUsdz = !!(currentProduct.usdzUrl && /\.usdz(\?|$)/i.test(currentProduct.usdzUrl));
+    var hasGlb = !!currentProduct.glbUrl;
+
+    if (Device.isIOS()) {
+      if (hasUsdz) {
+        return {
+          level: 'supported',
+          icon: '✓',
+          title: isEn ? 'iPhone / iPad Native AR Supported (Apple Quick Look)' : 'Thiết bị iPhone / iPad hỗ trợ AR Quick Look 1:1',
+          desc: isEn
+            ? 'Your device supports true-to-scale 1:1 placement via Apple AR Quick Look (.usdz) or Live 3D Camera.'
+            : 'Thiết bị của bạn hỗ trợ đặt sản phẩm tỷ lệ thực 1:1 qua Apple AR Quick Look (.usdz) hoặc Camera AR 3D trực tiếp.'
+        };
+      }
+      return {
+        level: 'limited',
+        icon: 'ℹ',
+        title: isEn ? 'Apple Quick Look (.usdz) Not Yet Available for This Item' : 'Sản phẩm chưa có tệp Apple Quick Look (.usdz)',
+        desc: isEn
+          ? 'Use Live 3D Camera preview or the 360° 3D Product Viewer to inspect proportions and finishes.'
+          : 'Bạn có thể dùng Camera 3D trực tiếp hoặc xoay mô hình 3D 360° để kiểm tra kích thước và vân gỗ.'
+      };
+    }
+
+    if (Device.isAndroid()) {
+      return {
+        level: hasGlb ? 'supported' : 'limited',
+        icon: hasGlb ? '✓' : 'ℹ',
+        title: isEn ? 'Android Native AR Supported (Google Scene Viewer)' : 'Thiết bị Android hỗ trợ Google Scene Viewer (ARCore)',
+        desc: isEn
+          ? 'Launch Google Scene Viewer for 1:1 floor placement (requires Google Play Services for AR) or use Live 3D Camera.'
+          : 'Mở Google Scene Viewer để đặt tỷ lệ 1:1 trên sàn nhà (cần thiết bị hỗ trợ ARCore) hoặc dùng Camera 3D trực tiếp.'
+      };
+    }
+
+    return {
+      level: 'desktop',
+      icon: 'ℹ',
+      title: isEn ? 'Native Spatial AR Requires an iOS or Android Smartphone' : 'Trình duyệt máy tính chưa hỗ trợ cảm biến AR trực tiếp',
+      desc: isEn
+        ? 'Scan the QR code below with your phone for 1:1 room AR (Quick Look / ARCore), or switch to 360° 3D Viewer / Webcam Room Preview.'
+        : 'Hãy quét mã QR bên dưới bằng iPhone/Android để đặt thử tỷ lệ 1:1 trong phòng, hoặc dùng tab Mô hình 3D 360° / Camera xem trước.'
+    };
+  }
+
+  function renderArCompatBanner() {
+    var $banner = $('#axArCompatBanner');
+    if (!$banner.length) return;
+    var cap = detectArCapability();
+    $banner
+      .removeClass('is-supported is-limited is-desktop')
+      .addClass('is-' + cap.level)
+      .show();
+    $('#axArCompatIcon').text(cap.icon);
+    $('#axArCompatTitle').text(cap.title);
+    $('#axArCompatDesc').text(cap.desc);
+  }
+
   function setupARCard() {
     var $cardIOS = $('#axArCardIOS');
     var $cardAndroid = $('#axArCardAndroid');
@@ -969,11 +1030,13 @@
     if (!currentProduct.has3D || !currentProduct.glbUrl) {
       $submodeBar.hide();
       $liveCamCard.hide();
+      $('#axArCompatBanner').hide();
       $cardMissing.fadeIn(150);
       return;
     }
 
     $submodeBar.show();
+    renderArCompatBanner();
 
     // Update iOS Quick Look link strictly with valid .usdz (NEVER pass .glb into rel="ar")
     var $appleLink = $('#axAppleArLink');

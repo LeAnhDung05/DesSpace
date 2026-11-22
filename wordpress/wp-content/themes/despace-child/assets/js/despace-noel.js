@@ -62,8 +62,10 @@
 	/* ----------------------------------------------------------------
 	   1. 3-Depth Atmospheric Snow / Crystal / Champagne Bokeh Engine
 	   ---------------------------------------------------------------- */
+	const heroStage = cfg.heroScopedSnow ? document.querySelector(".fv-featured-hero__stage") : null;
+	const hasAmbientSnowStage = !cfg.heroScopedSnow || Boolean(heroStage);
 	let spawnStarlightBurst = null;
-	let userSnowOn = !prefersReduced && Boolean(cfg.snowEnabled) && readSnowPref();
+	let userSnowOn = !prefersReduced && Boolean(cfg.snowEnabled) && hasAmbientSnowStage && readSnowPref();
 	let canvas = null;
 	let ctx = null;
 	let rafId = 0;
@@ -247,19 +249,32 @@
 		canvas = document.createElement("canvas");
 		canvas.id = "despace-noel-canvas";
 		canvas.setAttribute("aria-hidden", "true");
-		document.body.appendChild(canvas);
+		if (heroStage) {
+			canvas.classList.add("is-hero-scoped");
+			heroStage.appendChild(canvas);
+		} else {
+			canvas.classList.add("is-burst-only");
+			document.body.appendChild(canvas);
+		}
 		ctx = canvas.getContext("2d", { alpha: true });
 
 		const getParticleCount = () => {
+			if (!hasAmbientSnowStage) return 0;
 			const isMobile = window.innerWidth < 768;
-			if (cfg.snowDensity === "medium") return isMobile ? 30 : 54;
-			return isMobile ? 18 : 32;
+			if (cfg.snowDensity === "medium") return isMobile ? 22 : 38;
+			return isMobile ? 14 : 24;
 		};
 
 		const resize = () => {
 			if (!canvas || !ctx) return;
-			width = window.innerWidth;
-			height = window.innerHeight;
+			if (heroStage) {
+				const rect = heroStage.getBoundingClientRect();
+				width = Math.max(1, Math.round(rect.width));
+				height = Math.max(1, Math.round(rect.height));
+			} else {
+				width = window.innerWidth;
+				height = window.innerHeight;
+			}
 			dpr = Math.min(window.devicePixelRatio || 1, 2);
 			canvas.width = Math.floor(width * dpr);
 			canvas.height = Math.floor(height * dpr);
@@ -272,16 +287,25 @@
 
 		spawnStarlightBurst = (x, y) => {
 			if (!ctx) return;
-			const colors = ["#E6CA8A", "#D4AF37", "#FAF7F2", "#C9A96E"];
-			for (let i = 0; i < 24; i++) {
-				const angle = (Math.PI * 2 * i) / 24 + (Math.random() - 0.5) * 0.25;
-				const speed = 1.6 + Math.random() * 3.4;
+			let bx = x;
+			let by = y;
+			if (heroStage) {
+				const rect = heroStage.getBoundingClientRect();
+				// If burst originates outside the hero stage, skip hero-canvas burst cleanly
+				if (y < rect.top - 40 || y > rect.bottom + 40) return;
+				bx = x - rect.left;
+				by = y - rect.top;
+			}
+			const colors = ["#DFC086", "#BD9A62", "#F4F0E8", "#A9443F"];
+			for (let i = 0; i < 20; i++) {
+				const angle = (Math.PI * 2 * i) / 20 + (Math.random() - 0.5) * 0.25;
+				const speed = 1.4 + Math.random() * 2.8;
 				bursts.push({
-					x,
-					y,
+					x: bx,
+					y: by,
 					vx: Math.cos(angle) * speed,
-					vy: Math.sin(angle) * speed - 1.2,
-					r: 1.5 + Math.random() * 2.4,
+					vy: Math.sin(angle) * speed - 1.1,
+					r: 1.5 + Math.random() * 2.2,
 					life: 1,
 					color: colors[i % colors.length],
 				});
@@ -293,8 +317,14 @@
 		window.addEventListener(
 			"pointermove",
 			(e) => {
-				pointer.x = e.clientX;
-				pointer.y = e.clientY;
+				if (heroStage) {
+					const rect = heroStage.getBoundingClientRect();
+					pointer.x = e.clientX - rect.left;
+					pointer.y = e.clientY - rect.top;
+				} else {
+					pointer.x = e.clientX;
+					pointer.y = e.clientY;
+				}
 			},
 			{ passive: true }
 		);
@@ -308,6 +338,10 @@
 			},
 			{ passive: true }
 		);
+
+		if (heroStage && typeof ResizeObserver === "function") {
+			new ResizeObserver(resize).observe(heroStage);
+		}
 
 		document.addEventListener("visibilitychange", syncLoop);
 		new MutationObserver(syncLoop).observe(document.body, { attributes: true, attributeFilter: ["class"] });
@@ -381,7 +415,7 @@
 	/* ----------------------------------------------------------------
 	   3. Whisper-Quiet Floating Holiday Control Pill
 	   ---------------------------------------------------------------- */
-	const showSnowCtrl = !prefersReduced && Boolean(cfg.snowEnabled);
+	const showSnowCtrl = !prefersReduced && Boolean(cfg.snowEnabled) && hasAmbientSnowStage;
 	const showAudioCtrl = Boolean(cfg.audioEnabled) && Boolean(window.AudioContext || window.webkitAudioContext);
 	const showPromoCtrl = Boolean(cfg.promoCode);
 

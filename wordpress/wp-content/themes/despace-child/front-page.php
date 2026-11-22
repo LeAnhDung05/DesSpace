@@ -7,11 +7,19 @@ if (! defined('ABSPATH')) exit;
 
 get_header();
 
-$shop_id     = function_exists('wc_get_page_id') ? wc_get_page_id('shop') : 0;
-$shop_url    = furniva_url($shop_id > 0 ? get_permalink($shop_id) : home_url('/shop/'));
-$contact     = get_page_by_path('lien-he') ?: get_page_by_path('contact');
-$contact_url = furniva_url($contact ? get_permalink($contact) : home_url('/lien-he/'));
-$hero_url    = get_stylesheet_directory_uri() . '/assets/images/hero-scandinavian.jpg';
+$shop_id       = function_exists('wc_get_page_id') ? wc_get_page_id('shop') : 0;
+$shop_url      = furniva_url($shop_id > 0 ? get_permalink($shop_id) : home_url('/cua-hang/'));
+$contact       = get_page_by_path('lien-he') ?: get_page_by_path('contact');
+$contact_url   = furniva_url($contact ? get_permalink($contact) : home_url('/lien-he/'));
+$home_seasonal = function_exists('despace_get_active_seasonal_config') ? despace_get_active_seasonal_config() : null;
+$img_base_uri  = get_stylesheet_directory_uri() . '/assets/images/';
+$hero_url      = $img_base_uri . ($home_seasonal ? 'hero-winter-atelier.jpg' : 'hero-scandinavian.jpg');
+$hero_webp_url = $img_base_uri . ($home_seasonal ? 'hero-winter-atelier.webp' : 'hero-scandinavian.webp');
+$astro_webp    = $img_base_uri . 'astro-winter-atelier.webp';
+$astro_jpg     = $img_base_uri . 'astro-winter-atelier.jpg';
+$winter_url    = add_query_arg('collection', 'winter-atelier', $shop_url);
+$shop_3d_url   = add_query_arg('has_3d', 'yes', $shop_url);
+$shop_ar_url   = add_query_arg('has_ar', 'yes', $shop_url);
 
 $home_categories = get_terms(array(
 	'taxonomy'   => 'product_cat',
@@ -149,6 +157,57 @@ $hero_products = array(
 
 <div class="despace furniva fv-home">
 	<main class="fv-home-main" id="main-content">
+		<!-- Above-the-Fold Full-Width Editorial Hero (Hero first for instant visual impact & clear CTAs) -->
+		<section class="fv-featured-hero fv-reveal fv-reveal-fade" aria-label="<?php echo esc_attr($home_seasonal ? furniva_t('DeSpace Winter Atelier 2026', 'DeSpace Winter Atelier 2026') : furniva_t('Featured collection', 'Bộ sưu tập nổi bật')); ?>">
+			<div class="fv-featured-hero__grid fv-wrap">
+				<div class="fv-featured-hero__stage" id="dsHeroStage">
+					<div class="fv-hero-stage-inner">
+						<picture>
+							<source srcset="<?php echo esc_url($hero_webp_url); ?>" type="image/webp" />
+							<img src="<?php echo esc_url($hero_url); ?>" width="1376" height="768" alt="<?php echo esc_attr($home_seasonal ? furniva_t('Scandinavian living room styled for Christmas with warm walnut credenza, pine branches, beeswax candles and snowy view', 'Không gian phòng khách Bắc Âu mùa Giáng Sinh ấm áp với tủ gỗ óc chó, cành thông tươi, nến ấm và khung cửa sổ tuyết') : furniva_t('Warm Scandinavian living room with natural wood furniture', 'Không gian phòng khách Bắc Âu ấm áp với nội thất gỗ tự nhiên')); ?>" loading="eager" fetchpriority="high" decoding="async" />
+						</picture>
+						<div class="fv-home-hero-copy">
+							<span class="fv-eyebrow"><?php echo esc_html($home_seasonal ? furniva_t('DESPACE · WINTER ATELIER 2026', 'DESPACE · WINTER ATELIER 2026') : furniva_t('Designed for the everyday', 'Thiết kế cho nhịp sống mỗi ngày')); ?></span>
+							<h1 class="fv-home-hero-title">
+								<?php if ($home_seasonal) : ?>
+									<?php echo esc_html(furniva_t('A Season to Feel at Home.', 'Mùa lễ hội, chạm vào cảm giác an yên')); ?>
+								<?php else : ?>
+									<?php echo wp_kses_post(furniva_t('Quiet form.<br>Lasting presence.', 'Đường nét tĩnh lặng.<br>Vẻ đẹp bền lâu.')); ?>
+								<?php endif; ?>
+							</h1>
+							<p class="fv-home-hero-sub">
+								<?php echo esc_html($home_seasonal
+									? furniva_t('Nordic craft & calm holiday living — inspect every piece in 360° 3D and preview true-to-scale AR in your room.', 'Nội thất Bắc Âu tinh giản cho những phút giây sum vầy — xoay 360° mô hình 3D và đặt thử AR 1:1 ngay trong tổ ấm của bạn.')
+									: furniva_t('Thoughtful furniture for a home that feels like you.', 'Nội thất được chọn lọc để ngôi nhà mang dấu ấn riêng của bạn.')
+								); ?>
+							</p>
+							<div class="fv-home-hero-actions">
+								<a class="fv-home-hero-cta fv-home-hero-cta--primary" href="<?php echo esc_url($home_seasonal ? $winter_url : $shop_url); ?>">
+									<span><?php echo esc_html($home_seasonal ? furniva_t('Discover the Winter Collection', 'Khám phá bộ sưu tập') : furniva_t('Explore the collection', 'Khám phá bộ sưu tập')); ?></span>
+									<span aria-hidden="true">↗</span>
+								</a>
+								<a class="fv-home-hero-cta fv-home-hero-cta--secondary" href="<?php echo esc_url($shop_3d_url); ?>">
+									<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+									<span><?php echo esc_html($home_seasonal ? furniva_t('View in Your Space', 'Trải nghiệm 3D') : furniva_t('Explore in 3D & AR', 'Trải nghiệm 3D')); ?></span>
+								</a>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="fv-featured-hero__aside" aria-label="<?php echo esc_attr(furniva_t('Explore more spaces', 'Khám phá thêm không gian')); ?>">
+					<?php foreach ($hero_products as $index => $feature) :
+						$term = get_term_by('slug', $feature['slug'], 'product_cat');
+						$link = $term && ! is_wp_error($term) ? furniva_url(get_term_link($term)) : $shop_url;
+					?>
+						<a href="<?php echo esc_url($link); ?>" aria-label="<?php echo esc_attr(furniva_t($feature['label'][0], $feature['label'][1])); ?>">
+							<img src="<?php echo esc_url($feature['image']); ?>" alt="" loading="lazy" decoding="async" />
+							<span class="fv-home-feature-caption"><?php echo esc_html(furniva_t($feature['label'][0], $feature['label'][1])); ?> <span class="fv-home-feature-arrow" aria-hidden="true">↗</span></span>
+						</a>
+					<?php endforeach; ?>
+				</div>
+			</div>
+		</section>
+
 		<section class="fv-concierge fv-reveal fv-reveal-up" aria-labelledby="fv-concierge-title">
 			<div class="fv-wrap fv-concierge__inner">
 				<div class="fv-concierge__copy">
@@ -167,39 +226,12 @@ $hero_products = array(
 				<nav class="fv-start-chips fv-wrap" aria-label="<?php echo esc_attr(furniva_t('Shop by category', 'Mua sắm theo danh mục')); ?>">
 					<?php foreach ($home_categories as $category) : ?>
 						<a class="fv-start-chip" href="<?php echo esc_url(furniva_url(get_term_link($category))); ?>">
-							<span class="fv-start-chip__image"><img src="<?php echo esc_url($category_image_url($category)); ?>" alt="" loading="lazy" /></span>
+							<span class="fv-start-chip__image"><img src="<?php echo esc_url($category_image_url($category)); ?>" alt="" loading="lazy" decoding="async" /></span>
 							<span><?php echo esc_html(furniva_term_label($category->name, 'product_cat')); ?></span>
 						</a>
 					<?php endforeach; ?>
 				</nav>
 			<?php endif; ?>
-		</section>
-
-		<section class="fv-featured-hero fv-reveal fv-reveal-fade" aria-label="<?php echo esc_attr(furniva_t('Featured collection', 'Bộ sưu tập nổi bật')); ?>">
-			<div class="fv-featured-hero__grid fv-wrap">
-				<div class="fv-featured-hero__stage">
-					<a href="<?php echo esc_url($shop_url); ?>" aria-label="<?php echo esc_attr(furniva_t('Explore the DeSpace collection', 'Khám phá bộ sưu tập DeSpace')); ?>">
-						<img src="<?php echo esc_url($hero_url); ?>" alt="<?php echo esc_attr(furniva_t('Warm Scandinavian living room with natural wood furniture', 'Không gian phòng khách Bắc Âu ấm áp với nội thất gỗ tự nhiên')); ?>" loading="eager" fetchpriority="high" />
-						<span class="fv-home-hero-copy">
-							<span class="fv-eyebrow"><?php echo esc_html(furniva_t('Designed for the everyday', 'Thiết kế cho nhịp sống mỗi ngày')); ?></span>
-							<h1 class="fv-home-hero-title"><?php echo wp_kses_post(furniva_t('Quiet form.<br>Lasting presence.', 'Đường nét tĩnh lặng.<br>Vẻ đẹp bền lâu.')); ?></h1>
-							<span><?php echo esc_html(furniva_t('Thoughtful furniture for a home that feels like you.', 'Nội thất được chọn lọc để ngôi nhà mang dấu ấn riêng của bạn.')); ?></span>
-							<span class="fv-home-hero-cta"><?php echo esc_html(furniva_t('Explore the collection', 'Khám phá bộ sưu tập')); ?> <span aria-hidden="true">↗</span></span>
-						</span>
-					</a>
-				</div>
-				<div class="fv-featured-hero__aside" aria-label="<?php echo esc_attr(furniva_t('Explore more spaces', 'Khám phá thêm không gian')); ?>">
-					<?php foreach ($hero_products as $index => $feature) :
-						$term = get_term_by('slug', $feature['slug'], 'product_cat');
-						$link = $term && ! is_wp_error($term) ? furniva_url(get_term_link($term)) : $shop_url;
-					?>
-						<a href="<?php echo esc_url($link); ?>" aria-label="<?php echo esc_attr(furniva_t($feature['label'][0], $feature['label'][1])); ?>">
-							<img src="<?php echo esc_url($feature['image']); ?>" alt="" loading="lazy" />
-							<span class="fv-home-feature-caption"><?php echo esc_html(furniva_t($feature['label'][0], $feature['label'][1])); ?> <span class="fv-home-feature-arrow" aria-hidden="true">↗</span></span>
-						</a>
-					<?php endforeach; ?>
-				</div>
-			</div>
 		</section>
 
 		<section class="fv-promise fv-wrap fv-reveal fv-reveal-up" aria-labelledby="fv-promise-title">
@@ -227,10 +259,9 @@ $hero_products = array(
 		</section>
 
 		<?php
-		$home_seasonal = function_exists('despace_get_active_seasonal_config') ? despace_get_active_seasonal_config() : null;
 		$offer_code    = ($home_seasonal && ! empty($home_seasonal['promo_code'])) ? (string) $home_seasonal['promo_code'] : 'WELCOME10';
 		$offer_kicker  = $home_seasonal
-			? furniva_t('DeSpace Winter Atelier · Holiday Edition', 'DESPACE WINTER ATELIER · MÙA GIÁNG SINH')
+			? furniva_t('DeSpace — A Home for the Holidays · Winter Atelier 2026', 'DESPACE — TỔ ẤM MÙA LỄ HỘI · WINTER ATELIER 2026')
 			: furniva_t('A DeSpace welcome', 'ƯU ĐÃI CHÀO MỪNG DeSpace');
 		$offer_heading = $home_seasonal
 			? furniva_t('Warm spaces crafted for festive gatherings.', 'Tổ ấm nồng ấm cho mùa Giáng sinh an lành.')
@@ -247,7 +278,16 @@ $hero_products = array(
 			<div class="ds-holiday-card">
 				<div class="ds-holiday-card__grid">
 					<div>
-						<span class="ds-holiday-kicker">❄ <?php echo esc_html($offer_kicker); ?></span>
+						<div class="ds-holiday-astro-row">
+							<picture class="ds-holiday-astro-pic">
+								<source srcset="<?php echo esc_url($astro_webp); ?>" type="image/webp" />
+								<img src="<?php echo esc_url($astro_jpg); ?>" width="56" height="56" alt="<?php echo esc_attr(furniva_t('Astro — DeSpace Winter Atelier Companion', 'Astro — Linh vật Winter Atelier DeSpace')); ?>" loading="lazy" decoding="async" />
+							</picture>
+							<div>
+								<span class="ds-holiday-kicker">❄ <?php echo esc_html($offer_kicker); ?></span>
+								<span class="ds-holiday-astro-note"><?php echo esc_html(furniva_t('Astro welcomes you home for the season', 'Astro cùng bạn chuẩn bị không gian đón lễ ấm áp')); ?></span>
+							</div>
+						</div>
 						<h2 class="ds-holiday-title"><?php echo esc_html($offer_heading); ?></h2>
 						<p class="ds-holiday-sub"><?php echo esc_html($offer_sub); ?></p>
 						<?php if (! empty($home_seasonal['countdown_enabled'])) : ?>
@@ -266,7 +306,7 @@ $hero_products = array(
 							<button type="button" class="ds-gift-seal-btn" id="dsHolidayUnwrapBtn">
 								<span class="ds-wax-seal" aria-hidden="true">❄</span>
 								<span class="ds-gift-seal-title"><?php echo esc_html(furniva_t('Unwrap Holiday Privilege', 'Mở phong bao ưu đãi Noel')); ?></span>
-								<span class="ds-gift-seal-hint"><?php echo esc_html(furniva_t('Tap the wax seal to reveal your festive code ✦', 'Chạm con dấu vàng để mở mã quà tặng ✦')); ?></span>
+								<span class="ds-gift-seal-hint"><?php echo esc_html(furniva_t('Tap the wax seal to reveal your festive code ✦', 'Chạm con dấu đồng thau để mở mã quà tặng ✦')); ?></span>
 							</button>
 						</div>
 						<div class="ds-gift-revealed">
@@ -291,24 +331,24 @@ $hero_products = array(
 				</div>
 
 				<div class="ds-holiday-tiers">
-					<a class="ds-holiday-tier-link" href="<?php echo esc_url(add_query_arg('price_max', '5000000', $shop_url)); ?>">
+					<a class="ds-holiday-tier-link" href="<?php echo esc_url($winter_url); ?>">
 						<div>
-							<small><?php echo esc_html(furniva_t('Thoughtful Gifts · Under 5M ₫', 'Quà Tặng Tinh Tế · Dưới 5 Triệu')); ?></small>
-							<strong><?php echo esc_html(furniva_t('Compact storage & entryway pieces', 'Tủ gọn nhẹ & điểm nhấn sảnh đón')); ?></strong>
+							<small><?php echo esc_html(furniva_t('Winter Atelier Collection', 'Bộ Sưu Tập Winter Atelier')); ?></small>
+							<strong><?php echo esc_html(furniva_t('Curated Nordic Holiday Furniture', 'Tuyển Chọn Nội Thất Mùa Lễ Hội')); ?></strong>
 						</div>
 						<span class="ds-holiday-tier-arrow" aria-hidden="true">→</span>
 					</a>
-					<a class="ds-holiday-tier-link" href="<?php echo esc_url(add_query_arg('has_3d', 'yes', $shop_url)); ?>">
+					<a class="ds-holiday-tier-link" href="<?php echo esc_url($shop_3d_url); ?>">
 						<div>
-							<small><?php echo esc_html(furniva_t('Interactive 1:1 AR Preview', 'Đặt Thử Vào Phòng Đón Noel')); ?></small>
-							<strong><?php echo esc_html(furniva_t('40 Designs Ready in 3D & AR', '40 Thiết Kế Hỗ Trợ Xem 3D & AR')); ?></strong>
+							<small><?php echo esc_html(furniva_t('360° Interactive 3D Studio', 'Không Gian 3D 360°')); ?></small>
+							<strong><?php echo esc_html(furniva_t('Inspect 40 Pieces in True 3D', 'Xoay 360° 40 Mẫu Nội Thất Gỗ')); ?></strong>
 						</div>
 						<span class="ds-holiday-tier-arrow" aria-hidden="true">→</span>
 					</a>
-					<a class="ds-holiday-tier-link" href="<?php echo esc_url(add_query_arg('on_sale', '1', $shop_url)); ?>">
+					<a class="ds-holiday-tier-link" href="<?php echo esc_url($shop_ar_url); ?>">
 						<div>
-							<small><?php echo esc_html(furniva_t('Seasonal Showroom Privileges', 'Đặc Quyền Mùa Lễ Hội')); ?></small>
-							<strong><?php echo esc_html(furniva_t('Explore Holiday Sale Offers', 'Khám Phá Sản Phẩm Ưu Đãi Noel')); ?></strong>
+							<small><?php echo esc_html(furniva_t('True-to-Scale 1:1 AR Ready', 'Đặt Thử AR Tỷ Lệ 1:1')); ?></small>
+							<strong><?php echo esc_html(furniva_t('Preview Directly in Your Room', 'Đặt Thử Vào Phòng Đón Giáng Sinh')); ?></strong>
 						</div>
 						<span class="ds-holiday-tier-arrow" aria-hidden="true">→</span>
 					</a>

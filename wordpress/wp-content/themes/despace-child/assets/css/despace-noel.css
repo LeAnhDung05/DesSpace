@@ -8,40 +8,47 @@
      - .despace-noel--frost    (Alpine Frost: #F3F6F9 / #1E3342 / #C7A66B)
    ========================================================================== */
 
-/* 1. Shared Noel Tokens & 4 Preset Definitions */
+/* 1. Shared Noel Tokens & 4 Preset Definitions
+   Christmas 2026 — Winter Atelier Signature Palette:
+     Ivory #F4F0E8 · Ice #D9E2E6 · Pine #183B36 · Berry #A9443F · Brass #BD9A62 */
 body.despace-theme-noel {
-	--noel-primary: #1B3B2B;
-	--noel-primary-deep: #12291E;
-	--noel-gold: #C9A96E;
-	--noel-gold-bright: #E6CA8A;
-	--noel-gold-soft: rgba(201, 169, 110, 0.28);
-	--noel-gold-glow: rgba(201, 169, 110, 0.38);
-	--noel-surface-warm: #FAF7F2;
-	--noel-marquee-bg: #1B3B2B;
-	--noel-marquee-ink: #FAF7F2;
-	--noel-footer-bg: #162E22;
-	--noel-footer-ink: #F7F4EF;
-	--noel-badge-bg: #1B3B2B;
-	--noel-badge-ink: #F8EFE0;
+	--noel-ivory: #F4F0E8;
+	--noel-ice: #D9E2E6;
+	--noel-pine: #183B36;
+	--noel-berry: #A9443F;
+	--noel-brass: #BD9A62;
+	--noel-primary: #183B36;
+	--noel-primary-deep: #102824;
+	--noel-gold: #BD9A62;
+	--noel-gold-bright: #DFC086;
+	--noel-gold-soft: rgba(189, 154, 98, 0.30);
+	--noel-gold-glow: rgba(189, 154, 98, 0.40);
+	--noel-surface-warm: #F4F0E8;
+	--noel-marquee-bg: #183B36;
+	--noel-marquee-ink: #F4F0E8;
+	--noel-footer-bg: #14312D;
+	--noel-footer-ink: #F4F0E8;
+	--noel-badge-bg: #183B36;
+	--noel-badge-ink: #F4F0E8;
 }
 
-/* Preset 1: Nordic Hygge */
+/* Preset 1: Winter Atelier 2026 (Nordic Hygge — Brand Signature) */
 body.despace-theme-noel.despace-noel--nordic {
-	--despace-bg: #FAF7F2;
-	--despace-cream: #FAF7F2;
-	--despace-accent: #1B3B2B;
-	--despace-accent-hover: #12291E;
-	--despace-sand: #C9A96E;
-	--despace-border: #E5DCCF;
-	--f-champagne: #C9A96E;
-	--f-accent: #1B3B2B;
-	--noel-primary: #1B3B2B;
-	--noel-primary-deep: #12291E;
-	--noel-gold: #C9A96E;
-	--noel-marquee-bg: #1B3B2B;
-	--noel-marquee-ink: #FAF7F2;
-	--noel-footer-bg: #162E22;
-	--noel-badge-bg: #1B3B2B;
+	--despace-bg: #F4F0E8;
+	--despace-cream: #F4F0E8;
+	--despace-accent: #183B36;
+	--despace-accent-hover: #102824;
+	--despace-sand: #BD9A62;
+	--despace-border: #DDD7CB;
+	--f-champagne: #BD9A62;
+	--f-accent: #183B36;
+	--noel-primary: #183B36;
+	--noel-primary-deep: #102824;
+	--noel-gold: #BD9A62;
+	--noel-marquee-bg: #183B36;
+	--noel-marquee-ink: #F4F0E8;
+	--noel-footer-bg: #14312D;
+	--noel-badge-bg: #183B36;
 }
 
 /* Preset 2: Midnight Gold */
@@ -573,6 +580,74 @@ body.despace-theme-noel .f-badge-holiday {
 	text-transform: uppercase;
 }
 
+body.despace-theme-noel .f-badge-holiday--berry {
+	background: var(--noel-berry, #A9443F);
+	color: #F4F0E8;
+	border-color: rgba(244, 240, 232, 0.35);
+}
+
+/* Astro Winter Atelier Companion Row & Chatbot Dock */
+body.despace-theme-noel .ds-holiday-astro-row {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	margin-bottom: 12px;
+}
+
+body.despace-theme-noel .ds-holiday-astro-pic {
+	width: 56px;
+	height: 56px;
+	border-radius: 50%;
+	overflow: hidden;
+	border: 2px solid var(--noel-gold);
+	box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.45);
+	background: var(--noel-ivory, #F4F0E8);
+	flex-shrink: 0;
+}
+
+body.despace-theme-noel .ds-holiday-astro-pic img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+body.despace-theme-noel .ds-holiday-astro-row .ds-holiday-kicker {
+	margin-bottom: 2px;
+}
+
+body.despace-theme-noel .ds-holiday-astro-note {
+	display: block;
+	font-size: 12px;
+	color: rgba(244, 240, 232, 0.78);
+}
+
+body.despace-theme-noel .ax-chat-toggle--astro {
+	border: 2px solid var(--noel-gold);
+	box-shadow: 0 10px 26px rgba(24, 59, 54, 0.28);
+}
+
+body.despace-theme-noel .ax-chat-toggle--astro .ax-chat-mascot-img {
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+body.despace-theme-noel .f-filter-group--seasonal summary {
+	color: var(--noel-primary);
+}
+
+body.despace-theme-noel .f-card-ar-btn {
+	background: var(--noel-primary);
+	border-color: var(--noel-gold-soft);
+	color: var(--noel-ivory, #F4F0E8);
+}
+
+body.despace-theme-noel .f-card-ar-btn:hover {
+	background: var(--noel-gold);
+	border-color: var(--noel-gold);
+	color: var(--noel-primary-deep);
+}
+
 body.despace-theme-noel .f-card-3d-btn {
 	border-color: var(--noel-gold);
 	box-shadow: 0 2px 12px var(--noel-gold-soft);
@@ -663,9 +738,9 @@ body.despace-theme-noel .fv-footer a:hover { color: var(--noel-gold-bright); }
 body.despace-theme-noel .fv-brand-logo-img--footer { filter: brightness(0) invert(1) sepia(0.14) saturate(0.9); }
 body.despace-theme-noel .fv-footer__owner-avatar { background: var(--noel-gold); color: #1C1917; }
 
-/* 9. 3-Layer Atmospheric Canvas & Whisper-Quiet Holiday Control Pill
+/* 9. Hero-Scoped Atmospheric Canvas & Whisper-Quiet Holiday Control Pill
    Strict Z-Index Discipline:
-     canvas (150) < controls (190) < header (200) < mega (300) < drawer (500) < dialog (700) < 3D modal (100050) */
+     hero-canvas (2, inside Hero stage) / burst-canvas (150) < controls (190) < header (200) < mega (300) < drawer (500) < dialog (700) < 3D modal (100050) */
 #despace-noel-canvas {
 	position: fixed;
 	inset: 0;
@@ -674,6 +749,15 @@ body.despace-theme-noel .fv-footer__owner-avatar { background: var(--noel-gold);
 	pointer-events: none;
 	z-index: 150;
 	transition: opacity 0.35s ease;
+}
+
+#despace-noel-canvas.is-hero-scoped {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 2;
+	pointer-events: none;
 }
 
 #despace-noel-canvas.is-paused { opacity: 0; }

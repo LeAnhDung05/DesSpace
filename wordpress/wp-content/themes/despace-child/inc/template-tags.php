@@ -155,6 +155,13 @@ function despace_filter_sidebar() {
 			 WHERE p.post_type = 'product' AND p.post_status = 'publish'
 			   AND pm.meta_key = '_despace_glb_attachment_id' AND CAST(pm.meta_value AS UNSIGNED) > 0"
 		);
+	$has_ar_count = function_exists( 'despace_get_ar_product_ids' )
+		? count( despace_get_ar_product_ids() )
+		: $has_3d_count;
+	$seasonal_cfg = function_exists( 'despace_get_active_seasonal_config' ) ? despace_get_active_seasonal_config() : null;
+	$winter_count = ( $seasonal_cfg && function_exists( 'despace_get_winter_atelier_product_ids' ) )
+		? count( despace_get_winter_atelier_product_ids() )
+		: 0;
 	$onsale_count = function_exists( 'wc_get_product_ids_on_sale' ) ? count( wc_get_product_ids_on_sale() ) : 0;
 
 	$req_min = isset( $_GET['price_min'] ) && is_numeric( $_GET['price_min'] ) ? absint( $_GET['price_min'] ) : '';
@@ -320,19 +327,40 @@ function despace_filter_sidebar() {
 				</div>
 			</details>
 
-			<!-- 3D / AR Feature -->
-			<details class="f-filter-group" data-filter-name="has_3d">
+			<!-- 3D Model vs AR Room Preview (Distinct filters) -->
+			<details open class="f-filter-group" data-filter-name="has_3d">
 				<summary>
-					<span><?php echo esc_html( furniva_t( '3D & AR VIEW', 'TÍNH NĂNG 3D/AR' ) ); ?></span>
+					<span><?php echo esc_html( furniva_t( '3D & AR EXPERIENCE', 'TRẢI NGHIỆM 3D & AR' ) ); ?></span>
 				</summary>
 				<div class="f-filter-body">
 					<label class="f-filter-check">
-						<input type="checkbox" name="has_3d" value="yes" data-name="<?php echo esc_attr( furniva_t( '3D/AR Available', 'Xem được 3D/AR' ) ); ?>" />
-						<span><?php echo esc_html( furniva_t( '3D / AR Available', 'Xem được 3D/AR' ) ); ?></span>
+						<input type="checkbox" name="has_3d" value="yes" data-name="<?php echo esc_attr( furniva_t( '3D Model 360°', 'Mô hình 3D 360°' ) ); ?>" />
+						<span><?php echo esc_html( furniva_t( '3D Model (360° View)', 'Có mô hình 3D 360°' ) ); ?></span>
 						<span class="f-count">(<?php echo (int) $has_3d_count; ?>)</span>
+					</label>
+					<label class="f-filter-check">
+						<input type="checkbox" name="has_ar" value="yes" data-name="<?php echo esc_attr( furniva_t( 'AR Room Preview', 'Hỗ trợ AR đặt phòng' ) ); ?>" />
+						<span><?php echo esc_html( furniva_t( 'AR Ready (iOS / Android)', 'Hỗ trợ AR đặt phòng 1:1' ) ); ?></span>
+						<span class="f-count">(<?php echo (int) $has_ar_count; ?>)</span>
 					</label>
 				</div>
 			</details>
+
+			<?php if ( $seasonal_cfg && $winter_count > 0 ) : ?>
+			<!-- Winter Atelier 2026 Holiday Collection -->
+			<details open class="f-filter-group f-filter-group--seasonal" data-filter-name="collection">
+				<summary>
+					<span>❄ <?php echo esc_html( furniva_t( 'WINTER ATELIER 2026', 'BỘ SƯU TẬP MÙA LỄ HỘI' ) ); ?></span>
+				</summary>
+				<div class="f-filter-body">
+					<label class="f-filter-check">
+						<input type="checkbox" name="collection" value="winter-atelier" data-name="<?php echo esc_attr( furniva_t( 'Winter Atelier Edit', 'Winter Atelier 2026' ) ); ?>" />
+						<span><?php echo esc_html( furniva_t( 'Winter Atelier Holiday Edit', 'Tuyển chọn Winter Atelier' ) ); ?></span>
+						<span class="f-count">(<?php echo (int) $winter_count; ?>)</span>
+					</label>
+				</div>
+			</details>
+			<?php endif; ?>
 
 			<div class="f-filter-foot">
 				<button type="submit" class="f-filter-apply" id="furniva-filter-apply"><?php echo esc_html( furniva_t( 'Apply', 'Áp dụng' ) ); ?></button>
