@@ -542,7 +542,8 @@ function despace_category_mega_dropdown( $cat_slug ) {
 		return '';
 	}
 	$lang      = function_exists( 'despace_current_language' ) ? despace_current_language() : 'vi';
-	$cache_key = 'despace_mega_v2_' . md5( $cat_slug . '_' . $lang );
+	$host_key  = isset( $_SERVER['HTTP_HOST'] ) ? strtolower( (string) wp_unslash( $_SERVER['HTTP_HOST'] ) ) : home_url();
+	$cache_key = 'despace_mega_v2_' . md5( $cat_slug . '_' . $lang . '_' . $host_key );
 	$cached    = get_transient( $cache_key );
 	if ( false !== $cached && is_string( $cached ) ) {
 		return $cached;
