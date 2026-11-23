@@ -11351,11 +11351,10 @@ a,
 	text-decoration: none !important;
 }
 
-/* 2. Đồng bộ màu thương hiệu (Nâu đen ấm #1C1917) thay cho màu xanh dương mặc định */
+/* 2. Đồng bộ màu thương hiệu (Nâu đen ấm #1C1917) thay cho màu xanh dương mặc định (không ghi đè .ax-tab-btn) */
 .woocommerce-tabs ul.tabs li.active a,
 .woocommerce-tabs ul.tabs li.active,
-.product-tabs .active,
-.ax-tab-btn.active {
+.product-tabs .active {
 	background-color: #1c1917 !important;
 	border-color: #1c1917 !important;
 	color: #ffffff !important;

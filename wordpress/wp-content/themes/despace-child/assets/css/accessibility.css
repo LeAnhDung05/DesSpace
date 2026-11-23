@@ -286,9 +286,17 @@ button:disabled:focus-visible {
 
 /* --------------------------------------------------
    14. Required Field Indicator
+   (Only style native WooCommerce/HTML asterisk without duplicating it via ::after)
    -------------------------------------------------- */
-.required::after,
-label .required::after {
+abbr.required,
+label .required {
+    color: #bf5b50;
+    text-decoration: none;
+    border-bottom: 0;
+}
+
+.required:empty::after,
+label .required:empty::after {
     content: ' *';
     color: #bf5b50;
 }

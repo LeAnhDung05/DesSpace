@@ -38,7 +38,8 @@ if ( is_singular( 'product' ) ) {
 		}
 	}
 	if ( empty( $hero_image_url ) ) {
-		$hero_image_url = get_stylesheet_directory_uri() . '/assets/images/hero-scandinavian.jpg';
+		$shop_seasonal  = function_exists( 'despace_get_active_seasonal_config' ) ? despace_get_active_seasonal_config() : null;
+		$hero_image_url = get_stylesheet_directory_uri() . '/assets/images/' . ( $shop_seasonal ? 'hero-winter-atelier.webp' : 'hero-scandinavian.webp' );
 	}
 	?>
 	<section class="f-shop-hero <?php echo is_shop() ? 'f-shop-hero--no-split' : ''; ?> fv-reveal fv-reveal-up" aria-label="<?php echo esc_attr( furniva_t( 'Shop Catalogue Header', 'Tiêu đề danh mục cửa hàng' ) ); ?>">

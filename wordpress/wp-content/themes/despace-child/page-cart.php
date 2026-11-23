@@ -51,30 +51,8 @@ $progress_percent = $needs_shipping ? min(100, ($subtotal / $shipping_threshold)
                 <?php echo esc_html( furniva_t( 'Shopping Cart', 'Giỏ hàng' ) ); ?>
             </h1>
 
-            <?php if ( ! empty( $cart_items ) && $needs_shipping ) : ?>
-            <!-- Free Shipping Progress -->
-            <div class="ax-shipping-progress">
-                <?php if ( $remaining_for_free_shipping > 0 ) : ?>
-                    <p class="ax-progress-text">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                            <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
-                            <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
-                        </svg>
-                        <?php printf( wp_kses_post( furniva_t( 'Add %s more for FREE shipping!', 'Thêm %s nữa để được MIỄN PHÍ giao hàng!' ) ), wp_kses_post( wc_price( $remaining_for_free_shipping ) ) ); ?>
-                    </p>
-                <?php else : ?>
-                    <p class="ax-progress-text success">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                            <polyline points="22 4 12 14.01 9 11.01"/>
-                        </svg>
-                        <?php echo esc_html( furniva_t( 'You\'ve unlocked FREE shipping!', 'Bạn đã được MIỄN PHÍ giao hàng!' ) ); ?>
-                    </p>
-                <?php endif; ?>
-                <div class="ax-progress-bar">
-                    <div class="ax-progress-fill" style="width: <?php echo esc_attr( $progress_percent ); ?>%"></div>
-                </div>
-            </div>
+            <?php if ( function_exists( 'despace_render_commerce_stepper' ) ) : ?>
+                <?php despace_render_commerce_stepper( 1 ); ?>
             <?php endif; ?>
         </div>
     </section>

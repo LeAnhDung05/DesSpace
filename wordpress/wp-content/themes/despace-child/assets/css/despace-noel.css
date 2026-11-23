@@ -884,6 +884,12 @@ body.despace-theme-noel .fv-footer__owner-avatar {
 	box-shadow: 0 10px 28px rgba(28, 25, 23, 0.14);
 }
 
+/* Keep transactional Cart & Checkout pages 100% distraction-free so floating pills never cover form fields */
+body.woocommerce-cart #despace-noel-controls,
+body.woocommerce-checkout #despace-noel-controls {
+	display: none !important;
+}
+
 .ds-noel-ctrl-btn {
 	display: inline-flex;
 	align-items: center;

@@ -67,10 +67,12 @@ if (!empty($pdp_raw_dims['length']) && !empty($pdp_raw_dims['width']) && !empty(
     $pdp_dim_str = $pdp_model_info['dimensions'];
 }
 $pdp_seasonal = function_exists('despace_get_active_seasonal_config') ? despace_get_active_seasonal_config() : null;
-$free_ship_vnd = function_exists('despace_get_free_shipping_threshold') ? despace_get_free_shipping_threshold() : 5000000.0;
-$free_ship_lbl = furniva_is_vi()
-    ? number_format($free_ship_vnd, 0, ',', '.') . ' ₫'
-    : number_format($free_ship_vnd, 0, '.', ',') . ' ₫ (≈ $' . number_format(round($free_ship_vnd / 25000), 0) . ')';
+$pdp_verified_coupon = function_exists('despace_get_verified_coupon') ? despace_get_verified_coupon(is_array($pdp_seasonal) && !empty($pdp_seasonal['promo_code']) ? (string) $pdp_seasonal['promo_code'] : 'DESPACE10') : null;
+$pdp_single_finish = '';
+$pdp_color_terms = wc_get_product_terms($id, 'pa_color', array('fields' => 'names'));
+if (!empty($pdp_color_terms) && !is_wp_error($pdp_color_terms)) {
+    $pdp_single_finish = furniva_term_label($pdp_color_terms[0], 'pa_color');
+}
 ?>
 
 <div id="product-<?php echo esc_attr($id); ?>" <?php wc_product_class('ax-product-page', $product); ?>>
@@ -149,6 +151,11 @@ $free_ship_lbl = furniva_is_vi()
                                 <path d="m9 18 6-6-6-6" />
                             </svg>
                         </button>
+                    <?php endif; ?>
+
+                    <!-- Gallery Counter Pill -->
+                    <?php if (count($all_images) > 1): ?>
+                        <span class="ax-gallery-counter" id="axGalleryCounter" aria-live="polite">1 / <?php echo esc_html((string) count($all_images)); ?></span>
                     <?php endif; ?>
 
                     <!-- Zoom button -->
@@ -247,34 +254,57 @@ $free_ship_lbl = furniva_is_vi()
                 <!-- Title -->
                 <h1 class="ax-product-name"><?php echo esc_html($product->get_name()); ?></h1>
 
-                <p class="ax-product-sku">
-                    <span><?php echo esc_html(furniva_t('SKU:', 'Mã sản phẩm:')); ?></span>
-                    <span id="axProductSku"
-                        aria-live="polite"><?php echo esc_html($product->get_sku() ?: '—'); ?></span>
-                </p>
+                <div class="ax-pdp-meta-ribbon">
+                    <p class="ax-product-sku">
+                        <span><?php echo esc_html(furniva_t('SKU:', 'Mã SP:')); ?></span>
+                        <span id="axProductSku"
+                            aria-live="polite"><?php echo esc_html($product->get_sku() ?: '—'); ?></span>
+                    </p>
 
-                <!-- Rating -->
-                <div class="ax-product-rating">
-                    <div class="ax-stars">
-                        <?php for ($i = 1; $i <= 5; $i++): ?>
-                            <svg width="16" height="16" viewBox="0 0 24 24"
-                                fill="<?php echo $i <= round($rating) ? '#c5a880' : '#e5ddd2'; ?>">
-                                <path
-                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                            </svg>
-                        <?php endfor; ?>
+                    <!-- Rating -->
+                    <div class="ax-product-rating">
+                        <div class="ax-stars">
+                            <?php for ($i = 1; $i <= 5; $i++): ?>
+                                <svg width="15" height="15" viewBox="0 0 24 24"
+                                    fill="<?php echo $i <= round($rating) ? '#c5a880' : '#e5ddd2'; ?>" aria-hidden="true">
+                                    <path
+                                        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                            <?php endfor; ?>
+                        </div>
+                        <span class="ax-rating-text">
+                            <?php echo number_format($rating, 1); ?> (<?php echo $review_count; ?>
+                            <?php echo esc_html(furniva_t('reviews', 'đánh giá')); ?>)
+                        </span>
+                        <span
+                            class="ax-write-review"><?php echo esc_html(furniva_t('Write a review', 'Viết đánh giá')); ?></span>
                     </div>
-                    <span class="ax-rating-text">
-                        <?php echo number_format($rating, 1); ?> (<?php echo $review_count; ?>
-                        <?php echo esc_html(furniva_t('reviews', 'đánh giá')); ?>)
-                    </span>
-                    <span
-                        class="ax-write-review"><?php echo esc_html(furniva_t('Write a review', 'Viết đánh giá')); ?></span>
                 </div>
 
-                <!-- Price -->
-                <div class="ax-product-price" id="axProductPrice" aria-live="polite">
-                    <?php echo wp_kses_post($product->get_price_html()); ?>
+                <!-- Price & Verified Active Voucher Card -->
+                <div class="ax-pdp-price-card">
+                    <div class="ax-product-price" id="axProductPrice" aria-live="polite">
+                        <?php echo wp_kses_post($product->get_price_html()); ?>
+                        <?php if ($percent > 0): ?>
+                            <span class="ax-pdp-save-pill"><?php echo esc_html(sprintf(furniva_t('Save %d%%', 'Tiết kiệm %d%%'), (int) $percent)); ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <?php if ($pdp_verified_coupon): ?>
+                        <div class="ax-pdp-voucher-hint">
+                            <span>
+                                <?php
+                                echo wp_kses_post(
+                                    furniva_is_vi()
+                                        ? sprintf('Nhập mã <strong>%s</strong> (%s) tại Giỏ hàng', esc_html($pdp_verified_coupon['code']), esc_html($pdp_verified_coupon['label_vi']))
+                                        : sprintf('Apply active code <strong>%s</strong> (%s) in Cart', esc_html($pdp_verified_coupon['code']), esc_html($pdp_verified_coupon['label_en']))
+                                );
+                                ?>
+                            </span>
+                            <button type="button" class="ax-pdp-voucher-hint__copy" data-copy-coupon="<?php echo esc_attr($pdp_verified_coupon['code']); ?>">
+                                <?php echo esc_html(furniva_t('Copy', 'Sao chép')); ?>
+                            </button>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Short Description -->
@@ -286,21 +316,39 @@ $free_ship_lbl = furniva_is_vi()
                     <?php endif; ?>
                 </div>
 
-                <div class="ax-divider"></div>
-
-                <!-- Single Product Finish Display (No dots swatches) -->
+                <!-- Quick Verified Physical Specifications Strip -->
                 <?php
-                $single_finish = '';
-                $color_terms = wc_get_product_terms($id, 'pa_color', array('fields' => 'names'));
-                if (!empty($color_terms) && !is_wp_error($color_terms)) {
-                    $single_finish = furniva_term_label($color_terms[0], 'pa_color');
-                }
-                if ($single_finish && !$product->is_type('variable')): ?>
-                    <div class="ax-finish-badge-row">
-                        <span class="ax-var-label"><?php echo esc_html(furniva_t('Finish:', 'Màu hoàn thiện:')); ?></span>
-                        <strong class="ax-finish-val"><?php echo esc_html($single_finish); ?></strong>
+                $quick_dims = (!empty($pdp_raw_dims['length']) && !empty($pdp_raw_dims['width']) && !empty($pdp_raw_dims['height']))
+                    ? sprintf('%s × %s × %s cm', $pdp_raw_dims['length'], $pdp_raw_dims['width'], $pdp_raw_dims['height'])
+                    : '';
+                $quick_weight = $product->get_weight() ? wc_format_weight($product->get_weight()) : '';
+                if ($quick_dims || $pdp_single_finish || $quick_weight):
+                ?>
+                    <div class="ax-pdp-quick-specs" aria-label="<?php echo esc_attr(furniva_t('Key specifications', 'Thông số nổi bật')); ?>">
+                        <?php if ($quick_dims): ?>
+                            <div class="ax-pdp-quick-spec">
+                                <span class="ax-pdp-quick-spec__lbl"><?php echo esc_html(furniva_t('Dimensions', 'Kích thước')); ?></span>
+                                <span class="ax-pdp-quick-spec__val"><?php echo esc_html($quick_dims); ?></span>
+                            </div>
+                        <?php endif; ?>
+                        <?php if ($pdp_single_finish && !$product->is_type('variable')): ?>
+                            <div class="ax-pdp-quick-spec">
+                                <span class="ax-pdp-quick-spec__lbl"><?php echo esc_html(furniva_t('Finish', 'Hoàn thiện')); ?></span>
+                                <span class="ax-pdp-quick-spec__val"><?php echo esc_html($pdp_single_finish); ?></span>
+                            </div>
+                        <?php endif; ?>
+                        <?php if ($quick_weight): ?>
+                            <div class="ax-pdp-quick-spec">
+                                <span class="ax-pdp-quick-spec__lbl"><?php echo esc_html(furniva_t('Weight', 'Trọng lượng')); ?></span>
+                                <span class="ax-pdp-quick-spec__val"><?php echo esc_html($quick_weight); ?></span>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 <?php endif; ?>
+
+                <div class="ax-divider"></div>
+
+                <?php $single_finish = $pdp_single_finish; ?>
 
                 <!-- Availability -->
                 <div class="ax-availability">
@@ -354,8 +402,7 @@ $free_ship_lbl = furniva_is_vi()
 
                     if ($has_model):
                         ?>
-                        <div class="ax-3d-ar-actions-group"
-                            style="display:flex; gap:10px; margin: 16px 0 20px; flex-wrap:wrap;">
+                        <div class="ax-3d-ar-actions-group">
                             <!-- Nút 1: Xem Mô hình 3D 360° -->
                             <button type="button" class="ar-product-btn ax-open-3d-btn" id="axView3DModelBtn"
                                 data-product-id="<?php echo esc_attr($product->get_id()); ?>"
@@ -369,10 +416,9 @@ $free_ship_lbl = furniva_is_vi()
                                 data-default-color="<?php echo esc_attr($def_color); ?>" data-has-3d="yes"
                                 data-ar-enabled="<?php echo $has_ar ? 'yes' : 'no'; ?>"
                                 data-glb-url="<?php echo esc_url($model_info['glb_url']); ?>"
-                                data-usdz-url="<?php echo esc_url($model_info['usdz_url']); ?>" data-initial-tab="3d"
-                                style="flex: 1 1 200px; justify-content: center; background: #FAF7F2; color: #1C1917; border: 1.5px solid #D5C9BC;">
+                                data-usdz-url="<?php echo esc_url($model_info['usdz_url']); ?>" data-initial-tab="3d">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
+                                    stroke-width="2" aria-hidden="true">
                                     <path
                                         d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
                                     <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
@@ -394,10 +440,9 @@ $free_ship_lbl = furniva_is_vi()
                                     data-category-type="<?php echo esc_attr($cat_type); ?>"
                                     data-default-color="<?php echo esc_attr($def_color); ?>" data-has-3d="yes" data-ar-enabled="yes"
                                     data-glb-url="<?php echo esc_url($model_info['glb_url']); ?>"
-                                    data-usdz-url="<?php echo esc_url($model_info['usdz_url']); ?>" data-initial-tab="ar"
-                                    style="flex: 1 1 200px; justify-content: center; background: #1C1917; color: #FAF7F2; border: 1.5px solid #1C1917;">
+                                    data-usdz-url="<?php echo esc_url($model_info['usdz_url']); ?>" data-initial-tab="ar">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2">
+                                        stroke-width="2" aria-hidden="true">
                                         <path
                                             d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
                                         <circle cx="12" cy="13" r="4" />
@@ -811,7 +856,25 @@ $free_ship_lbl = furniva_is_vi()
             $thumbs.removeClass('active').attr('aria-pressed', 'false');
             $thumbs.eq(index).addClass('active').attr('aria-pressed', 'true');
             currentImageIndex = index;
+            var $counter = $('#axGalleryCounter');
+            if ($counter.length) {
+                $counter.text((index + 1) + ' / ' + totalImages);
+            }
         }
+
+        // One-click verified coupon copy on PDP
+        $(document).on('click', '.ax-pdp-voucher-hint__copy', function () {
+            var $btn = $(this);
+            var code = $btn.attr('data-copy-coupon');
+            if (!code) return;
+            var origText = $btn.text();
+            var doneText = '<?php echo esc_js(furniva_t('Copied ✓', 'Đã chép ✓')); ?>';
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(code).catch(function () {});
+            }
+            $btn.text(doneText);
+            setTimeout(function () { $btn.text(origText); }, 1800);
+        });
 
         $('#axGalleryPrev').on('click', function () {
             var newIndex = currentImageIndex > 0 ? currentImageIndex - 1 : totalImages - 1;

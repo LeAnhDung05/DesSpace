@@ -238,7 +238,7 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 					</div>
 					<div class="ax-privilege-item-content">
 						<h4><?php echo esc_html( furniva_t( 'Craftsmanship Warranty (Simulation)', 'Bảo Hành Kết Cấu (Mô Phỏng Đồ Án)' ) ); ?></h4>
-						<p><?php echo esc_html( furniva_t( 'Automatic digital warranty vault for all engineered wood & fittings.', 'Hệ thống bảo hành điện tử trọn vòng đời cho khung gỗ, bản lề và ray trượt.' ) ); ?></p>
+						<p><?php echo esc_html( furniva_t( 'Structural frame, hinge & slide support according to our store warranty policy (project simulation).', 'Theo dõi hỗ trợ kết cấu khung gỗ, bản lề và ray trượt theo chính sách cửa hàng (mô phỏng đồ án).' ) ); ?></p>
 					</div>
 				</li>
 

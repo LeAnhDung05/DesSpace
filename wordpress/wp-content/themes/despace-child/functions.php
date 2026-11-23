@@ -107,7 +107,7 @@ add_action('wp_head', function () {
 				'Liên hệ DeSpace — Gửi yêu cầu tư vấn sản phẩm nội thất và trải nghiệm không gian 3D/AR (Thông tin showroom mô phỏng phục vụ đồ án).',
 			),
 			'cau-hoi-thuong-gap'          => array(
-				'DeSpace FAQs — Answers on timber materials, 3D/AR room preview, delivery, installation, and 5-year warranty.',
+				'DeSpace FAQs — Answers on timber materials, 3D/AR room preview, delivery, installation, and store policies.',
 				'Giải đáp các câu hỏi thường gặp về sản phẩm gỗ tự nhiên, công nghệ xem phòng 3D/AR, đặt hàng và chính sách khách hàng tại DeSpace.',
 			),
 			'chinh-sach-giao-hang'        => array(
@@ -740,6 +740,36 @@ function furniva_assets() {
 				get_stylesheet_directory_uri() . '/assets/css/my-account.css',
 				array('furniva'),
 				filemtime($my_account_css)
+			);
+		}
+	}
+
+	// Unified Modern Luxury WooCommerce & Product UI System (2026)
+	$is_wc_modern_page = is_front_page()
+		|| (function_exists('is_woocommerce') && is_woocommerce())
+		|| (function_exists('is_cart') && is_cart())
+		|| (function_exists('is_checkout') && is_checkout())
+		|| (function_exists('is_account_page') && is_account_page())
+		|| is_page_template('page-wishlist.php')
+		|| is_page_template('page-cart.php');
+	if ($is_wc_modern_page) {
+		$wc_modern_css  = get_stylesheet_directory() . '/assets/css/woocommerce-modern.css';
+		$wc_modern_deps = array('furniva', 'furniva-a11y');
+		if (wp_style_is('furniva-single-product', 'enqueued')) {
+			$wc_modern_deps[] = 'furniva-single-product';
+		}
+		if (wp_style_is('furniva-wishlist-cart', 'enqueued')) {
+			$wc_modern_deps[] = 'furniva-wishlist-cart';
+		}
+		if (wp_style_is('furniva-my-account', 'enqueued')) {
+			$wc_modern_deps[] = 'furniva-my-account';
+		}
+		if (file_exists($wc_modern_css)) {
+			wp_enqueue_style(
+				'despace-woocommerce-modern',
+				get_stylesheet_directory_uri() . '/assets/css/woocommerce-modern.css',
+				$wc_modern_deps,
+				(string) filemtime($wc_modern_css) . '-' . (string) filesize($wc_modern_css)
 			);
 		}
 	}
@@ -1528,35 +1558,126 @@ add_filter('pre_option_woocommerce_currency_pos', function () {
 	return 'right_space';
 });
 
-// Free shipping progress bar on classic [woocommerce_cart] shortcode page
-add_action( 'woocommerce_before_cart_table', function () {
-	if ( ! function_exists( 'WC' ) || ! WC()->cart || WC()->cart->is_empty() || ! WC()->cart->needs_shipping() ) {
+// Translate WooCommerce "Shipment" package label cleanly for Vietnamese storefront
+add_filter( 'woocommerce_shipping_package_name', function ( $name, $i, $package ) {
+	if ( function_exists( 'furniva_t' ) ) {
+		return furniva_t( 'Shipping', 'Vận chuyển' );
+	}
+	return $name;
+}, 20, 3 );
+
+/**
+ * Render unified 3-Step Commerce Stepper (01 Cart -> 02 Checkout -> 03 Complete).
+ *
+ * @param int $active_step 1 = Cart, 2 = Checkout, 3 = Order Received.
+ */
+function despace_render_commerce_stepper( int $active_step = 1 ): void {
+	$steps = array(
+		1 => furniva_t( 'Shopping Cart', 'Giỏ hàng' ),
+		2 => furniva_t( 'Checkout', 'Thanh toán' ),
+		3 => furniva_t( 'Order Complete', 'Hoàn tất' ),
+	);
+	echo '<nav class="ds-commerce-stepper" aria-label="' . esc_attr( furniva_t( 'Checkout progress', 'Tiến trình đặt hàng' ) ) . '">';
+	foreach ( $steps as $num => $label ) {
+		$cls = ( $num < $active_step ) ? 'is-done' : ( $num === $active_step ? 'is-active' : '' );
+		echo '<div class="ds-commerce-step ' . esc_attr( $cls ) . '"' . ( $num === $active_step ? ' aria-current="step"' : '' ) . '>';
+		echo '<span class="ds-commerce-step__num">' . ( $num < $active_step ? '✓' : '0' . (int) $num ) . '</span>';
+		echo '<span>' . esc_html( $label ) . '</span>';
+		echo '</div>';
+		if ( $num < 3 ) {
+			echo '<span class="ds-commerce-step__line ' . ( $num < $active_step ? 'is-done' : '' ) . '" aria-hidden="true"></span>';
+		}
+	}
+	echo '</nav>';
+}
+
+// 1. Stepper on Classic Cart
+add_action( 'woocommerce_before_cart', function () {
+	despace_render_commerce_stepper( 1 );
+}, 5 );
+
+// 2. Verified Active Store Coupons Quick-Apply Ribbon on Cart (ONLY real published WooCommerce coupons)
+add_action( 'woocommerce_before_cart', function () {
+	if ( ! function_exists( 'WC' ) || ! WC()->cart || WC()->cart->is_empty() ) {
 		return;
 	}
-	$subtotal  = (float) WC()->cart->get_subtotal();
-	$threshold = despace_get_free_shipping_threshold();
-	$remaining = max( 0.0, $threshold - $subtotal );
-	$percent   = min( 100, (int) round( ( $subtotal / max( 1.0, $threshold ) ) * 100 ) );
+	$verified_coupons = array();
+	foreach ( array( 'DESPACE10', 'DESPACE500K' ) as $cand ) {
+		$c = despace_get_verified_coupon( $cand );
+		if ( $c && ! isset( $verified_coupons[ $c['code'] ] ) ) {
+			$verified_coupons[ $c['code'] ] = $c;
+		}
+	}
+	if ( empty( $verified_coupons ) ) {
+		return;
+	}
 	?>
-	<div class="ds-cart-freeship-bar" role="status" aria-live="polite">
-		<div class="ds-cart-freeship-bar__top">
-			<span class="ds-cart-freeship-bar__msg">
-				<?php if ( $remaining > 0 ) : ?>
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-					<span><?php printf( wp_kses_post( furniva_t( 'Add %s more to unlock <strong>FREE Nationwide Delivery</strong>.', 'Mua thêm %s để được <strong>MIỄN PHÍ GIAO HÀNG TOÀN QUỐC</strong>.' ) ), '<strong>' . wp_kses_post( wc_price( $remaining ) ) . '</strong>' ); ?></span>
-				<?php else : ?>
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-					<span class="is-unlocked"><?php echo wp_kses_post( furniva_t( 'You have unlocked <strong>FREE Nationwide Delivery</strong>!', 'Chúc mừng! Đơn hàng được <strong>MIỄN PHÍ GIAO HÀNG TOÀN QUỐC</strong>!' ) ); ?></span>
-				<?php endif; ?>
+	<div class="ds-cart-voucher-ribbon" role="region" aria-label="<?php echo esc_attr( furniva_t( 'Active store vouchers', 'Mã ưu đãi đang hoạt động' ) ); ?>">
+		<div class="ds-cart-voucher-ribbon__lead">
+			<span class="ds-cart-voucher-ribbon__icon" aria-hidden="true">
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
 			</span>
-			<span class="ds-cart-freeship-bar__pct"><?php echo esc_html( $percent ); ?>%</span>
+			<span><?php echo esc_html( furniva_t( 'Active store vouchers — click to apply:', 'Mã ưu đãi đang áp dụng — chạm để nhập nhanh:' ) ); ?></span>
 		</div>
-		<div class="ds-cart-freeship-bar__track" aria-hidden="true">
-			<div class="ds-cart-freeship-bar__fill <?php echo $remaining <= 0 ? 'is-complete' : ''; ?>" style="width:<?php echo esc_attr( $percent ); ?>%"></div>
+		<div class="ds-cart-voucher-chips">
+			<?php foreach ( $verified_coupons as $vc ) : ?>
+				<button type="button" class="ds-cart-voucher-chip" data-quick-coupon="<?php echo esc_attr( $vc['code'] ); ?>">
+					<code><?php echo esc_html( $vc['code'] ); ?></code>
+					<small><?php echo esc_html( furniva_is_vi() ? $vc['label_vi'] : $vc['label_en'] ); ?></small>
+				</button>
+			<?php endforeach; ?>
+		</div>
+	</div>
+	<script>
+	(function () {
+		if (window.__dsQuickCouponBound) return;
+		window.__dsQuickCouponBound = true;
+		document.addEventListener('click', function (e) {
+			var btn = e.target.closest('.ds-cart-voucher-chip[data-quick-coupon]');
+			if (!btn) return;
+			var code = btn.getAttribute('data-quick-coupon');
+			var inp = document.querySelector('#coupon_code, input[name="coupon_code"]');
+			var applyBtn = document.querySelector('button[name="apply_coupon"], input[name="apply_coupon"]');
+			if (inp && code) {
+				inp.value = code;
+				inp.dispatchEvent(new Event('input', { bubbles: true }));
+				if (applyBtn) {
+					applyBtn.click();
+				}
+			}
+		});
+	})();
+	</script>
+	<?php
+} );
+
+// 3. Verified Trust Strip inside Cart Totals Summary Card
+add_action( 'woocommerce_after_cart_totals', function () {
+	?>
+	<div class="ds-cart-trust-strip">
+		<div class="ds-cart-trust-pill">
+			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+			<span><?php echo esc_html( furniva_t( 'Secure Checkout', 'Thanh toán bảo mật' ) ); ?></span>
+		</div>
+		<div class="ds-cart-trust-pill">
+			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+			<span><?php echo esc_html( furniva_t( 'White-Glove Inspection', 'Đồng kiểm khi nhận hàng' ) ); ?></span>
 		</div>
 	</div>
 	<?php
 } );
+
+// 4. Stepper on Checkout & Order Received
+add_action( 'woocommerce_before_checkout_form', function () {
+	if ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'order-received' ) ) {
+		return;
+	}
+	despace_render_commerce_stepper( 2 );
+}, 5 );
+
+add_action( 'woocommerce_before_thankyou', function () {
+	despace_render_commerce_stepper( 3 );
+}, 5 );
 
 // Add "New" badge to genuinely new products (limit to top 3 newest)
 function furniva_is_new_product($product_id)

@@ -66,69 +66,19 @@ if ( ! empty( $raw_dims['length'] ) && ! empty( $raw_dims['width'] ) && ! empty(
 			<div class="f-card-badges">
 				<?php if ( ! $is_in_stock ) : ?>
 					<span class="f-badge-custom f-badge-outofstock"><?php echo esc_html( furniva_t( 'Out of stock', 'Hết hàng' ) ); ?></span>
-				<?php else : ?>
-					<?php if ( ! empty( $custom_badge ) ) :
-						$badge_slug  = sanitize_title( $custom_badge );
-						$badge_label = furniva_t( $custom_badge, ( 'Best Seller' === $custom_badge ? 'Bán chạy' : ( 'Featured' === $custom_badge ? 'Nổi bật' : ( 'New' === $custom_badge ? 'Mới' : ( 'Popular' === $custom_badge ? 'Phổ biến' : ( 'Sale' === $custom_badge ? 'Giảm giá' : $custom_badge ) ) ) ) ) );
-					?>
-						<?php if ( $card_seasonal && in_array( $custom_badge, array( 'Best Seller', 'Featured' ), true ) ) : ?>
-							<span class="f-badge-holiday">❄ <?php echo esc_html( furniva_t( 'Winter Atelier', 'Winter Atelier' ) ); ?></span>
-						<?php else : ?>
-							<span class="f-badge-custom f-badge-<?php echo esc_attr( $badge_slug ); ?>"><?php echo esc_html( $badge_label ); ?></span>
-						<?php endif; ?>
-					<?php elseif ( $is_winter_pick && $percent <= 0 ) : ?>
-						<span class="f-badge-holiday">❄ <?php echo esc_html( furniva_t( 'Winter Atelier', 'Winter Atelier' ) ); ?></span>
-					<?php endif; ?>
-					<?php if ( $percent > 0 ) : ?>
-						<span class="<?php echo $card_seasonal ? 'f-badge-holiday f-badge-holiday--berry' : 'f-badge-sale'; ?>"><?php echo $card_seasonal ? esc_html( furniva_t( 'Holiday', 'Noel' ) . ' ' ) : ''; ?>-<?php echo esc_html( $percent ); ?>%</span>
-					<?php endif; ?>
+				<?php elseif ( $card_seasonal && $is_winter_pick ) : ?>
+					<span class="f-badge-holiday">❄ <?php echo esc_html( 'Winter Atelier' . ( $percent > 0 ? ' · -' . $percent . '%' : '' ) ); ?></span>
+				<?php elseif ( $percent > 0 ) : ?>
+					<span class="<?php echo $card_seasonal ? 'f-badge-holiday f-badge-holiday--berry' : 'f-badge-sale'; ?>"><?php echo $card_seasonal ? esc_html( furniva_t( 'Holiday', 'Noel' ) . ' ' ) : ''; ?>-<?php echo esc_html( $percent ); ?>%</span>
+				<?php elseif ( ! empty( $custom_badge ) ) :
+					$badge_slug  = sanitize_title( $custom_badge );
+					$badge_label = furniva_t( $custom_badge, ( 'Best Seller' === $custom_badge ? 'Bán chạy' : ( 'Featured' === $custom_badge ? 'Nổi bật' : ( 'New' === $custom_badge ? 'Mới' : ( 'Popular' === $custom_badge ? 'Phổ biến' : ( 'Sale' === $custom_badge ? 'Giảm giá' : $custom_badge ) ) ) ) ) );
+				?>
+					<span class="f-badge-custom f-badge-<?php echo esc_attr( $badge_slug ); ?>"><?php echo esc_html( $badge_label ); ?></span>
 				<?php endif; ?>
 			</div>
 
 			<div class="f-card-actions">
-				<?php
-				// Distinct 3D Model button + AR Ready trigger pill (zero eager 3D model loading on listing page)
-				if ( ! empty( $card_3d['glb_url'] ) ) :
-					$has_card_ar = ! empty( $card_3d['ar_enabled'] );
-				?>
-					<button type="button" class="f-card-3d-btn ax-open-3d-btn"
-						data-product-id="<?php echo esc_attr( $id ); ?>"
-						data-product-name="<?php echo esc_attr( $product->get_name() ); ?>"
-						data-product-price="<?php echo esc_attr( wp_strip_all_tags( wc_price( $product->get_price() ) ) ); ?>"
-						data-product-regular-price="<?php echo esc_attr( $is_on_sale ? wp_strip_all_tags( wc_price( $regular ) ) : '' ); ?>"
-						data-product-raw-price="<?php echo esc_attr( $product->get_price() ); ?>"
-						data-product-image="<?php echo esc_url( $thumb_large ); ?>"
-						data-product-dimensions="<?php echo esc_attr( $card_dim_str ); ?>"
-						data-has-3d="yes"
-						data-ar-enabled="<?php echo $has_card_ar ? 'yes' : 'no'; ?>"
-						data-glb-url="<?php echo esc_url( $card_3d['glb_url'] ); ?>"
-						data-usdz-url="<?php echo esc_url( $card_3d['usdz_url'] ?? '' ); ?>"
-						data-initial-tab="3d"
-						aria-label="<?php echo esc_attr( furniva_t( 'Inspect 360° 3D Model', 'Xem mô hình 3D 360°' ) ); ?>"
-						title="<?php echo esc_attr( furniva_t( 'Inspect 360° 3D Model', 'Xem mô hình 3D 360°' ) ); ?>">
-						<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-						<span>3D</span>
-					</button>
-					<?php if ( $has_card_ar ) : ?>
-					<button type="button" class="f-card-ar-btn ax-open-ar-btn"
-						data-product-id="<?php echo esc_attr( $id ); ?>"
-						data-product-name="<?php echo esc_attr( $product->get_name() ); ?>"
-						data-product-price="<?php echo esc_attr( wp_strip_all_tags( wc_price( $product->get_price() ) ) ); ?>"
-						data-product-regular-price="<?php echo esc_attr( $is_on_sale ? wp_strip_all_tags( wc_price( $regular ) ) : '' ); ?>"
-						data-product-raw-price="<?php echo esc_attr( $product->get_price() ); ?>"
-						data-product-image="<?php echo esc_url( $thumb_large ); ?>"
-						data-product-dimensions="<?php echo esc_attr( $card_dim_str ); ?>"
-						data-has-3d="yes"
-						data-ar-enabled="yes"
-						data-glb-url="<?php echo esc_url( $card_3d['glb_url'] ); ?>"
-						data-usdz-url="<?php echo esc_url( $card_3d['usdz_url'] ?? '' ); ?>"
-						data-initial-tab="ar"
-						aria-label="<?php echo esc_attr( furniva_t( 'Preview AR in Your Room', 'Đặt thử AR trong phòng' ) ); ?>"
-						title="<?php echo esc_attr( furniva_t( 'Preview AR in Your Room', 'Đặt thử AR trong phòng' ) ); ?>">
-						<span>AR</span>
-					</button>
-					<?php endif; ?>
-				<?php endif; ?>
 				<?php
 				// Wishlist button backed by existing YITH WooCommerce Wishlist AJAX handler (never fakes success when backend is missing).
 				$wl_ready       = function_exists( 'despace_is_wishlist_backend_ready' ) && despace_is_wishlist_backend_ready();
@@ -161,6 +111,50 @@ if ( ! empty( $raw_dims['length'] ) && ! empty( $raw_dims['width'] ) && ! empty(
 					</button>
 				<?php endif; ?>
 			</div>
+
+			<?php if ( ! empty( $card_3d['glb_url'] ) ) :
+				$has_card_ar = ! empty( $card_3d['ar_enabled'] );
+			?>
+			<div class="f-card-spatial-dock" role="group" aria-label="<?php echo esc_attr( furniva_t( '3D & AR preview controls', 'Xem thử 3D và AR' ) ); ?>">
+				<button type="button" class="f-card-3d-btn ax-open-3d-btn"
+					data-product-id="<?php echo esc_attr( $id ); ?>"
+					data-product-name="<?php echo esc_attr( $product->get_name() ); ?>"
+					data-product-price="<?php echo esc_attr( wp_strip_all_tags( wc_price( $product->get_price() ) ) ); ?>"
+					data-product-regular-price="<?php echo esc_attr( $is_on_sale ? wp_strip_all_tags( wc_price( $regular ) ) : '' ); ?>"
+					data-product-raw-price="<?php echo esc_attr( $product->get_price() ); ?>"
+					data-product-image="<?php echo esc_url( $thumb_large ); ?>"
+					data-product-dimensions="<?php echo esc_attr( $card_dim_str ); ?>"
+					data-has-3d="yes"
+					data-ar-enabled="<?php echo $has_card_ar ? 'yes' : 'no'; ?>"
+					data-glb-url="<?php echo esc_url( $card_3d['glb_url'] ); ?>"
+					data-usdz-url="<?php echo esc_url( $card_3d['usdz_url'] ?? '' ); ?>"
+					data-initial-tab="3d"
+					aria-label="<?php echo esc_attr( furniva_t( 'Inspect 360° 3D Model', 'Xem mô hình 3D 360°' ) ); ?>"
+					title="<?php echo esc_attr( furniva_t( 'Inspect 360° 3D Model', 'Xem mô hình 3D 360°' ) ); ?>">
+					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+					<span>3D</span>
+				</button>
+				<?php if ( $has_card_ar ) : ?>
+				<button type="button" class="f-card-ar-btn ax-open-ar-btn"
+					data-product-id="<?php echo esc_attr( $id ); ?>"
+					data-product-name="<?php echo esc_attr( $product->get_name() ); ?>"
+					data-product-price="<?php echo esc_attr( wp_strip_all_tags( wc_price( $product->get_price() ) ) ); ?>"
+					data-product-regular-price="<?php echo esc_attr( $is_on_sale ? wp_strip_all_tags( wc_price( $regular ) ) : '' ); ?>"
+					data-product-raw-price="<?php echo esc_attr( $product->get_price() ); ?>"
+					data-product-image="<?php echo esc_url( $thumb_large ); ?>"
+					data-product-dimensions="<?php echo esc_attr( $card_dim_str ); ?>"
+					data-has-3d="yes"
+					data-ar-enabled="yes"
+					data-glb-url="<?php echo esc_url( $card_3d['glb_url'] ); ?>"
+					data-usdz-url="<?php echo esc_url( $card_3d['usdz_url'] ?? '' ); ?>"
+					data-initial-tab="ar"
+					aria-label="<?php echo esc_attr( furniva_t( 'Preview AR in Your Room', 'Đặt thử AR trong phòng' ) ); ?>"
+					title="<?php echo esc_attr( furniva_t( 'Preview AR in Your Room', 'Đặt thử AR trong phòng' ) ); ?>">
+					<span>AR</span>
+				</button>
+				<?php endif; ?>
+			</div>
+			<?php endif; ?>
 
 			<a href="<?php echo esc_url( $link ); ?>" aria-label="<?php echo esc_attr( $product->get_name() ); ?>" class="f-card-img-link">
 				<?php

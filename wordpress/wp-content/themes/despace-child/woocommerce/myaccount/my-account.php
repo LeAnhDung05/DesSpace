@@ -80,14 +80,29 @@ if ( function_exists( 'yith_wcwl_count_all_products' ) ) {
 				<span class="ax-stat-value fv-wishlist-count"><?php echo esc_html( $wishlist_count ); ?></span>
 				<span class="ax-stat-label"><?php echo esc_html( furniva_t( 'Saved Items', 'Yêu thích' ) ); ?></span>
 			</a>
+			<?php
+			$published_coupons_count = 0;
+			if ( function_exists( 'get_posts' ) ) {
+				$coupon_ids = get_posts( array(
+					'post_type'      => 'shop_coupon',
+					'post_status'    => 'publish',
+					'posts_per_page' => -1,
+					'fields'         => 'ids',
+				) );
+				$published_coupons_count = is_array( $coupon_ids ) ? count( $coupon_ids ) : 0;
+			}
+			$total_3d_catalog = function_exists( 'despace_get_3d_product_ids' ) ? count( despace_get_3d_product_ids() ) : 0;
+			?>
 			<div class="ax-stat-item">
-				<span class="ax-stat-value">2</span>
-				<span class="ax-stat-label"><?php echo esc_html( furniva_t( 'VIP Vouchers', 'Mã ưu đãi' ) ); ?></span>
+				<span class="ax-stat-value"><?php echo esc_html( (string) $published_coupons_count ); ?></span>
+				<span class="ax-stat-label"><?php echo esc_html( furniva_t( 'Active Coupons', 'Mã ưu đãi' ) ); ?></span>
 			</div>
-			<div class="ax-stat-item">
-				<span class="ax-stat-value">5 <?php echo esc_html( furniva_t( 'Yrs', 'Năm' ) ); ?></span>
-				<span class="ax-stat-label"><?php echo esc_html( furniva_t( 'Warranty', 'Bảo hành' ) ); ?></span>
-			</div>
+			<?php if ( $total_3d_catalog > 0 ) : ?>
+			<a href="<?php echo esc_url( add_query_arg( 'has_3d', 'yes', furniva_url( wc_get_page_permalink( 'shop' ) ) ) ); ?>" class="ax-stat-item">
+				<span class="ax-stat-value"><?php echo esc_html( (string) $total_3d_catalog ); ?></span>
+				<span class="ax-stat-label"><?php echo esc_html( furniva_t( '3D / AR Models', 'Mẫu 3D / AR' ) ); ?></span>
+			</a>
+			<?php endif; ?>
 		</div>
 	</header>
 
