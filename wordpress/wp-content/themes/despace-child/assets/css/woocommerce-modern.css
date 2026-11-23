@@ -2031,6 +2031,14 @@ ul.f-products,
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
+	.ax-stage-switcher {
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	}
+
+	.ax-stage-pill--ar {
+		grid-column: 1 / -1;
+	}
+
 	.ax-pdp-voucher-hint {
 		flex-direction: column;
 		align-items: flex-start;
