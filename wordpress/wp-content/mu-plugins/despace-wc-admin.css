@@ -55,7 +55,7 @@ body.ds-wc-admin-modern .notice[id*="astra"] {
    1. DESPACE COMMERCE TOP WORKSPACE BAR
    ========================================================================== */
 .ds-wc-topbar {
-	margin: 16px 20px 18px 2px;
+	margin: 46px 20px 18px 2px;
 	background: var(--dsw-surface);
 	border: 1px solid var(--dsw-border);
 	border-radius: var(--dsw-radius-lg);
@@ -570,50 +570,51 @@ body.ds-wc-admin-modern table.wp-list-table .row-title:hover {
 }
 
 /* ==========================================================================
-   4. PRODUCTS LIST SPECIFIC POLISH (FIX PRICE/SKU/BRAND WRAP + 3D/AR BADGE)
+   4. PRODUCTS LIST SPECIFIC POLISH (ZERO OVERFLOW + CLEAN COLUMN RHYTHM)
    ========================================================================== */
 body.post-type-product table.wp-list-table {
+	width: 100% !important;
 	table-layout: auto !important;
 }
 
-body.post-type-product table.wp-list-table th,
-body.post-type-product table.wp-list-table td {
+body.post-type-product table.wp-list-table thead th,
+body.post-type-product table.wp-list-table tbody td {
+	padding: 10px 7px !important;
 	word-break: normal !important;
 	overflow-wrap: break-word;
 }
 
 body.post-type-product table.wp-list-table .column-thumb {
-	width: 60px !important;
+	width: 56px !important;
 }
 
 body.post-type-product table.wp-list-table .column-name {
-	min-width: 210px;
+	min-width: 175px;
 }
 
 body.post-type-product table.wp-list-table .column-product_cat {
-	min-width: 120px;
+	width: 112px;
 }
 
 body.post-type-product table.wp-list-table .column-taxonomy-product_brand {
-	min-width: 108px;
-	white-space: nowrap;
+	width: 88px;
 }
 
 body.post-type-product table.wp-list-table .column-featured {
-	width: 36px !important;
+	width: 32px !important;
 	text-align: center;
 }
 
 body.post-type-product table.wp-list-table .column-date {
-	min-width: 118px;
-	white-space: nowrap;
+	width: 102px;
+	font-size: 12px;
 }
 
 body.post-type-product table.wp-list-table .column-thumb img {
-	width: 48px !important;
-	height: 48px !important;
-	max-width: 48px !important;
-	max-height: 48px !important;
+	width: 46px !important;
+	height: 46px !important;
+	max-width: 46px !important;
+	max-height: 46px !important;
 	object-fit: cover;
 	border-radius: var(--dsw-radius-sm) !important;
 	border: 1px solid var(--dsw-border);
@@ -621,15 +622,15 @@ body.post-type-product table.wp-list-table .column-thumb img {
 }
 
 body.post-type-product table.wp-list-table .column-sku {
-	width: 118px !important;
+	width: 96px !important;
 	white-space: nowrap !important;
 	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-	font-size: 12px !important;
+	font-size: 11.5px !important;
 	color: var(--dsw-ink-muted) !important;
 }
 
 body.post-type-product table.wp-list-table .column-price {
-	width: 124px !important;
+	width: 106px !important;
 	white-space: nowrap !important;
 	font-variant-numeric: tabular-nums;
 	font-weight: 600;
@@ -638,7 +639,7 @@ body.post-type-product table.wp-list-table .column-price {
 
 body.post-type-product table.wp-list-table .column-price del {
 	display: block;
-	font-size: 11.5px;
+	font-size: 11px;
 	font-weight: 400;
 	color: var(--dsw-ink-muted);
 	margin-bottom: 2px;
@@ -651,48 +652,46 @@ body.post-type-product table.wp-list-table .column-price ins {
 }
 
 body.post-type-product table.wp-list-table .column-is_in_stock {
-	width: 126px !important;
+	width: 108px !important;
 	white-space: nowrap;
 }
 
 body.post-type-product table.wp-list-table mark.instock {
 	display: inline-flex;
 	align-items: center;
-	padding: 3px 8px;
+	padding: 2px 7px;
 	border-radius: var(--dsw-radius-sm);
 	background: var(--dsw-success-bg) !important;
 	color: var(--dsw-success) !important;
-	font-size: 12px;
+	font-size: 11.5px;
 	font-weight: 600;
 }
 
 body.post-type-product table.wp-list-table mark.outofstock {
 	display: inline-flex;
 	align-items: center;
-	padding: 3px 8px;
+	padding: 2px 7px;
 	border-radius: var(--dsw-radius-sm);
 	background: var(--dsw-danger-bg) !important;
 	color: var(--dsw-danger) !important;
-	font-size: 12px;
+	font-size: 11.5px;
 	font-weight: 600;
 }
 
-/* Compact Product Tags column so rows never explode vertically */
+/* Compact Product Tags column */
 body.post-type-product table.wp-list-table .column-product_tag {
-	max-width: 170px;
+	max-width: 145px;
 }
 
 body.post-type-product table.wp-list-table tbody td.column-product_tag {
-	font-size: 11.5px;
-	line-height: 1.5;
+	font-size: 11px;
+	line-height: 1.4;
 	color: var(--dsw-ink-muted);
-	max-height: 54px;
-	overflow: hidden;
 }
 
 /* Custom 3D / AR Readiness Column */
 body.post-type-product table.wp-list-table .column-ds_3d_status {
-	width: 106px !important;
+	width: 88px !important;
 	white-space: nowrap;
 }
 
