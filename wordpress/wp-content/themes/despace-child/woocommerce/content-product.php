@@ -67,7 +67,7 @@ if ( ! empty( $raw_dims['length'] ) && ! empty( $raw_dims['width'] ) && ! empty(
 				<?php if ( ! $is_in_stock ) : ?>
 					<span class="f-badge-custom f-badge-outofstock"><?php echo esc_html( furniva_t( 'Out of stock', 'Hết hàng' ) ); ?></span>
 				<?php elseif ( $card_seasonal && $is_winter_pick ) : ?>
-					<span class="f-badge-holiday">❄ <?php echo esc_html( 'Winter Atelier' . ( $percent > 0 ? ' · -' . $percent . '%' : '' ) ); ?></span>
+					<span class="f-badge-holiday">❄ <?php echo esc_html( 'Atelier' . ( $percent > 0 ? ' -' . $percent . '%' : '' ) ); ?></span>
 				<?php elseif ( $percent > 0 ) : ?>
 					<span class="<?php echo $card_seasonal ? 'f-badge-holiday f-badge-holiday--berry' : 'f-badge-sale'; ?>"><?php echo $card_seasonal ? esc_html( furniva_t( 'Holiday', 'Noel' ) . ' ' ) : ''; ?>-<?php echo esc_html( $percent ); ?>%</span>
 				<?php elseif ( ! empty( $custom_badge ) ) :
