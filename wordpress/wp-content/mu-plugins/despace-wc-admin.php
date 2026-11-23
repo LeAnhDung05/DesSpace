@@ -135,8 +135,8 @@ add_action( 'in_admin_header', function (): void {
 		$active_tab = 'settings';
 		$kicker     = 'Cấu hình Cửa hàng';
 		$title      = 'Cài đặt WooCommerce';
-		$cta_label  = 'Xem cửa hàng ↗';
-		$cta_url    = home_url( '/' );
+		$cta_label  = 'Trạng thái hệ thống';
+		$cta_url    = admin_url( 'admin.php?page=wc-status' );
 	} elseif ( 'wc-status' === $page || 'wc-reports' === $page ) {
 		$active_tab = 'settings';
 		$kicker     = 'Vận hành WooCommerce';

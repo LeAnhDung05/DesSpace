@@ -63,6 +63,13 @@ body.ds-wc-admin-modern .notice[id*="astra"] {
 	box-shadow: var(--dsw-shadow-md);
 }
 
+/* Clear WooCommerce fixed 60px top header bar on Settings / Status / Reports screens */
+body.woocommerce_page_wc-settings .ds-wc-topbar,
+body.woocommerce_page_wc-status .ds-wc-topbar,
+body.woocommerce_page_wc-reports .ds-wc-topbar {
+	margin-top: 74px !important;
+}
+
 .ds-wc-topbar__hero {
 	background:
 		radial-gradient(460px 200px at 88% 0%, rgba(197, 155, 118, 0.28) 0%, transparent 66%),
@@ -563,10 +570,43 @@ body.ds-wc-admin-modern table.wp-list-table .row-title:hover {
 }
 
 /* ==========================================================================
-   4. PRODUCTS LIST SPECIFIC POLISH (FIX PRICE/SKU WRAP + 3D/AR BADGE COLUMN)
+   4. PRODUCTS LIST SPECIFIC POLISH (FIX PRICE/SKU/BRAND WRAP + 3D/AR BADGE)
    ========================================================================== */
+body.post-type-product table.wp-list-table {
+	table-layout: auto !important;
+}
+
+body.post-type-product table.wp-list-table th,
+body.post-type-product table.wp-list-table td {
+	word-break: normal !important;
+	overflow-wrap: break-word;
+}
+
 body.post-type-product table.wp-list-table .column-thumb {
-	width: 64px !important;
+	width: 60px !important;
+}
+
+body.post-type-product table.wp-list-table .column-name {
+	min-width: 210px;
+}
+
+body.post-type-product table.wp-list-table .column-product_cat {
+	min-width: 120px;
+}
+
+body.post-type-product table.wp-list-table .column-taxonomy-product_brand {
+	min-width: 108px;
+	white-space: nowrap;
+}
+
+body.post-type-product table.wp-list-table .column-featured {
+	width: 36px !important;
+	text-align: center;
+}
+
+body.post-type-product table.wp-list-table .column-date {
+	min-width: 118px;
+	white-space: nowrap;
 }
 
 body.post-type-product table.wp-list-table .column-thumb img {
