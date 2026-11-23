@@ -1,0 +1,937 @@
+/* ==========================================================================
+   DESPACE WP-ADMIN — MODERN ARCHITECTURAL WOOCOMMERCE & PRODUCTS UI (v1.0)
+   Strictly scoped to body.ds-wc-admin-modern (WooCommerce & Products screens).
+   Harmonizes with DeSpace Atelier Admin Cockpit (#F7F4EF / #1C1917 / #9A6745)
+   with crisp architectural corners (4px–8px) and 100% native WP/WC compatibility.
+   ========================================================================== */
+
+body.ds-wc-admin-modern {
+	--dsw-canvas: #F7F4EF;
+	--dsw-surface: #FFFFFF;
+	--dsw-surface-soft: #FAF7F2;
+	--dsw-surface-muted: #F2ECE3;
+	--dsw-ink: #1C1917;
+	--dsw-ink-body: #3D3B37;
+	--dsw-ink-muted: #69645D;
+	--dsw-border: #E5DDD2;
+	--dsw-border-strong: #D4C6B4;
+	--dsw-brand: #9A6745;
+	--dsw-brand-hover: #7A4E31;
+	--dsw-brand-soft: rgba(154, 103, 69, 0.10);
+	--dsw-success: #2E6B47;
+	--dsw-success-bg: #ECF6F0;
+	--dsw-warn: #A16207;
+	--dsw-warn-bg: #FEF7E6;
+	--dsw-danger: #B43D37;
+	--dsw-danger-bg: #FDF1F0;
+	--dsw-radius-sm: 4px;
+	--dsw-radius-md: 6px;
+	--dsw-radius-lg: 8px;
+	--dsw-shadow-sm: 0 1px 3px rgba(28, 25, 23, 0.05);
+	--dsw-shadow-md: 0 8px 24px -12px rgba(28, 25, 23, 0.10);
+	--wp-admin-theme-color: #9A6745;
+	--wp-admin-theme-color-darker-10: #7A4E31;
+	--wp-admin-theme-color-darker-20: #5E3B24;
+	background-color: var(--dsw-canvas) !important;
+	color: var(--dsw-ink);
+	font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body.ds-wc-admin-modern #wpcontent,
+body.ds-wc-admin-modern #wpbody,
+body.ds-wc-admin-modern #wpbody-content {
+	background-color: var(--dsw-canvas);
+}
+
+/* Hide 3rd-party theme upsell spam (e.g. Astra Business Toolkit) on WC/Products screens only */
+body.ds-wc-admin-modern .astra-notice,
+body.ds-wc-admin-modern .ast-notice-container,
+body.ds-wc-admin-modern [class*="astra-sites-"],
+body.ds-wc-admin-modern .notice[id*="astra"] {
+	display: none !important;
+}
+
+/* ==========================================================================
+   1. DESPACE COMMERCE TOP WORKSPACE BAR
+   ========================================================================== */
+.ds-wc-topbar {
+	margin: 16px 20px 18px 2px;
+	background: var(--dsw-surface);
+	border: 1px solid var(--dsw-border);
+	border-radius: var(--dsw-radius-lg);
+	overflow: hidden;
+	box-shadow: var(--dsw-shadow-md);
+}
+
+.ds-wc-topbar__hero {
+	background:
+		radial-gradient(460px 200px at 88% 0%, rgba(197, 155, 118, 0.28) 0%, transparent 66%),
+		linear-gradient(135deg, #1C1917 0%, #27211C 62%, #312720 100%);
+	color: #FAF7F2;
+	padding: 18px 24px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 14px 20px;
+}
+
+.ds-wc-topbar__left {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+	min-width: 260px;
+}
+
+.ds-wc-topbar__brand {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.ds-wc-topbar__logo {
+	height: 22px;
+	width: auto;
+	filter: brightness(0) invert(1);
+	display: block;
+}
+
+.ds-wc-topbar__sep {
+	width: 1px;
+	height: 14px;
+	background: rgba(255, 255, 255, 0.22);
+}
+
+.ds-wc-topbar__kicker {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 2px 8px;
+	border-radius: var(--dsw-radius-sm);
+	background: rgba(255, 255, 255, 0.10);
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	color: #E5DDD2;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.ds-wc-topbar__title {
+	margin: 2px 0 0 !important;
+	padding: 0 !important;
+	font-size: 20px !important;
+	font-weight: 700 !important;
+	letter-spacing: -0.02em;
+	color: #FFFFFF !important;
+	line-height: 1.25;
+}
+
+.ds-wc-topbar__stats {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 14px;
+	margin-top: 2px;
+	font-size: 12px;
+	color: #C9C1B8;
+}
+
+.ds-wc-topbar__stats strong {
+	color: #FAF7F2;
+	font-variant-numeric: tabular-nums;
+}
+
+.ds-wc-topbar__actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.ds-wc-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	min-height: 36px;
+	padding: 0 14px;
+	border-radius: var(--dsw-radius-sm);
+	font-size: 13px;
+	font-weight: 600;
+	text-decoration: none !important;
+	border: 1px solid transparent;
+	cursor: pointer;
+	transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+	white-space: nowrap;
+}
+
+.ds-wc-btn--primary {
+	background: var(--dsw-brand);
+	border-color: var(--dsw-brand);
+	color: #FFFFFF !important;
+}
+
+.ds-wc-btn--primary:hover {
+	background: var(--dsw-brand-hover);
+	border-color: var(--dsw-brand-hover);
+	transform: translateY(-1px);
+}
+
+.ds-wc-btn--ghost {
+	background: rgba(255, 255, 255, 0.08);
+	border-color: rgba(255, 255, 255, 0.20);
+	color: #FAF7F2 !important;
+}
+
+.ds-wc-btn--ghost:hover {
+	background: rgba(255, 255, 255, 0.16);
+	border-color: rgba(255, 255, 255, 0.34);
+}
+
+/* Quick Workspace Navigation Tabs */
+.ds-wc-topbar__nav {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 8px 16px;
+	background: var(--dsw-surface);
+	border-top: 1px solid var(--dsw-border);
+	overflow-x: auto;
+}
+
+.ds-wc-topbar__tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	padding: 7px 13px;
+	border-radius: var(--dsw-radius-sm);
+	color: var(--dsw-ink-body) !important;
+	font-size: 13px;
+	font-weight: 600;
+	text-decoration: none !important;
+	white-space: nowrap;
+	transition: background-color 0.14s ease, color 0.14s ease;
+}
+
+.ds-wc-topbar__tab:hover {
+	background: var(--dsw-surface-muted);
+	color: var(--dsw-ink) !important;
+}
+
+.ds-wc-topbar__tab.is-active {
+	background: var(--dsw-ink);
+	color: #FFFFFF !important;
+}
+
+.ds-wc-topbar__tab-count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 19px;
+	height: 19px;
+	padding: 0 5px;
+	border-radius: 3px;
+	background: var(--dsw-surface-muted);
+	color: var(--dsw-ink);
+	font-size: 11px;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+
+.ds-wc-topbar__tab.is-active .ds-wc-topbar__tab-count {
+	background: rgba(255, 255, 255, 0.18);
+	color: #FFFFFF;
+}
+
+.ds-wc-topbar__tab--cockpit {
+	margin-left: auto;
+	color: var(--dsw-brand) !important;
+	border: 1px solid var(--dsw-border);
+}
+
+.ds-wc-topbar__tab--cockpit:hover {
+	background: var(--dsw-brand-soft);
+	border-color: var(--dsw-brand);
+	color: var(--dsw-brand-hover) !important;
+}
+
+/* ==========================================================================
+   2. CORE WRAPPER, TYPOGRAPHY, LINKS, BUTTONS & CONTROLS
+   ========================================================================== */
+body.ds-wc-admin-modern .wrap {
+	margin: 10px 20px 36px 2px !important;
+}
+
+body.ds-wc-admin-modern .wrap > h1.wp-heading-inline,
+body.ds-wc-admin-modern .wrap > h1 {
+	font-size: 21px !important;
+	font-weight: 700 !important;
+	letter-spacing: -0.02em;
+	color: var(--dsw-ink) !important;
+	padding: 4px 0 8px !important;
+}
+
+/* Modern Page Title Actions ("Thêm sản phẩm mới", "Nhập vào", "Xuất ra") */
+body.ds-wc-admin-modern .wrap .page-title-action {
+	border-radius: var(--dsw-radius-sm) !important;
+	border: 1px solid var(--dsw-border-strong) !important;
+	background: var(--dsw-surface) !important;
+	color: var(--dsw-ink) !important;
+	font-weight: 600 !important;
+	font-size: 12.5px !important;
+	padding: 6px 13px !important;
+	top: -2px !important;
+	transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+body.ds-wc-admin-modern .wrap .page-title-action:first-of-type {
+	background: var(--dsw-brand) !important;
+	border-color: var(--dsw-brand) !important;
+	color: #FFFFFF !important;
+}
+
+body.ds-wc-admin-modern .wrap .page-title-action:first-of-type:hover {
+	background: var(--dsw-brand-hover) !important;
+	border-color: var(--dsw-brand-hover) !important;
+}
+
+body.ds-wc-admin-modern .wrap .page-title-action:hover {
+	background: var(--dsw-surface-soft) !important;
+	border-color: var(--dsw-brand) !important;
+	color: var(--dsw-brand-hover) !important;
+}
+
+/* Links & Buttons inside WC/Products screens */
+body.ds-wc-admin-modern .wrap a {
+	color: var(--dsw-brand);
+}
+
+body.ds-wc-admin-modern .wrap a:hover {
+	color: var(--dsw-brand-hover);
+}
+
+body.ds-wc-admin-modern .wp-core-ui .button,
+body.ds-wc-admin-modern .wp-core-ui .button-secondary {
+	border-radius: var(--dsw-radius-sm) !important;
+	border: 1px solid var(--dsw-border-strong) !important;
+	background: var(--dsw-surface) !important;
+	color: var(--dsw-ink) !important;
+	font-weight: 600 !important;
+	font-size: 13px !important;
+	min-height: 34px;
+	padding: 0 13px !important;
+	box-shadow: none !important;
+	transition: border-color 0.14s ease, background-color 0.14s ease, color 0.14s ease;
+}
+
+body.ds-wc-admin-modern .wp-core-ui .button:hover,
+body.ds-wc-admin-modern .wp-core-ui .button-secondary:hover {
+	border-color: var(--dsw-brand) !important;
+	background: var(--dsw-surface-soft) !important;
+	color: var(--dsw-brand-hover) !important;
+}
+
+body.ds-wc-admin-modern .wp-core-ui .button-primary {
+	border-radius: var(--dsw-radius-sm) !important;
+	background: var(--dsw-brand) !important;
+	border: 1px solid var(--dsw-brand) !important;
+	color: #FFFFFF !important;
+	font-weight: 600 !important;
+	text-shadow: none !important;
+	box-shadow: 0 1px 2px rgba(154, 103, 69, 0.24) !important;
+}
+
+body.ds-wc-admin-modern .wp-core-ui .button-primary:hover,
+body.ds-wc-admin-modern .wp-core-ui .button-primary:focus {
+	background: var(--dsw-brand-hover) !important;
+	border-color: var(--dsw-brand-hover) !important;
+	color: #FFFFFF !important;
+}
+
+/* Inputs, Selects & Textareas */
+body.ds-wc-admin-modern input[type="text"],
+body.ds-wc-admin-modern input[type="search"],
+body.ds-wc-admin-modern input[type="email"],
+body.ds-wc-admin-modern input[type="number"],
+body.ds-wc-admin-modern input[type="url"],
+body.ds-wc-admin-modern input[type="password"],
+body.ds-wc-admin-modern select,
+body.ds-wc-admin-modern textarea {
+	border: 1px solid var(--dsw-border-strong) !important;
+	border-radius: var(--dsw-radius-sm) !important;
+	background-color: var(--dsw-surface);
+	color: var(--dsw-ink);
+	font-size: 13px;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+body.ds-wc-admin-modern input[type="text"]:focus,
+body.ds-wc-admin-modern input[type="search"]:focus,
+body.ds-wc-admin-modern input[type="email"]:focus,
+body.ds-wc-admin-modern input[type="number"]:focus,
+body.ds-wc-admin-modern select:focus,
+body.ds-wc-admin-modern textarea:focus {
+	border-color: var(--dsw-brand) !important;
+	box-shadow: 0 0 0 2px rgba(154, 103, 69, 0.18) !important;
+	outline: none !important;
+}
+
+body.ds-wc-admin-modern input[type="checkbox"]:checked::before {
+	filter: sepia(1) hue-rotate(-15deg) saturate(1.8) brightness(0.75);
+}
+
+/* Notices inside WC/Products */
+body.ds-wc-admin-modern .wrap .notice,
+body.ds-wc-admin-modern .wrap div.updated,
+body.ds-wc-admin-modern .wrap div.error {
+	border-radius: var(--dsw-radius-md) !important;
+	border: 1px solid var(--dsw-border) !important;
+	border-left-width: 4px !important;
+	background: var(--dsw-surface) !important;
+	box-shadow: var(--dsw-shadow-sm);
+	margin: 10px 0 14px !important;
+}
+
+/* ==========================================================================
+   3. MODERN LIST TABLES (PRODUCTS, HPOS ORDERS, COUPONS, CATEGORIES)
+   ========================================================================== */
+body.ds-wc-admin-modern ul.subsubsub {
+	margin: 8px 0 12px !important;
+	padding: 4px;
+	background: var(--dsw-surface);
+	border: 1px solid var(--dsw-border);
+	border-radius: var(--dsw-radius-md);
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 2px;
+	float: left;
+}
+
+body.ds-wc-admin-modern ul.subsubsub li {
+	color: transparent;
+	font-size: 0;
+}
+
+body.ds-wc-admin-modern ul.subsubsub li a {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 5px 11px;
+	border-radius: var(--dsw-radius-sm);
+	font-size: 12.5px;
+	font-weight: 600;
+	color: var(--dsw-ink-body) !important;
+	text-decoration: none;
+}
+
+body.ds-wc-admin-modern ul.subsubsub li a:hover {
+	background: var(--dsw-surface-soft);
+	color: var(--dsw-ink) !important;
+}
+
+body.ds-wc-admin-modern ul.subsubsub li a.current {
+	background: var(--dsw-ink) !important;
+	color: #FFFFFF !important;
+}
+
+body.ds-wc-admin-modern ul.subsubsub li a .count {
+	color: var(--dsw-ink-muted);
+	font-weight: 600;
+}
+
+body.ds-wc-admin-modern ul.subsubsub li a.current .count {
+	color: rgba(255, 255, 255, 0.78);
+}
+
+/* Search Box & Tablenav Filter Bar */
+body.ds-wc-admin-modern p.search-box {
+	margin: 8px 0 12px !important;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+body.ds-wc-admin-modern p.search-box input[type="search"] {
+	min-height: 34px;
+	min-width: 220px;
+	padding: 0 11px;
+}
+
+body.ds-wc-admin-modern .tablenav.top {
+	clear: both;
+	height: auto !important;
+	margin: 0 0 12px !important;
+	padding: 10px 14px !important;
+	background: var(--dsw-surface);
+	border: 1px solid var(--dsw-border);
+	border-radius: var(--dsw-radius-md);
+	box-shadow: var(--dsw-shadow-sm);
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+body.ds-wc-admin-modern .tablenav.top .actions {
+	padding: 0 !important;
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+body.ds-wc-admin-modern .tablenav.top .tablenav-pages {
+	margin: 0 0 0 auto !important;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+body.ds-wc-admin-modern .tablenav .tablenav-pages a.button,
+body.ds-wc-admin-modern .tablenav .tablenav-pages span.tablenav-pages-navspan {
+	border-radius: var(--dsw-radius-sm) !important;
+	min-width: 30px;
+	min-height: 30px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Elevated Data Table */
+body.ds-wc-admin-modern table.wp-list-table {
+	background: var(--dsw-surface) !important;
+	border: 1px solid var(--dsw-border) !important;
+	border-radius: var(--dsw-radius-md) !important;
+	border-collapse: separate !important;
+	border-spacing: 0 !important;
+	overflow: hidden;
+	box-shadow: var(--dsw-shadow-sm) !important;
+}
+
+body.ds-wc-admin-modern table.wp-list-table thead th,
+body.ds-wc-admin-modern table.wp-list-table thead td,
+body.ds-wc-admin-modern table.wp-list-table tfoot th,
+body.ds-wc-admin-modern table.wp-list-table tfoot td {
+	background: var(--dsw-surface-soft) !important;
+	border-bottom: 1px solid var(--dsw-border) !important;
+	color: var(--dsw-ink-muted) !important;
+	font-size: 11.5px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	padding: 11px 10px !important;
+}
+
+body.ds-wc-admin-modern table.wp-list-table thead th a,
+body.ds-wc-admin-modern table.wp-list-table tfoot th a {
+	color: var(--dsw-ink-body) !important;
+	padding: 0 !important;
+}
+
+body.ds-wc-admin-modern table.wp-list-table tbody tr {
+	background: var(--dsw-surface) !important;
+	transition: background-color 0.14s ease;
+}
+
+body.ds-wc-admin-modern table.wp-list-table tbody tr:nth-child(even) {
+	background: #FCFBF9 !important;
+}
+
+body.ds-wc-admin-modern table.wp-list-table tbody tr:hover {
+	background: #F6F0E6 !important;
+}
+
+body.ds-wc-admin-modern table.wp-list-table tbody td,
+body.ds-wc-admin-modern table.wp-list-table tbody th {
+	padding: 12px 10px !important;
+	border-bottom: 1px solid #EFEAE1 !important;
+	vertical-align: middle !important;
+	color: var(--dsw-ink-body);
+	font-size: 13px;
+}
+
+body.ds-wc-admin-modern table.wp-list-table .row-title {
+	font-size: 13.5px !important;
+	font-weight: 600 !important;
+	color: var(--dsw-ink) !important;
+}
+
+body.ds-wc-admin-modern table.wp-list-table .row-title:hover {
+	color: var(--dsw-brand) !important;
+}
+
+/* ==========================================================================
+   4. PRODUCTS LIST SPECIFIC POLISH (FIX PRICE/SKU WRAP + 3D/AR BADGE COLUMN)
+   ========================================================================== */
+body.post-type-product table.wp-list-table .column-thumb {
+	width: 64px !important;
+}
+
+body.post-type-product table.wp-list-table .column-thumb img {
+	width: 48px !important;
+	height: 48px !important;
+	max-width: 48px !important;
+	max-height: 48px !important;
+	object-fit: cover;
+	border-radius: var(--dsw-radius-sm) !important;
+	border: 1px solid var(--dsw-border);
+	background: var(--dsw-surface-soft);
+}
+
+body.post-type-product table.wp-list-table .column-sku {
+	width: 118px !important;
+	white-space: nowrap !important;
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 12px !important;
+	color: var(--dsw-ink-muted) !important;
+}
+
+body.post-type-product table.wp-list-table .column-price {
+	width: 124px !important;
+	white-space: nowrap !important;
+	font-variant-numeric: tabular-nums;
+	font-weight: 600;
+	color: var(--dsw-ink);
+}
+
+body.post-type-product table.wp-list-table .column-price del {
+	display: block;
+	font-size: 11.5px;
+	font-weight: 400;
+	color: var(--dsw-ink-muted);
+	margin-bottom: 2px;
+}
+
+body.post-type-product table.wp-list-table .column-price ins {
+	text-decoration: none;
+	font-weight: 700;
+	color: var(--dsw-brand-hover);
+}
+
+body.post-type-product table.wp-list-table .column-is_in_stock {
+	width: 126px !important;
+	white-space: nowrap;
+}
+
+body.post-type-product table.wp-list-table mark.instock {
+	display: inline-flex;
+	align-items: center;
+	padding: 3px 8px;
+	border-radius: var(--dsw-radius-sm);
+	background: var(--dsw-success-bg) !important;
+	color: var(--dsw-success) !important;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+body.post-type-product table.wp-list-table mark.outofstock {
+	display: inline-flex;
+	align-items: center;
+	padding: 3px 8px;
+	border-radius: var(--dsw-radius-sm);
+	background: var(--dsw-danger-bg) !important;
+	color: var(--dsw-danger) !important;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+/* Compact Product Tags column so rows never explode vertically */
+body.post-type-product table.wp-list-table .column-product_tag {
+	max-width: 170px;
+}
+
+body.post-type-product table.wp-list-table tbody td.column-product_tag {
+	font-size: 11.5px;
+	line-height: 1.5;
+	color: var(--dsw-ink-muted);
+	max-height: 54px;
+	overflow: hidden;
+}
+
+/* Custom 3D / AR Readiness Column */
+body.post-type-product table.wp-list-table .column-ds_3d_status {
+	width: 106px !important;
+	white-space: nowrap;
+}
+
+.ds-admin-3d-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 3px 8px;
+	border-radius: var(--dsw-radius-sm);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.03em;
+}
+
+.ds-admin-3d-badge--ready {
+	background: #ECF6F0;
+	color: #2E6B47;
+	border: 1px solid rgba(46, 107, 71, 0.22);
+}
+
+.ds-admin-3d-badge--3d {
+	background: #F5ECE2;
+	color: #7A4E31;
+	border: 1px solid rgba(154, 103, 69, 0.24);
+}
+
+.ds-admin-3d-badge--none {
+	background: var(--dsw-surface-muted);
+	color: var(--dsw-ink-muted);
+}
+
+/* ==========================================================================
+   5. PRODUCT EDITOR & HPOS ORDER EDITOR METABOXES
+   ========================================================================== */
+body.ds-wc-admin-modern #titlediv #title {
+	height: auto !important;
+	padding: 10px 14px !important;
+	font-size: 20px !important;
+	font-weight: 600 !important;
+	border-radius: var(--dsw-radius-md) !important;
+	border: 1px solid var(--dsw-border-strong) !important;
+	background: var(--dsw-surface) !important;
+	color: var(--dsw-ink) !important;
+}
+
+body.ds-wc-admin-modern .postbox {
+	background: var(--dsw-surface) !important;
+	border: 1px solid var(--dsw-border) !important;
+	border-radius: var(--dsw-radius-md) !important;
+	box-shadow: var(--dsw-shadow-sm) !important;
+	margin-bottom: 16px !important;
+	overflow: hidden;
+}
+
+body.ds-wc-admin-modern .postbox .postbox-header {
+	background: var(--dsw-surface-soft) !important;
+	border-bottom: 1px solid var(--dsw-border) !important;
+	padding: 4px 12px !important;
+}
+
+body.ds-wc-admin-modern .postbox .postbox-header h2,
+body.ds-wc-admin-modern .postbox h2.hndle {
+	font-size: 13.5px !important;
+	font-weight: 700 !important;
+	color: var(--dsw-ink) !important;
+	letter-spacing: -0.01em;
+}
+
+/* WooCommerce Product Data Metabox Tabs */
+body.ds-wc-admin-modern #woocommerce-product-data ul.wc-tabs {
+	background: var(--dsw-surface-soft) !important;
+	border-right: 1px solid var(--dsw-border) !important;
+}
+
+body.ds-wc-admin-modern #woocommerce-product-data ul.wc-tabs li a {
+	color: var(--dsw-ink-body) !important;
+	font-weight: 600;
+	border-bottom: 1px solid #EFEAE1 !important;
+	padding: 11px 12px !important;
+}
+
+body.ds-wc-admin-modern #woocommerce-product-data ul.wc-tabs li.active a {
+	background: var(--dsw-surface) !important;
+	color: var(--dsw-brand) !important;
+	border-left: 3px solid var(--dsw-brand) !important;
+}
+
+body.ds-wc-admin-modern #major-publishing-actions {
+	background: var(--dsw-surface-soft) !important;
+	border-top: 1px solid var(--dsw-border) !important;
+	padding: 12px 14px !important;
+}
+
+/* Product Categories 2-Column Layout */
+body.taxonomy-product_cat #col-left .form-wrap,
+body.taxonomy-product_tag #col-left .form-wrap {
+	background: var(--dsw-surface);
+	border: 1px solid var(--dsw-border);
+	border-radius: var(--dsw-radius-md);
+	padding: 18px 20px;
+	box-shadow: var(--dsw-shadow-sm);
+}
+
+body.taxonomy-product_cat table.wp-list-table .column-thumb img {
+	width: 44px !important;
+	height: 44px !important;
+	object-fit: cover;
+	border-radius: var(--dsw-radius-sm) !important;
+	border: 1px solid var(--dsw-border);
+	background: var(--dsw-surface-soft);
+}
+
+/* ==========================================================================
+   6. WOOCOMMERCE ORDERS (HPOS) & ORDER STATUS BADGES
+   ========================================================================== */
+body.ds-wc-admin-modern mark.order-status {
+	border-radius: var(--dsw-radius-sm) !important;
+	font-size: 12px !important;
+	font-weight: 600 !important;
+	padding: 2px 10px !important;
+	line-height: 22px !important;
+}
+
+body.ds-wc-admin-modern mark.order-status.status-completed {
+	background: var(--dsw-success-bg) !important;
+	color: var(--dsw-success) !important;
+}
+
+body.ds-wc-admin-modern mark.order-status.status-processing {
+	background: #EAF2FB !important;
+	color: #0050A0 !important;
+}
+
+body.ds-wc-admin-modern mark.order-status.status-on-hold,
+body.ds-wc-admin-modern mark.order-status.status-pending {
+	background: var(--dsw-warn-bg) !important;
+	color: var(--dsw-warn) !important;
+}
+
+body.ds-wc-admin-modern mark.order-status.status-cancelled,
+body.ds-wc-admin-modern mark.order-status.status-failed {
+	background: var(--dsw-danger-bg) !important;
+	color: var(--dsw-danger) !important;
+}
+
+body.ds-wc-admin-modern #order_data {
+	padding: 22px 24px !important;
+}
+
+body.ds-wc-admin-modern #order_data h2 {
+	font-size: 20px !important;
+	font-weight: 700 !important;
+	color: var(--dsw-ink) !important;
+}
+
+body.ds-wc-admin-modern #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items thead th {
+	background: var(--dsw-surface-soft) !important;
+	color: var(--dsw-ink-muted) !important;
+	font-size: 11.5px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+/* ==========================================================================
+   7. WOOCOMMERCE SETTINGS & REACT WC-ADMIN HARMONIZATION
+   ========================================================================== */
+body.woocommerce_page_wc-settings .woo-nav-tab-wrapper {
+	display: flex !important;
+	flex-wrap: wrap;
+	gap: 4px;
+	padding: 6px !important;
+	margin: 0 0 18px !important;
+	background: var(--dsw-surface);
+	border: 1px solid var(--dsw-border) !important;
+	border-radius: var(--dsw-radius-md);
+	box-shadow: var(--dsw-shadow-sm);
+}
+
+body.woocommerce_page_wc-settings .woo-nav-tab-wrapper .nav-tab {
+	float: none !important;
+	margin: 0 !important;
+	padding: 8px 14px !important;
+	border: 0 !important;
+	border-radius: var(--dsw-radius-sm) !important;
+	background: transparent !important;
+	color: var(--dsw-ink-body) !important;
+	font-size: 13px !important;
+	font-weight: 600 !important;
+}
+
+body.woocommerce_page_wc-settings .woo-nav-tab-wrapper .nav-tab:hover {
+	background: var(--dsw-surface-soft) !important;
+	color: var(--dsw-ink) !important;
+}
+
+body.woocommerce_page_wc-settings .woo-nav-tab-wrapper .nav-tab-active {
+	background: var(--dsw-ink) !important;
+	color: #FFFFFF !important;
+}
+
+body.woocommerce_page_wc-settings form#mainform > h2,
+body.woocommerce_page_wc-settings form#mainform > table.form-table,
+body.woocommerce_page_wc-settings form#mainform > div[id$="-description"] {
+	background: var(--dsw-surface);
+	padding-left: 22px;
+	padding-right: 22px;
+	border-left: 1px solid var(--dsw-border);
+	border-right: 1px solid var(--dsw-border);
+	box-sizing: border-box;
+}
+
+body.woocommerce_page_wc-settings form#mainform > h2 {
+	margin: 18px 0 0 !important;
+	padding-top: 20px;
+	padding-bottom: 6px;
+	border-top: 1px solid var(--dsw-border);
+	border-radius: var(--dsw-radius-md) var(--dsw-radius-md) 0 0;
+	font-size: 16px;
+	font-weight: 700;
+	color: var(--dsw-ink);
+}
+
+body.woocommerce_page_wc-settings form#mainform > div[id$="-description"] p {
+	margin: 0;
+	padding: 0 0 12px;
+	color: var(--dsw-ink-muted);
+	font-size: 13px;
+}
+
+body.woocommerce_page_wc-settings form#mainform > table.form-table {
+	margin: 0 0 18px !important;
+	border-bottom: 1px solid var(--dsw-border);
+	border-radius: 0 0 var(--dsw-radius-md) var(--dsw-radius-md);
+}
+
+body.woocommerce_page_wc-settings form#mainform > table.form-table th {
+	padding-left: 22px !important;
+	color: var(--dsw-ink) !important;
+	font-weight: 600 !important;
+}
+
+/* WooCommerce React Admin (wc-admin: Home, Customers, Analytics, Marketing) */
+body.ds-wc-admin-modern .woocommerce-layout__header {
+	background: var(--dsw-surface) !important;
+	border-bottom: 1px solid var(--dsw-border) !important;
+	box-shadow: var(--dsw-shadow-sm);
+}
+
+body.ds-wc-admin-modern .woocommerce-layout__main {
+	background: var(--dsw-canvas);
+}
+
+body.ds-wc-admin-modern .components-card {
+	border-radius: var(--dsw-radius-md) !important;
+	border: 1px solid var(--dsw-border) !important;
+	box-shadow: var(--dsw-shadow-sm) !important;
+}
+
+body.ds-wc-admin-modern .components-button.is-primary {
+	background: var(--dsw-brand) !important;
+	border-color: var(--dsw-brand) !important;
+	border-radius: var(--dsw-radius-sm) !important;
+}
+
+body.ds-wc-admin-modern .components-button.is-primary:hover {
+	background: var(--dsw-brand-hover) !important;
+}
+
+@media (max-width: 782px) {
+	.ds-wc-topbar {
+		margin: 12px 10px 14px;
+	}
+
+	.ds-wc-topbar__hero {
+		padding: 14px 16px;
+	}
+
+	body.ds-wc-admin-modern .wrap {
+		margin: 8px 10px 28px !important;
+	}
+}
