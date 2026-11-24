@@ -249,8 +249,9 @@ $custom_badge     = get_post_meta( $id, '_despace_badge', true ) ?: get_post_met
                         $dim_str = $model_info['dimensions'];
                     }
                     $image_url  = wp_get_attachment_image_url( $product->get_image_id(), 'large' );
-                    $price_clean = wc_price( $product->get_price() );
-                    $regular_price_clean = $product->is_on_sale() ? wc_price( $product->get_regular_price() ) : '';
+                    $prod_title_clean = function_exists( 'furniva_translate_product_title' ) ? furniva_translate_product_title( $product->get_name(), $product ) : $product->get_name();
+                    $price_clean = function_exists( 'despace_format_plain_price' ) ? despace_format_plain_price( $product->get_price() ) : html_entity_decode( wp_strip_all_tags( wc_price( $product->get_price() ) ), ENT_QUOTES, 'UTF-8' );
+                    $regular_price_clean = $product->is_on_sale() ? ( function_exists( 'despace_format_plain_price' ) ? despace_format_plain_price( $product->get_regular_price() ) : html_entity_decode( wp_strip_all_tags( wc_price( $product->get_regular_price() ) ), ENT_QUOTES, 'UTF-8' ) ) : '';
                     $has_model = ! empty( $model_info['glb_url'] );
                     $has_ar    = $has_model && ! empty( $model_info['ar_enabled'] );
 
@@ -260,9 +261,9 @@ $custom_badge     = get_post_meta( $id, '_despace_badge', true ) ?: get_post_met
                     <!-- Nút 1: Xem Mô hình 3D 360° -->
                     <button type="button" class="ar-product-btn ax-open-3d-btn" id="axView3DModelBtn"
                         data-product-id="<?php echo esc_attr( $product->get_id() ); ?>"
-                        data-product-name="<?php echo esc_attr( $product->get_name() ); ?>"
-                        data-product-price="<?php echo esc_attr( wp_strip_all_tags( $price_clean ) ); ?>"
-                        data-product-regular-price="<?php echo esc_attr( wp_strip_all_tags( $regular_price_clean ) ); ?>"
+                        data-product-name="<?php echo esc_attr( $prod_title_clean ); ?>"
+                        data-product-price="<?php echo esc_attr( $price_clean ); ?>"
+                        data-product-regular-price="<?php echo esc_attr( $regular_price_clean ); ?>"
                         data-product-raw-price="<?php echo esc_attr( $product->get_price() ); ?>"
                         data-product-image="<?php echo esc_url( $image_url ); ?>"
                         data-product-dimensions="<?php echo esc_attr( $dim_str ); ?>"
@@ -286,9 +287,9 @@ $custom_badge     = get_post_meta( $id, '_despace_badge', true ) ?: get_post_met
                     <!-- Nút 2: Xem Trong Phòng Bạn (AR Thực tế qua Camera) -->
                     <button type="button" class="ar-product-btn ax-open-ar-btn" id="arViewInRoomBtn"
                         data-product-id="<?php echo esc_attr( $product->get_id() ); ?>"
-                        data-product-name="<?php echo esc_attr( $product->get_name() ); ?>"
-                        data-product-price="<?php echo esc_attr( wp_strip_all_tags( $price_clean ) ); ?>"
-                        data-product-regular-price="<?php echo esc_attr( wp_strip_all_tags( $regular_price_clean ) ); ?>"
+                        data-product-name="<?php echo esc_attr( $prod_title_clean ); ?>"
+                        data-product-price="<?php echo esc_attr( $price_clean ); ?>"
+                        data-product-regular-price="<?php echo esc_attr( $regular_price_clean ); ?>"
                         data-product-raw-price="<?php echo esc_attr( $product->get_price() ); ?>"
                         data-product-image="<?php echo esc_url( $image_url ); ?>"
                         data-product-dimensions="<?php echo esc_attr( $dim_str ); ?>"

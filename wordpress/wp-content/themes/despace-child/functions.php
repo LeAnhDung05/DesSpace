@@ -1045,15 +1045,12 @@ add_filter('woocommerce_quantity_input_classes', function ($classes) {
 });
 
 // ---------------------------------------------------------------- misc
-// Price display: keep decimals clean
+// Price display: keep decimals clean and VND symbol position consistent across VI & EN
 add_filter('woocommerce_price_format', function ($format, $currency_pos) {
-	if (function_exists('despace_is_english_mode') && despace_is_english_mode()) {
-		return '%1$s%2$s';
-	}
 	return '%2$s&nbsp;%1$s';
 }, 20, 2);
 add_filter('pre_option_woocommerce_currency_pos', function () {
-	return (function_exists('despace_is_english_mode') && despace_is_english_mode()) ? 'left' : 'right_space';
+	return 'right_space';
 });
 
 // Add "New" badge to genuinely new products (limit to top 3 newest)

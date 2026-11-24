@@ -62,7 +62,7 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 						<div class="ax-input-wrap">
 							<svg class="ax-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
 							<input class="woocommerce-Input woocommerce-Input--text input-text" type="password" name="password" id="password" autocomplete="current-password" placeholder="<?php echo esc_attr( furniva_t( 'Enter your secure password', 'Nhập mật khẩu của bạn...' ) ); ?>" required aria-required="true" />
-							<button type="button" class="ax-pwd-toggle" aria-label="<?php echo esc_attr( furniva_t( 'Toggle password visibility', 'Ẩn/hiện mật khẩu' ) ); ?>">
+							<button type="button" class="ax-pwd-toggle" aria-pressed="false" aria-label="<?php echo esc_attr( furniva_t( 'Show password', 'Hiện mật khẩu' ) ); ?>">
 								<svg class="ax-eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
 							</button>
 						</div>
@@ -164,7 +164,7 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 									<div class="ax-input-wrap">
 										<svg class="ax-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
 										<input type="password" class="woocommerce-Input woocommerce-Input--text input-text" name="password" id="reg_password" autocomplete="new-password" placeholder="<?php echo esc_attr( furniva_t( 'Minimum 8 characters', 'Tối thiểu 8 ký tự...' ) ); ?>" required aria-required="true" />
-										<button type="button" class="ax-pwd-toggle" aria-label="<?php echo esc_attr( furniva_t( 'Toggle password visibility', 'Ẩn/hiện mật khẩu' ) ); ?>">
+										<button type="button" class="ax-pwd-toggle" aria-pressed="false" aria-label="<?php echo esc_attr( furniva_t( 'Show password', 'Hiện mật khẩu' ) ); ?>">
 											<svg class="ax-eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
 										</button>
 									</div>
@@ -175,7 +175,7 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 									<div class="ax-input-wrap">
 										<svg class="ax-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
 										<input type="password" class="woocommerce-Input woocommerce-Input--text input-text" name="password_confirm" id="reg_password_confirm" autocomplete="new-password" placeholder="<?php echo esc_attr( furniva_t( 'Re-enter your password', 'Nhập lại mật khẩu vừa tạo...' ) ); ?>" required aria-required="true" />
-										<button type="button" class="ax-pwd-toggle" aria-label="<?php echo esc_attr( furniva_t( 'Toggle password visibility', 'Ẩn/hiện mật khẩu' ) ); ?>">
+										<button type="button" class="ax-pwd-toggle" aria-pressed="false" aria-label="<?php echo esc_attr( furniva_t( 'Show password', 'Hiện mật khẩu' ) ); ?>">
 											<svg class="ax-eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
 										</button>
 									</div>

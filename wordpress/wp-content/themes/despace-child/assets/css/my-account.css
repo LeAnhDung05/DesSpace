@@ -333,20 +333,43 @@
 	color: var(--ax-account-gold);
 }
 
-/* Password Toggle Visibility Button */
+/* Password Toggle Visibility Button (AUD-02: single vertically centered accessible button) */
+.ax-input-wrap .password-input {
+	display: block;
+	width: 100%;
+	position: relative;
+}
+
+.ax-input-wrap .password-input .show-password-input,
+.ax-input-wrap .show-password-input {
+	display: none !important;
+}
+
 .ax-pwd-toggle {
 	position: absolute;
-	right: 12px;
+	right: 6px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 40px;
+	height: 40px;
+	min-width: 40px;
+	min-height: 40px;
 	background: transparent;
 	border: none;
-	padding: 6px;
+	padding: 0;
 	color: var(--ax-account-text-muted);
 	cursor: pointer;
-	display: flex;
+	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	border-radius: 4px;
-	transition: color 0.2s ease;
+	border-radius: 6px;
+	z-index: 5;
+	transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.ax-pwd-toggle:focus-visible {
+	outline: 2px solid var(--ax-account-gold);
+	outline-offset: 2px;
 }
 
 .ax-pwd-toggle:hover {
@@ -1828,6 +1851,11 @@
 	color: var(--ax-account-text-dark) !important;
 }
 
+.ax-account-page-wrap .ax-input-wrap .password-input .show-password-input,
+.ax-account-page-wrap .ax-input-wrap .show-password-input {
+	display: none !important;
+}
+
 .ax-account-page-wrap .password-input .show-password-input,
 .ax-account-page-wrap .show-password-input {
 	position: absolute !important;
@@ -1846,6 +1874,11 @@
 	justify-content: center !important;
 	z-index: 4 !important;
 	color: var(--ax-account-text-muted) !important;
+}
+
+.ax-account-page-wrap .ax-input-wrap .password-input .show-password-input,
+.ax-account-page-wrap .ax-input-wrap .show-password-input {
+	display: none !important;
 }
 
 /* ==========================================================================

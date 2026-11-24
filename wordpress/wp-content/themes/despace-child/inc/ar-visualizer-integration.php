@@ -192,6 +192,19 @@ function ax_get_ar_page_url() {
 }
 
 /**
+ * Format a WooCommerce price amount as clean plain text (no screen-reader text, decoded entities).
+ */
+if ( ! function_exists( 'despace_format_plain_price' ) ) {
+	function despace_format_plain_price( $amount ) {
+		if ( '' === $amount || null === $amount ) {
+			return '';
+		}
+		$plain = html_entity_decode( wp_strip_all_tags( wc_price( $amount ) ), ENT_QUOTES, 'UTF-8' );
+		return trim( preg_replace( '/\s+/u', ' ', $plain ) );
+	}
+}
+
+/**
  * Add AR Button to Product Page (Hooked for standard WooCommerce layouts)
  */
 add_action( 'woocommerce_single_product_summary', 'ar_add_button_to_product', 30 );
@@ -207,11 +220,15 @@ function ar_add_button_to_product() {
 	if ( ! empty( $dims['length'] ) && ! empty( $dims['width'] ) && ! empty( $dims['height'] ) ) {
 		$dim_str = "{$dims['length']} × {$dims['width']} × {$dims['height']} cm";
 	}
+	$prod_name  = function_exists( 'furniva_translate_product_title' ) ? furniva_translate_product_title( $product->get_name(), $product ) : $product->get_name();
+	$price_text = despace_format_plain_price( $product->get_price() );
+	$reg_text   = $product->is_on_sale() ? despace_format_plain_price( $product->get_regular_price() ) : '';
 
 	echo '<button type="button" class="ar-product-btn ax-open-room-modal" id="arViewInRoomBtn"
 		data-product-id="' . esc_attr( $product->get_id() ) . '"
-		data-product-name="' . esc_attr( $product->get_name() ) . '"
-		data-product-price="' . esc_attr( html_entity_decode( wp_strip_all_tags( $product->get_price_html() ), ENT_QUOTES, 'UTF-8' ) ) . '"
+		data-product-name="' . esc_attr( $prod_name ) . '"
+		data-product-price="' . esc_attr( $price_text ) . '"
+		data-product-regular-price="' . esc_attr( $reg_text ) . '"
 		data-product-raw-price="' . esc_attr( $product->get_price() ) . '"
 		data-product-image="' . esc_url( $image_url ) . '"
 		data-product-dimensions="' . esc_attr( $dim_str ) . '"
@@ -241,11 +258,15 @@ function ar_add_product_data() {
 	$dimensions = $product->get_dimensions( false );
 	$image_url  = wp_get_attachment_image_url( $product->get_image_id(), 'woocommerce_single' );
 	$model_info = ax_get_product_3d_info( $product->get_id() );
+	$prod_name  = function_exists( 'furniva_translate_product_title' ) ? furniva_translate_product_title( $product->get_name(), $product ) : $product->get_name();
+	$price_text = despace_format_plain_price( $product->get_price() );
+	$reg_text   = $product->is_on_sale() ? despace_format_plain_price( $product->get_regular_price() ) : '';
 
 	echo '<div id="ar-product-data"
 		 data-product-id="' . esc_attr( $product->get_id() ) . '"
-		 data-product-name="' . esc_attr( $product->get_name() ) . '"
-		 data-product-price="' . esc_attr( html_entity_decode( wp_strip_all_tags( $product->get_price_html() ), ENT_QUOTES, 'UTF-8' ) ) . '"
+		 data-product-name="' . esc_attr( $prod_name ) . '"
+		 data-product-price="' . esc_attr( $price_text ) . '"
+		 data-product-regular-price="' . esc_attr( $reg_text ) . '"
 		 data-product-image="' . esc_url( $image_url ) . '"
 		 data-product-width="' . esc_attr( $dimensions['width'] ?? 100 ) . '"
 		 data-product-height="' . esc_attr( $dimensions['height'] ?? 80 ) . '"

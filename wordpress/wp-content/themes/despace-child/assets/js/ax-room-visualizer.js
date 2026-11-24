@@ -31,6 +31,8 @@
     autoRotate: true,
     modelLoaded: false,
     modelViewerEnsured: false,
+    lastTriggerEl: null,
+    isModalOpen: false,
     // Live 3D Camera AR state
     cameraStream: null,
     facingMode: 'environment',
@@ -149,7 +151,7 @@
       ensureModelViewerLibrary();
       extractProductData($(this));
       currentProduct.initialTab = '3d';
-      openModal();
+      openModal(this);
       return false;
     });
 
@@ -160,25 +162,89 @@
       ensureModelViewerLibrary();
       extractProductData($(this));
       currentProduct.initialTab = 'ar';
-      openModal();
+      openModal(this);
       return false;
     });
   }
 
+  function isEnglishLocale() {
+    if (typeof window !== 'undefined' && /^\/en(\/|$)/.test(window.location.pathname || '')) return true;
+    if (document.body && document.body.classList.contains('translatepress-en_US')) return true;
+    var lang = (document.documentElement.lang || '').toLowerCase();
+    if (lang.indexOf('en') === 0) return true;
+    if (typeof window !== 'undefined' && window.furnivaData && window.furnivaData.language) {
+      return window.furnivaData.language === 'en';
+    }
+    return false;
+  }
+
+  function t(en, vi) {
+    return isEnglishLocale() ? en : vi;
+  }
+
+  function decodePlainText(val) {
+    if (!val) return '';
+    var s = String(val);
+    if (s.indexOf('&') !== -1) {
+      var ta = document.createElement('textarea');
+      ta.innerHTML = s;
+      s = ta.value;
+    }
+    return s.replace(/\s+/g, ' ').trim();
+  }
+
+  function getModalFocusable($modal) {
+    return $modal.find('a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])').filter(function () {
+      var el = this;
+      if (!el.offsetParent && el.offsetWidth === 0 && el.offsetHeight === 0) return false;
+      var style = window.getComputedStyle(el);
+      return style.display !== 'none' && style.visibility !== 'hidden';
+    });
+  }
+
+  function handleModalKeydown(e) {
+    if (!state.isModalOpen) return;
+    if (e.key === 'Escape' || e.keyCode === 27) {
+      e.preventDefault();
+      closeModal();
+      return;
+    }
+    if (e.key === 'Tab' || e.keyCode === 9) {
+      var $modal = $('#ax-room-visualizer-modal');
+      var $focusable = getModalFocusable($modal);
+      if (!$focusable.length) return;
+      var firstEl = $focusable.get(0);
+      var lastEl = $focusable.get($focusable.length - 1);
+      if (e.shiftKey) {
+        if (document.activeElement === firstEl || !$modal.get(0).contains(document.activeElement)) {
+          e.preventDefault();
+          lastEl.focus();
+        }
+      } else {
+        if (document.activeElement === lastEl || !$modal.get(0).contains(document.activeElement)) {
+          e.preventDefault();
+          firstEl.focus();
+        }
+      }
+    }
+  }
+
   function extractProductData($elem) {
     var $fallbackData = $('#ar-product-data');
+    var $card = $elem.closest('li.product, .f-card, .fv-product-card, .product');
+    var cardTitle = $card.length ? ($card.find('.f-card-title, .woocommerce-loop-product__title, h2, h3').first().text().trim()) : '';
     var id = $elem.data('product-id') || ($fallbackData.length ? $fallbackData.data('product-id') : 0) || $('input[name="product_id"]').val() || 0;
-    var name = $elem.data('product-name') || ($fallbackData.length ? $fallbackData.data('product-name') : '') || $('.product_title').first().text().trim() || 'DeSpace Luxury Product';
+    var name = decodePlainText($elem.attr('data-product-name') || ($fallbackData.length ? $fallbackData.attr('data-product-name') : '') || cardTitle || $('.product_title').first().text().trim() || t('DeSpace Product', 'Sản phẩm DeSpace'));
 
-    var price = $elem.data('product-price') || ($fallbackData.length ? $fallbackData.data('product-price') : '') || '';
+    var price = decodePlainText($elem.attr('data-product-price') || ($fallbackData.length ? $fallbackData.attr('data-product-price') : '') || '');
     if (!price) {
       var $priceEl = $('.ax-product-price .woocommerce-Price-amount, .price .woocommerce-Price-amount').last();
-      price = $priceEl.length ? $priceEl.text().trim() : '';
+      price = $priceEl.length ? decodePlainText($priceEl.text()) : '';
     }
-    var regPrice = $elem.data('product-regular-price') || '';
-    var rawPrice = $elem.data('product-raw-price') || '';
-    var image = $elem.data('product-image') || ($fallbackData.length ? $fallbackData.data('product-image') : '') || $('.woocommerce-product-gallery__image img').first().attr('src') || '';
-    var dims = $elem.data('product-dimensions') || '';
+    var regPrice = decodePlainText($elem.attr('data-product-regular-price') || ($fallbackData.length ? $fallbackData.attr('data-product-regular-price') : '') || '');
+    var rawPrice = $elem.attr('data-product-raw-price') || '';
+    var image = $elem.attr('data-product-image') || ($fallbackData.length ? $fallbackData.attr('data-product-image') : '') || $('.woocommerce-product-gallery__image img').first().attr('src') || '';
+    var dims = decodePlainText($elem.attr('data-product-dimensions') || '');
 
     var glbUrl = $elem.data('glb-url') || ($fallbackData.length ? $fallbackData.data('glb-url') : '') || '';
     var usdzUrl = $elem.data('usdz-url') || ($fallbackData.length ? $fallbackData.data('usdz-url') : '') || '';
@@ -224,15 +290,18 @@
     return url;
   }
 
-  function openModal() {
+  function openModal(triggerEl) {
     var $modal = $('#ax-room-visualizer-modal');
     if (!$modal.length) return;
+
+    state.lastTriggerEl = triggerEl || document.activeElement;
+    state.isModalOpen = true;
 
     ensureModelViewerLibrary();
 
     // 1. Populate unified product summary in footer
     $('#axModalProductName').text(currentProduct.name);
-    $('#axModalProductThumb').attr('src', currentProduct.image);
+    $('#axModalProductThumb').attr('src', currentProduct.image).attr('alt', currentProduct.name);
 
     var $priceWrap = $('#axModalProductPrice').empty();
     $priceWrap.append($('<span class="ax-modal-sale-price"></span>').text(currentProduct.price || ''));
@@ -240,14 +309,18 @@
       $priceWrap.append($('<del class="ax-modal-reg-price"></del>').text(currentProduct.regularPrice));
     }
 
+    var scaleLabel = t('True 1:1 Scale', 'Tỷ lệ thực 1:1');
+    $('#ax3DInfoScale').text(scaleLabel);
     if (currentProduct.dimensions) {
       $('#axModalProductDims').text(currentProduct.dimensions).show();
-      $('#ax3DInfoDims').text(currentProduct.dimensions);
+      $('#ax3DInfoDims').text(currentProduct.dimensions).show();
+      $('#ax3DInfoSep, #ax3DInfoPill .ax-pill-sep').show();
       $('#axLiveArInfoDims').text(currentProduct.dimensions);
     } else {
       $('#axModalProductDims').hide();
-      $('#ax3DInfoDims').text('Tỷ lệ thực 1:1');
-      $('#axLiveArInfoDims').text('Tỷ lệ thực 1:1');
+      $('#ax3DInfoDims').text('').hide();
+      $('#ax3DInfoSep, #ax3DInfoPill .ax-pill-sep').hide();
+      $('#axLiveArInfoDims').text(scaleLabel);
     }
 
     $('#ax3DInfoTitle').text(currentProduct.name);
@@ -259,12 +332,22 @@
     // 3. Switch to initial tab ('3d' or 'ar')
     switchTab(currentProduct.initialTab || '3d');
 
-    // 4. Show modal
-    $modal.fadeIn(200).attr('aria-hidden', 'false');
+    // 4. Show modal & move keyboard focus into dialog
+    $modal.fadeIn(200, function () {
+      var closeEl = document.getElementById('axRoomModalClose');
+      if (closeEl && state.isModalOpen) {
+        closeEl.focus();
+      }
+    }).attr('aria-hidden', 'false');
     $('body').css('overflow', 'hidden');
+    document.removeEventListener('keydown', handleModalKeydown, true);
+    document.addEventListener('keydown', handleModalKeydown, true);
   }
 
   function closeModal() {
+    if (!state.isModalOpen) return;
+    state.isModalOpen = false;
+    document.removeEventListener('keydown', handleModalKeydown, true);
     stopLiveCameraStream();
     stopInteractive3DLoop();
     var $modal = $('#ax-room-visualizer-modal');
@@ -275,6 +358,11 @@
     if (mv) {
       mv.autoRotate = false;
     }
+
+    if (state.lastTriggerEl && typeof state.lastTriggerEl.focus === 'function' && document.body.contains(state.lastTriggerEl)) {
+      state.lastTriggerEl.focus();
+    }
+    state.lastTriggerEl = null;
   }
 
   function setupModelViewer() {
@@ -364,7 +452,7 @@
 
     $('#axInteractive3DStage').hide();
     $('#axBtnToggleDoors').hide().removeClass('is-open').attr('aria-pressed', 'false');
-    $('#axBtnToggleDoorsText').text('Mở hết cửa');
+    $('#axBtnToggleDoorsText').text(t('Open Doors', 'Mở hết cửa'));
     $('#ax3DPartHint').hide().text('');
     $('#ax3DPartPills').hide().empty();
 
@@ -547,7 +635,7 @@
     $('#axBtnToggleDoors')
       .toggleClass('is-open', anyOpen)
       .attr('aria-pressed', anyOpen ? 'true' : 'false');
-    $('#axBtnToggleDoorsText').text(allOpen ? 'Đóng hết cửa' : (anyOpen ? 'Mở tất cả' : 'Mở hết cửa'));
+    $('#axBtnToggleDoorsText').text(allOpen ? t('Close Doors', 'Đóng hết cửa') : (anyOpen ? t('Open All', 'Mở tất cả') : t('Open Doors', 'Mở hết cửa')));
 
     interactive3D.parts.forEach(function (pt) {
       if (pt.chipEl) {
@@ -837,7 +925,7 @@
       stopLiveCameraStream();
       $('#axTabPaneAR').hide().removeClass('ax-tab-active');
       $('#axTabPane3D').show().addClass('ax-tab-active');
-      $('#axModalHeaderSubtitle').text('Quan sát chi tiết mô hình 3D 360° — chạm trực tiếp từng cánh cửa hoặc ngăn kéo để đóng/mở');
+      $('#axModalHeaderSubtitle').text(t('Explore 360° 3D model — tap doors or drawers directly to open/close', 'Quan sát chi tiết mô hình 3D 360° — chạm trực tiếp từng cánh cửa hoặc ngăn kéo để đóng/mở'));
       if (interactive3D.modelRoot) {
         interactive3D.active = true;
         resizeInteractive3DStage();
@@ -847,7 +935,7 @@
       stopInteractive3DLoop();
       $('#axTabPane3D').hide().removeClass('ax-tab-active');
       $('#axTabPaneAR').show().addClass('ax-tab-active');
-      $('#axModalHeaderSubtitle').text('Khởi chạy Camera để đưa đúng mô hình 3D vào phòng của bạn với tỷ lệ 1:1 mượt mà');
+      $('#axModalHeaderSubtitle').text(t('Launch Camera to place the true 1:1 scale 3D model in your room', 'Khởi chạy Camera để đưa đúng mô hình 3D vào phòng của bạn với tỷ lệ 1:1 mượt mà'));
       setupARCard();
     }
   }
@@ -1663,7 +1751,7 @@
     // Update switcher button labels
     if (lanBase) {
       var lanHost = lanBase.replace(/^https?:\/\//, '');
-      $('#axQrNetLanBtn').text('📶 Cùng Wi-Fi (' + lanHost + ')');
+      $('#axQrNetLanBtn').text(t('📶 Same Wi-Fi (' + lanHost + ')', '📶 Cùng Wi-Fi (' + lanHost + ')'));
     }
     if (!tunnelBase) {
       $('#axQrNetTunnelBtn').hide();
@@ -2150,7 +2238,7 @@
     clearTimeout(copyTimers.get(button));
     button.removeAttribute('data-copied');
     button.removeAttribute('data-failed');
-    var message = ok ? 'Đã sao chép!' : 'Không thể sao chép';
+    var message = ok ? t('Copied!', 'Đã sao chép!') : t('Copy failed', 'Không thể sao chép');
     if (message === lastCopyMessage) message += '\u00A0';
     lastCopyMessage = message;
     tip.textContent = '';
@@ -2158,7 +2246,7 @@
     button.setAttribute(ok ? 'data-copied' : 'data-failed', '');
     var $textSpan = $(button).find('#axBtnCopyArText');
     if ($textSpan.length) {
-      $textSpan.text(ok ? '✓ Đã sao chép!' : 'Sao chép Link AR');
+      $textSpan.text(ok ? t('✓ Copied!', '✓ Đã sao chép!') : t('Copy AR Link', 'Sao chép Link AR'));
     }
     requestAnimationFrame(function () { tip.textContent = message; });
     copyTimers.set(button, setTimeout(function () {
@@ -2166,7 +2254,7 @@
       button.removeAttribute('data-failed');
       tip.textContent = '';
       if ($textSpan.length) {
-        $textSpan.text('Sao chép Link AR');
+        $textSpan.text(t('Copy AR Link', 'Sao chép Link AR'));
       }
     }, 2200));
   }
@@ -2228,7 +2316,7 @@
       var originalText = $('#axModalCartBtnText').text();
 
       $btn.addClass('loading');
-      $('#axModalCartBtnText').text('Đang thêm...');
+      $('#axModalCartBtnText').text(t('Adding…', 'Đang thêm...'));
 
       $.ajax({
         type: 'POST',
@@ -2248,7 +2336,7 @@
             return;
           }
           $btn.removeClass('loading').addClass('added');
-          $('#axModalCartBtnText').text('✓ Đã thêm vào giỏ!');
+          $('#axModalCartBtnText').text(t('✓ Added to cart!', '✓ Đã thêm vào giỏ!'));
           if (response && response.fragments) {
             $(document.body).trigger('added_to_cart', [response.fragments, response.cart_hash, $btn]);
           }

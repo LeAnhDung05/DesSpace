@@ -114,14 +114,19 @@
   gap: 4px;
 }
 
+.ax-room-modal .ax-mode-tab,
 .ax-mode-tab {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
   border-radius: 9999px;
+  font-family: var(--f-font, "Inter", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   font-size: 13px;
   font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
   color: #69645D;
   background: transparent;
   border: none;
@@ -129,10 +134,12 @@
   transition: all 0.25s ease;
 }
 
+.ax-room-modal .ax-mode-tab:hover,
 .ax-mode-tab:hover {
   color: #1C1917;
 }
 
+.ax-room-modal .ax-mode-tab.active,
 .ax-mode-tab.active {
   background: #FFFFFF;
   color: #1C1917;
@@ -836,6 +843,7 @@
   margin: 0;
 }
 
+.ax-room-modal .ax-btn-modal-cart,
 .ax-btn-modal-cart {
   display: inline-flex;
   align-items: center;
@@ -843,7 +851,7 @@
   height: 44px;
   padding: 0 24px;
   background: #1C1917;
-  color: #FFFFFF;
+  color: #FFFFFF !important;
   border: none;
   border-radius: 9999px;
   font-size: 14px;
@@ -851,6 +859,10 @@
   cursor: pointer;
   transition: all 0.25s ease;
   white-space: nowrap;
+}
+
+.ax-room-modal .ax-btn-modal-cart svg {
+  stroke: #FFFFFF;
 }
 
 .ax-btn-modal-cart:hover {
@@ -1159,6 +1171,7 @@
   z-index: 10;
 }
 
+.ax-room-modal .ax-toolbar-btn,
 .ax-toolbar-btn {
   display: inline-flex;
   align-items: center;
@@ -1169,20 +1182,25 @@
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid #E7E0D7;
   border-radius: 9999px;
+  font-family: var(--f-font, "Inter", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   font-size: 12px;
   font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
   color: #69645D;
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
+.ax-room-modal .ax-toolbar-btn:hover,
 .ax-toolbar-btn:hover {
   background: #FFFFFF;
   color: #1C1917;
   border-color: #1C1917;
 }
 
+.ax-room-modal .ax-toolbar-btn.is-active,
 .ax-toolbar-btn.is-active {
   background: #1C1917;
   color: #FAF7F2;
@@ -2402,7 +2420,7 @@
 }
 
 .ax-3d-info-pill {
-  max-width: min(300px, calc(100% - 530px));
+  max-width: min(300px, calc(100% - 540px));
 }
 .ax-3d-info-pill .ax-pill-row {
   min-width: 0;
@@ -2411,4 +2429,68 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* AUD-05: Prevent overlap at 1024x768 & zero horizontal overflow at 320x640 */
+@media (max-width: 1180px) {
+  .ax-3d-viewport-wrapper {
+    height: min(440px, calc(100vh - 250px));
+    max-height: calc(100vh - 250px);
+    min-height: 300px;
+  }
+  .ax-3d-info-pill {
+    max-width: min(260px, calc(100% - 530px));
+    padding: 7px 11px;
+  }
+  .ax-3d-quick-toolbar {
+    gap: 6px;
+  }
+  .ax-toolbar-btn {
+    padding: 6px 10px;
+    font-size: 11.5px;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 960px) {
+  .ax-3d-info-pill {
+    max-width: calc(100% - 32px);
+  }
+  .ax-3d-quick-toolbar {
+    top: auto;
+    bottom: 46px;
+    left: 12px;
+    right: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 680px) {
+  .ax-room-modal-dialog {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  .ax-room-modal-body {
+    overflow-x: hidden;
+  }
+  .ax-3d-viewport-wrapper {
+    min-height: 260px;
+    height: min(360px, calc(100dvh - 290px));
+    max-height: calc(100dvh - 290px);
+  }
+  .ax-3d-quick-toolbar {
+    bottom: 12px;
+    left: 8px;
+    right: 8px;
+    width: auto !important;
+  }
+  .ax-3d-interaction-hints {
+    display: none;
+  }
+  .ax-btn-modal-cart {
+    min-height: 44px;
+    height: 44px;
+  }
 }

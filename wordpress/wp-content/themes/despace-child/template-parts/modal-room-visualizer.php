@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 ?>
 
-<div id="ax-room-visualizer-modal" class="ax-room-modal" role="dialog" aria-modal="true" aria-labelledby="ax-room-modal-title" aria-hidden="true" style="display: none;">
+<div id="ax-room-visualizer-modal" class="ax-room-modal" role="dialog" aria-modal="true" aria-labelledby="ax-room-modal-title" aria-hidden="true" data-no-translation style="display: none;">
 	<div class="ax-room-modal-backdrop" id="axRoomModalBackdrop"></div>
 	
 	<div class="ax-room-modal-dialog">
@@ -94,12 +94,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<div class="ax-3d-info-pill" id="ax3DInfoPill">
 						<div class="ax-pill-row">
 							<span class="ax-pill-dot"></span>
-							<strong id="ax3DInfoTitle">Tủ giày 3 cánh DeSpace Metro</strong>
+							<strong id="ax3DInfoTitle"><?php echo esc_html( furniva_t( 'DeSpace 3D Product', 'Sản phẩm 3D DeSpace' ) ); ?></strong>
 						</div>
 						<div class="ax-pill-meta">
-							<span id="ax3DInfoDims">Rộng 114 cm × Sâu 33 cm × Cao 76 cm</span>
-							<span class="ax-pill-sep">•</span>
-							<span id="ax3DInfoScale">Tỷ lệ thực 1:1</span>
+							<span id="ax3DInfoDims"></span>
+							<span class="ax-pill-sep" id="ax3DInfoSep" aria-hidden="true">•</span>
+							<span id="ax3DInfoScale"><?php echo esc_html( furniva_t( 'True 1:1 Scale', 'Tỷ lệ thực 1:1' ) ); ?></span>
 						</div>
 					</div>
 
@@ -118,14 +118,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 								<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.85.99 6.57 2.6L21 8"/>
 								<polyline points="21 3 21 8 16 8"/>
 							</svg>
-							<span>Auto-Rotate</span>
+							<span><?php echo esc_html( furniva_t( 'Auto-Rotate', 'Tự động xoay' ) ); ?></span>
 						</button>
 						<button type="button" class="ax-toolbar-btn" id="axBtnResetCamera" title="<?php echo esc_attr( furniva_t( 'Reset Camera Angle', 'Góc nhìn mặc định' ) ); ?>">
 							<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
 								<polyline points="1 4 1 10 7 10"/>
 								<path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
 							</svg>
-							<span>Reset Angle</span>
+							<span><?php echo esc_html( furniva_t( 'Reset Angle', 'Đặt lại góc' ) ); ?></span>
 						</button>
 						<button type="button" class="ax-toolbar-btn ax-toolbar-btn-accent ax-trigger-live-cam" title="<?php echo esc_attr( furniva_t( 'Open Live AR Camera', 'Mở Camera AR Trực Tiếp' ) ); ?>">
 							<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -140,12 +140,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<div class="ax-3d-interaction-hints">
 						<span class="ax-hint-item">
 							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.85.99 6.57 2.6L21 8"/><polyline points="21 3 21 8 16 8"/></svg>
-							Xoay 360° bằng chuột hoặc chạm
+							<?php echo esc_html( furniva_t( 'Drag or touch to rotate 360°', 'Xoay 360° bằng chuột hoặc chạm' ) ); ?>
 						</span>
 						<span class="ax-hint-sep">•</span>
 						<span class="ax-hint-item">
 							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-							Cuộn / Vuốt để Phóng to / Thu nhỏ
+							<?php echo esc_html( furniva_t( 'Scroll / Pinch to Zoom', 'Cuộn / Vuốt để Phóng to / Thu nhỏ' ) ); ?>
 						</span>
 					</div>
 
@@ -258,10 +258,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 							<div class="ax-3d-info-pill ax-live-ar-pill">
 								<div class="ax-pill-row">
 									<span class="ax-pill-dot ax-pill-dot-live" id="axLiveSpatialDot"></span>
-									<strong id="axLiveArInfoTitle">LIVE AR 3D STUDIO</strong>
+									<strong id="axLiveArInfoTitle"><?php echo esc_html( furniva_t( 'LIVE AR 3D STUDIO', 'CAMERA AR 3D TRỰC TIẾP' ) ); ?></strong>
 								</div>
 								<div class="ax-pill-meta">
-									<span id="axLiveArInfoDims">Tỷ lệ thực 1:1</span>
+									<span id="axLiveArInfoDims"><?php echo esc_html( furniva_t( 'True 1:1 Scale', 'Tỷ lệ thực 1:1' ) ); ?></span>
 									<span class="ax-pill-sep">•</span>
 									<span id="axLiveArScaleReadout">100%</span>
 								</div>
@@ -269,7 +269,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 							<!-- Centered Live Floor & Obstacle Collision Alert HUD (Visible on Desktop & Mobile) -->
 							<div class="ax-live-spatial-status" id="axLiveSpatialStatus" role="status" aria-live="polite">
-								🔍 Đang quét mặt sàn...
+								<?php echo esc_html( furniva_t( 'Scanning floor surface…', '🔍 Đang quét mặt sàn...' ) ); ?>
 							</div>
 
 							<!-- Top-Right Gesture Mode Switcher (Rotate 360° vs Move on Floor) -->
@@ -278,19 +278,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
 										<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.85.99 6.57 2.6L21 8"/><polyline points="21 3 21 8 16 8"/>
 									</svg>
-									<span>Xoay 3D 360°</span>
+									<span><?php echo esc_html( furniva_t( 'Rotate 3D 360°', 'Xoay 3D 360°' ) ); ?></span>
 								</button>
 								<button type="button" class="despace-stage-mode-btn" id="axLiveModeMoveBtn" data-gesture="move">
 									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
 										<polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/>
 									</svg>
-									<span>Di Chuyển Vị Trí</span>
+									<span><?php echo esc_html( furniva_t( 'Move Position', 'Di Chuyển Vị Trí' ) ); ?></span>
 								</button>
 							</div>
 
 							<!-- Interactive Hint Banner -->
 							<div class="ax-stage-hint" id="axLiveArHint">
-								Vuốt trên sản phẩm để xoay 3D 360° • Chuyển sang "Di Chuyển Vị Trí" để kéo đặt trên sàn
+								<?php echo esc_html( furniva_t( 'Drag on the model to rotate 360° • Switch to "Move Position" to place on floor', 'Vuốt trên sản phẩm để xoay 3D 360° • Chuyển sang "Di Chuyển Vị Trí" để kéo đặt trên sàn' ) ); ?>
 							</div>
 						</div>
 
@@ -298,13 +298,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<div class="ax-room-controls-bar ax-live-cam-controls">
 							<!-- Scale Control -->
 							<div class="ax-control-group">
-								<span class="ax-control-label">Kích thước:</span>
+								<span class="ax-control-label"><?php echo esc_html( furniva_t( 'Scale:', 'Kích thước:' ) ); ?></span>
 								<div class="ax-scale-controls">
-									<button type="button" class="ax-scale-btn" id="axLiveScaleDownBtn" aria-label="Thu nhỏ">−</button>
-									<input type="range" id="axLiveScaleSlider" min="50" max="180" value="100" step="2" aria-label="Tỷ lệ kích thước mô hình 3D" />
-									<button type="button" class="ax-scale-btn" id="axLiveScaleUpBtn" aria-label="Phóng to">+</button>
+									<button type="button" class="ax-scale-btn" id="axLiveScaleDownBtn" aria-label="<?php echo esc_attr( furniva_t( 'Zoom out', 'Thu nhỏ' ) ); ?>">−</button>
+									<input type="range" id="axLiveScaleSlider" min="50" max="180" value="100" step="2" aria-label="<?php echo esc_attr( furniva_t( '3D model scale', 'Tỷ lệ kích thước mô hình 3D' ) ); ?>" />
+									<button type="button" class="ax-scale-btn" id="axLiveScaleUpBtn" aria-label="<?php echo esc_attr( furniva_t( 'Zoom in', 'Phóng to' ) ); ?>">+</button>
 									<span class="ax-scale-badge" id="axLiveScaleBadge">100%</span>
-									<button type="button" class="ax-scale-reset-btn" id="axLiveResetTransformBtn" title="Đặt lại góc nhìn & vị trí" aria-label="Đặt lại vị trí">
+									<button type="button" class="ax-scale-reset-btn" id="axLiveResetTransformBtn" title="<?php echo esc_attr( furniva_t( 'Reset angle & position', 'Đặt lại góc nhìn & vị trí' ) ); ?>" aria-label="<?php echo esc_attr( furniva_t( 'Reset position', 'Đặt lại vị trí' ) ); ?>">
 										<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
 											<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
 										</svg>
@@ -314,16 +314,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 							<!-- Lighting Tone -->
 							<div class="ax-control-group">
-								<span class="ax-control-label">Ánh sáng:</span>
+								<span class="ax-control-label"><?php echo esc_html( furniva_t( 'Lighting:', 'Ánh sáng:' ) ); ?></span>
 								<div class="ax-btn-group">
 									<button type="button" class="ax-pill-btn ax-live-tone-btn active" data-tone="natural" data-exposure="1.06">
-										<span class="ax-tone-dot ax-dot-natural"></span> Tự nhiên
+										<span class="ax-tone-dot ax-dot-natural"></span> <?php echo esc_html( furniva_t( 'Natural', 'Tự nhiên' ) ); ?>
 									</button>
 									<button type="button" class="ax-pill-btn ax-live-tone-btn" data-tone="warm" data-exposure="1.22">
-										<span class="ax-tone-dot ax-dot-warm"></span> Ấm áp
+										<span class="ax-tone-dot ax-dot-warm"></span> <?php echo esc_html( furniva_t( 'Warm', 'Ấm áp' ) ); ?>
 									</button>
 									<button type="button" class="ax-pill-btn ax-live-tone-btn" data-tone="moody" data-exposure="0.86">
-										<span class="ax-tone-dot ax-dot-moody"></span> Sắc nét
+										<span class="ax-tone-dot ax-dot-moody"></span> <?php echo esc_html( furniva_t( 'Crisp', 'Sắc nét' ) ); ?>
 									</button>
 								</div>
 							</div>
@@ -331,32 +331,32 @@ if ( ! defined( 'ABSPATH' ) ) {
 							<!-- Camera Actions: Auto-Floor, Spatial Obstacle Scan, Toggle Doors, Flip, Upload Room Photo, Snapshot -->
 							<div class="ax-control-group">
 								<button type="button" class="ax-pill-btn" id="axLiveAutoFloorBtn" title="<?php echo esc_attr( furniva_t( 'Detect room floor & snap model onto floor', 'Quét mặt sàn & đặt sản phẩm xuống sàn nhà' ) ); ?>">
-									<span>🎯 Đặt Xuống Sàn</span>
+									<span><?php echo esc_html( furniva_t( '🎯 Snap to Floor', '🎯 Đặt Xuống Sàn' ) ); ?></span>
 								</button>
 								<button type="button" class="ax-pill-btn active" id="axLiveSpatialToggleBtn" aria-pressed="true" title="<?php echo esc_attr( furniva_t( 'Real-time terrain & obstacle collision warning', 'Bật/Tắt cảm biến nhận biết sàn & cảnh báo vật cản đỏ' ) ); ?>">
-									<span>🛡️ Quét Vật Cản</span>
+									<span><?php echo esc_html( furniva_t( '🛡️ Obstacle Scan', '🛡️ Quét Vật Cản' ) ); ?></span>
 								</button>
 								<button type="button" class="ax-pill-btn" id="axLiveToggleDoorsBtn" aria-pressed="false" style="display:none;" title="<?php echo esc_attr( furniva_t( 'Open / Close Cabinet Doors in AR', 'Mở / Đóng cánh tủ trong AR' ) ); ?>">
-									<span>🚪 Mở Tủ</span>
+									<span><?php echo esc_html( furniva_t( '🚪 Open Doors', '🚪 Mở Tủ' ) ); ?></span>
 								</button>
-								<button type="button" class="ax-pill-btn" id="axLiveFlipCamBtn" title="Đổi camera Trước / Sau">
+								<button type="button" class="ax-pill-btn" id="axLiveFlipCamBtn" title="<?php echo esc_attr( furniva_t( 'Switch front / rear camera', 'Đổi camera Trước / Sau' ) ); ?>">
 									<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
 										<path d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/>
 									</svg>
-									<span>Đổi Camera</span>
+									<span><?php echo esc_html( furniva_t( 'Flip Camera', 'Đổi Camera' ) ); ?></span>
 								</button>
 								<label class="ax-pill-btn" for="axLiveRoomPhotoInput" style="cursor:pointer; margin:0;">
 									<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
 										<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
 									</svg>
-									<span>Ảnh Phòng</span>
+									<span><?php echo esc_html( furniva_t( 'Room Photo', 'Ảnh Phòng' ) ); ?></span>
 									<input type="file" id="axLiveRoomPhotoInput" accept="image/*" hidden />
 								</label>
 								<button type="button" class="ax-pill-btn active" id="axLiveSnapshotBtn">
 									<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
 										<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
 									</svg>
-									<span>Chụp Lưu Ảnh AR</span>
+									<span><?php echo esc_html( furniva_t( 'Save AR Photo', 'Chụp Lưu Ảnh AR' ) ); ?></span>
 								</button>
 							</div>
 						</div>
@@ -487,49 +487,49 @@ if ( ! defined( 'ABSPATH' ) ) {
 										<!-- Standards-compliant ISO/IEC 18004 SVG QR Code mounted here -->
 										<div id="axDynamicQrCode"></div>
 									</div>
-									<span class="ax-qr-badge" id="axQrModeBadge">SCAN TO OPEN MOBILE AR</span>
+									<span class="ax-qr-badge" id="axQrModeBadge"><?php echo esc_html( furniva_t( 'SCAN TO OPEN MOBILE AR', 'QUÉT ĐỂ MỞ AR DI ĐỘNG' ) ); ?></span>
 
 									<!-- Network Mode Switcher (Cloud HTTPS vs Local Wi-Fi LAN) -->
-									<div class="ax-qr-net-switch" id="axQrNetSwitch" role="group" aria-label="Chế độ kết nối mã QR">
+									<div class="ax-qr-net-switch" id="axQrNetSwitch" role="group" aria-label="<?php echo esc_attr( furniva_t( 'QR connection mode', 'Chế độ kết nối mã QR' ) ); ?>">
 										<button type="button" class="ax-qr-net-btn is-active" data-net-mode="tunnel" id="axQrNetTunnelBtn">
-											🌐 Mọi mạng (HTTPS)
+											<?php echo esc_html( furniva_t( '🌐 Any Network (HTTPS)', '🌐 Mọi mạng (HTTPS)' ) ); ?>
 										</button>
 										<button type="button" class="ax-qr-net-btn" data-net-mode="lan" id="axQrNetLanBtn">
-											📶 Cùng Wi-Fi (LAN)
+											<?php echo esc_html( furniva_t( '📶 Same Wi-Fi (LAN)', '📶 Cùng Wi-Fi (LAN)' ) ); ?>
 										</button>
 									</div>
 									<p class="ax-qr-net-status" id="axQrNetStatus" aria-live="polite"></p>
 								</div>
 
 								<div class="ax-qr-info">
-									<span class="ax-room-badge">TRẢI NGHIỆM AR THỰC TẾ TRÊN ĐIỆN THOẠI &amp; MÁY TÍNH</span>
-									<h3 class="ax-qr-title">Quét Mã QR Để Mở Camera AR</h3>
+									<span class="ax-room-badge"><?php echo esc_html( furniva_t( 'REAL AR EXPERIENCE ON MOBILE & DESKTOP', 'TRẢI NGHIỆM AR THỰC TẾ TRÊN ĐIỆN THOẠI & MÁY TÍNH' ) ); ?></span>
+									<h3 class="ax-qr-title"><?php echo esc_html( furniva_t( 'Scan QR Code to Open AR Camera', 'Quét Mã QR Để Mở Camera AR' ) ); ?></h3>
 									<p class="ax-qr-desc">
-										Đưa camera điện thoại vào mã QR bên trái để mở trực tiếp mô hình 3D của sản phẩm này trong không gian phòng của bạn, hoặc trải nghiệm ngay qua Camera trên thiết bị hiện tại.
+										<?php echo esc_html( furniva_t( 'Point your phone camera at the QR code on the left to preview this 3D furniture piece in your room, or launch Live Camera AR directly on this device.', 'Đưa camera điện thoại vào mã QR bên trái để mở trực tiếp mô hình 3D của sản phẩm này trong không gian phòng của bạn, hoặc trải nghiệm ngay qua Camera trên thiết bị hiện tại.' ) ); ?>
 									</p>
 									<ul class="ax-qr-checklist">
 										<li>
 											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9A6745" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-											<span><strong>iPhone / iPad:</strong> Mở ứng dụng Camera mặc định hoặc Zalo, quét mã QR và chạm vào liên kết để mở <strong>Camera AR 3D</strong> hoặc <strong>Apple AR Quick Look</strong>.</span>
+											<span><?php echo wp_kses_post( furniva_t( '<strong>iPhone / iPad:</strong> Open the Camera app, scan the QR code, and tap the link to launch <strong>Live 3D Camera AR</strong> or <strong>Apple AR Quick Look</strong>.', '<strong>iPhone / iPad:</strong> Mở ứng dụng Camera mặc định hoặc Zalo, quét mã QR và chạm vào liên kết để mở <strong>Camera AR 3D</strong> hoặc <strong>Apple AR Quick Look</strong>.' ) ); ?></span>
 										</li>
 										<li>
 											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9A6745" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-											<span><strong>Android:</strong> Dùng máy ảnh, Google Lens hoặc Zalo quét mã để mở <strong>Camera AR 3D</strong> hoặc <strong>Google Scene Viewer</strong>.</span>
+											<span><?php echo wp_kses_post( furniva_t( '<strong>Android:</strong> Use your camera or Google Lens to scan and open <strong>Live 3D Camera AR</strong> or <strong>Google Scene Viewer</strong>.', '<strong>Android:</strong> Dùng máy ảnh, Google Lens hoặc Zalo quét mã để mở <strong>Camera AR 3D</strong> hoặc <strong>Google Scene Viewer</strong>.' ) ); ?></span>
 										</li>
 										<li>
 											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9A6745" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-											<span><strong>Đồng bộ 100% Model 3D:</strong> Hiển thị đúng chuẩn mô hình 3D PBR của sản phẩm với thao tác xoay 360° và kéo đặt mượt mà.</span>
+											<span><?php echo wp_kses_post( furniva_t( '<strong>100% Synced 3D Model:</strong> Displays the exact PBR 3D model with smooth 360° rotation and placement.', '<strong>Đồng bộ 100% Model 3D:</strong> Hiển thị đúng chuẩn mô hình 3D PBR của sản phẩm với thao tác xoay 360° và kéo đặt mượt mà.' ) ); ?></span>
 										</li>
 									</ul>
 
 									<div class="ax-qr-copy-row">
-										<input type="text" id="axArDirectUrlInput" readonly class="ax-ar-url-input" aria-label="Đường dẫn AR trên điện thoại" />
+										<input type="text" id="axArDirectUrlInput" readonly class="ax-ar-url-input" aria-label="<?php echo esc_attr( furniva_t( 'Mobile AR link', 'Đường dẫn AR trên điện thoại' ) ); ?>" />
 										<span class="ax-copy-wrap">
 											<button type="button" class="ax-btn ax-btn-copy-url" id="axBtnCopyArUrl" command="--copy" commandfor="axArDirectUrlInput">
 												<svg class="ax-copy-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
 													<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
 												</svg>
-												<span id="axBtnCopyArText">Sao chép Link AR</span>
+												<span id="axBtnCopyArText"><?php echo esc_html( furniva_t( 'Copy AR Link', 'Sao chép Link AR' ) ); ?></span>
 											</button>
 											<span class="ax-copy-tip" id="axArCopyStatus" role="status"></span>
 										</span>
@@ -541,7 +541,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 												<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
 												<circle cx="12" cy="13" r="4"/>
 											</svg>
-											<span>Mở Camera AR 3D Trực Tiếp Ngay Trên Thiết Bị Này</span>
+											<span><?php echo esc_html( furniva_t( 'Open Live 3D Camera AR on This Device', 'Mở Camera AR 3D Trực Tiếp Ngay Trên Thiết Bị Này' ) ); ?></span>
 										</button>
 									</div>
 								</div>
@@ -552,8 +552,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<!-- AR Not Supported / Missing Model Fallback Message -->
 					<div class="ax-ar-unsupported-card" id="axArMissingModelCard" style="display:none;">
 						<div class="ax-status-icon">📦</div>
-						<h3>Chức Năng AR Đang Được Chuẩn Bị</h3>
-						<p>Sản phẩm này hiện đang trong quá trình số hóa 3D đo đạc tỷ lệ chuẩn bởi DeSpace Studio. Vui lòng chuyển sang Tab "Mô Hình 3D" hoặc xem chi tiết ảnh sản phẩm.</p>
+						<h3><?php echo esc_html( furniva_t( 'AR Preview Coming Soon', 'Chức Năng AR Đang Được Chuẩn Bị' ) ); ?></h3>
+						<p><?php echo esc_html( furniva_t( 'This product is currently being digitized at true 1:1 scale by DeSpace Studio. Please switch to the 3D Viewer tab or browse product photos.', 'Sản phẩm này hiện đang trong quá trình số hóa 3D đo đạc tỷ lệ chuẩn bởi DeSpace Studio. Vui lòng chuyển sang Tab "Mô Hình 3D" hoặc xem chi tiết ảnh sản phẩm.' ) ); ?></p>
 					</div>
 
 				</div>
@@ -568,9 +568,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<img id="axModalProductThumb" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Thumbnail" />
 				</div>
 				<div class="ax-modal-product-meta">
-					<h3 id="axModalProductName" class="ax-modal-prod-title">Product Name</h3>
+					<h3 id="axModalProductName" class="ax-modal-prod-title"><?php echo esc_html( furniva_t( 'Product', 'Sản phẩm' ) ); ?></h3>
 					<div class="ax-modal-prod-sub">
-						<span id="axModalProductPrice" class="ax-modal-prod-price">$0.00</span>
+						<span id="axModalProductPrice" class="ax-modal-prod-price"></span>
 						<span id="axModalProductDims" class="ax-modal-prod-dims" style="display: none;"></span>
 					</div>
 				</div>
@@ -578,9 +578,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 			<div class="ax-modal-actions">
 				<div class="ax-modal-qty-stepper">
-					<button type="button" class="ax-modal-qty-btn" id="axModalQtyMinus" aria-label="Giảm số lượng">−</button>
-					<input type="number" id="axModalQtyInput" value="1" min="1" max="99" aria-label="Số lượng" />
-					<button type="button" class="ax-modal-qty-btn" id="axModalQtyPlus" aria-label="Tăng số lượng">+</button>
+					<button type="button" class="ax-modal-qty-btn" id="axModalQtyMinus" aria-label="<?php echo esc_attr( furniva_t( 'Decrease quantity', 'Giảm số lượng' ) ); ?>">−</button>
+					<input type="number" id="axModalQtyInput" value="1" min="1" max="99" aria-label="<?php echo esc_attr( furniva_t( 'Quantity', 'Số lượng' ) ); ?>" />
+					<button type="button" class="ax-modal-qty-btn" id="axModalQtyPlus" aria-label="<?php echo esc_attr( furniva_t( 'Increase quantity', 'Tăng số lượng' ) ); ?>">+</button>
 				</div>
 				<button type="button" class="ax-btn ax-btn-primary ax-btn-modal-cart" id="axModalAddToCartBtn">
 					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">

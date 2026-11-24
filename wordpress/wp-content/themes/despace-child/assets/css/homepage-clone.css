@@ -1888,12 +1888,14 @@
 }
 
 .fv-footer__brand > a:first-child {
-  width: 126px;
-  margin: 2px auto 10px;
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 12px;
 }
 
 .fv-footer__brand > a:first-child img {
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   height: auto;
 }
 

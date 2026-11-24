@@ -68,11 +68,24 @@ $thumb_large  = $product->get_image_id() ? wp_get_attachment_image_url( $product
 				// 3D Preview button
 				$card_3d = function_exists( 'ax_get_product_3d_info' ) ? ax_get_product_3d_info( $id ) : array();
 				if ( ! empty( $card_3d['glb_url'] ) ) :
+					$card_dims     = $product->get_dimensions( false );
+					$card_dim_str  = '';
+					if ( ! empty( $card_dims['length'] ) && ! empty( $card_dims['width'] ) && ! empty( $card_dims['height'] ) ) {
+						$card_dim_str = "{$card_dims['length']} × {$card_dims['width']} × {$card_dims['height']} cm";
+					} elseif ( ! empty( $card_3d['dimensions'] ) ) {
+						$card_dim_str = $card_3d['dimensions'];
+					}
+					$card_prod_name = function_exists( 'furniva_translate_product_title' ) ? furniva_translate_product_title( $product->get_name(), $product ) : $product->get_name();
+					$card_price_str = function_exists( 'despace_format_plain_price' ) ? despace_format_plain_price( $product->get_price() ) : html_entity_decode( wp_strip_all_tags( wc_price( $product->get_price() ) ), ENT_QUOTES, 'UTF-8' );
+					$card_reg_str   = $product->is_on_sale() ? ( function_exists( 'despace_format_plain_price' ) ? despace_format_plain_price( $product->get_regular_price() ) : html_entity_decode( wp_strip_all_tags( wc_price( $product->get_regular_price() ) ), ENT_QUOTES, 'UTF-8' ) ) : '';
 				?>
 					<button type="button" class="f-card-3d-btn ax-open-3d-btn"
 						data-product-id="<?php echo esc_attr( $id ); ?>"
-						data-product-name="<?php echo esc_attr( $product->get_name() ); ?>"
-						data-product-price="<?php echo esc_attr( wp_strip_all_tags( $product->get_price_html() ) ); ?>"
+						data-product-name="<?php echo esc_attr( $card_prod_name ); ?>"
+						data-product-price="<?php echo esc_attr( $card_price_str ); ?>"
+						data-product-regular-price="<?php echo esc_attr( $card_reg_str ); ?>"
+						data-product-raw-price="<?php echo esc_attr( $product->get_price() ); ?>"
+						data-product-dimensions="<?php echo esc_attr( $card_dim_str ); ?>"
 						data-product-image="<?php echo esc_url( $thumb_large ); ?>"
 						data-has-3d="yes"
 						data-ar-enabled="<?php echo ! empty( $card_3d['ar_enabled'] ) ? 'yes' : 'no'; ?>"

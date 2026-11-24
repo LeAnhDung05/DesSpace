@@ -206,18 +206,51 @@ function furniva_translate_product_html( $content ) {
 		return '>' . htmlspecialchars( $text, ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8' ) . '<';
 	}, $content );
 }
+function despace_get_product_en_field( $product_id, $meta_key, $csv_key ) {
+	$en_val = get_post_meta( $product_id, $meta_key, true );
+	if ( ! empty( $en_val ) ) {
+		return $en_val;
+	}
+	$csv_rows = get_post_meta( $product_id, '_despace_source_csv_rows', true );
+	if ( is_array( $csv_rows ) && ! empty( $csv_rows['en_usd'][ $csv_key ] ) ) {
+		$val = (string) $csv_rows['en_usd'][ $csv_key ];
+		$val = str_ireplace( array( 'https://furniva.in/', 'http://furniva.in/', 'furniva-' ), array( 'https://despace.vn/', 'https://despace.vn/', 'despace-' ), $val );
+		$val = str_ireplace( array( 'furniva', 'funival', 'axgnud' ), 'DeSpace', $val );
+		return $val;
+	}
+	return '';
+}
+
 add_filter( 'woocommerce_product_get_short_description', function( $desc, $product = null ) {
 	if ( in_array( furniva_current_language(), array( 'en', 'en_US', 'en_GB' ), true ) && $product instanceof WC_Product ) {
-		$en_desc = get_post_meta( $product->get_id(), '_short_description_en', true );
-		if ( ! empty( $en_desc ) ) return $en_desc;
+		$en_desc = despace_get_product_en_field( $product->get_id(), '_short_description_en', 'Short description' );
+		if ( '' !== $en_desc ) {
+			return $en_desc;
+		}
 	}
 	return furniva_translate_product_html( $desc );
 }, 99, 2 );
 
+add_filter( 'woocommerce_short_description', function( $desc ) {
+	if ( is_admin() || ! in_array( furniva_current_language(), array( 'en', 'en_US', 'en_GB' ), true ) ) {
+		return $desc;
+	}
+	global $post;
+	if ( $post && 'product' === $post->post_type ) {
+		$en_desc = despace_get_product_en_field( $post->ID, '_short_description_en', 'Short description' );
+		if ( '' !== $en_desc ) {
+			return wpautop( wp_kses_post( $en_desc ) );
+		}
+	}
+	return $desc;
+}, 99 );
+
 add_filter( 'woocommerce_product_get_description', function( $desc, $product = null ) {
 	if ( in_array( furniva_current_language(), array( 'en', 'en_US', 'en_GB' ), true ) && $product instanceof WC_Product ) {
-		$en_desc = get_post_meta( $product->get_id(), '_description_en', true );
-		if ( ! empty( $en_desc ) ) return $en_desc;
+		$en_desc = despace_get_product_en_field( $product->get_id(), '_description_en', 'Description' );
+		if ( '' !== $en_desc ) {
+			return $en_desc;
+		}
 	}
 	return furniva_translate_product_html( $desc );
 }, 99, 2 );
@@ -332,18 +365,56 @@ add_filter( 'woocommerce_page_title', function( $title ) {
 
 function furniva_translate_attribute_label( $label, $name ) {
 	$labels = array(
-		'pa_brand' => array( 'Brand', 'Thương hiệu' ), 'brand' => array( 'Brand', 'Thương hiệu' ),
-		'pa_color' => array( 'Color', 'Màu sắc' ), 'color' => array( 'Color', 'Màu sắc' ),
-		'pa_size' => array( 'Size', 'Kích thước' ), 'size' => array( 'Size', 'Kích thước' ),
+		'pa_brand'           => array( 'Brand', 'Thương hiệu' ),
+		'brand'              => array( 'Brand', 'Thương hiệu' ),
+		'pa_color'           => array( 'Color', 'Màu sắc' ),
+		'color'              => array( 'Color', 'Màu sắc' ),
+		'màu sắc'            => array( 'Color', 'Màu sắc' ),
+		'pa_size'            => array( 'Size', 'Kích thước' ),
+		'size'               => array( 'Size', 'Kích thước' ),
+		'pa_material'        => array( 'Material', 'Chất liệu' ),
+		'material'           => array( 'Material', 'Chất liệu' ),
+		'chất liệu'          => array( 'Material', 'Chất liệu' ),
+		'pa_finish'          => array( 'Surface Finish', 'Hoàn thiện bề mặt' ),
+		'hoàn thiện bề mặt'  => array( 'Surface Finish', 'Hoàn thiện bề mặt' ),
 	);
-	$key = strtolower( (string) $name );
-	if ( isset( $labels[ $key ] ) || isset( $labels[ strtolower( (string) $label ) ] ) ) {
-		$pair = $labels[ $key ] ?? $labels[ strtolower( (string) $label ) ];
+	$key       = mb_strtolower( trim( (string) $name ), 'UTF-8' );
+	$label_key = mb_strtolower( trim( (string) $label ), 'UTF-8' );
+	if ( isset( $labels[ $key ] ) || isset( $labels[ $label_key ] ) ) {
+		$pair = $labels[ $key ] ?? $labels[ $label_key ];
 		return furniva_t( $pair[0], $pair[1] );
 	}
 	return $label;
 }
 add_filter( 'woocommerce_attribute_label', 'furniva_translate_attribute_label', 99, 2 );
+
+add_filter( 'woocommerce_attribute', function( $value_html, $attribute, $values ) {
+	if ( is_admin() || ! in_array( furniva_current_language(), array( 'en', 'en_US', 'en_GB' ), true ) ) {
+		return $value_html;
+	}
+	$tax = ( is_object( $attribute ) && method_exists( $attribute, 'get_name' ) ) ? $attribute->get_name() : '';
+	$material_map = array(
+		'Cánh chớp thoáng khí'                 => 'Ventilated Louvered Doors',
+		'Gỗ công nghiệp phủ Laminate mờ 17mm'  => '17mm Matte Laminate Engineered Wood',
+		'Gỗ công nghiệp phủ Melamine chống ẩm' => 'Moisture-Resistant Melamine Engineered Wood',
+		'Kính cường lực'                       => 'Tempered Glass',
+		'Kim loại sơn tĩnh điện'               => 'Powder-Coated Metal',
+	);
+	$translated = array();
+	foreach ( (array) $values as $v ) {
+		$clean = trim( html_entity_decode( wp_strip_all_tags( (string) $v ), ENT_QUOTES, 'UTF-8' ) );
+		if ( isset( $material_map[ $clean ] ) ) {
+			$translated[] = esc_html( $material_map[ $clean ] );
+		} else {
+			$t = despace_term_label( $clean, $tax ?: 'pa_color' );
+			if ( $t === $clean && 'pa_color' !== $tax ) {
+				$t = despace_term_label( $clean, 'pa_color' );
+			}
+			$translated[] = esc_html( $t );
+		}
+	}
+	return ! empty( $translated ) ? wpautop( wptexturize( implode( ', ', $translated ) ) ) : $value_html;
+}, 99, 3 );
 
 function despace_term_label( $name, $taxonomy = '' ) {
 	$name = html_entity_decode( (string) $name, ENT_QUOTES, get_bloginfo( 'charset' ) );
@@ -545,43 +616,32 @@ function despace_language_switcher_html() {
 	// Preserve percent-encoded UTF-8 Vietnamese slugs (do NOT run sanitize_text_field on REQUEST_URI).
 	$raw_uri     = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '/';
 	$uri         = '/' . ltrim( str_replace( array( "\r", "\n" ), '', $raw_uri ), '/' );
-	$current_url = esc_url_raw( home_url( $uri ) );
+	$parsed_uri  = wp_parse_url( $uri );
+	$raw_path    = isset( $parsed_uri['path'] ) && '' !== $parsed_uri['path'] ? $parsed_uri['path'] : '/';
+	$qs          = ! empty( $parsed_uri['query'] ) ? '?' . $parsed_uri['query'] : '';
 
-	$vi_url = '';
-	$en_url = '';
-
-	if ( class_exists( 'TRP_Translate_Press' ) ) {
-		$trp           = TRP_Translate_Press::get_trp_instance();
-		$url_converter = $trp ? $trp->get_component( 'url_converter' ) : null;
-		if ( $url_converter && method_exists( $url_converter, 'get_url_for_language' ) ) {
-			$vi_url = $url_converter->get_url_for_language( 'vi', $current_url );
-			$en_url = $url_converter->get_url_for_language( 'en_US', $current_url );
-		}
+	// Strip any duplicated /en/ prefix(es) to build canonical VI and EN paths without /en/en/ loops.
+	$base_path = preg_replace( '#^(?:/en)+(?:/|$)#i', '/', $raw_path );
+	if ( '' === $base_path ) {
+		$base_path = '/';
 	}
+	$en_path = '/en' . ( '/' === $base_path ? '/' : $base_path );
 
-	// Fallback if TRP didn't produce distinct URLs
-	if ( empty( $vi_url ) || empty( $en_url ) || $vi_url === $en_url ) {
-		$path = wp_parse_url( $current_url, PHP_URL_PATH ) ?: '/';
-		$query = wp_parse_url( $current_url, PHP_URL_QUERY );
-		$qs = $query ? '?' . $query : '';
-		if ( 0 === strpos( $path, '/en/' ) || '/en' === $path ) {
-			$en_url  = $current_url;
-			$vi_path = preg_replace( '#^/en(/|$)#', '/', $path );
-			$vi_url  = home_url( $vi_path . $qs );
-		} else {
-			$vi_url  = $current_url;
-			$en_url  = home_url( '/en' . ( '/' === $path ? '/' : $path ) . $qs );
-		}
-	}
+	$site_home = rtrim( home_url( '/' ), '/' );
+	// Ensure home_url() itself does not already include /en when TranslatePress filters home_url on EN pages.
+	$site_home = preg_replace( '#/en$#i', '', $site_home );
+
+	$vi_url = $site_home . $base_path . $qs;
+	$en_url = $site_home . $en_path . $qs;
 
 	ob_start();
 	?>
-	<div class="fv-lang-switcher" role="navigation" aria-label="<?php echo esc_attr( despace_t( 'Language selector', 'Chọn ngôn ngữ' ) ); ?>">
-		<a href="<?php echo esc_url( $vi_url ); ?>" class="fv-lang-btn <?php echo $is_vi ? 'is-active' : ''; ?>" aria-current="<?php echo $is_vi ? 'true' : 'false'; ?>" title="Tiếng Việt">
+	<div class="fv-lang-switcher" role="navigation" aria-label="<?php echo esc_attr( despace_t( 'Language selector', 'Chọn ngôn ngữ' ) ); ?>" data-no-translation>
+		<a href="<?php echo esc_url( $vi_url ); ?>" class="fv-lang-btn <?php echo $is_vi ? 'is-active' : ''; ?>" aria-current="<?php echo $is_vi ? 'true' : 'false'; ?>" title="Tiếng Việt" data-no-translation>
 			<span class="fv-lang-code">VI</span>
 		</a>
 		<span class="fv-lang-sep" aria-hidden="true">/</span>
-		<a href="<?php echo esc_url( $en_url ); ?>" class="fv-lang-btn <?php echo ! $is_vi ? 'is-active' : ''; ?>" aria-current="<?php echo ! $is_vi ? 'true' : 'false'; ?>" title="English">
+		<a href="<?php echo esc_url( $en_url ); ?>" class="fv-lang-btn <?php echo ! $is_vi ? 'is-active' : ''; ?>" aria-current="<?php echo ! $is_vi ? 'true' : 'false'; ?>" title="English" data-no-translation>
 			<span class="fv-lang-code">EN</span>
 		</a>
 	</div>
@@ -594,9 +654,8 @@ function furniva_language_switcher_html() {
 }
 
 /**
- * Safe English Currency Reference Display (Ledger remains strictly VND)
- * Never mutates woocommerce_currency or raw_woocommerce_price so WC_Order totals
- * and payment gateways always settle accurately in VND without 25,000x corruption.
+ * Detect English frontend mode.
+ * Prices stay strictly in VND across both VI and EN (no hardcoded/approximate USD conversion).
  */
 function despace_is_english_mode() {
 	if ( function_exists( 'furniva_current_language' ) ) {
@@ -608,21 +667,6 @@ function despace_is_english_mode() {
 	$uri = $_SERVER['REQUEST_URI'] ?? '';
 	return ( 0 === strpos( $uri, '/en/' ) || '/en' === $uri );
 }
-
-add_filter( 'wc_price', function( $return, $price, $args, $unformatted_price ) {
-	if ( is_admin() || ! despace_is_english_mode() ) {
-		return $return;
-	}
-	$raw_num = is_numeric( $unformatted_price ) ? (float) $unformatted_price : 0.0;
-	if ( $raw_num <= 0 ) {
-		return $return;
-	}
-	$usd_approx = round( $raw_num / 25000, 0 );
-	if ( $usd_approx < 1 ) {
-		$usd_approx = round( $raw_num / 25000, 2 );
-	}
-	return $return . ' <span class="despace-usd-ref" style="font-size:0.84em;opacity:0.75;font-weight:500;">(&approx; $' . esc_html( number_format( (float) $usd_approx, ( $usd_approx == (int) $usd_approx ? 0 : 2 ) ) ) . ')</span>';
-}, 99, 4 );
 
 /**
  * Permanently disable TranslatePress floating language switcher widget.

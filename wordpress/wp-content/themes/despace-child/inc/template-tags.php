@@ -529,7 +529,7 @@ function despace_category_mega_dropdown( $cat_slug ) {
 		return '';
 	}
 	$lang      = function_exists( 'despace_current_language' ) ? despace_current_language() : 'vi';
-	$cache_key = 'despace_mega_v2_' . md5( $cat_slug . '_' . $lang );
+	$cache_key = 'despace_mega_v3_' . md5( $cat_slug . '_' . $lang );
 	$cached    = get_transient( $cache_key );
 	if ( false !== $cached && is_string( $cached ) ) {
 		return $cached;
@@ -579,7 +579,7 @@ function despace_category_mega_dropdown( $cat_slug ) {
 				$price_html = $product->get_price_html();
 				$is_badge   = ( 0 === $idx ) && ( $product->is_featured() || $product->get_total_sales() > 0 );
 			?>
-				<a class="fv-mega-product-card" href="<?php echo esc_url( furniva_url( get_permalink( $product_id ) ) ); ?>" data-skeleton-route="pdp">
+				<a class="fv-mega-product-card" href="<?php echo esc_url( furniva_url( get_permalink( $product_id ) ) ); ?>" aria-label="<?php echo esc_attr( $title ); ?>" data-skeleton-route="pdp">
 					<div class="fv-mega-product-card__thumb">
 						<img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $title ); ?>" width="96" height="96" loading="lazy" fetchpriority="low" decoding="async" />
 						<?php if ( $is_badge ) : ?>
@@ -605,7 +605,7 @@ function despace_category_mega_dropdown( $cat_slug ) {
 function despace_flush_mega_dropdown_cache() {
 	global $wpdb;
 	if ( isset( $wpdb->options ) ) {
-		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_despace_mega_v2_%' OR option_name LIKE '_transient_timeout_despace_mega_v2_%'" );
+		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_despace_mega_v3_%' OR option_name LIKE '_transient_timeout_despace_mega_v3_%'" );
 	}
 }
 add_action( 'save_post_product', 'despace_flush_mega_dropdown_cache' );
