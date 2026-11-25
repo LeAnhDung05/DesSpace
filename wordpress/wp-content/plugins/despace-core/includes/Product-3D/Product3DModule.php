@@ -48,6 +48,7 @@ class Product3DModule {
 		// 1. MIME type permissions for GLB / GLTF / USDZ
 		add_filter( 'upload_mimes', array( $this, 'register_mime_types' ), 10, 2 );
 		add_filter( 'wp_check_filetype_and_ext', array( $this, 'correct_filetype_ext' ), 10, 4 );
+		add_filter( 'wp_handle_upload_prefilter', array( $this, 'validate_3d_upload_file' ) );
 
 		// 2. Admin Meta Box for 3D / AR
 		add_action( 'add_meta_boxes_product', array( $this, 'register_meta_box' ) );
@@ -97,8 +98,10 @@ class Product3DModule {
 				return $data;
 			}
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-			$magic = file_get_contents( $file, false, null, 0, 4 );
-			if ( 'glTF' !== $magic ) {
+			$header = file_get_contents( $file, false, null, 0, 8 );
+			$magic  = substr( $header, 0, 4 );
+			$ver    = unpack( 'V', substr( $header, 4, 4 ) )[1] ?? 0;
+			if ( 'glTF' !== $magic || 2 !== $ver ) {
 				return $data;
 			}
 			$data['ext']  = 'glb';
@@ -131,6 +134,66 @@ class Product3DModule {
 	}
 
 	/**
+	 * Validate 3D upload file size (<= 20MB) and binary magic bytes prior to WordPress storage.
+	 *
+	 * @param array $file Array of $_FILE data from wp_handle_upload.
+	 * @return array
+	 */
+	public function validate_3d_upload_file( array $file ): array {
+		if ( ! empty( $file['error'] ) ) {
+			return $file;
+		}
+
+		$filename = $file['name'] ?? '';
+		$ext      = strtolower( pathinfo( $filename, PATHINFO_EXTENSION ) );
+		$fsize    = (int) ( $file['size'] ?? 0 );
+
+		if ( in_array( $ext, array( 'glb', 'usdz', 'gltf' ), true ) ) {
+			// 1. Enforce 20MB limit per DeSpace API Contract spec (API_CONTRACT.md section 3.3)
+			$max_bytes = 20 * 1024 * 1024;
+			if ( $fsize > $max_bytes ) {
+				$file['error'] = sprintf(
+					__( 'Tệp mô hình 3D (%s) vượt quá giới hạn tối đa cho phép là 20MB theo chuẩn DeSpace.', 'despace-core' ),
+					esc_html( $filename )
+				);
+				return $file;
+			}
+
+			// 2. Validate binary magic bytes if temporary file is readable
+			$tmp = $file['tmp_name'] ?? '';
+			if ( is_string( $tmp ) && is_readable( $tmp ) ) {
+				if ( 'glb' === $ext ) {
+					if ( $fsize < 12 ) {
+						$file['error'] = __( 'Tệp GLB không hợp lệ hoặc bị hỏng (kích thước quá nhỏ).', 'despace-core' );
+						return $file;
+					}
+					// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+					$header = file_get_contents( $tmp, false, null, 0, 8 );
+					$magic  = substr( $header, 0, 4 );
+					$ver    = unpack( 'V', substr( $header, 4, 4 ) )[1] ?? 0;
+					if ( 'glTF' !== $magic || 2 !== $ver ) {
+						$file['error'] = __( 'Tệp GLB không đúng chuẩn glTF 2.0 Binary (Magic header không khớp).', 'despace-core' );
+						return $file;
+					}
+				} elseif ( 'usdz' === $ext ) {
+					if ( $fsize < 30 ) {
+						$file['error'] = __( 'Tệp USDZ không hợp lệ hoặc bị hỏng.', 'despace-core' );
+						return $file;
+					}
+					// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+					$magic = file_get_contents( $tmp, false, null, 0, 4 );
+					if ( "PK\x03\x04" !== $magic ) {
+						$file['error'] = __( 'Tệp USDZ không hợp lệ (cần định dạng package zip chuẩn của Apple AR).', 'despace-core' );
+						return $file;
+					}
+				}
+			}
+		}
+
+		return $file;
+	}
+
+	/**
 	 * Register Product Meta Box.
 	 */
 	public function register_meta_box(): void {
@@ -155,11 +218,32 @@ class Product3DModule {
 		$poster_id     = absint( get_post_meta( $post->ID, '_despace_poster_attachment_id', true ) );
 		$enable_ar     = get_post_meta( $post->ID, '_despace_enable_ar', true );
 
+		// 3D physical dimensions & camera controls (per API_CONTRACT.md section 3)
+		$dimensions = get_post_meta( $post->ID, '_despace_3d_dimensions', true );
+		if ( ! is_array( $dimensions ) ) {
+			$dimensions = array();
+		}
+		$dim_length    = $dimensions['length'] ?? 0;
+		$dim_width     = $dimensions['width'] ?? 0;
+		$dim_height    = $dimensions['height'] ?? 0;
+		$dim_unit      = ! empty( $dimensions['unit'] ) ? $dimensions['unit'] : 'cm';
+		$camera_orbit  = get_post_meta( $post->ID, '_despace_3d_camera_orbit', true ) ?: '45deg 75deg 2.5m';
+		$field_of_view = get_post_meta( $post->ID, '_despace_3d_field_of_view', true ) ?: '30deg';
+
 		// Fallback detection from legacy meta or 3D table if new fields are empty
 		if ( ! $attachment_id && empty( $glb_url ) ) {
 			$info = self::get_product_3d_info( $post->ID );
 			if ( ! empty( $info['glb_url'] ) ) {
 				$glb_url = $info['glb_url'];
+			}
+			if ( empty( $poster_id ) && ! empty( $info['poster_attachment_id'] ) ) {
+				$poster_id = absint( $info['poster_attachment_id'] );
+			}
+			if ( 0 == $dim_length && 0 == $dim_width && 0 == $dim_height ) {
+				$dim_length = $info['depth'] ?? 0;
+				$dim_width  = $info['width'] ?? 0;
+				$dim_height = $info['height'] ?? 0;
+				$dim_unit   = $info['unit'] ?? 'cm';
 			}
 		}
 
@@ -174,12 +258,15 @@ class Product3DModule {
 		?>
 		<div class="despace-3d-meta-wrapper" style="padding: 12px 0;">
 			<style>
-				.despace-meta-row { margin-bottom: 15px; }
-				.despace-meta-row label { display: block; font-weight: 600; margin-bottom: 5px; }
-				.despace-meta-row .description { color: #666; font-size: 12px; margin-top: 4px; }
+				.despace-meta-row { margin-bottom: 18px; }
+				.despace-meta-row label { display: block; font-weight: 600; margin-bottom: 5px; color: #1e1e1e; }
+				.despace-meta-row .description { color: #666; font-size: 12px; margin-top: 4px; line-height: 1.4; }
 				.despace-media-preview { margin-top: 8px; font-family: monospace; background: #f0f0f1; padding: 6px 10px; border-radius: 4px; display: inline-block; word-break: break-all; }
+				.despace-dim-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; max-width: 600px; }
+				.despace-dim-grid input, .despace-dim-grid select { width: 100%; }
 			</style>
 
+			<!-- 1. GLB 3D Binary File -->
 			<div class="despace-meta-row">
 				<label for="despace_glb_attachment_id"><?php esc_html_e( 'Tệp mô hình 3D (.glb / GLTF Binary)', 'despace-core' ); ?></label>
 				<input type="hidden" id="despace_glb_attachment_id" name="despace_glb_attachment_id" value="<?php echo esc_attr( $attachment_id ); ?>" />
@@ -192,18 +279,82 @@ class Product3DModule {
 				<div id="despace_glb_preview" class="despace-media-preview" style="<?php echo $current_glb_preview ? '' : 'display:none;'; ?>">
 					<?php echo esc_html( $current_glb_preview ); ?>
 				</div>
+				<p class="description"><?php esc_html_e( 'Định dạng chuẩn Binary glTF 2.0 (.glb), dung lượng tối đa <= 20MB (khuyến nghị <= 12MB). Tỷ lệ scale: 1 đơn vị 3D = 1 mét thực tế.', 'despace-core' ); ?></p>
 			</div>
 
+			<!-- 2. Fallback GLB URL -->
 			<div class="despace-meta-row">
-				<label for="despace_glb_url"><?php esc_html_e( 'Hoặc đường dẫn GLB trực tiếp (URL dự phòng)', 'despace-core' ); ?></label>
+				<label for="despace_glb_url"><?php esc_html_e( 'Đường dẫn GLB trực tiếp (URL dự phòng nếu không dùng Attachment ID)', 'despace-core' ); ?></label>
 				<input type="url" class="regular-text" id="despace_glb_url" name="despace_glb_url" value="<?php echo esc_attr( $glb_url ); ?>" placeholder="https://..." />
 			</div>
 
+			<!-- 3. Poster Image Picker -->
+			<div class="despace-meta-row">
+				<label for="despace_poster_attachment_id"><?php esc_html_e( 'Ảnh Poster 3D (Thumbnail tải trước)', 'despace-core' ); ?></label>
+				<input type="hidden" id="despace_poster_attachment_id" name="despace_poster_attachment_id" value="<?php echo esc_attr( $poster_id ); ?>" />
+				<button type="button" class="button button-secondary" id="despace_select_poster_btn">
+					<?php echo $poster_id ? esc_html__( 'Thay ảnh Poster', 'despace-core' ) : esc_html__( 'Chọn ảnh Poster từ Media Library', 'despace-core' ); ?>
+				</button>
+				<button type="button" class="button" id="despace_remove_poster_btn" style="<?php echo $poster_id ? '' : 'display:none;'; ?>">
+					<?php esc_html_e( 'Gỡ Poster', 'despace-core' ); ?>
+				</button>
+				<div id="despace_poster_preview" style="margin-top: 8px; <?php echo $poster_preview_url ? '' : 'display:none;'; ?>">
+					<?php if ( $poster_preview_url ) : ?>
+						<img src="<?php echo esc_url( $poster_preview_url ); ?>" style="max-height: 100px; border-radius: 4px; border: 1px solid #ddd;" alt="Poster preview" />
+					<?php endif; ?>
+				</div>
+				<p class="description"><?php esc_html_e( 'Hình ảnh tĩnh nhẹ (WebP/JPG) hiển thị trong khi model 3D đang được tải về thiết bị.', 'despace-core' ); ?></p>
+			</div>
+
+			<!-- 4. AR Toggle -->
 			<div class="despace-meta-row">
 				<label>
 					<input type="checkbox" name="despace_enable_ar" value="yes" <?php checked( 'yes', $enable_ar ? $enable_ar : 'yes' ); ?> />
 					<?php esc_html_e( 'Kích hoạt thực tế ảo tăng cường AR (WebXR / SceneViewer / QuickLook)', 'despace-core' ); ?>
 				</label>
+			</div>
+
+			<!-- 5. Physical Dimensions -->
+			<div class="despace-meta-row">
+				<label><?php esc_html_e( 'Kích thước vật lý thực tế (Physical Dimensions)', 'despace-core' ); ?></label>
+				<div class="despace-dim-grid">
+					<div>
+						<span style="font-size:11px;color:#666;"><?php esc_html_e( 'Chiều dài (Length)', 'despace-core' ); ?></span>
+						<input type="number" step="0.1" min="0" name="despace_3d_length" value="<?php echo esc_attr( $dim_length ); ?>" placeholder="210" />
+					</div>
+					<div>
+						<span style="font-size:11px;color:#666;"><?php esc_html_e( 'Chiều rộng (Width)', 'despace-core' ); ?></span>
+						<input type="number" step="0.1" min="0" name="despace_3d_width" value="<?php echo esc_attr( $dim_width ); ?>" placeholder="90" />
+					</div>
+					<div>
+						<span style="font-size:11px;color:#666;"><?php esc_html_e( 'Chiều cao (Height)', 'despace-core' ); ?></span>
+						<input type="number" step="0.1" min="0" name="despace_3d_height" value="<?php echo esc_attr( $dim_height ); ?>" placeholder="85" />
+					</div>
+					<div>
+						<span style="font-size:11px;color:#666;"><?php esc_html_e( 'Đơn vị (Unit)', 'despace-core' ); ?></span>
+						<select name="despace_3d_unit">
+							<option value="cm" <?php selected( 'cm', $dim_unit ); ?>>cm</option>
+							<option value="mm" <?php selected( 'mm', $dim_unit ); ?>>mm</option>
+							<option value="m" <?php selected( 'm', $dim_unit ); ?>>m</option>
+						</select>
+					</div>
+				</div>
+				<p class="description"><?php esc_html_e( 'Kích thước vật lý thực tế chuẩn hóa theo API Contract M1 để đối soát không gian AR chính xác.', 'despace-core' ); ?></p>
+			</div>
+
+			<!-- 6. Camera Controls -->
+			<div class="despace-meta-row">
+				<label><?php esc_html_e( 'Cấu hình góc nhìn khởi tạo (Camera Orbit & Field of View)', 'despace-core' ); ?></label>
+				<div style="display:flex; gap:12px; max-width:600px;">
+					<div style="flex:1;">
+						<span style="font-size:11px;color:#666;">Camera Orbit (VD: 45deg 75deg 2.5m)</span>
+						<input type="text" class="regular-text" style="width:100%;" name="despace_3d_camera_orbit" value="<?php echo esc_attr( $camera_orbit ); ?>" />
+					</div>
+					<div style="flex:1;">
+						<span style="font-size:11px;color:#666;">Field of View (VD: 30deg)</span>
+						<input type="text" class="regular-text" style="width:100%;" name="despace_3d_field_of_view" value="<?php echo esc_attr( $field_of_view ); ?>" />
+					</div>
+				</div>
 			</div>
 		</div>
 		<?php
@@ -213,24 +364,80 @@ class Product3DModule {
 	 * Save Meta Box data.
 	 */
 	public function save_meta_box( $post_id ): void {
+		// 1. Verify CSRF Nonce
 		if ( ! isset( $_POST['despace_3d_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['despace_3d_nonce'] ) ), 'despace_save_3d_meta' ) ) {
 			return;
 		}
+
+		// 2. Ignore autosave requests
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return;
 		}
-		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+
+		// 3. Strict RBAC capability check: edit_post, manage_despace_3d, or manage_woocommerce (per SECURITY_AUDIT.md)
+		$can_manage_3d = current_user_can( 'edit_post', $post_id )
+			|| current_user_can( 'manage_despace_3d' )
+			|| current_user_can( 'manage_woocommerce' );
+
+		if ( ! $can_manage_3d ) {
 			return;
 		}
 
+		// 1. GLB Attachment ID (Golden Rule: Attachment ID > 0)
 		if ( isset( $_POST['despace_glb_attachment_id'] ) ) {
-			update_post_meta( $post_id, '_despace_glb_attachment_id', absint( $_POST['despace_glb_attachment_id'] ) );
+			$att_id = absint( $_POST['despace_glb_attachment_id'] );
+			if ( $att_id > 0 ) {
+				$mime = get_post_mime_type( $att_id );
+				$file = get_attached_file( $att_id );
+				$ext  = strtolower( pathinfo( $file ?: '', PATHINFO_EXTENSION ) );
+				if ( in_array( $mime, array( 'model/gltf-binary', 'model/gltf+json' ), true ) || 'glb' === $ext || 'gltf' === $ext ) {
+					update_post_meta( $post_id, '_despace_glb_attachment_id', $att_id );
+				}
+			} else {
+				delete_post_meta( $post_id, '_despace_glb_attachment_id' );
+			}
 		}
+
+		// 2. Poster Attachment ID
+		if ( isset( $_POST['despace_poster_attachment_id'] ) ) {
+			$poster_id = absint( $_POST['despace_poster_attachment_id'] );
+			if ( $poster_id > 0 ) {
+				update_post_meta( $post_id, '_despace_poster_attachment_id', $poster_id );
+			} else {
+				delete_post_meta( $post_id, '_despace_poster_attachment_id' );
+			}
+		}
+
+		// 3. Fallback GLB URL
 		if ( isset( $_POST['despace_glb_url'] ) ) {
-			update_post_meta( $post_id, '_despace_glb_url', esc_url_raw( wp_unslash( $_POST['despace_glb_url'] ) ) );
+			$raw_url = sanitize_text_field( wp_unslash( $_POST['despace_glb_url'] ) );
+			if ( '' !== $raw_url ) {
+				update_post_meta( $post_id, '_despace_glb_url', esc_url_raw( $raw_url ) );
+			} else {
+				delete_post_meta( $post_id, '_despace_glb_url' );
+			}
 		}
+
+		// 4. AR Toggle
 		$enable_ar = isset( $_POST['despace_enable_ar'] ) ? 'yes' : 'no';
 		update_post_meta( $post_id, '_despace_enable_ar', $enable_ar );
+
+		// 5. 3D Dimensions
+		$dimensions = array(
+			'length' => isset( $_POST['despace_3d_length'] ) ? floatval( $_POST['despace_3d_length'] ) : 0,
+			'width'  => isset( $_POST['despace_3d_width'] ) ? floatval( $_POST['despace_3d_width'] ) : 0,
+			'height' => isset( $_POST['despace_3d_height'] ) ? floatval( $_POST['despace_3d_height'] ) : 0,
+			'unit'   => isset( $_POST['despace_3d_unit'] ) ? sanitize_text_field( wp_unslash( $_POST['despace_3d_unit'] ) ) : 'cm',
+		);
+		update_post_meta( $post_id, '_despace_3d_dimensions', $dimensions );
+
+		// 6. Camera Orbit & FOV
+		if ( isset( $_POST['despace_3d_camera_orbit'] ) ) {
+			update_post_meta( $post_id, '_despace_3d_camera_orbit', sanitize_text_field( wp_unslash( $_POST['despace_3d_camera_orbit'] ) ) );
+		}
+		if ( isset( $_POST['despace_3d_field_of_view'] ) ) {
+			update_post_meta( $post_id, '_despace_3d_field_of_view', sanitize_text_field( wp_unslash( $_POST['despace_3d_field_of_view'] ) ) );
+		}
 	}
 
 	/**
@@ -414,23 +621,80 @@ class Product3DModule {
 			return $url;
 		};
 
-		if ( $row && ! empty( $row['glb_url'] ) ) {
+		// Helper to resolve poster thumbnail with fallback to product featured image (per Issue #6)
+		$resolve_poster = static function( int $pid, int $custom_poster_id, string $legacy_thumb = '' ) use ( $resolve_asset_url ): array {
+			// 1. Check custom poster attachment if valid and exists
+			if ( $custom_poster_id > 0 ) {
+				$custom_url = wp_get_attachment_image_url( $custom_poster_id, 'full' );
+				if ( ! empty( $custom_url ) ) {
+					return array(
+						'id'     => $custom_poster_id,
+						'url'    => $custom_url,
+						'source' => 'custom',
+					);
+				}
+			}
+
+			// 2. Fallback to product featured image (get_post_thumbnail_id)
+			if ( function_exists( 'get_post_thumbnail_id' ) ) {
+				$thumb_id = absint( get_post_thumbnail_id( $pid ) );
+				if ( $thumb_id > 0 ) {
+					$thumb_url = wp_get_attachment_image_url( $thumb_id, 'full' );
+					if ( ! empty( $thumb_url ) ) {
+						return array(
+							'id'     => $thumb_id,
+							'url'    => $thumb_url,
+							'source' => 'product_image',
+						);
+					}
+				}
+			}
+
+			// 3. Fallback to legacy seed thumbnail url if present
+			if ( ! empty( $legacy_thumb ) ) {
+				return array(
+					'id'     => 0,
+					'url'    => $resolve_asset_url( $legacy_thumb ),
+					'source' => 'custom',
+				);
+			}
+
 			return array(
-				'has_3d'     => true,
-				'glb_url'    => $append_mtime_version( $resolve_asset_url( (string) $row['glb_url'] ) ),
-				'usdz_url'   => ! empty( $row['usdz_url'] ) ? $append_mtime_version( $resolve_asset_url( (string) $row['usdz_url'] ) ) : '',
-				'thumbnail'  => ! empty( $row['thumbnail_url'] ) ? $resolve_asset_url( (string) $row['thumbnail_url'] ) : '',
-				'ar_enabled' => (bool) ( $row['ar_enabled'] ?? 1 ),
-				'width'      => $row['width'] ?? 0,
-				'depth'      => $row['depth'] ?? 0,
-				'height'     => $row['height'] ?? 0,
-				'unit'       => $row['unit'] ?? 'cm',
+				'id'     => 0,
+				'url'    => '',
+				'source' => 'none',
+			);
+		};
+
+		if ( $row && ! empty( $row['glb_url'] ) ) {
+			$glb_att_db    = absint( get_post_meta( $product_id, '_despace_glb_attachment_id', true ) );
+			$poster_att_db = absint( get_post_meta( $product_id, '_despace_poster_attachment_id', true ) );
+			$poster_info   = $resolve_poster( $product_id, $poster_att_db, (string) ( $row['thumbnail_url'] ?? '' ) );
+			$orbit_db      = get_post_meta( $product_id, '_despace_3d_camera_orbit', true ) ?: '45deg 75deg 2.5m';
+			$fov_db        = get_post_meta( $product_id, '_despace_3d_field_of_view', true ) ?: '30deg';
+
+			return array(
+				'has_3d'               => true,
+				'glb_url'              => $append_mtime_version( $resolve_asset_url( (string) $row['glb_url'] ) ),
+				'usdz_url'             => ! empty( $row['usdz_url'] ) ? $append_mtime_version( $resolve_asset_url( (string) $row['usdz_url'] ) ) : '',
+				'thumbnail'            => $poster_info['url'],
+				'poster_url'           => $poster_info['url'],
+				'poster_attachment_id' => $poster_info['id'],
+				'poster_source'        => $poster_info['source'],
+				'ar_enabled'           => (bool) ( $row['ar_enabled'] ?? 1 ),
+				'width'                => $row['width'] ?? 0,
+				'depth'                => $row['depth'] ?? 0,
+				'height'               => $row['height'] ?? 0,
+				'unit'                 => $row['unit'] ?? 'cm',
+				'glb_attachment_id'    => $glb_att_db,
+				'camera_orbit'         => $orbit_db,
+				'field_of_view'        => $fov_db,
 			);
 		}
 
 		// 2. Postmeta fallbacks
-		$glb_att = absint( get_post_meta( $product_id, '_despace_glb_attachment_id', true ) );
-		$glb_url = get_post_meta( $product_id, '_despace_glb_url', true )
+		$glb_att   = absint( get_post_meta( $product_id, '_despace_glb_attachment_id', true ) );
+		$glb_url   = get_post_meta( $product_id, '_despace_glb_url', true )
 			?: get_post_meta( $product_id, '_axgnud_model_glb', true )
 			?: get_post_meta( $product_id, '_glb_file', true );
 
@@ -439,25 +703,42 @@ class Product3DModule {
 		}
 
 		if ( $glb_url ) {
+			$poster_att  = absint( get_post_meta( $product_id, '_despace_poster_attachment_id', true ) );
+			$poster_info = $resolve_poster( $product_id, $poster_att, '' );
+			$dimensions  = get_post_meta( $product_id, '_despace_3d_dimensions', true );
+			if ( ! is_array( $dimensions ) ) {
+				$dimensions = array();
+			}
+			$enable_ar = get_post_meta( $product_id, '_despace_enable_ar', true );
+
 			return array(
-				'has_3d'     => true,
-				'glb_url'    => $glb_url,
-				'usdz_url'   => '',
-				'thumbnail'  => '',
-				'ar_enabled' => true,
-				'width'      => 0,
-				'depth'      => 0,
-				'height'     => 0,
-				'unit'       => 'cm',
+				'has_3d'               => true,
+				'glb_url'              => $glb_url,
+				'usdz_url'             => '',
+				'thumbnail'            => $poster_info['url'],
+				'poster_url'           => $poster_info['url'],
+				'poster_attachment_id' => $poster_info['id'],
+				'poster_source'        => $poster_info['source'],
+				'ar_enabled'           => 'no' !== $enable_ar,
+				'width'                => $dimensions['width'] ?? 0,
+				'depth'                => $dimensions['length'] ?? 0,
+				'height'               => $dimensions['height'] ?? 0,
+				'unit'                 => $dimensions['unit'] ?? 'cm',
+				'glb_attachment_id'    => $glb_att,
+				'camera_orbit'         => get_post_meta( $product_id, '_despace_3d_camera_orbit', true ) ?: '45deg 75deg 2.5m',
+				'field_of_view'        => get_post_meta( $product_id, '_despace_3d_field_of_view', true ) ?: '30deg',
 			);
 		}
 
 		return array(
-			'has_3d'     => false,
-			'glb_url'    => '',
-			'usdz_url'   => '',
-			'thumbnail'  => '',
-			'ar_enabled' => false,
+			'has_3d'               => false,
+			'glb_url'              => '',
+			'usdz_url'             => '',
+			'thumbnail'            => '',
+			'poster_url'           => '',
+			'poster_attachment_id' => 0,
+			'poster_source'        => 'none',
+			'ar_enabled'           => false,
 		);
 	}
 
@@ -477,7 +758,7 @@ class Product3DModule {
 
 		echo sprintf(
 			'<div class="despace-3d-action-wrapper" style="margin: 16px 0;">
-				<button type="button" class="despace-btn-view-3d f-btn-3d" data-glb="%s" data-usdz="%s" data-product-id="%d" data-title="%s">
+				<button type="button" class="despace-btn-view-3d f-btn-3d" data-glb="%s" data-usdz="%s" data-poster="%s" data-product-id="%d" data-title="%s">
 					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px; vertical-align:middle;">
 						<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
 					</svg>
@@ -486,6 +767,7 @@ class Product3DModule {
 			</div>',
 			esc_url( $info['glb_url'] ),
 			esc_url( $info['usdz_url'] ),
+			esc_url( $info['poster_url'] ?? $info['thumbnail'] ?? '' ),
 			esc_attr( $product->get_id() ),
 			esc_attr( $product->get_name() ),
 			esc_html__( 'Trải nghiệm Không gian 3D & AR', 'despace-core' )
