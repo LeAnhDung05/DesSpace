@@ -89,6 +89,24 @@ class RestApiModule {
 			)
 		);
 
+		// Official API Contract route: /products/{id}/model-3d (API_CONTRACT.md section 4.2)
+		register_rest_route(
+			self::REST_NAMESPACE,
+			'/products/(?P<id>\d+)/model-3d',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_product_3d' ),
+					'permission_callback' => '__return_true',
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'update_product_3d' ),
+					'permission_callback' => array( RoleManager::class, 'rest_check_3d_permission' ),
+				),
+			)
+		);
+
 		// 2. Product filter & Catalog endpoints (API Contract M2)
 		$filter_args = array(
 			'methods'             => WP_REST_Server::READABLE,
@@ -751,14 +769,53 @@ class RestApiModule {
 
 		$info = Product3DModule::get_product_3d_info( $product_id );
 
-		return new WP_REST_Response( array(
+		$glb_att  = absint( $info['glb_attachment_id'] ?? get_post_meta( $product_id, '_despace_glb_attachment_id', true ) );
+		$glb_size = 0;
+		if ( $glb_att ) {
+			$file_path = get_attached_file( $glb_att );
+			if ( $file_path && file_exists( $file_path ) ) {
+				$glb_size = (int) filesize( $file_path );
+			}
+		}
+
+		$poster_att = absint( $info['poster_attachment_id'] ?? get_post_meta( $product_id, '_despace_poster_attachment_id', true ) );
+		$poster_url = $poster_att ? wp_get_attachment_image_url( $poster_att, 'full' ) : ( $info['thumbnail'] ?? '' );
+
+		// Strict payload conforming to API_CONTRACT.md section 4.2
+		$response_payload = array(
 			'product_id' => $product_id,
-			'data'       => $info,
-		), 200 );
+			'has_3d'     => ! empty( $info['has_3d'] ),
+			'glb'        => array(
+				'attachment_id' => $glb_att,
+				'url'           => $info['glb_url'] ?? '',
+				'filesize'      => $glb_size,
+				'mime_type'     => 'model/gltf-binary',
+			),
+			'poster'     => array(
+				'attachment_id' => $poster_att,
+				'url'           => $poster_url,
+				'source'        => $info['poster_source'] ?? ( $poster_att ? 'custom' : 'product_image' ),
+			),
+			'config'     => array(
+				'enable_ar'     => ! empty( $info['ar_enabled'] ),
+				'ar_modes'      => 'webxr scene-viewer quick-look',
+				'camera_orbit'  => $info['camera_orbit'] ?? '45deg 75deg 2.5m',
+				'field_of_view' => $info['field_of_view'] ?? '30deg',
+				'dimensions'    => array(
+					'length' => floatval( $info['depth'] ?? 0 ),
+					'width'  => floatval( $info['width'] ?? 0 ),
+					'height' => floatval( $info['height'] ?? 0 ),
+					'unit'   => $info['unit'] ?? 'cm',
+				),
+			),
+			'data'       => $info, // Keep backward compatibility for existing callers
+		);
+
+		return new WP_REST_Response( $response_payload, 200 );
 	}
 
 	/**
-	 * Update 3D model metadata for a product (POST /products/{id}/3d).
+	 * Update 3D model metadata for a product (POST /products/{id}/model-3d or /products/{id}/3d).
 	 */
 	public function update_product_3d( WP_REST_Request $request ): WP_REST_Response {
 		$product_id = absint( $request->get_param( 'id' ) );
@@ -783,9 +840,24 @@ class RestApiModule {
 			), 403 );
 		}
 
-		$model_id = absint( $request->get_param( 'model_attachment_id' ) ?? 0 );
+		// Support glb_attachment_id (API Contract) and model_attachment_id (legacy)
+		$model_id = absint( $request->get_param( 'glb_attachment_id' ) ?? $request->get_param( 'model_attachment_id' ) ?? 0 );
 		if ( $model_id ) {
+			$mime = get_post_mime_type( $model_id );
+			$file = get_attached_file( $model_id );
+			$ext  = strtolower( pathinfo( $file ?: '', PATHINFO_EXTENSION ) );
+			if ( ! in_array( $mime, array( 'model/gltf-binary', 'model/gltf+json' ), true ) && 'glb' !== $ext && 'gltf' !== $ext ) {
+				return new WP_REST_Response( array(
+					'code'    => 'despace_invalid_glb_attachment',
+					'message' => 'Tệp đính kèm phải là mô hình 3D hợp lệ (.glb / model/gltf-binary).',
+				), 400 );
+			}
 			update_post_meta( $product_id, '_despace_glb_attachment_id', $model_id );
+		}
+
+		$poster_id = absint( $request->get_param( 'poster_attachment_id' ) ?? 0 );
+		if ( $poster_id ) {
+			update_post_meta( $product_id, '_despace_poster_attachment_id', $poster_id );
 		}
 
 		$glb_url = esc_url_raw( (string) ( $request->get_param( 'glb_url' ) ?? '' ) );
@@ -794,10 +866,32 @@ class RestApiModule {
 			update_post_meta( $product_id, '_axgnud_model_glb', $glb_url );
 		}
 
-		$ar_enabled = $request->get_param( 'ar_enabled' );
+		$ar_enabled = $request->get_param( 'enable_ar' ) ?? $request->get_param( 'ar_enabled' );
 		if ( null !== $ar_enabled ) {
-			update_post_meta( $product_id, '_despace_enable_ar', $ar_enabled ? 'yes' : 'no' );
-			update_post_meta( $product_id, '_ar_enabled', $ar_enabled ? 'yes' : 'no' );
+			$flag = ( $ar_enabled && 'no' !== $ar_enabled ) ? 'yes' : 'no';
+			update_post_meta( $product_id, '_despace_enable_ar', $flag );
+			update_post_meta( $product_id, '_ar_enabled', $flag );
+		}
+
+		$camera_orbit = sanitize_text_field( (string) ( $request->get_param( 'camera_orbit' ) ?? '' ) );
+		if ( '' !== $camera_orbit ) {
+			update_post_meta( $product_id, '_despace_3d_camera_orbit', $camera_orbit );
+		}
+
+		$field_of_view = sanitize_text_field( (string) ( $request->get_param( 'field_of_view' ) ?? '' ) );
+		if ( '' !== $field_of_view ) {
+			update_post_meta( $product_id, '_despace_3d_field_of_view', $field_of_view );
+		}
+
+		$dimensions = $request->get_param( 'dimensions' );
+		if ( is_array( $dimensions ) ) {
+			$dim_sanitized = array(
+				'length' => floatval( $dimensions['length'] ?? 0 ),
+				'width'  => floatval( $dimensions['width'] ?? 0 ),
+				'height' => floatval( $dimensions['height'] ?? 0 ),
+				'unit'   => sanitize_text_field( $dimensions['unit'] ?? 'cm' ),
+			);
+			update_post_meta( $product_id, '_despace_3d_dimensions', $dim_sanitized );
 		}
 
 		// Sync custom 3D table so updates are not shadowed by stale rows.
@@ -814,7 +908,7 @@ class RestApiModule {
 					$update_fmt[]                  = '%s';
 				}
 				if ( null !== $ar_enabled ) {
-					$update_fields['ar_enabled'] = $ar_enabled ? 1 : 0;
+					$update_fields['ar_enabled'] = ( $ar_enabled && 'no' !== $ar_enabled ) ? 1 : 0;
 					$update_fmt[]                = '%d';
 				}
 				if ( ! empty( $update_fields ) ) {
